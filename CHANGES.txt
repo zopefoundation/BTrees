@@ -1,0 +1,13 @@
+``BTrees`` Changelog
+====================
+
+
+4.0.0 (unreleased)
+------------------
+
+Platform Changes
+################
+
+- Dropped support for Python < 2.6.
+
+- Factored ``BTrees`` as a separate distribution.
