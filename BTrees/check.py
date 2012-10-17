@@ -42,7 +42,8 @@ from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
 from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
 from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
 
-from ZODB.utils import positive_id, oid_repr
+from BTrees.utils import positive_id
+from BTrees.utils import oid_repr
 
 TYPE_UNKNOWN, TYPE_BTREE, TYPE_BUCKET = range(3)
 

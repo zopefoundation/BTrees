@@ -34,25 +34,23 @@ import BTrees
 from BTrees.IIBTree import using64bits
 from BTrees.check import check
 
-import transaction
-from ZODB import DB
-from ZODB.MappingStorage import MappingStorage
 
-class Base(TestCase):
-    """ Tests common to all types: sets, buckets, and BTrees """
+class Base(object):
+    # Tests common to all types: sets, buckets, and BTrees 
 
     db = None
 
-    def setUp(self):
-        self.t = self.t_class()
+    def _makeOne(self):
+        return self.klass()
+
 
     def tearDown(self):
         if self.db is not None:
             self.db.close()
-        self.t = None
-        del self.t
 
     def _getRoot(self):
+        from ZODB import DB
+        from ZODB.MappingStorage import MappingStorage
         if self.db is None:
             # Unclear:  On the next line, the ZODB4 flavor of this routine
             # [asses a cache_size argument:
@@ -67,8 +65,9 @@ class Base(TestCase):
         root._p_jar.close()
 
     def testLoadAndStore(self):
+        import transaction
         for i in 0, 10, 1000:
-            t = self.t.__class__()
+            t = self._makeOne()
             self._populate(t, i)
             root = None
             root = self._getRoot()
@@ -85,15 +84,17 @@ class Base(TestCase):
             self._closeRoot(root2)
 
     def testSetstateArgumentChecking(self):
-        try: self.t.__class__().__setstate__(('',))
+        try:
+            self._makeOne().__setstate__(('',))
         except TypeError, v:
             self.assertEqual(str(v), 'tuple required for first state element')
         else:
             raise AssertionError("Expected exception")
 
     def testGhostUnghost(self):
+        import transaction
         for i in 0, 10, 1000:
-            t = self.t.__class__()
+            t = self._makeOne()
             self._populate(t, i)
             root = self._getRoot()
             root[i] = t
@@ -111,7 +112,7 @@ class Base(TestCase):
             self._closeRoot(root2)
 
     def testSimpleExclusiveKeyRange(self):
-        t = self.t.__class__()
+        t = self._makeOne()
         self.assertEqual(list(t.keys()), [])
         self.assertEqual(list(t.keys(excludemin=True)), [])
         self.assertEqual(list(t.keys(excludemax=True)), [])
@@ -147,7 +148,10 @@ class Base(TestCase):
                          [1])
 
     def testUpdatesDoReadChecksOnInternalNodes(self):
-        t = self.t
+        import transaction
+        from ZODB import DB
+        from ZODB.MappingStorage import MappingStorage
+        t = self._makeOne()
         if not hasattr(t, '_firstbucket'):
             return
         self._populate(t, 1000)
@@ -190,7 +194,7 @@ class Base(TestCase):
 
 
 class MappingBase(Base):
-    """ Tests common to mappings (buckets, btrees) """
+    # Tests common to mappings (buckets, btrees) 
 
     def _populate(self, t, l):
         # Make some data
@@ -200,9 +204,10 @@ class MappingBase(Base):
         # test the repr because buckets have a complex repr implementation
         # internally the cutoff from a stack allocated buffer to a heap
         # allocated buffer is 10000.
+        t = self._makeOne()
         for i in range(1000):
-            self.t[i] = i
-        r = repr(self.t)
+            t[i] = i
+        r = repr(t)
         # Make sure the repr is 10000 bytes long for a bucket.
         # But since the test is also run for btrees, skip the length
         # check if the repr starts with '<'
@@ -213,79 +218,87 @@ class MappingBase(Base):
         self.assertRaises(KeyError, self._getitemfail)
 
     def _getitemfail(self):
-        return self.t[1]
+        return self._makeOne()[1]
 
     def testGetReturnsDefault(self):
-        self.assertEqual(self.t.get(1) , None)
-        self.assertEqual(self.t.get(1, 'foo') , 'foo')
+        self.assertEqual(self._makeOne().get(1) , None)
+        self.assertEqual(self._makeOne().get(1, 'foo') , 'foo')
 
     def testSetItemGetItemWorks(self):
-        self.t[1] = 1
-        a = self.t[1]
+        t = self._makeOne()
+        t[1] = 1
+        a = t[1]
         self.assertEqual(a , 1, `a`)
 
     def testReplaceWorks(self):
-        self.t[1] = 1
-        self.assertEqual(self.t[1] , 1, self.t[1])
-        self.t[1] = 2
-        self.assertEqual(self.t[1] , 2, self.t[1])
+        t = self._makeOne()
+        t[1] = 1
+        self.assertEqual(t[1] , 1, t[1])
+        t[1] = 2
+        self.assertEqual(t[1] , 2, t[1])
 
     def testLen(self):
+        t = self._makeOne()
         added = {}
         r = range(1000)
         for x in r:
             k = random.choice(r)
-            self.t[k] = x
+            t[k] = x
             added[k] = x
         addl = added.keys()
-        self.assertEqual(len(self.t) , len(addl), len(self.t))
+        self.assertEqual(len(t) , len(addl), len(t))
 
     def testHasKeyWorks(self):
-        self.t[1] = 1
-        self.assert_(self.t.has_key(1))
-        self.assert_(1 in self.t)
-        self.assert_(0 not in self.t)
-        self.assert_(2 not in self.t)
+        t = self._makeOne()
+        t[1] = 1
+        self.assert_(t.has_key(1))
+        self.assert_(1 in t)
+        self.assert_(0 not in t)
+        self.assert_(2 not in t)
 
     def testValuesWorks(self):
+        t = self._makeOne()
         for x in range(100):
-            self.t[x] = x*x
-        v = self.t.values()
+            t[x] = x*x
+        v = t.values()
         for i in range(100):
             self.assertEqual(v[i], i*i)
         self.assertRaises(IndexError, lambda: v[i+1])
         i = 0
-        for value in self.t.itervalues():
+        for value in t.itervalues():
             self.assertEqual(value, i*i)
             i += 1
 
     def testValuesWorks1(self):
+        t = self._makeOne()
         for x in range(100):
-            self.t[99-x] = x
+            t[99-x] = x
 
         for x in range(40):
-            lst = list(self.t.values(0+x,99-x))
+            lst = list(t.values(0+x,99-x))
             lst.sort()
             self.assertEqual(lst,range(0+x,99-x+1))
 
-            lst = list(self.t.values(max=99-x, min=0+x))
+            lst = list(t.values(max=99-x, min=0+x))
             lst.sort()
             self.assertEqual(lst,range(0+x,99-x+1))
 
     def testValuesNegativeIndex(self):
+        t = self._makeOne()
         L = [-3, 6, -11, 4]
         for i in L:
-            self.t[i] = i
+            t[i] = i
         L.sort()
-        vals = self.t.values()
+        vals = t.values()
         for i in range(-1, -5, -1):
             self.assertEqual(vals[i], L[i])
         self.assertRaises(IndexError, lambda: vals[-5])
 
     def testKeysWorks(self):
+        t = self._makeOne()
         for x in range(100):
-            self.t[x] = x
-        v = self.t.keys()
+            t[x] = x
+        v = t.keys()
         i = 0
         for x in v:
             self.assertEqual(x,i)
@@ -293,28 +306,30 @@ class MappingBase(Base):
         self.assertRaises(IndexError, lambda: v[i])
 
         for x in range(40):
-            lst = self.t.keys(0+x,99-x)
+            lst = t.keys(0+x,99-x)
             self.assertEqual(list(lst), range(0+x, 99-x+1))
 
-            lst = self.t.keys(max=99-x, min=0+x)
+            lst = t.keys(max=99-x, min=0+x)
             self.assertEqual(list(lst), range(0+x, 99-x+1))
 
         self.assertEqual(len(v), 100)
 
     def testKeysNegativeIndex(self):
+        t = self._makeOne()
         L = [-3, 6, -11, 4]
         for i in L:
-            self.t[i] = i
+            t[i] = i
         L.sort()
-        keys = self.t.keys()
+        keys = t.keys()
         for i in range(-1, -5, -1):
             self.assertEqual(keys[i], L[i])
         self.assertRaises(IndexError, lambda: keys[-5])
 
     def testItemsWorks(self):
+        t = self._makeOne()
         for x in range(100):
-            self.t[x] = 2*x
-        v = self.t.items()
+            t[x] = 2*x
+        v = t.items()
         i = 0
         for x in v:
             self.assertEqual(x[0], i)
@@ -323,22 +338,23 @@ class MappingBase(Base):
         self.assertRaises(IndexError, lambda: v[i+1])
 
         i = 0
-        for x in self.t.iteritems():
+        for x in t.iteritems():
             self.assertEqual(x, (i, 2*i))
             i += 1
 
-        items = list(self.t.items(min=12, max=20))
+        items = list(t.items(min=12, max=20))
         self.assertEqual(items, zip(range(12, 21), range(24, 43, 2)))
 
-        items = list(self.t.iteritems(min=12, max=20))
+        items = list(t.iteritems(min=12, max=20))
         self.assertEqual(items, zip(range(12, 21), range(24, 43, 2)))
 
     def testItemsNegativeIndex(self):
+        t = self._makeOne()
         L = [-3, 6, -11, 4]
         for i in L:
-            self.t[i] = i
+            t[i] = i
         L.sort()
-        items = self.t.items()
+        items = t.items()
         for i in range(-1, -5, -1):
             self.assertEqual(items[i], (L[i], L[i]))
         self.assertRaises(IndexError, lambda: items[-5])
@@ -347,19 +363,20 @@ class MappingBase(Base):
         self.assertRaises(KeyError, self._deletefail)
 
     def _deletefail(self):
-        del self.t[1]
+        t = self._makeOne()
+        del t[1]
 
     def testMaxKeyMinKey(self):
-        self.t[7] = 6
-        self.t[3] = 10
-        self.t[8] = 12
-        self.t[1] = 100
-        self.t[5] = 200
-        self.t[10] = 500
-        self.t[6] = 99
-        self.t[4] = 150
-        del self.t[7]
-        t = self.t
+        t = self._makeOne()
+        t[7] = 6
+        t[3] = 10
+        t[8] = 12
+        t[1] = 100
+        t[5] = 200
+        t[10] = 500
+        t[6] = 99
+        t[4] = 150
+        del t[7]
         self.assertEqual(t.maxKey(), 10)
         self.assertEqual(t.maxKey(6), 6)
         self.assertEqual(t.maxKey(9), 8)
@@ -382,15 +399,17 @@ class MappingBase(Base):
             self.fail("expected ValueError")
 
     def testClear(self):
+        t = self._makeOne()
         r = range(100)
         for x in r:
             rnd = random.choice(r)
-            self.t[rnd] = 0
-        self.t.clear()
-        diff = lsubtract(list(self.t.keys()), [])
+            t[rnd] = 0
+        t.clear()
+        diff = lsubtract(list(t.keys()), [])
         self.assertEqual(diff, [])
 
     def testUpdate(self):
+        t = self._makeOne()
         d={}
         l=[]
         for i in range(10000):
@@ -401,29 +420,29 @@ class MappingBase(Base):
         items=d.items()
         items.sort()
 
-        self.t.update(d)
-        self.assertEqual(list(self.t.items()), items)
+        t.update(d)
+        self.assertEqual(list(t.items()), items)
 
-        self.t.clear()
-        self.assertEqual(list(self.t.items()), [])
+        t.clear()
+        self.assertEqual(list(t.items()), [])
 
-        self.t.update(l)
-        self.assertEqual(list(self.t.items()), items)
+        t.update(l)
+        self.assertEqual(list(t.items()), items)
 
     # Before ZODB 3.4.2, update/construction from PersistentMapping failed.
     def testUpdateFromPersistentMapping(self):
         from persistent.mapping import PersistentMapping
-
+        t = self._makeOne()
         pm = PersistentMapping({1: 2})
-        self.t.update(pm)
-        self.assertEqual(list(self.t.items()), [(1, 2)])
+        t.update(pm)
+        self.assertEqual(list(t.items()), [(1, 2)])
 
         # Construction goes thru the same internals as .update().
-        t = self.t.__class__(pm)
+        t = t.__class__(pm)
         self.assertEqual(list(t.items()), [(1, 2)])
 
     def testEmptyRangeSearches(self):
-        t = self.t
+        t = self._makeOne()
         t.update([(1,1), (5,5), (9,9)])
         self.assertEqual(list(t.keys(-6,-4)), [], list(t.keys(-6,-4)))
         self.assertEqual(list(t.keys(2,4)), [], list(t.keys(2,4)))
@@ -451,8 +470,7 @@ class MappingBase(Base):
         # This tests fixes to several bugs in this area, starting with
         # http://collector.zope.org/Zope/419,
         # "BTreeItems slice contains 1 too many elements".
-
-        t = self.t
+        t = self._makeOne()
         for n in range(10):
             t.clear()
             self.assertEqual(len(t), 0)
@@ -522,7 +540,7 @@ class MappingBase(Base):
         self.assertEqual(list(tslice), zip(range(20, 80), [1]*60))
 
     def testIterators(self):
-        t = self.t
+        t = self._makeOne()
 
         for keys in [], [-2], [1, 4], range(-170, 2000, 6):
             t.clear()
@@ -551,7 +569,7 @@ class MappingBase(Base):
             self.assertEqual(list(t.iteritems()), list(t.items()))
 
     def testRangedIterators(self):
-        t = self.t
+        t = self._makeOne()
 
         for keys in [], [-2], [1, 4], range(-170, 2000, 13):
             t.clear()
@@ -601,24 +619,15 @@ class MappingBase(Base):
 
     def testBadUpdateTupleSize(self):
         # This one silently ignored the excess in Zope3.
-        try:
-            self.t.update([(1, 2, 3)])
-        except TypeError:
-            pass
-        else:
-            self.fail("update() with 3-tuple didn't complain")
+        t = self._makeOne()
+        self.assertRaises(TypeError, t.update, [(1, 2, 3)])
 
         # This one dumped core in Zope3.
-        try:
-            self.t.update([(1,)])
-        except TypeError:
-            pass
-        else:
-            self.fail("update() with 1-tuple didn't complain")
+        self.assertRaises(TypeError, t.update, [(1,)])
 
         # This one should simply succeed.
-        self.t.update([(1, 2)])
-        self.assertEqual(list(self.t.items()), [(1, 2)])
+        t.update([(1, 2)])
+        self.assertEqual(list(t.items()), [(1, 2)])
 
     def testSimpleExclusivRanges(self):
         def identity(x):
@@ -633,7 +642,7 @@ class MappingBase(Base):
                               ("itervalues", identity),
                               ("iteritems", dup)):
 
-            t = self.t.__class__()
+            t = self._makeOne()
             meth = getattr(t, methodname, None)
             if meth is None:
                 continue
@@ -677,7 +686,7 @@ class MappingBase(Base):
                              f([1]))
 
     def testSetdefault(self):
-        t = self.t
+        t = self._makeOne()
 
         self.assertEqual(t.setdefault(1, 2), 2)
         # That should also have associated 1 with 2 in the tree.
@@ -695,7 +704,7 @@ class MappingBase(Base):
 
 
     def testPop(self):
-        t = self.t
+        t = self._makeOne()
 
         # Empty container.
         # If no default given, raises KeyError.
@@ -732,32 +741,32 @@ class MappingBase(Base):
 
 
 class NormalSetTests(Base):
-    """ Test common to all set types """
+    # Test common to all set types 
 
     def _populate(self, t, l):
         # Make some data
         t.update(range(l))
 
     def testInsertReturnsValue(self):
-        t = self.t
+        t = self._makeOne()
         self.assertEqual(t.insert(5) , 1)
         self.assertEqual(t.add(4) , 1)
 
     def testDuplicateInsert(self):
-        t = self.t
+        t = self._makeOne()
         t.insert(5)
         self.assertEqual(t.insert(5) , 0)
         self.assertEqual(t.add(5) , 0)
 
     def testInsert(self):
-        t = self.t
+        t = self._makeOne()
         t.insert(1)
         self.assert_(t.has_key(1))
         self.assert_(1 in t)
         self.assert_(2 not in t)
 
     def testBigInsert(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(10000)
         for x in r:
             t.insert(x)
@@ -766,7 +775,7 @@ class NormalSetTests(Base):
             self.assert_(x in t)
 
     def testRemoveSucceeds(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
         for x in r: t.remove(x)
@@ -775,15 +784,15 @@ class NormalSetTests(Base):
         self.assertRaises(KeyError, self._removenonexistent)
 
     def _removenonexistent(self):
-        self.t.remove(1)
+        self._makeOne().remove(1)
 
     def testHasKeyFails(self):
-        t = self.t
+        t = self._makeOne()
         self.assert_(not t.has_key(1))
         self.assert_(1 not in t)
 
     def testKeys(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(1000)
         for x in r:
             t.insert(x)
@@ -792,7 +801,7 @@ class NormalSetTests(Base):
 
 
     def testClear(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(1000)
         for x in r: t.insert(x)
         t.clear()
@@ -800,7 +809,7 @@ class NormalSetTests(Base):
         self.assertEqual(diff , [], diff)
 
     def testMaxKeyMinKey(self):
-        t = self.t
+        t = self._makeOne()
         t.insert(1)
         t.insert(2)
         t.insert(3)
@@ -835,6 +844,7 @@ class NormalSetTests(Base):
             self.fail("expected ValueError")
 
     def testUpdate(self):
+        t = self._makeOne()
         d={}
         l=[]
         for i in range(10000):
@@ -845,11 +855,11 @@ class NormalSetTests(Base):
         items = d.keys()
         items.sort()
 
-        self.t.update(l)
-        self.assertEqual(list(self.t.keys()), items)
+        t.update(l)
+        self.assertEqual(list(t.keys()), items)
 
     def testEmptyRangeSearches(self):
-        t = self.t
+        t = self._makeOne()
         t.update([1, 5, 9])
         self.assertEqual(list(t.keys(-6,-4)), [], list(t.keys(-6,-4)))
         self.assertEqual(list(t.keys(2,4)), [], list(t.keys(2,4)))
@@ -872,8 +882,7 @@ class NormalSetTests(Base):
     def testSlicing(self):
         # Test that slicing of .keys() works exactly the same way as slicing
         # a Python list with the same contents.
-
-        t = self.t
+        t = self._makeOne()
         for n in range(10):
             t.clear()
             self.assertEqual(len(t), 0)
@@ -902,7 +911,7 @@ class NormalSetTests(Base):
                     self.assertEqual(list(x), keys[lo:hi])
 
     def testIterator(self):
-        t = self.t
+        t = self._makeOne()
 
         for keys in [], [-2], [1, 4], range(-170, 2000, 6):
             t.clear()
@@ -926,292 +935,19 @@ class NormalSetTests(Base):
             self.assertEqual(x, keys)
 
 class ExtendedSetTests(NormalSetTests):
+
     def testLen(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
         self.assertEqual(len(t) , 10000, len(t))
 
     def testGetItem(self):
-        t = self.t
+        t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
         for x in r:
             self.assertEqual(t[x] , x)
-
-class BTreeTests(MappingBase):
-    """ Tests common to all BTrees """
-
-    def tearDown(self):
-        self.t._check()
-        check(self.t)
-        MappingBase.tearDown(self)
-
-    def testDeleteNoChildrenWorks(self):
-        self.t[5] = 6
-        self.t[2] = 10
-        self.t[6] = 12
-        self.t[1] = 100
-        self.t[3] = 200
-        self.t[10] = 500
-        self.t[4] = 99
-        del self.t[4]
-        diff = lsubtract(self.t.keys(), [1,2,3,5,6,10])
-        self.assertEqual(diff , [], diff)
-
-    def testDeleteOneChildWorks(self):
-        self.t[5] = 6
-        self.t[2] = 10
-        self.t[6] = 12
-        self.t[1] = 100
-        self.t[3] = 200
-        self.t[10] = 500
-        self.t[4] = 99
-        del self.t[3]
-        diff = lsubtract(self.t.keys(), [1,2,4,5,6,10])
-        self.assertEqual(diff , [], diff)
-
-    def testDeleteTwoChildrenNoInorderSuccessorWorks(self):
-        self.t[5] = 6
-        self.t[2] = 10
-        self.t[6] = 12
-        self.t[1] = 100
-        self.t[3] = 200
-        self.t[10] = 500
-        self.t[4] = 99
-        del self.t[2]
-        diff = lsubtract(self.t.keys(), [1,3,4,5,6,10])
-        self.assertEqual(diff , [], diff)
-
-    def testDeleteTwoChildrenInorderSuccessorWorks(self):
-        # 7, 3, 8, 1, 5, 10, 6, 4 -- del 3
-        self.t[7] = 6
-        self.t[3] = 10
-        self.t[8] = 12
-        self.t[1] = 100
-        self.t[5] = 200
-        self.t[10] = 500
-        self.t[6] = 99
-        self.t[4] = 150
-        del self.t[3]
-        diff = lsubtract(self.t.keys(), [1,4,5,6,7,8,10])
-        self.assertEqual(diff , [], diff)
-
-    def testDeleteRootWorks(self):
-        # 7, 3, 8, 1, 5, 10, 6, 4 -- del 7
-        self.t[7] = 6
-        self.t[3] = 10
-        self.t[8] = 12
-        self.t[1] = 100
-        self.t[5] = 200
-        self.t[10] = 500
-        self.t[6] = 99
-        self.t[4] = 150
-        del self.t[7]
-        diff = lsubtract(self.t.keys(), [1,3,4,5,6,8,10])
-        self.assertEqual(diff , [], diff)
-
-    def testRandomNonOverlappingInserts(self):
-        added = {}
-        r = range(100)
-        for x in r:
-            k = random.choice(r)
-            if not added.has_key(k):
-                self.t[k] = x
-                added[k] = 1
-        addl = added.keys()
-        addl.sort()
-        diff = lsubtract(list(self.t.keys()), addl)
-        self.assertEqual(diff , [], (diff, addl, list(self.t.keys())))
-
-    def testRandomOverlappingInserts(self):
-        added = {}
-        r = range(100)
-        for x in r:
-            k = random.choice(r)
-            self.t[k] = x
-            added[k] = 1
-        addl = added.keys()
-        addl.sort()
-        diff = lsubtract(self.t.keys(), addl)
-        self.assertEqual(diff , [], diff)
-
-    def testRandomDeletes(self):
-        r = range(1000)
-        added = []
-        for x in r:
-            k = random.choice(r)
-            self.t[k] = x
-            added.append(k)
-        deleted = []
-        for x in r:
-            k = random.choice(r)
-            if self.t.has_key(k):
-                self.assert_(k in self.t)
-                del self.t[k]
-                deleted.append(k)
-                if self.t.has_key(k):
-                    self.fail( "had problems deleting %s" % k )
-        badones = []
-        for x in deleted:
-            if self.t.has_key(x):
-                badones.append(x)
-        self.assertEqual(badones , [], (badones, added, deleted))
-
-    def testTargetedDeletes(self):
-        r = range(1000)
-        for x in r:
-            k = random.choice(r)
-            self.t[k] = x
-        for x in r:
-            try:
-                del self.t[x]
-            except KeyError:
-                pass
-        self.assertEqual(realseq(self.t.keys()) , [], realseq(self.t.keys()))
-
-    def testPathologicalRightBranching(self):
-        r = range(1000)
-        for x in r:
-            self.t[x] = 1
-        self.assertEqual(realseq(self.t.keys()) , r, realseq(self.t.keys()))
-        for x in r:
-            del self.t[x]
-        self.assertEqual(realseq(self.t.keys()) , [], realseq(self.t.keys()))
-
-    def testPathologicalLeftBranching(self):
-        r = range(1000)
-        revr = r[:]
-        revr.reverse()
-        for x in revr:
-            self.t[x] = 1
-        self.assertEqual(realseq(self.t.keys()) , r, realseq(self.t.keys()))
-
-        for x in revr:
-            del self.t[x]
-        self.assertEqual(realseq(self.t.keys()) , [], realseq(self.t.keys()))
-
-    def testSuccessorChildParentRewriteExerciseCase(self):
-        add_order = [
-            85, 73, 165, 273, 215, 142, 233, 67, 86, 166, 235, 225, 255,
-            73, 175, 171, 285, 162, 108, 28, 283, 258, 232, 199, 260,
-            298, 275, 44, 261, 291, 4, 181, 285, 289, 216, 212, 129,
-            243, 97, 48, 48, 159, 22, 285, 92, 110, 27, 55, 202, 294,
-            113, 251, 193, 290, 55, 58, 239, 71, 4, 75, 129, 91, 111,
-            271, 101, 289, 194, 218, 77, 142, 94, 100, 115, 101, 226,
-            17, 94, 56, 18, 163, 93, 199, 286, 213, 126, 240, 245, 190,
-            195, 204, 100, 199, 161, 292, 202, 48, 165, 6, 173, 40, 218,
-            271, 228, 7, 166, 173, 138, 93, 22, 140, 41, 234, 17, 249,
-            215, 12, 292, 246, 272, 260, 140, 58, 2, 91, 246, 189, 116,
-            72, 259, 34, 120, 263, 168, 298, 118, 18, 28, 299, 192, 252,
-            112, 60, 277, 273, 286, 15, 263, 141, 241, 172, 255, 52, 89,
-            127, 119, 255, 184, 213, 44, 116, 231, 173, 298, 178, 196,
-            89, 184, 289, 98, 216, 115, 35, 132, 278, 238, 20, 241, 128,
-            179, 159, 107, 206, 194, 31, 260, 122, 56, 144, 118, 283,
-            183, 215, 214, 87, 33, 205, 183, 212, 221, 216, 296, 40,
-            108, 45, 188, 139, 38, 256, 276, 114, 270, 112, 214, 191,
-            147, 111, 299, 107, 101, 43, 84, 127, 67, 205, 251, 38, 91,
-            297, 26, 165, 187, 19, 6, 73, 4, 176, 195, 90, 71, 30, 82,
-            139, 210, 8, 41, 253, 127, 190, 102, 280, 26, 233, 32, 257,
-            194, 263, 203, 190, 111, 218, 199, 29, 81, 207, 18, 180,
-            157, 172, 192, 135, 163, 275, 74, 296, 298, 265, 105, 191,
-            282, 277, 83, 188, 144, 259, 6, 173, 81, 107, 292, 231,
-            129, 65, 161, 113, 103, 136, 255, 285, 289, 1
-            ]
-        delete_order = [
-            276, 273, 12, 275, 2, 286, 127, 83, 92, 33, 101, 195,
-            299, 191, 22, 232, 291, 226, 110, 94, 257, 233, 215, 184,
-            35, 178, 18, 74, 296, 210, 298, 81, 265, 175, 116, 261,
-            212, 277, 260, 234, 6, 129, 31, 4, 235, 249, 34, 289, 105,
-            259, 91, 93, 119, 7, 183, 240, 41, 253, 290, 136, 75, 292,
-            67, 112, 111, 256, 163, 38, 126, 139, 98, 56, 282, 60, 26,
-            55, 245, 225, 32, 52, 40, 271, 29, 252, 239, 89, 87, 205,
-            213, 180, 97, 108, 120, 218, 44, 187, 196, 251, 202, 203,
-            172, 28, 188, 77, 90, 199, 297, 282, 141, 100, 161, 216,
-            73, 19, 17, 189, 30, 258
-            ]
-        for x in add_order:
-            self.t[x] = 1
-        for x in delete_order:
-            try: del self.t[x]
-            except KeyError:
-                if self.t.has_key(x):
-                    self.assertEqual(1,2,"failed to delete %s" % x)
-
-    def testRangeSearchAfterSequentialInsert(self):
-        r = range(100)
-        for x in r:
-            self.t[x] = 0
-        diff = lsubtract(list(self.t.keys(0, 100)), r)
-        self.assertEqual(diff , [], diff)
-
-    def testRangeSearchAfterRandomInsert(self):
-        r = range(100)
-        a = {}
-        for x in r:
-            rnd = random.choice(r)
-            self.t[rnd] = 0
-            a[rnd] = 0
-        diff = lsubtract(list(self.t.keys(0, 100)), a.keys())
-        self.assertEqual(diff , [], diff)
-
-    def testPathologicalRangeSearch(self):
-        t = self.t
-        # Build a 2-level tree with at least two buckets.
-        for i in range(200):
-            t[i] = i
-        items, dummy = t.__getstate__()
-        self.assert_(len(items) > 2)   # at least two buckets and a key
-        # All values in the first bucket are < firstkey.  All in the
-        # second bucket are >= firstkey, and firstkey is the first key in
-        # the second bucket.
-        firstkey = items[1]
-        therange = t.keys(-1, firstkey)
-        self.assertEqual(len(therange), firstkey + 1)
-        self.assertEqual(list(therange), range(firstkey + 1))
-        # Now for the tricky part.  If we delete firstkey, the second bucket
-        # loses its smallest key, but firstkey remains in the BTree node.
-        # If we then do a high-end range search on firstkey, the BTree node
-        # directs us to look in the second bucket, but there's no longer any
-        # key <= firstkey in that bucket.  The correct answer points to the
-        # end of the *first* bucket.  The algorithm has to be smart enough
-        # to "go backwards" in the BTree then; if it doesn't, it will
-        # erroneously claim that the range is empty.
-        del t[firstkey]
-        therange = t.keys(min=-1, max=firstkey)
-        self.assertEqual(len(therange), firstkey)
-        self.assertEqual(list(therange), range(firstkey))
-
-    def testInsertMethod(self):
-        t = self.t
-        t[0] = 1
-        self.assertEqual(t.insert(0, 1) , 0)
-        self.assertEqual(t.insert(1, 1) , 1)
-        self.assertEqual(lsubtract(list(t.keys()), [0,1]) , [])
-
-    def testDamagedIterator(self):
-        # A cute one from Steve Alexander.  This caused the BTreeItems
-        # object to go insane, accessing memory beyond the allocated part
-        # of the bucket.  If it fails, the symptom is either a C-level
-        # assertion error (if the BTree code was compiled without NDEBUG),
-        # or most likely a segfault (if the BTree code was compiled with
-        # NDEBUG).
-
-        t = self.t.__class__()
-        self._populate(t, 10)
-        # In order for this to fail, it's important that k be a "lazy"
-        # iterator, referring to the BTree by indirect position (index)
-        # instead of a fully materialized list.  Then the position can
-        # end up pointing into trash memory, if the bucket pointed to
-        # shrinks.
-        k = t.keys()
-        for dummy in range(20):
-            try:
-                del t[k[0]]
-            except RuntimeError, detail:
-                self.assertEqual(str(detail), "the bucket being iterated "
-                                              "changed size")
-                break
 
 
 LARGEST_32_BITS = 2147483647
@@ -1229,48 +965,46 @@ LARGEST_NEGATIVE_65_BITS = SMALLEST_64_BITS - 1
 class TestLongIntSupport:
 
     def getTwoValues(self):
-        """Return two distinct values; these must compare as un-equal.
-
-        These values must be usable as values.
-
-        """
+        # Return two distinct values; these must compare as un-equal.
+        #
+        # These values must be usable as values.
         return object(), object()
 
     def getTwoKeys(self):
-        """Return two distinct values, these must compare as un-equal.
-
-        These values must be usable as keys.
-
-        """
+        # Return two distinct values, these must compare as un-equal.
+        #
+        #These values must be usable as keys.
         return 0, 1
 
     def _set_value(self, key, value):
-        self.t[key] = value
+        t = self._makeOne()
+        t[key] = value
 
 class TestLongIntKeys(TestLongIntSupport):
 
     def testLongIntKeysWork(self):
+        t = self._makeOne()
         o1, o2 = self.getTwoValues()
         assert o1 != o2
 
         # Test some small key values first:
-        self.t[0L] = o1
-        self.assertEqual(self.t[0], o1)
-        self.t[0] = o2
-        self.assertEqual(self.t[0L], o2)
-        self.assertEqual(list(self.t.keys()), [0])
+        t[0L] = o1
+        self.assertEqual(t[0], o1)
+        t[0] = o2
+        self.assertEqual(t[0L], o2)
+        self.assertEqual(list(t.keys()), [0])
 
         # Test some large key values too:
         k1 = SMALLEST_POSITIVE_33_BITS
         k2 = LARGEST_64_BITS
         k3 = SMALLEST_64_BITS
-        self.t[k1] = o1
-        self.t[k2] = o2
-        self.t[k3] = o1
-        self.assertEqual(self.t[k1], o1)
-        self.assertEqual(self.t[k2], o2)
-        self.assertEqual(self.t[k3], o1)
-        self.assertEqual(list(self.t.keys()), [k3, 0, k1, k2])
+        t[k1] = o1
+        t[k2] = o2
+        t[k3] = o1
+        self.assertEqual(t[k1], o1)
+        self.assertEqual(t[k2], o2)
+        self.assertEqual(t[k3], o1)
+        self.assertEqual(list(t.keys()), [k3, 0, k1, k2])
 
     def testLongIntKeysOutOfRange(self):
         o1, o2 = self.getTwoValues()
@@ -1284,6 +1018,7 @@ class TestLongIntKeys(TestLongIntSupport):
 class TestLongIntValues(TestLongIntSupport):
 
     def testLongIntValuesWork(self):
+        t = self._makeOne()
         keys = list(self.getTwoKeys())
         keys.sort()
         k1, k2 = keys
@@ -1293,11 +1028,11 @@ class TestLongIntValues(TestLongIntSupport):
         v1 = SMALLEST_POSITIVE_33_BITS
         v2 = v1 + 1
 
-        self.t[k1] = v1
-        self.t[k2] = v2
-        self.assertEqual(self.t[k1], v1)
-        self.assertEqual(self.t[k2], v2)
-        self.assertEqual(list(self.t.values()), [v1, v2])
+        t[k1] = v1
+        t[k2] = v2
+        self.assertEqual(t[k1], v1)
+        self.assertEqual(t[k2], v2)
+        self.assertEqual(list(t.values()), [v1, v2])
 
     def testLongIntValuesOutOfRange(self):
         k1, k2 = self.getTwoKeys()
@@ -1322,41 +1057,41 @@ if not using64bits:
 
 # tests of various type errors
 
-class TypeTest(TestCase):
+class TypeTest(object):
 
     def testBadTypeRaises(self):
         self.assertRaises(TypeError, self._stringraises)
         self.assertRaises(TypeError, self._floatraises)
         self.assertRaises(TypeError, self._noneraises)
 
-class TestIOBTrees(TypeTest):
-    def setUp(self):
-        self.t = IOBTree()
+class TestIOBTrees(TypeTest, TestCase):
+    def _makeOne(self):
+        return IOBTree()
 
     def _stringraises(self):
-        self.t['c'] = 1
+        self._makeOne()['c'] = 1
 
     def _floatraises(self):
-        self.t[2.5] = 1
+        self._makeOne()[2.5] = 1
 
     def _noneraises(self):
-        self.t[None] = 1
+        self._makeOne()[None] = 1
 
-class TestOIBTrees(TypeTest):
-    def setUp(self):
-        self.t = OIBTree()
+class TestOIBTrees(TypeTest, TestCase):
+    def _makeOne(self):
+        return OIBTree()
 
     def _stringraises(self):
-        self.t[1] = 'c'
+        self._makeOne()[1] = 'c'
 
     def _floatraises(self):
-        self.t[1] = 1.4
+        self._makeOne()[1] = 1.4
 
     def _noneraises(self):
-        self.t[1] = None
+        self._makeOne()[1] = None
 
     def testEmptyFirstBucketReportedByGuido(self):
-        b = self.t
+        b = self._makeOne()
         for i in xrange(29972): # reduce to 29971 and it works
             b[i] = i
         for i in xrange(30): # reduce to 29 and it works
@@ -1366,8 +1101,8 @@ class TestOIBTrees(TypeTest):
         self.assertEqual(b.keys()[0], 30)
 
 class TestIIBTrees(TestCase):
-    def setUp(self):
-        self.t = IIBTree()
+    def _makeOne(self):
+        return IIBTree()
 
     def testNonIntegerKeyRaises(self):
         self.assertRaises(TypeError, self._stringraiseskey)
@@ -1380,26 +1115,26 @@ class TestIIBTrees(TestCase):
         self.assertRaises(TypeError, self._noneraisesvalue)
 
     def _stringraiseskey(self):
-        self.t['c'] = 1
+        self._makeOne()['c'] = 1
 
     def _floatraiseskey(self):
-        self.t[2.5] = 1
+        self._makeOne()[2.5] = 1
 
     def _noneraiseskey(self):
-        self.t[None] = 1
+        self._makeOne()[None] = 1
 
     def _stringraisesvalue(self):
-        self.t[1] = 'c'
+        self._makeOne()[1] = 'c'
 
     def _floatraisesvalue(self):
-        self.t[1] = 1.4
+        self._makeOne()[1] = 1.4
 
     def _noneraisesvalue(self):
-        self.t[1] = None
+        self._makeOne()[1] = None
 
 class TestIFBTrees(TestCase):
-    def setUp(self):
-        self.t = IFBTree()
+    def _makeOne(self):
+        return IFBTree()
 
     def testNonIntegerKeyRaises(self):
         self.assertRaises(TypeError, self._stringraiseskey)
@@ -1409,33 +1144,33 @@ class TestIFBTrees(TestCase):
     def testNonNumericValueRaises(self):
         self.assertRaises(TypeError, self._stringraisesvalue)
         self.assertRaises(TypeError, self._noneraisesvalue)
-        self.t[1] = 1
-        self.t[1] = 1.0
+        self._makeOne()[1] = 1
+        self._makeOne()[1] = 1.0
 
     def _stringraiseskey(self):
-        self.t['c'] = 1
+        self._makeOne()['c'] = 1
 
     def _floatraiseskey(self):
-        self.t[2.5] = 1
+        self._makeOne()[2.5] = 1
 
     def _noneraiseskey(self):
-        self.t[None] = 1
+        self._makeOne()[None] = 1
 
     def _stringraisesvalue(self):
-        self.t[1] = 'c'
+        self._makeOne()[1] = 'c'
 
     def _floatraisesvalue(self):
-        self.t[1] = 1.4
+        self._makeOne()[1] = 1.4
 
     def _noneraisesvalue(self):
-        self.t[1] = None
+        self._makeOne()[1] = None
 
-class TestI_Sets(TestCase):
+class I_SetsBase(object):
 
     def testBadBadKeyAfterFirst(self):
-        self.assertRaises(TypeError, self.t.__class__, [1, ''])
-        self.assertRaises(TypeError, self.t.update, [1, ''])
-        del self.t
+        t = self._makeOne()
+        self.assertRaises(TypeError, t.__class__, [1, ''])
+        self.assertRaises(TypeError, t.update, [1, ''])
 
     def testNonIntegerInsertRaises(self):
         self.assertRaises(TypeError,self._insertstringraises)
@@ -1443,53 +1178,53 @@ class TestI_Sets(TestCase):
         self.assertRaises(TypeError,self._insertnoneraises)
 
     def _insertstringraises(self):
-        self.t.insert('a')
+        self._makeOne().insert('a')
 
     def _insertfloatraises(self):
-        self.t.insert(1.4)
+        self._makeOne().insert(1.4)
 
     def _insertnoneraises(self):
-        self.t.insert(None)
+        self._makeOne().insert(None)
 
-class TestIOSets(TestI_Sets):
+class TestIOSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = IOSet()
+    def _makeOne(self):
+        return IOSet()
 
-class TestIOTreeSets(TestI_Sets):
+class TestIOTreeSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = IOTreeSet()
+    def _makeOne(self):
+        return IOTreeSet()
 
-class TestIISets(TestI_Sets):
+class TestIISets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = IISet()
+    def _makeOne(self):
+        return IISet()
 
-class TestIITreeSets(TestI_Sets):
+class TestIITreeSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = IITreeSet()
+    def _makeOne(self):
+        return IITreeSet()
 
-class TestLOSets(TestI_Sets):
+class TestLOSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = LOSet()
+    def _makeOne(self):
+        return LOSet()
 
-class TestLOTreeSets(TestI_Sets):
+class TestLOTreeSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = LOTreeSet()
+    def _makeOne(self):
+        return LOTreeSet()
 
-class TestLLSets(TestI_Sets):
+class TestLLSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = LLSet()
+    def _makeOne(self):
+        return LLSet()
 
-class TestLLTreeSets(TestI_Sets):
+class TestLLTreeSets(I_SetsBase, TestCase):
 
-    def setUp(self):
-        self.t = LLTreeSet()
+    def _makeOne(self):
+        return LLTreeSet()
 
 
 class DegenerateBTree(TestCase):
@@ -1845,13 +1580,316 @@ class BugFixes(TestCase):
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
 
-class IIBTreeTest(BTreeTests):
-    def setUp(self):
-        self.t = IIBTree()
+class BTreeTests(MappingBase):
+    # Tests common to all BTrees 
+
+    def _checkIt(self, t):
+        t._check()
+        check(t)
+
+    def testDeleteNoChildrenWorks(self):
+        t = self._makeOne()
+        t[5] = 6
+        t[2] = 10
+        t[6] = 12
+        t[1] = 100
+        t[3] = 200
+        t[10] = 500
+        t[4] = 99
+        del t[4]
+        diff = lsubtract(t.keys(), [1,2,3,5,6,10])
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testDeleteOneChildWorks(self):
+        t = self._makeOne()
+        t[5] = 6
+        t[2] = 10
+        t[6] = 12
+        t[1] = 100
+        t[3] = 200
+        t[10] = 500
+        t[4] = 99
+        del t[3]
+        diff = lsubtract(t.keys(), [1,2,4,5,6,10])
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testDeleteTwoChildrenNoInorderSuccessorWorks(self):
+        t = self._makeOne()
+        t[5] = 6
+        t[2] = 10
+        t[6] = 12
+        t[1] = 100
+        t[3] = 200
+        t[10] = 500
+        t[4] = 99
+        del t[2]
+        diff = lsubtract(t.keys(), [1,3,4,5,6,10])
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testDeleteTwoChildrenInorderSuccessorWorks(self):
+        # 7, 3, 8, 1, 5, 10, 6, 4 -- del 3
+        t = self._makeOne()
+        t[7] = 6
+        t[3] = 10
+        t[8] = 12
+        t[1] = 100
+        t[5] = 200
+        t[10] = 500
+        t[6] = 99
+        t[4] = 150
+        del t[3]
+        diff = lsubtract(t.keys(), [1,4,5,6,7,8,10])
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testDeleteRootWorks(self):
+        # 7, 3, 8, 1, 5, 10, 6, 4 -- del 7
+        t = self._makeOne()
+        t[7] = 6
+        t[3] = 10
+        t[8] = 12
+        t[1] = 100
+        t[5] = 200
+        t[10] = 500
+        t[6] = 99
+        t[4] = 150
+        del t[7]
+        diff = lsubtract(t.keys(), [1,3,4,5,6,8,10])
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testRandomNonOverlappingInserts(self):
+        t = self._makeOne()
+        added = {}
+        r = range(100)
+        for x in r:
+            k = random.choice(r)
+            if not added.has_key(k):
+                t[k] = x
+                added[k] = 1
+        addl = added.keys()
+        addl.sort()
+        diff = lsubtract(list(t.keys()), addl)
+        self.assertEqual(diff , [], (diff, addl, list(t.keys())))
+        self._checkIt(t)
+
+    def testRandomOverlappingInserts(self):
+        t = self._makeOne()
+        added = {}
+        r = range(100)
+        for x in r:
+            k = random.choice(r)
+            t[k] = x
+            added[k] = 1
+        addl = added.keys()
+        addl.sort()
+        diff = lsubtract(t.keys(), addl)
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testRandomDeletes(self):
+        t = self._makeOne()
+        r = range(1000)
+        added = []
+        for x in r:
+            k = random.choice(r)
+            t[k] = x
+            added.append(k)
+        deleted = []
+        for x in r:
+            k = random.choice(r)
+            if t.has_key(k):
+                self.assert_(k in t)
+                del t[k]
+                deleted.append(k)
+                if t.has_key(k):
+                    self.fail( "had problems deleting %s" % k )
+        badones = []
+        for x in deleted:
+            if t.has_key(x):
+                badones.append(x)
+        self.assertEqual(badones , [], (badones, added, deleted))
+        self._checkIt(t)
+
+    def testTargetedDeletes(self):
+        t = self._makeOne()
+        r = range(1000)
+        for x in r:
+            k = random.choice(r)
+            t[k] = x
+        for x in r:
+            try:
+                del t[x]
+            except KeyError:
+                pass
+        self.assertEqual(realseq(t.keys()) , [], realseq(t.keys()))
+        self._checkIt(t)
+
+    def testPathologicalRightBranching(self):
+        t = self._makeOne()
+        r = range(1000)
+        for x in r:
+            t[x] = 1
+        self.assertEqual(realseq(t.keys()) , r, realseq(t.keys()))
+        for x in r:
+            del t[x]
+        self.assertEqual(realseq(t.keys()) , [], realseq(t.keys()))
+        self._checkIt(t)
+
+    def testPathologicalLeftBranching(self):
+        t = self._makeOne()
+        r = range(1000)
+        revr = r[:]
+        revr.reverse()
+        for x in revr:
+            t[x] = 1
+        self.assertEqual(realseq(t.keys()) , r, realseq(t.keys()))
+
+        for x in revr:
+            del t[x]
+        self.assertEqual(realseq(t.keys()) , [], realseq(t.keys()))
+        self._checkIt(t)
+
+    def testSuccessorChildParentRewriteExerciseCase(self):
+        t = self._makeOne()
+        add_order = [
+            85, 73, 165, 273, 215, 142, 233, 67, 86, 166, 235, 225, 255,
+            73, 175, 171, 285, 162, 108, 28, 283, 258, 232, 199, 260,
+            298, 275, 44, 261, 291, 4, 181, 285, 289, 216, 212, 129,
+            243, 97, 48, 48, 159, 22, 285, 92, 110, 27, 55, 202, 294,
+            113, 251, 193, 290, 55, 58, 239, 71, 4, 75, 129, 91, 111,
+            271, 101, 289, 194, 218, 77, 142, 94, 100, 115, 101, 226,
+            17, 94, 56, 18, 163, 93, 199, 286, 213, 126, 240, 245, 190,
+            195, 204, 100, 199, 161, 292, 202, 48, 165, 6, 173, 40, 218,
+            271, 228, 7, 166, 173, 138, 93, 22, 140, 41, 234, 17, 249,
+            215, 12, 292, 246, 272, 260, 140, 58, 2, 91, 246, 189, 116,
+            72, 259, 34, 120, 263, 168, 298, 118, 18, 28, 299, 192, 252,
+            112, 60, 277, 273, 286, 15, 263, 141, 241, 172, 255, 52, 89,
+            127, 119, 255, 184, 213, 44, 116, 231, 173, 298, 178, 196,
+            89, 184, 289, 98, 216, 115, 35, 132, 278, 238, 20, 241, 128,
+            179, 159, 107, 206, 194, 31, 260, 122, 56, 144, 118, 283,
+            183, 215, 214, 87, 33, 205, 183, 212, 221, 216, 296, 40,
+            108, 45, 188, 139, 38, 256, 276, 114, 270, 112, 214, 191,
+            147, 111, 299, 107, 101, 43, 84, 127, 67, 205, 251, 38, 91,
+            297, 26, 165, 187, 19, 6, 73, 4, 176, 195, 90, 71, 30, 82,
+            139, 210, 8, 41, 253, 127, 190, 102, 280, 26, 233, 32, 257,
+            194, 263, 203, 190, 111, 218, 199, 29, 81, 207, 18, 180,
+            157, 172, 192, 135, 163, 275, 74, 296, 298, 265, 105, 191,
+            282, 277, 83, 188, 144, 259, 6, 173, 81, 107, 292, 231,
+            129, 65, 161, 113, 103, 136, 255, 285, 289, 1
+            ]
+        delete_order = [
+            276, 273, 12, 275, 2, 286, 127, 83, 92, 33, 101, 195,
+            299, 191, 22, 232, 291, 226, 110, 94, 257, 233, 215, 184,
+            35, 178, 18, 74, 296, 210, 298, 81, 265, 175, 116, 261,
+            212, 277, 260, 234, 6, 129, 31, 4, 235, 249, 34, 289, 105,
+            259, 91, 93, 119, 7, 183, 240, 41, 253, 290, 136, 75, 292,
+            67, 112, 111, 256, 163, 38, 126, 139, 98, 56, 282, 60, 26,
+            55, 245, 225, 32, 52, 40, 271, 29, 252, 239, 89, 87, 205,
+            213, 180, 97, 108, 120, 218, 44, 187, 196, 251, 202, 203,
+            172, 28, 188, 77, 90, 199, 297, 282, 141, 100, 161, 216,
+            73, 19, 17, 189, 30, 258
+            ]
+        for x in add_order:
+            t[x] = 1
+        for x in delete_order:
+            try: del t[x]
+            except KeyError:
+                if t.has_key(x):
+                    self.assertEqual(1,2,"failed to delete %s" % x)
+        self._checkIt(t)
+
+    def testRangeSearchAfterSequentialInsert(self):
+        t = self._makeOne()
+        r = range(100)
+        for x in r:
+            t[x] = 0
+        diff = lsubtract(list(t.keys(0, 100)), r)
+        self.assertEqual(diff , [], diff)
+        self._checkIt(t)
+
+    def testRangeSearchAfterRandomInsert(self):
+        t = self._makeOne()
+        r = range(100)
+        a = {}
+        for x in r:
+            rnd = random.choice(r)
+            t[rnd] = 0
+            a[rnd] = 0
+        diff = lsubtract(list(t.keys(0, 100)), a.keys())
+        self.assertEqual(diff, [], diff)
+        self._checkIt(t)
+
+    def testPathologicalRangeSearch(self):
+        t = self._makeOne()
+        # Build a 2-level tree with at least two buckets.
+        for i in range(200):
+            t[i] = i
+        items, dummy = t.__getstate__()
+        self.assert_(len(items) > 2)   # at least two buckets and a key
+        # All values in the first bucket are < firstkey.  All in the
+        # second bucket are >= firstkey, and firstkey is the first key in
+        # the second bucket.
+        firstkey = items[1]
+        therange = t.keys(-1, firstkey)
+        self.assertEqual(len(therange), firstkey + 1)
+        self.assertEqual(list(therange), range(firstkey + 1))
+        # Now for the tricky part.  If we delete firstkey, the second bucket
+        # loses its smallest key, but firstkey remains in the BTree node.
+        # If we then do a high-end range search on firstkey, the BTree node
+        # directs us to look in the second bucket, but there's no longer any
+        # key <= firstkey in that bucket.  The correct answer points to the
+        # end of the *first* bucket.  The algorithm has to be smart enough
+        # to "go backwards" in the BTree then; if it doesn't, it will
+        # erroneously claim that the range is empty.
+        del t[firstkey]
+        therange = t.keys(min=-1, max=firstkey)
+        self.assertEqual(len(therange), firstkey)
+        self.assertEqual(list(therange), range(firstkey))
+        self._checkIt(t)
+
+    def testInsertMethod(self):
+        t = self._makeOne()
+        t[0] = 1
+        self.assertEqual(t.insert(0, 1) , 0)
+        self.assertEqual(t.insert(1, 1) , 1)
+        self.assertEqual(lsubtract(list(t.keys()), [0,1]) , [])
+        self._checkIt(t)
+
+    def testDamagedIterator(self):
+        # A cute one from Steve Alexander.  This caused the BTreeItems
+        # object to go insane, accessing memory beyond the allocated part
+        # of the bucket.  If it fails, the symptom is either a C-level
+        # assertion error (if the BTree code was compiled without NDEBUG),
+        # or most likely a segfault (if the BTree code was compiled with
+        # NDEBUG).
+        t = self._makeOne()
+        self._populate(t, 10)
+        # In order for this to fail, it's important that k be a "lazy"
+        # iterator, referring to the BTree by indirect position (index)
+        # instead of a fully materialized list.  Then the position can
+        # end up pointing into trash memory, if the bucket pointed to
+        # shrinks.
+        k = t.keys()
+        for dummy in range(20):
+            try:
+                del t[k[0]]
+            except RuntimeError, detail:
+                self.assertEqual(str(detail), "the bucket being iterated "
+                                              "changed size")
+                break
+        self._checkIt(t)
+
+class IIBTreeTest(BTreeTests, TestCase):
+    def _makeOne(self):
+        return IIBTree()
 
     def testIIBTreeOverflow(self):
         good = set()
-        b = self.t
+        b = self._makeOne()
 
         def trial(i):
             i = int(i)
@@ -1871,18 +1909,21 @@ class IIBTreeTest(BTreeTests):
         del b[0]
         self.assertEqual(sorted(good), sorted(b))
 
-class IFBTreeTest(BTreeTests):
-    def setUp(self):
-        self.t = IFBTree()
-class IOBTreeTest(BTreeTests):
-    def setUp(self):
-        self.t = IOBTree()
-class OIBTreeTest(BTreeTests):
-    def setUp(self):
-        self.t = OIBTree()
-class OOBTreeTest(BTreeTests):
-    def setUp(self):
-        self.t = OOBTree()
+class IFBTreeTest(BTreeTests, TestCase):
+    def _makeOne(self):
+        return IFBTree()
+
+class IOBTreeTest(BTreeTests, TestCase):
+    def _makeOne(self):
+        return IOBTree()
+
+class OIBTreeTest(BTreeTests, TestCase):
+    def _makeOne(self):
+        return OIBTree()
+
+class OOBTreeTest(BTreeTests, TestCase):
+    def _makeOne(self):
+        return OOBTree()
 
     def testRejectDefaultComparison(self):
         # Check that passing int keys w default comparison fails.
@@ -1893,66 +1934,74 @@ class OOBTreeTest(BTreeTests):
         # used in a function that's used in lots of places.
         # Otherwise, there are many permutations that would have to be
         # checked.
+        t = self._makeOne()
 
         class C(object):
             pass
 
-        self.assertRaises(TypeError, lambda : self.t.__setitem__(C(), 1))
+        self.assertRaises(TypeError, lambda : t.__setitem__(C(), 1))
 
         class C(object):
             def __cmp__(*args):
                 return 1
 
         c = C()
-        self.t[c] = 1
+        t[c] = 1
 
-        self.t.clear()
+        t.clear()
 
         class C(object):
             def __lt__(*args):
                 return 1
 
         c = C()
-        self.t[c] = 1
+        t[c] = 1
 
-        self.t.clear()
+        t.clear()
 
 if using64bits:
-    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues):
-        def setUp(self):
-            self.t = IIBTree()
+
+    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues, TestCase):
+        def _makeOne(self):
+            return IIBTree()
         def getTwoValues(self):
             return 1, 2
-    class IFBTreeTest(BTreeTests, TestLongIntKeys):
-        def setUp(self):
-            self.t = IFBTree()
+
+    class IFBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+        def _makeOne(self):
+            return IFBTree()
         def getTwoValues(self):
             return 0.5, 1.5
-    class IOBTreeTest(BTreeTests, TestLongIntKeys):
-        def setUp(self):
-            self.t = IOBTree()
-    class OIBTreeTest(BTreeTests, TestLongIntValues):
-        def setUp(self):
-            self.t = OIBTree()
+
+    class IOBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+        def _makeOne(self):
+            return IOBTree()
+
+    class OIBTreeTest(BTreeTests, TestLongIntValues, TestCase):
+        def _makeOne(self):
+            return OIBTree()
         def getTwoKeys(self):
             return object(), object()
 
-class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues):
-    def setUp(self):
-        self.t = LLBTree()
+class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues, TestCase):
+    def _makeOne(self):
+        return LLBTree()
     def getTwoValues(self):
         return 1, 2
-class LFBTreeTest(BTreeTests, TestLongIntKeys):
-    def setUp(self):
-        self.t = LFBTree()
+
+class LFBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+    def _makeOne(self):
+        return LFBTree()
     def getTwoValues(self):
         return 0.5, 1.5
-class LOBTreeTest(BTreeTests, TestLongIntKeys):
-    def setUp(self):
-        self.t = LOBTree()
-class OLBTreeTest(BTreeTests, TestLongIntValues):
-    def setUp(self):
-        self.t = OLBTree()
+
+class LOBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+    def _makeOne(self):
+        return LOBTree()
+
+class OLBTreeTest(BTreeTests, TestLongIntValues, TestCase):
+    def _makeOne(self):
+        return OLBTree()
     def getTwoKeys(self):
         return object(), object()
 
@@ -1977,7 +2026,7 @@ class TestCmpError(TestCase):
 
 # test for presence of generic names in module
 
-class ModuleTest(TestCase):
+class ModuleTest(object):
     module = None
     prefix = None
     iface = None
@@ -2089,26 +2138,24 @@ class FamilyTest(TestCase):
         self.failUnless(f2 is family)
 
 class InternalKeysMappingTest(TestCase):
-    """There must not be any internal keys not in the BTree
-    """
+    # There must not be any internal keys not in the BTree
 
     def add_key(self, tree, key):
         tree[key] = key
 
     def test_internal_keys_after_deletion(self):
-        """Make sure when a key's deleted, it's not an internal key
-
-        We'll leverage __getstate__ to introspect the internal structures.
-
-        We need to check BTrees with BTree children as well as BTrees
-        with bucket children.
-        """
-
+        # Make sure when a key's deleted, it's not an internal key
+        #
+        # We'll leverage __getstate__ to introspect the internal structures.
+        #
+        # We need to check BTrees with BTree children as well as BTrees
+        # with bucket children.
+        import transaction
         from ZODB.MappingStorage import DB
         db = DB()
         conn = db.open()
 
-        tree = conn.root.tree = self.t_class()
+        tree = conn.root.tree = self._makeOne()
         i = 0
 
         # Grow the btree until we have multiple buckets
@@ -2149,79 +2196,10 @@ class InternalKeysMappingTest(TestCase):
         db.close()
 
 class InternalKeysSetTest:
-    """There must not be any internal keys not in the TreeSet
-    """
+    # There must not be any internal keys not in the TreeSet
 
     def add_key(self, tree, key):
         tree.add(key)
-
-def test_suite():
-    s = TestSuite()
-
-    for kv in ('OO',
-               'II', 'IO', 'OI', 'IF',
-               'LL', 'LO', 'OL', 'LF',
-               ):
-        for name, bases in (
-            ('BTree', (InternalKeysMappingTest,)),
-            ('TreeSet', (InternalKeysSetTest,)),
-            ):
-            klass = ClassType(kv + name + 'InternalKeyTest', bases,
-                              dict(t_class=globals()[kv+name]))
-            s.addTest(makeSuite(klass))
-
-    for kv in ('OO', 
-               'II', 'IO', 'OI', 'IF',
-               'LL', 'LO', 'OL', 'LF',
-               ):
-        for name, bases in (
-            ('Bucket', (MappingBase,)),
-            ('TreeSet', (NormalSetTests,)),
-            ('Set', (ExtendedSetTests,)),
-            ):
-            klass = ClassType(kv + name + 'Test', bases,
-                              dict(t_class=globals()[kv+name]))
-            s.addTest(makeSuite(klass))
-
-    for kv, iface in (
-        ('OO', BTrees.Interfaces.IObjectObjectBTreeModule),
-        ('IO', BTrees.Interfaces.IIntegerObjectBTreeModule),
-        ('LO', BTrees.Interfaces.IIntegerObjectBTreeModule),
-        ('OI', BTrees.Interfaces.IObjectIntegerBTreeModule),
-        ('OL', BTrees.Interfaces.IObjectIntegerBTreeModule),
-        ('II', BTrees.Interfaces.IIntegerIntegerBTreeModule),
-        ('LL', BTrees.Interfaces.IIntegerIntegerBTreeModule),
-        ('IF', BTrees.Interfaces.IIntegerFloatBTreeModule),
-        ('LF', BTrees.Interfaces.IIntegerFloatBTreeModule)):
-        s.addTest(
-            makeSuite(
-                ClassType(
-                    kv + 'ModuleTest',
-                    (ModuleTest,),
-                    dict(
-                        prefix=kv,
-                        module=getattr(BTrees, kv + 'BTree'),
-                        iface=iface))))
-
-    for klass in (
-        IIBTreeTest, IFBTreeTest, IOBTreeTest, OIBTreeTest,
-        LLBTreeTest, LFBTreeTest, LOBTreeTest, OLBTreeTest,
-        OOBTreeTest,
-
-        # Note:  there is no TestOOBTrees.  The next three are
-        # checking for assorted TypeErrors, and when both keys
-        # and values are objects (OO), there's nothing to test.
-        TestIIBTrees, TestIFBTrees,  TestIOBTrees,  TestOIBTrees,
-        TestIOSets, TestIOTreeSets, TestIISets, TestIITreeSets,
-        TestLOSets, TestLOTreeSets, TestLLSets, TestLLTreeSets,
-        DegenerateBTree,
-        TestCmpError,
-        BugFixes,
-        FamilyTest,
-        ):
-        s.addTest(makeSuite(klass))
-
-    return s
 
 ## utility functions
 
@@ -2249,9 +2227,226 @@ def permutations(x):
         result.extend([[first] + p for p in permutations(xcopy[1:])])
     return result
 
+# Unroll stuff in 'test_suite'
 
-def main():
-    TextTestRunner().run(test_suite())
 
-if __name__ == '__main__':
-    main()
+class OOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = OOBTree
+class OOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = OOTreeSet
+class OOBucketTest(MappingBase, TestCase):
+    klass = OOBucket
+class OOTreeSetTest(NormalSetTests, TestCase):
+    klass = OOTreeSet
+class OOSetTest(ExtendedSetTests, TestCase):
+    klass = OOSet
+class OOModuleTest(ModuleTest, TestCase):
+    prefix = 'OO'
+    module = BTrees.OOBTree
+    iface = BTrees.Interfaces.IObjectObjectBTreeModule
+ 
+class IIBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = IIBTree
+class IITreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = IITreeSet
+class IIBucketTest(MappingBase, TestCase):
+    klass = IIBucket
+class IITreeSetTest(NormalSetTests, TestCase):
+    klass = IITreeSet
+class IISetTest(ExtendedSetTests, TestCase):
+    klass = IISet
+class IIModuleTest(ModuleTest, TestCase):
+    prefix = 'II'
+    module = BTrees.IIBTree
+    iface = BTrees.Interfaces.IIntegerIntegerBTreeModule
+
+class IOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = IOBTree
+class IOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = IOTreeSet
+class IOBucketTest(MappingBase, TestCase):
+    klass = IOBucket
+class IOTreeSetTest(NormalSetTests, TestCase):
+    klass = IOTreeSet
+class IOSetTest(ExtendedSetTests, TestCase):
+    klass = IOSet
+class IOModuleTest(ModuleTest, TestCase):
+    prefix = 'IO'
+    module = BTrees.IOBTree
+    iface = BTrees.Interfaces.IIntegerObjectBTreeModule
+
+class OIBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = OIBTree
+class OITreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = OITreeSet
+class OIBucketTest(MappingBase, TestCase):
+    klass = OIBucket
+class OITreeSetTest(NormalSetTests, TestCase):
+    klass = OITreeSet
+class OISetTest(ExtendedSetTests, TestCase):
+    klass = OISet
+class OIModuleTest(ModuleTest, TestCase):
+    prefix = 'OI'
+    module = BTrees.OIBTree
+    iface = BTrees.Interfaces.IObjectIntegerBTreeModule
+
+class IFBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = IFBTree
+class IFTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = IFTreeSet
+class IFBucketTest(MappingBase, TestCase):
+    klass = IFBucket
+class IFTreeSetTest(NormalSetTests, TestCase):
+    klass = IFTreeSet
+class IFSetTest(ExtendedSetTests, TestCase):
+    klass = IFSet
+class IFModuleTest(ModuleTest, TestCase):
+    prefix = 'IF'
+    module = BTrees.IFBTree
+    iface = BTrees.Interfaces.IIntegerFloatBTreeModule
+
+class LLBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = LLBTree
+class LLTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = LLTreeSet
+class LLBucketTest(MappingBase, TestCase):
+    klass = LLBucket
+class LLTreeSetTest(NormalSetTests, TestCase):
+    klass = LLTreeSet
+class LLSetTest(ExtendedSetTests, TestCase):
+    klass = LLSet
+class LLSetTest(ExtendedSetTests, TestCase):
+    klass = LLSet
+class LLModuleTest(ModuleTest, TestCase):
+    prefix = 'LL'
+    module = BTrees.LLBTree
+    iface = BTrees.Interfaces.IIntegerIntegerBTreeModule
+
+class LOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = LOBTree
+class LOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = LOTreeSet
+class LOBucketTest(MappingBase, TestCase):
+    klass = LOBucket
+class LOTreeSetTest(NormalSetTests, TestCase):
+    klass = LOTreeSet
+class LOSetTest(ExtendedSetTests, TestCase):
+    klass = LOSet
+class LOModuleTest(ModuleTest, TestCase):
+    prefix = 'LO'
+    module = BTrees.LOBTree
+    iface =BTrees.Interfaces.IIntegerObjectBTreeModule
+
+class OLBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = OLBTree
+class OLTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = OLTreeSet
+class OLBucketTest(MappingBase, TestCase):
+    klass = OLBucket
+class OLTreeSetTest(NormalSetTests, TestCase):
+    klass = OLTreeSet
+class OLSetTest(ExtendedSetTests, TestCase):
+    klass = OLSet
+class OLModuleTest(ModuleTest, TestCase):
+    prefix = 'OL'
+    module = BTrees.OLBTree
+    iface = BTrees.Interfaces.IObjectIntegerBTreeModule
+
+class LFBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
+    klass = LFBTree
+class LFTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
+    klass = LFTreeSet
+class LFBucketTest(MappingBase, TestCase):
+    klass = LFBucket
+class LFTreeSetTest(NormalSetTests, TestCase):
+    klass = LFTreeSet
+class LFSetTest(ExtendedSetTests, TestCase):
+    klass = LFSet
+class LFModuleTest(ModuleTest, TestCase):
+    prefix = 'LF'
+    module = BTrees.LFBTree
+    iface = BTrees.Interfaces.IIntegerFloatBTreeModule
+
+
+def test_suite():
+    return TestSuite((
+        makeSuite(OOBTreeInternalKeyTest),
+        makeSuite(OOTreeSetInternalKeyTest),
+        makeSuite(OOBucketTest),
+        makeSuite(OOTreeSetTest),
+        makeSuite(OOSetTest),
+        makeSuite(OOModuleTest),
+        makeSuite(IIBTreeInternalKeyTest),
+        makeSuite(IITreeSetInternalKeyTest),
+        makeSuite(IIBucketTest),
+        makeSuite(IITreeSetTest),
+        makeSuite(IISetTest),
+        makeSuite(IIModuleTest),
+        makeSuite(IOBTreeInternalKeyTest),
+        makeSuite(IOTreeSetInternalKeyTest),
+        makeSuite(IOBucketTest),
+        makeSuite(IOTreeSetTest),
+        makeSuite(IOSetTest),
+        makeSuite(IOModuleTest),
+        makeSuite(OIBTreeInternalKeyTest),
+        makeSuite(OITreeSetInternalKeyTest),
+        makeSuite(OIBucketTest),
+        makeSuite(OITreeSetTest),
+        makeSuite(OISetTest),
+        makeSuite(OIModuleTest),
+        makeSuite(IFBTreeInternalKeyTest),
+        makeSuite(IFTreeSetInternalKeyTest),
+        makeSuite(IFBucketTest),
+        makeSuite(IFTreeSetTest),
+        makeSuite(IFSetTest),
+        makeSuite(IFModuleTest),
+        makeSuite(LLBTreeInternalKeyTest),
+        makeSuite(LLTreeSetInternalKeyTest),
+        makeSuite(LLBucketTest),
+        makeSuite(LLTreeSetTest),
+        makeSuite(LLSetTest),
+        makeSuite(LLModuleTest),
+        makeSuite(LOBTreeInternalKeyTest),
+        makeSuite(LOTreeSetInternalKeyTest),
+        makeSuite(LOBucketTest),
+        makeSuite(LOTreeSetTest),
+        makeSuite(LOSetTest),
+        makeSuite(LOModuleTest),
+        makeSuite(OLBTreeInternalKeyTest),
+        makeSuite(OLTreeSetInternalKeyTest),
+        makeSuite(OLBucketTest),
+        makeSuite(OLTreeSetTest),
+        makeSuite(OLSetTest),
+        makeSuite(OLModuleTest),
+        makeSuite(LFBTreeInternalKeyTest),
+        makeSuite(LFTreeSetInternalKeyTest),
+        makeSuite(LFBucketTest),
+        makeSuite(LFTreeSetTest),
+        makeSuite(LFSetTest),
+        makeSuite(LFModuleTest),
+        makeSuite(IIBTreeTest),
+        makeSuite(IFBTreeTest),
+        makeSuite(IOBTreeTest),
+        makeSuite(OIBTreeTest),
+        makeSuite(LLBTreeTest),
+        makeSuite(LFBTreeTest),
+        makeSuite(LOBTreeTest),
+        makeSuite(OLBTreeTest),
+        makeSuite(OOBTreeTest),
+        makeSuite(TestIIBTrees),
+        makeSuite(TestIFBTrees),
+        makeSuite(TestIOBTrees),
+        makeSuite(TestOIBTrees),
+        makeSuite(TestIOSets),
+        makeSuite(TestIOTreeSets),
+        makeSuite(TestIISets),
+        makeSuite(TestIITreeSets),
+        makeSuite(TestLOSets),
+        makeSuite(TestLOTreeSets),
+        makeSuite(TestLLSets),
+        makeSuite(TestLLTreeSets),
+        makeSuite(DegenerateBTree),
+        makeSuite(TestCmpError),
+        makeSuite(BugFixes),
+        makeSuite(FamilyTest),
+    ))

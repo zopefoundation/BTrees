@@ -570,9 +570,3 @@ def test_suite():
         ):
         s.addTest(makeSuite(klass))
     return s
-
-def main():
-    TextTestRunner().run(test_suite())
-
-if __name__ == '__main__':
-    main()
