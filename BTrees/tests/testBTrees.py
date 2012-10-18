@@ -11,28 +11,7 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import gc
-import pickle
-import random
-import StringIO
-from unittest import TestCase, TestSuite, TextTestRunner, makeSuite
-from types import ClassType
-import zope.interface.verify
-
-from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
-from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
-from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
-from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
-from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
-from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
-
-import BTrees
-
-from BTrees.IIBTree import using64bits
-from BTrees.check import check
+import unittest
 
 
 class Base(object):
@@ -41,7 +20,7 @@ class Base(object):
     db = None
 
     def _makeOne(self):
-        return self.klass()
+        return self._getTargetClass()()
 
 
     def tearDown(self):
@@ -64,7 +43,7 @@ class Base(object):
     def _closeRoot(self, root):
         root._p_jar.close()
 
-    def testLoadAndStore(self):
+    def functestLoadAndStore(self):
         import transaction
         for i in 0, 10, 1000:
             t = self._makeOne()
@@ -91,7 +70,7 @@ class Base(object):
         else:
             raise AssertionError("Expected exception")
 
-    def testGhostUnghost(self):
+    def functestGhostUnghost(self):
         import transaction
         for i in 0, 10, 1000:
             t = self._makeOne()
@@ -147,7 +126,7 @@ class Base(object):
         self.assertEqual(list(t.keys(0, 2, excludemin=True, excludemax=True)),
                          [1])
 
-    def testUpdatesDoReadChecksOnInternalNodes(self):
+    def functest_UpdatesDoReadChecksOnInternalNodes(self):
         import transaction
         from ZODB import DB
         from ZODB.MappingStorage import MappingStorage
@@ -238,6 +217,7 @@ class MappingBase(Base):
         self.assertEqual(t[1] , 2, t[1])
 
     def testLen(self):
+        import random
         t = self._makeOne()
         added = {}
         r = range(1000)
@@ -399,6 +379,7 @@ class MappingBase(Base):
             self.fail("expected ValueError")
 
     def testClear(self):
+        import random
         t = self._makeOne()
         r = range(100)
         for x in r:
@@ -409,6 +390,7 @@ class MappingBase(Base):
         self.assertEqual(diff, [])
 
     def testUpdate(self):
+        import random
         t = self._makeOne()
         d={}
         l=[]
@@ -844,6 +826,7 @@ class NormalSetTests(Base):
             self.fail("expected ValueError")
 
     def testUpdate(self):
+        import random
         t = self._makeOne()
         d={}
         l=[]
@@ -983,6 +966,9 @@ class TestLongIntSupport:
 class TestLongIntKeys(TestLongIntSupport):
 
     def testLongIntKeysWork(self):
+        from BTrees.IIBTree import using64bits
+        if not using64bits:
+            return
         t = self._makeOne()
         o1, o2 = self.getTwoValues()
         assert o1 != o2
@@ -1007,6 +993,9 @@ class TestLongIntKeys(TestLongIntSupport):
         self.assertEqual(list(t.keys()), [k3, 0, k1, k2])
 
     def testLongIntKeysOutOfRange(self):
+        from BTrees.IIBTree import using64bits
+        if not using64bits:
+            return
         o1, o2 = self.getTwoValues()
         self.assertRaises(
             ValueError,
@@ -1018,6 +1007,9 @@ class TestLongIntKeys(TestLongIntSupport):
 class TestLongIntValues(TestLongIntSupport):
 
     def testLongIntValuesWork(self):
+        from BTrees.IIBTree import using64bits
+        if not using64bits:
+            return
         t = self._makeOne()
         keys = list(self.getTwoKeys())
         keys.sort()
@@ -1035,6 +1027,9 @@ class TestLongIntValues(TestLongIntSupport):
         self.assertEqual(list(t.values()), [v1, v2])
 
     def testLongIntValuesOutOfRange(self):
+        from BTrees.IIBTree import using64bits
+        if not using64bits:
+            return
         k1, k2 = self.getTwoKeys()
         self.assertRaises(
             ValueError,
@@ -1042,17 +1037,6 @@ class TestLongIntValues(TestLongIntSupport):
         self.assertRaises(
             ValueError,
             self._set_value, k1, LARGEST_NEGATIVE_65_BITS)
-
-
-if not using64bits:
-    # We're not using 64-bit ints in this build, so we don't expect
-    # the long-integer tests to pass.
-
-    class TestLongIntKeys:
-        pass
-
-    class TestLongIntValues:
-        pass
 
 
 # tests of various type errors
@@ -1064,8 +1048,9 @@ class TypeTest(object):
         self.assertRaises(TypeError, self._floatraises)
         self.assertRaises(TypeError, self._noneraises)
 
-class TestIOBTrees(TypeTest, TestCase):
+class TestIOBTrees(TypeTest, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IOBTree import IOBTree
         return IOBTree()
 
     def _stringraises(self):
@@ -1077,8 +1062,9 @@ class TestIOBTrees(TypeTest, TestCase):
     def _noneraises(self):
         self._makeOne()[None] = 1
 
-class TestOIBTrees(TypeTest, TestCase):
+class TestOIBTrees(TypeTest, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.OIBTree import OIBTree
         return OIBTree()
 
     def _stringraises(self):
@@ -1100,8 +1086,9 @@ class TestOIBTrees(TypeTest, TestCase):
 
         self.assertEqual(b.keys()[0], 30)
 
-class TestIIBTrees(TestCase):
+class TestIIBTrees(unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IIBTree import IIBTree
         return IIBTree()
 
     def testNonIntegerKeyRaises(self):
@@ -1132,8 +1119,9 @@ class TestIIBTrees(TestCase):
     def _noneraisesvalue(self):
         self._makeOne()[1] = None
 
-class TestIFBTrees(TestCase):
+class TestIFBTrees(unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IFBTree import IFBTree
         return IFBTree()
 
     def testNonIntegerKeyRaises(self):
@@ -1186,48 +1174,56 @@ class I_SetsBase(object):
     def _insertnoneraises(self):
         self._makeOne().insert(None)
 
-class TestIOSets(I_SetsBase, TestCase):
+class TestIOSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.IOBTree import IOSet
         return IOSet()
 
-class TestIOTreeSets(I_SetsBase, TestCase):
+class TestIOTreeSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.IOBTree import IOTreeSet
         return IOTreeSet()
 
-class TestIISets(I_SetsBase, TestCase):
+class TestIISets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.IIBTree import IISet
         return IISet()
 
-class TestIITreeSets(I_SetsBase, TestCase):
+class TestIITreeSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.IIBTree import IITreeSet
         return IITreeSet()
 
-class TestLOSets(I_SetsBase, TestCase):
+class TestLOSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.LOBTree import LOSet
         return LOSet()
 
-class TestLOTreeSets(I_SetsBase, TestCase):
+class TestLOTreeSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.LOBTree import LOTreeSet
         return LOTreeSet()
 
-class TestLLSets(I_SetsBase, TestCase):
+class TestLLSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.LLBTree import LLSet
         return LLSet()
 
-class TestLLTreeSets(I_SetsBase, TestCase):
+class TestLLTreeSets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
+        from BTrees.LLBTree import LLTreeSet
         return LLTreeSet()
 
 
-class DegenerateBTree(TestCase):
+class DegenerateBTree(unittest.TestCase):
     # Build a degenerate tree (set).  Boxes are BTree nodes.  There are
     # 5 leaf buckets, each containing a single int.  Keys in the BTree
     # nodes don't appear in the buckets.  Seven BTree nodes are purely
@@ -1269,6 +1265,9 @@ class DegenerateBTree(TestCase):
 
     def _build_degenerate_tree(self):
         # Build the buckets and chain them together.
+        from BTrees.IIBTree import IISet
+        from BTrees.IIBTree import IITreeSet
+        from BTrees.check import check
         bucket11 = IISet([11])
 
         bucket7 = IISet()
@@ -1376,7 +1375,7 @@ class DegenerateBTree(TestCase):
         #      RuntimeWarning: tp_compare didn't return -1 or -2 for exception
         #    warnings, possibly due to memory corruption after a BTree
         #    goes insane.
-
+        from BTrees.check import check
         t, keys = self._build_degenerate_tree()
         for oneperm in permutations(keys):
             t, keys = self._build_degenerate_tree()
@@ -1415,11 +1414,12 @@ class ToBeDeleted(object):
     def __hash__(self):
         return hash(self.id)
 
-class BugFixes(TestCase):
+class BugFixes(unittest.TestCase):
 
     # Collector 1843.  Error returns were effectively ignored in
     # Bucket_rangeSearch(), leading to "delayed" errors, or worse.
     def testFixed1843(self):
+        from BTrees.IIBTree import IISet
         t = IISet()
         t.insert(1)
         # This one used to fail to raise the TypeError when it occurred.
@@ -1437,6 +1437,9 @@ class BugFixes(TestCase):
         # That means what's left in the reference dict is never GC'ed
         # therefore referenced somewhere
         # To simulate real life, some random data is used to exercise the tree
+        import gc
+        import random
+        from BTrees.OOBTree import OOBTree
 
         t = OOBTree()
 
@@ -1584,6 +1587,7 @@ class BTreeTests(MappingBase):
     # Tests common to all BTrees 
 
     def _checkIt(self, t):
+        from BTrees.check import check
         t._check()
         check(t)
 
@@ -1662,6 +1666,7 @@ class BTreeTests(MappingBase):
         self._checkIt(t)
 
     def testRandomNonOverlappingInserts(self):
+        import random
         t = self._makeOne()
         added = {}
         r = range(100)
@@ -1677,6 +1682,7 @@ class BTreeTests(MappingBase):
         self._checkIt(t)
 
     def testRandomOverlappingInserts(self):
+        import random
         t = self._makeOne()
         added = {}
         r = range(100)
@@ -1691,6 +1697,7 @@ class BTreeTests(MappingBase):
         self._checkIt(t)
 
     def testRandomDeletes(self):
+        import random
         t = self._makeOne()
         r = range(1000)
         added = []
@@ -1715,6 +1722,7 @@ class BTreeTests(MappingBase):
         self._checkIt(t)
 
     def testTargetedDeletes(self):
+        import random
         t = self._makeOne()
         r = range(1000)
         for x in r:
@@ -1812,6 +1820,7 @@ class BTreeTests(MappingBase):
         self._checkIt(t)
 
     def testRangeSearchAfterRandomInsert(self):
+        import random
         t = self._makeOne()
         r = range(100)
         a = {}
@@ -1883,8 +1892,9 @@ class BTreeTests(MappingBase):
                 break
         self._checkIt(t)
 
-class IIBTreeTest(BTreeTests, TestCase):
+class IIBTreeTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IIBTree import IIBTree
         return IIBTree()
 
     def testIIBTreeOverflow(self):
@@ -1909,20 +1919,24 @@ class IIBTreeTest(BTreeTests, TestCase):
         del b[0]
         self.assertEqual(sorted(good), sorted(b))
 
-class IFBTreeTest(BTreeTests, TestCase):
+class IFBTreeTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IFBTree import IFBTree
         return IFBTree()
 
-class IOBTreeTest(BTreeTests, TestCase):
+class IOBTreeTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.IOBTree import IOBTree
         return IOBTree()
 
-class OIBTreeTest(BTreeTests, TestCase):
+class OIBTreeTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.OIBTree import OIBTree
         return OIBTree()
 
-class OOBTreeTest(BTreeTests, TestCase):
+class OOBTreeTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.OOBTree import OOBTree
         return OOBTree()
 
     def testRejectDefaultComparison(self):
@@ -1959,48 +1973,59 @@ class OOBTreeTest(BTreeTests, TestCase):
 
         t.clear()
 
+from BTrees.IIBTree import using64bits
 if using64bits:
 
-    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues, TestCase):
+    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
+                      unittest.TestCase):
         def _makeOne(self):
+            from BTrees.IIBTree import IIBTree
             return IIBTree()
         def getTwoValues(self):
             return 1, 2
 
-    class IFBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+    class IFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
         def _makeOne(self):
+            from BTrees.IFBTree import IFBTree
             return IFBTree()
         def getTwoValues(self):
             return 0.5, 1.5
 
-    class IOBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+    class IOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
         def _makeOne(self):
+            from BTrees.IOBTree import IOBTree
             return IOBTree()
 
-    class OIBTreeTest(BTreeTests, TestLongIntValues, TestCase):
+    class OIBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         def _makeOne(self):
+            from BTrees.OIBTree import OIBTree
             return OIBTree()
         def getTwoKeys(self):
             return object(), object()
 
-class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues, TestCase):
+class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
+                  unittest.TestCase):
     def _makeOne(self):
+        from BTrees.LLBTree import LLBTree
         return LLBTree()
     def getTwoValues(self):
         return 1, 2
 
-class LFBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+class LFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.LFBTree import LFBTree
         return LFBTree()
     def getTwoValues(self):
         return 0.5, 1.5
 
-class LOBTreeTest(BTreeTests, TestLongIntKeys, TestCase):
+class LOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.LOBTree import LOBTree
         return LOBTree()
 
-class OLBTreeTest(BTreeTests, TestLongIntValues, TestCase):
+class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
     def _makeOne(self):
+        from BTrees.OLBTree import OLBTree
         return OLBTree()
     def getTwoKeys(self):
         return object(), object()
@@ -2012,8 +2037,9 @@ class DoesntLikeBeingCompared:
     def __cmp__(self,other):
         raise ValueError('incomparable')
 
-class TestCmpError(TestCase):
+class TestCmpError(unittest.TestCase):
     def testFoo(self):
+        from BTrees.OOBTree import OOBTree
         t = OOBTree()
         t['hello world'] = None
         try:
@@ -2027,33 +2053,36 @@ class TestCmpError(TestCase):
 # test for presence of generic names in module
 
 class ModuleTest(object):
-    module = None
     prefix = None
-    iface = None
+    def _getModule(self):
+        pass
     def testNames(self):
         for name in ('Bucket', 'BTree', 'Set', 'TreeSet'):
-            klass = getattr(self.module, name)
-            self.assertEqual(klass.__module__, self.module.__name__)
-            self.assert_(klass is getattr(self.module, self.prefix + name))
+            klass = getattr(self._getModule(), name)
+            self.assertEqual(klass.__module__, self._getModule().__name__)
+            self.assert_(klass is getattr(self._getModule(),
+                                          self.prefix + name))
 
     def testModuleProvides(self):
-        self.assert_(
-            zope.interface.verify.verifyObject(self.iface, self.module))
+        from zope.interface.verify import verifyObject
+        verifyObject(self._getInterface(), self._getModule())
 
     def testFamily(self):
+        import BTrees
         if self.prefix == 'OO':
             self.assert_(
-                getattr(self.module, 'family', self) is self)
+                getattr(self._getModule(), 'family', self) is self)
         elif 'L' in self.prefix:
-            self.assert_(self.module.family is BTrees.family64)
+            self.assert_(self._getModule().family is BTrees.family64)
         elif 'I' in self.prefix:
-            self.assert_(self.module.family is BTrees.family32)
+            self.assert_(self._getModule().family is BTrees.family32)
 
-class FamilyTest(TestCase):
+class FamilyTest(unittest.TestCase):
     def test32(self):
-        self.assert_(
-            zope.interface.verify.verifyObject(
-                BTrees.Interfaces.IBTreeFamily, BTrees.family32))
+        from zope.interface.verify import verifyObject
+        import BTrees
+        from BTrees.IOBTree import IOTreeSet
+        verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family32)
         self.assertEquals(
             BTrees.family32.IO, BTrees.IOBTree)
         self.assertEquals(
@@ -2080,9 +2109,10 @@ class FamilyTest(TestCase):
         self.check_pickling(BTrees.family32)
 
     def test64(self):
-        self.assert_(
-            zope.interface.verify.verifyObject(
-                BTrees.Interfaces.IBTreeFamily, BTrees.family64))
+        from zope.interface.verify import verifyObject
+        import BTrees
+        from BTrees.LOBTree import LOTreeSet
+        verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family64)
         self.assertEquals(
             BTrees.family64.IO, BTrees.LOBTree)
         self.assertEquals(
@@ -2109,6 +2139,9 @@ class FamilyTest(TestCase):
         # unpickled, and the same instances will always be returned on
         # unpickling, whether from the same unpickler or different
         # unpicklers.
+        import pickle
+        import StringIO
+
         s = pickle.dumps((family, family))
         (f1, f2) = pickle.loads(s)
         self.failUnless(f1 is family)
@@ -2137,13 +2170,13 @@ class FamilyTest(TestCase):
         self.failUnless(f1 is family)
         self.failUnless(f2 is family)
 
-class InternalKeysMappingTest(TestCase):
+class InternalKeysMappingTest(unittest.TestCase):
     # There must not be any internal keys not in the BTree
 
     def add_key(self, tree, key):
         tree[key] = key
 
-    def test_internal_keys_after_deletion(self):
+    def functest_internal_keys_after_deletion(self):
         # Make sure when a key's deleted, it's not an internal key
         #
         # We'll leverage __getstate__ to introspect the internal structures.
@@ -2230,223 +2263,351 @@ def permutations(x):
 # Unroll stuff in 'test_suite'
 
 
-class OOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = OOBTree
-class OOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = OOTreeSet
-class OOBucketTest(MappingBase, TestCase):
-    klass = OOBucket
-class OOTreeSetTest(NormalSetTests, TestCase):
-    klass = OOTreeSet
-class OOSetTest(ExtendedSetTests, TestCase):
-    klass = OOSet
-class OOModuleTest(ModuleTest, TestCase):
+class OOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTree
+        return OOBTree
+class OOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSet
+        return OOTreeSet
+class OOBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBucket
+        return OOBucket
+class OOTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSet
+        return OOTreeSet
+class OOSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOSet
+        return OOSet
+class OOModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'OO'
-    module = BTrees.OOBTree
-    iface = BTrees.Interfaces.IObjectObjectBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.OOBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectObjectBTreeModule
  
-class IIBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = IIBTree
-class IITreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = IITreeSet
-class IIBucketTest(MappingBase, TestCase):
-    klass = IIBucket
-class IITreeSetTest(NormalSetTests, TestCase):
-    klass = IITreeSet
-class IISetTest(ExtendedSetTests, TestCase):
-    klass = IISet
-class IIModuleTest(ModuleTest, TestCase):
+class IIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBTree
+        return IIBTree
+class IITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSet
+        return IITreeSet
+class IIBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBucket
+        return IIBucket
+class IITreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSet
+        return IITreeSet
+class IISetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IISet
+        return IISet
+class IIModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'II'
-    module = BTrees.IIBTree
-    iface = BTrees.Interfaces.IIntegerIntegerBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.IIBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerIntegerBTreeModule
 
-class IOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = IOBTree
-class IOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = IOTreeSet
-class IOBucketTest(MappingBase, TestCase):
-    klass = IOBucket
-class IOTreeSetTest(NormalSetTests, TestCase):
-    klass = IOTreeSet
-class IOSetTest(ExtendedSetTests, TestCase):
-    klass = IOSet
-class IOModuleTest(ModuleTest, TestCase):
+class IOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBTree
+        return IOBTree
+class IOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOTreeSet
+        return IOTreeSet
+class IOBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBucket
+        return IOBucket
+class IOTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOTreeSet
+        return IOTreeSet
+class IOSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOSet
+        return IOSet
+class IOModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'IO'
-    module = BTrees.IOBTree
-    iface = BTrees.Interfaces.IIntegerObjectBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.IOBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerObjectBTreeModule
 
-class OIBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = OIBTree
-class OITreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = OITreeSet
-class OIBucketTest(MappingBase, TestCase):
-    klass = OIBucket
-class OITreeSetTest(NormalSetTests, TestCase):
-    klass = OITreeSet
-class OISetTest(ExtendedSetTests, TestCase):
-    klass = OISet
-class OIModuleTest(ModuleTest, TestCase):
+class OIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBTree
+        return OIBTree
+class OITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OITreeSet
+        return OITreeSet
+class OIBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBucket
+        return OIBucket
+class OITreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OITreeSet
+        return OITreeSet
+class OISetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OISet
+        return OISet
+class OIModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'OI'
-    module = BTrees.OIBTree
-    iface = BTrees.Interfaces.IObjectIntegerBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.OIBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectIntegerBTreeModule
 
-class IFBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = IFBTree
-class IFTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = IFTreeSet
-class IFBucketTest(MappingBase, TestCase):
-    klass = IFBucket
-class IFTreeSetTest(NormalSetTests, TestCase):
-    klass = IFTreeSet
-class IFSetTest(ExtendedSetTests, TestCase):
-    klass = IFSet
-class IFModuleTest(ModuleTest, TestCase):
+class IFBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBTree
+        return IFBTree
+class IFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFTreeSet
+        return IFTreeSet
+class IFBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBucket
+        return IFBucket
+class IFTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFTreeSet
+        return IFTreeSet
+class IFSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFSet
+        return IFSet
+class IFModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'IF'
-    module = BTrees.IFBTree
-    iface = BTrees.Interfaces.IIntegerFloatBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.IFBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerFloatBTreeModule
 
-class LLBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = LLBTree
-class LLTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = LLTreeSet
-class LLBucketTest(MappingBase, TestCase):
-    klass = LLBucket
-class LLTreeSetTest(NormalSetTests, TestCase):
-    klass = LLTreeSet
-class LLSetTest(ExtendedSetTests, TestCase):
-    klass = LLSet
-class LLSetTest(ExtendedSetTests, TestCase):
-    klass = LLSet
-class LLModuleTest(ModuleTest, TestCase):
+class LLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBTree
+        return LLBTree
+class LLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLTreeSet
+        return LLTreeSet
+class LLBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBucket
+        return LLBucket
+class LLTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLTreeSet
+        return LLTreeSet
+class LLSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLSet
+        return LLSet
+class LLSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLSet
+        return LLSet
+class LLModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'LL'
-    module = BTrees.LLBTree
-    iface = BTrees.Interfaces.IIntegerIntegerBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.LLBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerIntegerBTreeModule
 
-class LOBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = LOBTree
-class LOTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = LOTreeSet
-class LOBucketTest(MappingBase, TestCase):
-    klass = LOBucket
-class LOTreeSetTest(NormalSetTests, TestCase):
-    klass = LOTreeSet
-class LOSetTest(ExtendedSetTests, TestCase):
-    klass = LOSet
-class LOModuleTest(ModuleTest, TestCase):
+class LOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBTree
+        return LOBTree
+class LOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOTreeSet
+        return LOTreeSet
+class LOBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBucket
+        return LOBucket
+class LOTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOTreeSet
+        return LOTreeSet
+class LOSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOSet
+        return LOSet
+class LOModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'LO'
-    module = BTrees.LOBTree
-    iface =BTrees.Interfaces.IIntegerObjectBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.LOBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerObjectBTreeModule
 
-class OLBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = OLBTree
-class OLTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = OLTreeSet
-class OLBucketTest(MappingBase, TestCase):
-    klass = OLBucket
-class OLTreeSetTest(NormalSetTests, TestCase):
-    klass = OLTreeSet
-class OLSetTest(ExtendedSetTests, TestCase):
-    klass = OLSet
-class OLModuleTest(ModuleTest, TestCase):
+class OLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBTree
+        return OLBTree
+class OLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSet
+        return OLTreeSet
+class OLBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBucket
+        return OLBucket
+class OLTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSet
+        return OLTreeSet
+class OLSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLSet
+        return OLSet
+class OLModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'OL'
-    module = BTrees.OLBTree
-    iface = BTrees.Interfaces.IObjectIntegerBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.OLBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectIntegerBTreeModule
 
-class LFBTreeInternalKeyTest(InternalKeysMappingTest, TestCase):
-    klass = LFBTree
-class LFTreeSetInternalKeyTest(InternalKeysSetTest, TestCase):
-    klass = LFTreeSet
-class LFBucketTest(MappingBase, TestCase):
-    klass = LFBucket
-class LFTreeSetTest(NormalSetTests, TestCase):
-    klass = LFTreeSet
-class LFSetTest(ExtendedSetTests, TestCase):
-    klass = LFSet
-class LFModuleTest(ModuleTest, TestCase):
+class LFBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBTree
+        return LFBTree
+class LFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFTreeSet
+        return LFTreeSet
+class LFBucketTest(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBucket
+        return LFBucket
+class LFTreeSetTest(NormalSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFTreeSet
+        return LFTreeSet
+class LFSetTest(ExtendedSetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFSet
+        return LFSet
+class LFModuleTest(ModuleTest, unittest.TestCase):
     prefix = 'LF'
-    module = BTrees.LFBTree
-    iface = BTrees.Interfaces.IIntegerFloatBTreeModule
+    def _getModule(self):
+        import BTrees
+        return BTrees.LFBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerFloatBTreeModule
 
 
 def test_suite():
-    return TestSuite((
-        makeSuite(OOBTreeInternalKeyTest),
-        makeSuite(OOTreeSetInternalKeyTest),
-        makeSuite(OOBucketTest),
-        makeSuite(OOTreeSetTest),
-        makeSuite(OOSetTest),
-        makeSuite(OOModuleTest),
-        makeSuite(IIBTreeInternalKeyTest),
-        makeSuite(IITreeSetInternalKeyTest),
-        makeSuite(IIBucketTest),
-        makeSuite(IITreeSetTest),
-        makeSuite(IISetTest),
-        makeSuite(IIModuleTest),
-        makeSuite(IOBTreeInternalKeyTest),
-        makeSuite(IOTreeSetInternalKeyTest),
-        makeSuite(IOBucketTest),
-        makeSuite(IOTreeSetTest),
-        makeSuite(IOSetTest),
-        makeSuite(IOModuleTest),
-        makeSuite(OIBTreeInternalKeyTest),
-        makeSuite(OITreeSetInternalKeyTest),
-        makeSuite(OIBucketTest),
-        makeSuite(OITreeSetTest),
-        makeSuite(OISetTest),
-        makeSuite(OIModuleTest),
-        makeSuite(IFBTreeInternalKeyTest),
-        makeSuite(IFTreeSetInternalKeyTest),
-        makeSuite(IFBucketTest),
-        makeSuite(IFTreeSetTest),
-        makeSuite(IFSetTest),
-        makeSuite(IFModuleTest),
-        makeSuite(LLBTreeInternalKeyTest),
-        makeSuite(LLTreeSetInternalKeyTest),
-        makeSuite(LLBucketTest),
-        makeSuite(LLTreeSetTest),
-        makeSuite(LLSetTest),
-        makeSuite(LLModuleTest),
-        makeSuite(LOBTreeInternalKeyTest),
-        makeSuite(LOTreeSetInternalKeyTest),
-        makeSuite(LOBucketTest),
-        makeSuite(LOTreeSetTest),
-        makeSuite(LOSetTest),
-        makeSuite(LOModuleTest),
-        makeSuite(OLBTreeInternalKeyTest),
-        makeSuite(OLTreeSetInternalKeyTest),
-        makeSuite(OLBucketTest),
-        makeSuite(OLTreeSetTest),
-        makeSuite(OLSetTest),
-        makeSuite(OLModuleTest),
-        makeSuite(LFBTreeInternalKeyTest),
-        makeSuite(LFTreeSetInternalKeyTest),
-        makeSuite(LFBucketTest),
-        makeSuite(LFTreeSetTest),
-        makeSuite(LFSetTest),
-        makeSuite(LFModuleTest),
-        makeSuite(IIBTreeTest),
-        makeSuite(IFBTreeTest),
-        makeSuite(IOBTreeTest),
-        makeSuite(OIBTreeTest),
-        makeSuite(LLBTreeTest),
-        makeSuite(LFBTreeTest),
-        makeSuite(LOBTreeTest),
-        makeSuite(OLBTreeTest),
-        makeSuite(OOBTreeTest),
-        makeSuite(TestIIBTrees),
-        makeSuite(TestIFBTrees),
-        makeSuite(TestIOBTrees),
-        makeSuite(TestOIBTrees),
-        makeSuite(TestIOSets),
-        makeSuite(TestIOTreeSets),
-        makeSuite(TestIISets),
-        makeSuite(TestIITreeSets),
-        makeSuite(TestLOSets),
-        makeSuite(TestLOTreeSets),
-        makeSuite(TestLLSets),
-        makeSuite(TestLLTreeSets),
-        makeSuite(DegenerateBTree),
-        makeSuite(TestCmpError),
-        makeSuite(BugFixes),
-        makeSuite(FamilyTest),
+    return unittest.TestSuite((
+        unittest.makeSuite(OOBTreeInternalKeyTest),
+        unittest.makeSuite(OOTreeSetInternalKeyTest),
+        unittest.makeSuite(OOBucketTest),
+        unittest.makeSuite(OOTreeSetTest),
+        unittest.makeSuite(OOSetTest),
+        unittest.makeSuite(OOModuleTest),
+        unittest.makeSuite(IIBTreeInternalKeyTest),
+        unittest.makeSuite(IITreeSetInternalKeyTest),
+        unittest.makeSuite(IIBucketTest),
+        unittest.makeSuite(IITreeSetTest),
+        unittest.makeSuite(IISetTest),
+        unittest.makeSuite(IIModuleTest),
+        unittest.makeSuite(IOBTreeInternalKeyTest),
+        unittest.makeSuite(IOTreeSetInternalKeyTest),
+        unittest.makeSuite(IOBucketTest),
+        unittest.makeSuite(IOTreeSetTest),
+        unittest.makeSuite(IOSetTest),
+        unittest.makeSuite(IOModuleTest),
+        unittest.makeSuite(OIBTreeInternalKeyTest),
+        unittest.makeSuite(OITreeSetInternalKeyTest),
+        unittest.makeSuite(OIBucketTest),
+        unittest.makeSuite(OITreeSetTest),
+        unittest.makeSuite(OISetTest),
+        unittest.makeSuite(OIModuleTest),
+        unittest.makeSuite(IFBTreeInternalKeyTest),
+        unittest.makeSuite(IFTreeSetInternalKeyTest),
+        unittest.makeSuite(IFBucketTest),
+        unittest.makeSuite(IFTreeSetTest),
+        unittest.makeSuite(IFSetTest),
+        unittest.makeSuite(IFModuleTest),
+        unittest.makeSuite(LLBTreeInternalKeyTest),
+        unittest.makeSuite(LLTreeSetInternalKeyTest),
+        unittest.makeSuite(LLBucketTest),
+        unittest.makeSuite(LLTreeSetTest),
+        unittest.makeSuite(LLSetTest),
+        unittest.makeSuite(LLModuleTest),
+        unittest.makeSuite(LOBTreeInternalKeyTest),
+        unittest.makeSuite(LOTreeSetInternalKeyTest),
+        unittest.makeSuite(LOBucketTest),
+        unittest.makeSuite(LOTreeSetTest),
+        unittest.makeSuite(LOSetTest),
+        unittest.makeSuite(LOModuleTest),
+        unittest.makeSuite(OLBTreeInternalKeyTest),
+        unittest.makeSuite(OLTreeSetInternalKeyTest),
+        unittest.makeSuite(OLBucketTest),
+        unittest.makeSuite(OLTreeSetTest),
+        unittest.makeSuite(OLSetTest),
+        unittest.makeSuite(OLModuleTest),
+        unittest.makeSuite(LFBTreeInternalKeyTest),
+        unittest.makeSuite(LFTreeSetInternalKeyTest),
+        unittest.makeSuite(LFBucketTest),
+        unittest.makeSuite(LFTreeSetTest),
+        unittest.makeSuite(LFSetTest),
+        unittest.makeSuite(LFModuleTest),
+        unittest.makeSuite(IIBTreeTest),
+        unittest.makeSuite(IFBTreeTest),
+        unittest.makeSuite(IOBTreeTest),
+        unittest.makeSuite(OIBTreeTest),
+        unittest.makeSuite(LLBTreeTest),
+        unittest.makeSuite(LFBTreeTest),
+        unittest.makeSuite(LOBTreeTest),
+        unittest.makeSuite(OLBTreeTest),
+        unittest.makeSuite(OOBTreeTest),
+        unittest.makeSuite(TestIIBTrees),
+        unittest.makeSuite(TestIFBTrees),
+        unittest.makeSuite(TestIOBTrees),
+        unittest.makeSuite(TestOIBTrees),
+        unittest.makeSuite(TestIOSets),
+        unittest.makeSuite(TestIOTreeSets),
+        unittest.makeSuite(TestIISets),
+        unittest.makeSuite(TestIITreeSets),
+        unittest.makeSuite(TestLOSets),
+        unittest.makeSuite(TestLOTreeSets),
+        unittest.makeSuite(TestLLSets),
+        unittest.makeSuite(TestLLTreeSets),
+        unittest.makeSuite(DegenerateBTree),
+        unittest.makeSuite(TestCmpError),
+        unittest.makeSuite(BugFixes),
+        unittest.makeSuite(FamilyTest),
     ))
