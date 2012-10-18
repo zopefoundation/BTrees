@@ -579,7 +579,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         # It's (almost necessarily) a white-box test, and sensitive to
         # implementation details.
         import transaction
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -652,7 +652,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         self.assertEqual(state[0][1], 60)
         self.assertEqual(state[0][3], 120)
 
-        self.assertRaises(BTreesConflictError, tm2.commit)
+        self.assertRaises(ConflictError, tm2.commit)
 
     @_skip_wo_ZODB
     def testEmptyBucketConflict(self):
@@ -660,7 +660,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         # viewed as a conflict:  conflict resolution doesn't have enough
         # info to unlink the empty bucket from the BTree correctly.
         import transaction
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -728,7 +728,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         # create an "insane" BTree (a legit BTree cannot contain an empty
         # bucket -- it contains NULL pointers the BTree code doesn't
         # expect, and segfaults result).
-        self.assertRaises(BTreesConflictError, tm2.commit)
+        self.assertRaises(ConflictError, tm2.commit)
 
     @_skip_wo_ZODB
     def testEmptyBucketNoConflict(self):
@@ -793,7 +793,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         self.assertEqual(len(state[0]), 3)
         self.assertEqual(state[0][1], 60)
 
-        # This shouldn't create a BTreesConflictError.
+        # This shouldn't create a ConflictError.
         transaction.commit()
         # And the resulting BTree shouldn't have internal damage.
         b._check()
@@ -802,7 +802,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
     # to decref a NULL pointer if conflict resolution was fed 3 empty
     # buckets.  http://collector.zope.org/Zope/553
     def testThreeEmptyBucketsNoSegfault(self):
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         t = self._makeOne()
         t[1] = 1
         bucket = t._firstbucket
@@ -815,11 +815,11 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
                      state3 is not state1)
         self.assert_(state2 == state1 and
                      state3 == state1)
-        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
+        self.assertRaises(ConflictError, bucket._p_resolveConflict,
                           state1, state2, state3)
         # When an empty BTree resolves conflicts, it computes the
         # bucket state as None, so...
-        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
+        self.assertRaises(ConflictError, bucket._p_resolveConflict,
                           None, None, None)
 
     @_skip_wo_ZODB
@@ -831,7 +831,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         # It's (almost necessarily) a white-box test, and sensitive to
         # implementation details.
         import transaction
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -872,12 +872,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         for k in range(0, 60, 4):
             del copy[k]
 
-        try:
-            tm2.commit()
-        except BTreesConflictError, detail:
-            self.assert_(str(detail).startswith('database conflict error'))
-        else:
-            self.fail("expected BTreesConflictError")
+        self.assertRaises(ConflictError, tm2.commit)
 
     @_skip_wo_ZODB
     def testConflictWithOneEmptyBucket(self):
@@ -889,7 +884,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         # the BTree despite that resolution thinks it's non-empty!  This
         # was first reported by Dieter Maurer, to zodb-dev on 22 Mar 2005.
         import transaction
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -929,12 +924,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
 
         copy[1] = 1
 
-        try:
-            tm2.commit()
-        except BTreesConflictError, detail:
-            self.assert_(str(detail).startswith('database conflict error'))
-        else:
-            self.fail("expected BTreesConflictError")
+        self.assertRaises(ConflictError, tm2.commit)
 
         # Same thing, except commit the transactions in the opposite order.
         b = self._makeOne()
@@ -961,12 +951,8 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
 
         for k in range(0, 60, 4):
             del copy[k]
-        try:
-            tm2.commit()
-        except BTreesConflictError, detail:
-            self.assert_(str(detail).startswith('database conflict error'))
-        else:
-            self.fail("expected BTreesConflictError")
+
+        self.assertRaises(ConflictError, tm2.commit)
 
     @_skip_wo_ZODB
     def testConflictOfInsertAndDeleteOfFirstBucketItem(self):
@@ -1002,7 +988,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
 
         """
         import transaction
-        from BTrees.Interfaces import BTreesConflictError
+        from ZODB.POSException import ConflictError
         mytype = self._getTargetClass()
         db = self.openDB()
         tm1 = transaction.TransactionManager()
@@ -1023,7 +1009,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
             conn2.root.t[i] = i
 
         tm1.commit()
-        self.assertRaises(BTreesConflictError, tm2.commit)
+        self.assertRaises(ConflictError, tm2.commit)
         tm2.abort()
 
         k = t.__getstate__()[0][1]
@@ -1031,7 +1017,7 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
         del conn2.root.t[k]
 
         tm2.commit()
-        self.assertRaises(BTreesConflictError, tm1.commit)
+        self.assertRaises(ConflictError, tm1.commit)
         tm1.abort()
 
 
