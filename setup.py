@@ -99,11 +99,16 @@ else:
 
     ext_modules = [BTreeExtension(family) for family in FAMILIES]
 
+REQUIRES = [
+    'persistent',
+    'zope.interface',
+]
+TESTS_REQUIRE = REQUIRES + ['transaction']
+
 setup(name='BTrees',
       version=__version__,
       description='Scalable persistent object containers',
       long_description=README,
-      setup_requires=['persistent'],
       classifiers=[
         "Development Status :: 6 - Mature",
         "License :: OSI Approved :: Zope Public License",
@@ -130,18 +135,14 @@ setup(name='BTrees',
       zip_safe=False,
       ext_modules = ext_modules,
       extras_require = {
-        'test': ['transaction'],
+        'test': TESTS_REQUIRE,
+        'ZODB': ['ZODB3'],
         'testing': ['nose', 'coverage'],
         'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
       },
       test_suite="BTrees.tests",
-      tests_require=[
-        'transaction',
-      ],
-      install_requires=[
-        'zope.interface',
-        'persistent',
-      ],
+      tests_require=TESTS_REQUIRE,
+      install_requires=REQUIRES,
       entry_points = """\
       """
      )
