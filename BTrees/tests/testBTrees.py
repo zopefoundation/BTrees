@@ -13,6 +13,16 @@
 ##############################################################################
 import unittest
 
+def _skip_wo_ZODB(test_method): #pragma NO COVER
+    try:
+        import ZODB
+    except ImportError: # skip this test if ZODB is not available
+        def _dummy(*args):
+            pass
+        return _dummy
+    else:
+        return test_method
+
 
 class Base(object):
     # Tests common to all types: sets, buckets, and BTrees 
@@ -43,7 +53,8 @@ class Base(object):
     def _closeRoot(self, root):
         root._p_jar.close()
 
-    def functestLoadAndStore(self):
+    @_skip_wo_ZODB
+    def testLoadAndStore(self):
         import transaction
         for i in 0, 10, 1000:
             t = self._makeOne()
@@ -70,7 +81,8 @@ class Base(object):
         else:
             raise AssertionError("Expected exception")
 
-    def functestGhostUnghost(self):
+    @_skip_wo_ZODB
+    def testGhostUnghost(self):
         import transaction
         for i in 0, 10, 1000:
             t = self._makeOne()
@@ -126,7 +138,8 @@ class Base(object):
         self.assertEqual(list(t.keys(0, 2, excludemin=True, excludemax=True)),
                          [1])
 
-    def functest_UpdatesDoReadChecksOnInternalNodes(self):
+    @_skip_wo_ZODB
+    def test_UpdatesDoReadChecksOnInternalNodes(self):
         import transaction
         from ZODB import DB
         from ZODB.MappingStorage import MappingStorage
@@ -2176,7 +2189,8 @@ class InternalKeysMappingTest(unittest.TestCase):
     def add_key(self, tree, key):
         tree[key] = key
 
-    def functest_internal_keys_after_deletion(self):
+    @_skip_wo_ZODB
+    def test_internal_keys_after_deletion(self):
         # Make sure when a key's deleted, it's not an internal key
         #
         # We'll leverage __getstate__ to introspect the internal structures.

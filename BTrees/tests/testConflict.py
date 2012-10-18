@@ -14,6 +14,16 @@
 import unittest
 
 
+def _skip_wo_ZODB(test_method): #pragma NO COVER
+    try:
+        import ZODB
+    except ImportError: # skip this test if ZODB is not available
+        def _dummy(*args):
+            pass
+        return _dummy
+    else:
+        return test_method
+
 
 class Base:
     """ Tests common to all types: sets, buckets, and BTrees """
@@ -66,30 +76,6 @@ class MappingBase(Base):
         items=base.items()
 
         return  base, b1, b2, bm, e1, e2, items
-
-    def functestSimpleConflict(self):
-        # Unlike all the other tests, invoke conflict resolution
-        # by committing a transaction and catching a conflict
-        # in the storage.
-        import transaction
-        self.openDB()
-
-        r1 = self.db.open().root()
-        r1["t"] = t = self._makeOne()
-        transaction.commit()
-
-        r2 = self.db.open().root()
-        copy = r2["t"]
-        list(copy)    # unghostify
-
-        self.assertEqual(t._p_serial, copy._p_serial)
-
-        t.update({1:2, 2:3})
-        transaction.commit()
-
-        copy.update({3:4})
-        transaction.commit()
-
 
     def testMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -512,11 +498,35 @@ class LFSetTests(SetTests, unittest.TestCase):
         return LFSet
 
 
-class NastyConfict(Base, unittest.TestCase):
+class NastyConfictFunctionalTests(Base, unittest.TestCase):
+    # Provoke various conflict scenarios using ZODB + transaction
 
     def _getTargetClass(self):
         from BTrees.OOBTree import OOBTree
         return OOBTree
+
+    @_skip_wo_ZODB
+    def testSimpleConflict(self):
+        # Invoke conflict resolution by committing a transaction and
+        # catching a conflict in the storage.
+        import transaction
+        self.openDB()
+
+        r1 = self.db.open().root()
+        r1["t"] = t = self._makeOne()
+        transaction.commit()
+
+        r2 = self.db.open().root()
+        copy = r2["t"]
+        list(copy)    # unghostify
+
+        self.assertEqual(t._p_serial, copy._p_serial)
+
+        t.update({1:2, 2:3})
+        transaction.commit()
+
+        copy.update({3:4})
+        transaction.commit()
 
     # This tests a problem that cropped up while trying to write
     # testBucketSplitConflict (below):  conflict resolution wasn't
@@ -524,7 +534,8 @@ class NastyConfict(Base, unittest.TestCase):
     # strange complaints about pickling (despite that the test isn't
     # doing any *directly*), thru SystemErrors from Python and
     # AssertionErrors inside the BTree code.
-    def functestResolutionBlowsUp(self):
+    @_skip_wo_ZODB
+    def testResolutionBlowsUp(self):
         import transaction
         b = self._makeOne()
         for i in range(0, 200, 4):
@@ -562,7 +573,8 @@ class NastyConfict(Base, unittest.TestCase):
         transaction.commit()  # if this doesn't blow up
         list(copy.values())         # and this doesn't either, then fine
 
-    def functestBucketSplitConflict(self):
+    @_skip_wo_ZODB
+    def testBucketSplitConflict(self):
         # Tests that a bucket split is viewed as a conflict.
         # It's (almost necessarily) a white-box test, and sensitive to
         # implementation details.
@@ -642,7 +654,8 @@ class NastyConfict(Base, unittest.TestCase):
 
         self.assertRaises(BTreesConflictError, tm2.commit)
 
-    def functestEmptyBucketConflict(self):
+    @_skip_wo_ZODB
+    def testEmptyBucketConflict(self):
         # Tests that an emptied bucket *created by* conflict resolution is
         # viewed as a conflict:  conflict resolution doesn't have enough
         # info to unlink the empty bucket from the BTree correctly.
@@ -717,8 +730,8 @@ class NastyConfict(Base, unittest.TestCase):
         # expect, and segfaults result).
         self.assertRaises(BTreesConflictError, tm2.commit)
 
-
-    def functestEmptyBucketNoConflict(self):
+    @_skip_wo_ZODB
+    def testEmptyBucketNoConflict(self):
         # Tests that a plain empty bucket (on input) is not viewed as a
         # conflict.
         import transaction
@@ -809,7 +822,8 @@ class NastyConfict(Base, unittest.TestCase):
         self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           None, None, None)
 
-    def functestCantResolveBTreeConflict(self):
+    @_skip_wo_ZODB
+    def testCantResolveBTreeConflict(self):
         # Test that a conflict involving two different changes to
         # an internal BTree node is unresolvable.  An internal node
         # only changes when there are enough additions or deletions
@@ -865,7 +879,8 @@ class NastyConfict(Base, unittest.TestCase):
         else:
             self.fail("expected BTreesConflictError")
 
-    def functestConflictWithOneEmptyBucket(self):
+    @_skip_wo_ZODB
+    def testConflictWithOneEmptyBucket(self):
         # If one transaction empties a bucket, while another adds an item
         # to the bucket, all the changes "look resolvable":  bucket conflict
         # resolution returns a bucket containing (only) the item added by
@@ -953,7 +968,8 @@ class NastyConfict(Base, unittest.TestCase):
         else:
             self.fail("expected BTreesConflictError")
 
-    def functestConflictOfInsertAndDeleteOfFirstBucketItem(self):
+    @_skip_wo_ZODB
+    def testConflictOfInsertAndDeleteOfFirstBucketItem(self):
         """
         Recently, BTrees became careful about removing internal keys
         (keys in internal aka BTree nodes) when they were deleted from
@@ -1019,8 +1035,9 @@ class NastyConfict(Base, unittest.TestCase):
         tm1.abort()
 
 
+
 def test_suite():
-    return unittest.TestSuite((
+    suite = unittest.TestSuite((
         unittest.makeSuite(OOBTreeTests),
         unittest.makeSuite(OOBucketTests),
         unittest.makeSuite(OOTreeSetTests),
@@ -1066,5 +1083,7 @@ def test_suite():
         unittest.makeSuite(LFTreeSetTests),
         unittest.makeSuite(LFSetTests),
 
-        unittest.makeSuite(NastyConfict),
+        unittest.makeSuite(NastyConfictFunctionalTests),
     ))
+
+    return suite
