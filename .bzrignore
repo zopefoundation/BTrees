@@ -5,3 +5,4 @@ build
 nosetests.xml
 coverage.xml
 *.egg
+docs/_build

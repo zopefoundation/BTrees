@@ -1,0 +1,22 @@
+:mod:`BTrees` Documentation
+===========================
+
+This package contains a set of persistent object containers built around
+a modified BTree data structure.  The trees are optimized for use inside
+ZODB's "optimistic concurrency" paradigm, and include explicit resolution
+of conflicts detected by that mechannism.
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
