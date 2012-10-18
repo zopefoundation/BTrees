@@ -15,71 +15,61 @@
 
 import unittest
 
-from BTrees.OOBTree import OOBucket as Bucket, OOSet as Set
 
-import transaction
-from ZODB.MappingStorage import MappingStorage
-from ZODB.DB import DB
+STR = "A string with hi-bit-set characters: \700\701"
+UNICODE = u"A unicode string"
+
 
 class CompareTest(unittest.TestCase):
 
-    s = "A string with hi-bit-set characters: \700\701"
-    u = u"A unicode string"
-
     def setUp(self):
         # These defaults only make sense if the default encoding
-        # prevents s from being promoted to Unicode.
-        self.assertRaises(UnicodeError, unicode, self.s)
+        # prevents STR from being promoted to Unicode.
+        self.assertRaises(UnicodeError, unicode, STR)
 
-        # An object needs to be added to the database to
-        self.db = DB(MappingStorage())
-        root = self.db.open().root()
-        self.bucket = root["bucket"] = Bucket()
-        self.set = root["set"] = Set()
-        transaction.commit()
+    def _makeBucket(self):
+        from BTrees.OOBTree import OOBucket
+        return OOBucket()
 
-    def tearDown(self):
-        self.assert_(self.bucket._p_changed != 2)
-        self.assert_(self.set._p_changed != 2)
-        transaction.abort()
+    def _makeSet(self):
+        from BTrees.OOBTree import OOSet
+        return OOSet()
 
     def assertUE(self, callable, *args):
         self.assertRaises(UnicodeError, callable, *args)
 
     def testBucketGet(self):
-        import sys
         import warnings
-        _warnlog = []
-        def _showwarning(*args, **kw):
-            _warnlog.append((args, kw))
-        warnings.showwarning, _before = _showwarning, warnings.showwarning
-        try:
-            self.bucket[self.s] = 1
-            self.assertUE(self.bucket.get, self.u)
-        finally:
-            warnings.showwarning = _before
-        if sys.version_info >= (2, 6):
-            self.assertEqual(len(_warnlog), 1)
+        b = self._makeBucket()
+        with warnings.catch_warnings(True) as _warnlog:
+            b[STR] = 1
+            self.assertUE(b.get, UNICODE)
+        self.assertEqual(len(_warnlog), 1)
 
     def testSetGet(self):
-        self.set.insert(self.s)
-        self.assertUE(self.set.remove, self.u)
+        s = self._makeSet()
+        s.insert(STR)
+        self.assertUE(s.remove, UNICODE)
 
     def testBucketSet(self):
-        self.bucket[self.s] = 1
-        self.assertUE(self.bucket.__setitem__, self.u, 1)
+        b = self._makeBucket()
+        b[STR] = 1
+        self.assertUE(b.__setitem__, UNICODE, 1)
 
     def testSetSet(self):
-        self.set.insert(self.s)
-        self.assertUE(self.set.insert, self.u)
+        s = self._makeSet()
+        s.insert(STR)
+        self.assertUE(s.insert, UNICODE)
 
     def testBucketMinKey(self):
-        self.bucket[self.s] = 1
-        self.assertUE(self.bucket.minKey, self.u)
+        b = self._makeBucket()
+        b[STR] = 1
+        self.assertUE(b.minKey, UNICODE)
 
     def testSetMinKey(self):
-        self.set.insert(self.s)
-        self.assertUE(self.set.minKey, self.u)
+        s = self._makeSet()
+        s.insert(STR)
+        self.assertUE(s.minKey, UNICODE)
 
 def test_suite():
     return unittest.makeSuite(CompareTest)
