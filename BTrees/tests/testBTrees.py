@@ -2183,8 +2183,11 @@ class FamilyTest(unittest.TestCase):
         self.failUnless(f1 is family)
         self.failUnless(f2 is family)
 
-class InternalKeysMappingTest(unittest.TestCase):
+class InternalKeysMappingTest(object):
     # There must not be any internal keys not in the BTree
+
+    def _makeOne(self):
+        return self._getTargetClass()()
 
     def add_key(self, tree, key):
         tree[key] = key
@@ -2242,7 +2245,7 @@ class InternalKeysMappingTest(unittest.TestCase):
         transaction.abort()
         db.close()
 
-class InternalKeysSetTest:
+class InternalKeysSetTest(object):
     # There must not be any internal keys not in the TreeSet
 
     def add_key(self, tree, key):
