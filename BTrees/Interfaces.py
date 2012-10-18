@@ -507,6 +507,12 @@ class IIntegerFloatBTreeModule(IBTreeModule, IMerge):
     family = Attribute('The IBTreeFamily of this module')
 
 
+try:
+    from ZODB.POSException import BTreesConflictError
+except ImportError:
+    class BTreesConflictError(ValueError):
+        pass
+
 ###############################################################
 # IMPORTANT NOTE
 #

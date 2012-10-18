@@ -11,39 +11,27 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import os
-from unittest import TestCase, TestSuite, makeSuite
-from types import ClassType
+import unittest
 
-from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
-from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
-from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
-from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
-from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
-from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
 
-import transaction
-from ZODB.POSException import ConflictError
 
 class Base:
     """ Tests common to all types: sets, buckets, and BTrees """
 
     storage = None
 
-    def setUp(self):
-        self.t = self.t_type()
-
     def tearDown(self):
+        import transaction
         transaction.abort()
-        del self.t
         if self.storage is not None:
             self.storage.close()
             self.storage.cleanup()
 
+    def _makeOne(self):
+        return self._getTargetClass()()
+
     def openDB(self):
+        import os
         from ZODB.FileStorage import FileStorage
         from ZODB.DB import DB
         n = 'fs_tmp__%s' % os.getpid()
@@ -55,7 +43,8 @@ class MappingBase(Base):
     """ Tests common to mappings (buckets, btrees) """
 
     def _deletefail(self):
-        del self.t[1]
+        t = self._makeOne()
+        del t[1]
 
     def _setupConflict(self):
 
@@ -68,7 +57,7 @@ class MappingBase(Base):
         e2=[(7745, 0), (4868, 1), (-2548, 2), (-2711, 3), (-3154, 4)]
 
 
-        base=self.t
+        base = self._makeOne()
         base.update([(i, i*i) for i in l[:20]])
         b1=base.__class__(base)
         b2=base.__class__(base)
@@ -78,23 +67,24 @@ class MappingBase(Base):
 
         return  base, b1, b2, bm, e1, e2, items
 
-    def testSimpleConflict(self):
+    def functestSimpleConflict(self):
         # Unlike all the other tests, invoke conflict resolution
         # by committing a transaction and catching a conflict
         # in the storage.
+        import transaction
         self.openDB()
 
         r1 = self.db.open().root()
-        r1["t"] = self.t
+        r1["t"] = t = self._makeOne()
         transaction.commit()
 
         r2 = self.db.open().root()
         copy = r2["t"]
         list(copy)    # unghostify
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(t._p_serial, copy._p_serial)
 
-        self.t.update({1:2, 2:3})
+        t.update({1:2, 2:3})
         transaction.commit()
 
         copy.update({3:4})
@@ -111,7 +101,7 @@ class MappingBase(Base):
         del bm[items[5][0]]
         del bm[items[-1][0]]
         del bm[items[-2][0]]
-        test_merge(base, b1, b2, bm, 'merge  delete')
+        _test_merge(base, b1, b2, bm, 'merge  delete')
 
     def testMergeDeleteAndUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -123,7 +113,7 @@ class MappingBase(Base):
         bm[items[5][0]]=1
         del bm[items[-1][0]]
         bm[items[-2][0]]=2
-        test_merge(base, b1, b2, bm, 'merge update and delete')
+        _test_merge(base, b1, b2, bm, 'merge update and delete')
 
     def testMergeUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -135,27 +125,27 @@ class MappingBase(Base):
         bm[items[5][0]]=2
         bm[items[-1][0]]=3
         bm[items[-2][0]]=4
-        test_merge(base, b1, b2, bm, 'merge update')
+        _test_merge(base, b1, b2, bm, 'merge update')
 
     def testFailMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         del b1[items[0][0]]
         del b2[items[0][0]]
-        test_merge(base, b1, b2, bm, 'merge conflicting delete',
+        _test_merge(base, b1, b2, bm, 'merge conflicting delete',
                    should_fail=1)
 
     def testFailMergeUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         b1[items[0][0]]=1
         b2[items[0][0]]=2
-        test_merge(base, b1, b2, bm, 'merge conflicting update',
+        _test_merge(base, b1, b2, bm, 'merge conflicting update',
                    should_fail=1)
 
     def testFailMergeDeleteAndUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         del b1[items[0][0]]
         b2[items[0][0]]=-9
-        test_merge(base, b1, b2, bm, 'merge conflicting update and delete',
+        _test_merge(base, b1, b2, bm, 'merge conflicting update and delete',
                    should_fail=1)
 
     def testMergeInserts(self):
@@ -170,7 +160,7 @@ class MappingBase(Base):
         bm[e1[0][0]]=e1[0][1]
         bm[99999]=99999
         bm[e1[2][0]]=e1[2][1]
-        test_merge(base, b1, b2, bm, 'merge insert')
+        _test_merge(base, b1, b2, bm, 'merge insert')
 
     def testMergeInsertsFromEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -185,7 +175,7 @@ class MappingBase(Base):
         b2.update(e2)
         bm.update(e2)
 
-        test_merge(base, b1, b2, bm, 'merge insert from empty')
+        _test_merge(base, b1, b2, bm, 'merge insert from empty')
 
     def testFailMergeEmptyAndFill(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -195,7 +185,7 @@ class MappingBase(Base):
         b2.update(e2)
         bm.update(e2)
 
-        test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
+        _test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
 
     def testMergeEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -203,7 +193,7 @@ class MappingBase(Base):
         b1.clear()
         bm.clear()
 
-        test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
+        _test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
 
     def testFailMergeInsert(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -211,7 +201,7 @@ class MappingBase(Base):
         b1[e1[0][0]]=e1[0][1]
         b2[99999]=99999
         b2[e1[0][0]]=e1[0][1]
-        test_merge(base, b1, b2, bm, 'merge conflicting inserts',
+        _test_merge(base, b1, b2, bm, 'merge conflicting inserts',
                    should_fail=1)
 
 class SetTests(Base):
@@ -226,7 +216,7 @@ class SetTests(Base):
         e2=[7745, 4868, -2548, -2711, -3154]
 
 
-        base=self.t
+        base = self._makeOne()
         base.update(l)
         b1=base.__class__(base)
         b2=base.__class__(base)
@@ -246,13 +236,13 @@ class SetTests(Base):
         bm.remove(items[5])
         bm.remove(items[-1])
         bm.remove(items[-2])
-        test_merge(base, b1, b2, bm, 'merge  delete')
+        _test_merge(base, b1, b2, bm, 'merge  delete')
 
     def testFailMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         b1.remove(items[0])
         b2.remove(items[0])
-        test_merge(base, b1, b2, bm, 'merge conflicting delete',
+        _test_merge(base, b1, b2, bm, 'merge conflicting delete',
                    should_fail=1)
 
     def testMergeInserts(self):
@@ -267,7 +257,7 @@ class SetTests(Base):
         bm.insert(e1[0])
         bm.insert(99999)
         bm.insert(e1[2])
-        test_merge(base, b1, b2, bm, 'merge insert')
+        _test_merge(base, b1, b2, bm, 'merge insert')
 
     def testMergeInsertsFromEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -282,7 +272,7 @@ class SetTests(Base):
         b2.update(e2)
         bm.update(e2)
 
-        test_merge(base, b1, b2, bm, 'merge insert from empty')
+        _test_merge(base, b1, b2, bm, 'merge insert from empty')
 
     def testFailMergeEmptyAndFill(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -292,7 +282,7 @@ class SetTests(Base):
         b2.update(e2)
         bm.update(e2)
 
-        test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
+        _test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
 
     def testMergeEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -300,7 +290,7 @@ class SetTests(Base):
         b1.clear()
         bm.clear()
 
-        test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
+        _test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
 
     def testFailMergeInsert(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -308,11 +298,12 @@ class SetTests(Base):
         b1.insert(e1[0])
         b2.insert(99999)
         b2.insert(e1[0])
-        test_merge(base, b1, b2, bm, 'merge conflicting inserts',
+        _test_merge(base, b1, b2, bm, 'merge conflicting inserts',
                    should_fail=1)
 
 
-def test_merge(o1, o2, o3, expect, message='failed to merge', should_fail=0):
+def _test_merge(o1, o2, o3, expect, message='failed to merge', should_fail=0):
+    from BTrees.Interfaces import BTreesConflictError
     s1 = o1.__getstate__()
     s2 = o2.__getstate__()
     s3 = o3.__getstate__()
@@ -323,7 +314,7 @@ def test_merge(o1, o2, o3, expect, message='failed to merge', should_fail=0):
     if should_fail:
         try:
             merged = o1._p_resolveConflict(s1, s2, s3)
-        except ConflictError, err:
+        except BTreesConflictError, err:
             pass
         else:
             assert 0, message
@@ -331,9 +322,201 @@ def test_merge(o1, o2, o3, expect, message='failed to merge', should_fail=0):
         merged = o1._p_resolveConflict(s1, s2, s3)
         assert merged == expected, message
 
-class NastyConfict(Base, TestCase):
 
-    t_type = OOBTree
+class OOBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTree
+        return OOBTree
+
+class OOBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBucket
+        return OOBucket
+
+class OOTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSet
+        return OOTreeSet
+
+class OOSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOSet
+        return OOSet
+
+
+class IIBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBTree
+        return IIBTree
+
+class IIBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBucket
+        return IIBucket
+
+class IITreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSet
+        return IITreeSet
+
+class IISetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IISet
+        return IISet
+
+
+class IOBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBTree
+        return IOBTree
+
+class IOBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBucket
+        return IOBucket
+
+class IOTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOTreeSet
+        return IOTreeSet
+
+class IOSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOSet
+        return IOSet
+
+
+class OIBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBTree
+        return OIBTree
+
+class OIBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBucket
+        return OIBucket
+
+class OITreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OITreeSet
+        return OITreeSet
+
+class OISetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OISet
+        return OISet
+
+
+class IFBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBTree
+        return IFBTree
+
+class IFBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBucket
+        return IFBucket
+
+class IFTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFTreeSet
+        return IFTreeSet
+
+class IFSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFSet
+        return IFSet
+
+
+class LLBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBTree
+        return LLBTree
+
+class LLBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBucket
+        return LLBucket
+
+class LLTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLTreeSet
+        return LLTreeSet
+
+class LLSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLSet
+        return LLSet
+
+
+class LOBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBTree
+        return LOBTree
+
+class LOBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBucket
+        return LOBucket
+
+class LOTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOTreeSet
+        return LOTreeSet
+
+class LOSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOSet
+        return LOSet
+
+
+class OLBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBTree
+        return OLBTree
+
+class OLBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBucket
+        return OLBucket
+
+class OLTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSet
+        return OLTreeSet
+
+class OLSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLSet
+        return OLSet
+
+
+class LFBTreeTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBTree
+        return LFBTree
+
+class LFBucketTests(MappingBase, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBucket
+        return LFBucket
+
+class LFTreeSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFTreeSet
+        return LFTreeSet
+
+class LFSetTests(SetTests, unittest.TestCase):
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFSet
+        return LFSet
+
+
+class NastyConfict(Base, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTree
+        return OOBTree
 
     # This tests a problem that cropped up while trying to write
     # testBucketSplitConflict (below):  conflict resolution wasn't
@@ -341,8 +524,9 @@ class NastyConfict(Base, TestCase):
     # strange complaints about pickling (despite that the test isn't
     # doing any *directly*), thru SystemErrors from Python and
     # AssertionErrors inside the BTree code.
-    def testResolutionBlowsUp(self):
-        b = self.t
+    def functestResolutionBlowsUp(self):
+        import transaction
+        b = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -361,7 +545,7 @@ class NastyConfict(Base, TestCase):
         self.openDB()
 
         r1 = self.db.open().root()
-        r1["t"] = self.t
+        r1["t"] = b
         transaction.commit()
 
         r2 = self.db.open().root()
@@ -369,20 +553,22 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(b._p_serial, copy._p_serial)
 
-        self.t.update({1:2, 2:3})
+        b.update({1:2, 2:3})
         transaction.commit()
 
         copy.update({3:4})
         transaction.commit()  # if this doesn't blow up
         list(copy.values())         # and this doesn't either, then fine
 
-    def testBucketSplitConflict(self):
+    def functestBucketSplitConflict(self):
         # Tests that a bucket split is viewed as a conflict.
         # It's (almost necessarily) a white-box test, and sensitive to
         # implementation details.
-        b = self.t
+        import transaction
+        from BTrees.Interfaces import BTreesConflictError
+        b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -402,7 +588,7 @@ class NastyConfict(Base, TestCase):
 
         tm1 = transaction.TransactionManager()
         r1 = self.db.open(transaction_manager=tm1).root()
-        r1["t"] = self.t
+        r1["t"] = b
         tm1.commit()
 
         tm2 = transaction.TransactionManager()
@@ -411,11 +597,11 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(orig._p_serial, copy._p_serial)
 
         # In one transaction, add 16 new keys to bucket1, to force a bucket
         # split.
-        b = self.t
+        b = orig
         numtoadd = 16
         candidate = 60
         while numtoadd:
@@ -454,13 +640,15 @@ class NastyConfict(Base, TestCase):
         self.assertEqual(state[0][1], 60)
         self.assertEqual(state[0][3], 120)
 
-        self.assertRaises(ConflictError, tm2.commit)
+        self.assertRaises(BTreesConflictError, tm2.commit)
 
-    def testEmptyBucketConflict(self):
+    def functestEmptyBucketConflict(self):
         # Tests that an emptied bucket *created by* conflict resolution is
         # viewed as a conflict:  conflict resolution doesn't have enough
         # info to unlink the empty bucket from the BTree correctly.
-        b = self.t
+        import transaction
+        from BTrees.Interfaces import BTreesConflictError
+        b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -480,7 +668,7 @@ class NastyConfict(Base, TestCase):
 
         tm1 = transaction.TransactionManager()
         r1 = self.db.open(transaction_manager=tm1).root()
-        r1["t"] = self.t
+        r1["t"] = b
         tm1.commit()
 
         tm2 = transaction.TransactionManager()
@@ -489,10 +677,10 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(orig._p_serial, copy._p_serial)
 
         # In one transaction, delete half of bucket 1.
-        b = self.t
+        b = orig
         for k in 60, 64, 68, 72, 76, 80, 84, 88:
             del b[k]
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -527,13 +715,14 @@ class NastyConfict(Base, TestCase):
         # create an "insane" BTree (a legit BTree cannot contain an empty
         # bucket -- it contains NULL pointers the BTree code doesn't
         # expect, and segfaults result).
-        self.assertRaises(ConflictError, tm2.commit)
+        self.assertRaises(BTreesConflictError, tm2.commit)
 
 
-    def testEmptyBucketNoConflict(self):
+    def functestEmptyBucketNoConflict(self):
         # Tests that a plain empty bucket (on input) is not viewed as a
         # conflict.
-        b = self.t
+        import transaction
+        b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -552,7 +741,7 @@ class NastyConfict(Base, TestCase):
         self.openDB()
 
         r1 = self.db.open().root()
-        r1["t"] = self.t
+        r1["t"] = orig
         transaction.commit()
 
         r2 = self.db.open().root()
@@ -560,10 +749,10 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(orig._p_serial, copy._p_serial)
 
         # In one transaction, just add a key.
-        b = self.t
+        b = orig
         b[1] = 1
         # bucket 0 has 16 values: [0, 1] + [4, 8 .. 56]
         # bucket 1 has 15 values: 60, 64 .. 116
@@ -591,7 +780,7 @@ class NastyConfict(Base, TestCase):
         self.assertEqual(len(state[0]), 3)
         self.assertEqual(state[0][1], 60)
 
-        # This shouldn't create a ConflictError.
+        # This shouldn't create a BTreesConflictError.
         transaction.commit()
         # And the resulting BTree shouldn't have internal damage.
         b._check()
@@ -600,9 +789,11 @@ class NastyConfict(Base, TestCase):
     # to decref a NULL pointer if conflict resolution was fed 3 empty
     # buckets.  http://collector.zope.org/Zope/553
     def testThreeEmptyBucketsNoSegfault(self):
-        self.t[1] = 1
-        bucket = self.t._firstbucket
-        del self.t[1]
+        from BTrees.Interfaces import BTreesConflictError
+        t = self._makeOne()
+        t[1] = 1
+        bucket = t._firstbucket
+        del t[1]
         state1 = bucket.__getstate__()
         state2 = bucket.__getstate__()
         state3 = bucket.__getstate__()
@@ -611,21 +802,23 @@ class NastyConfict(Base, TestCase):
                      state3 is not state1)
         self.assert_(state2 == state1 and
                      state3 == state1)
-        self.assertRaises(ConflictError, bucket._p_resolveConflict,
+        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           state1, state2, state3)
         # When an empty BTree resolves conflicts, it computes the
         # bucket state as None, so...
-        self.assertRaises(ConflictError, bucket._p_resolveConflict,
+        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           None, None, None)
 
-    def testCantResolveBTreeConflict(self):
+    def functestCantResolveBTreeConflict(self):
         # Test that a conflict involving two different changes to
         # an internal BTree node is unresolvable.  An internal node
         # only changes when there are enough additions or deletions
         # to a child bucket that the bucket is split or removed.
         # It's (almost necessarily) a white-box test, and sensitive to
         # implementation details.
-        b = self.t
+        import transaction
+        from BTrees.Interfaces import BTreesConflictError
+        b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -644,7 +837,7 @@ class NastyConfict(Base, TestCase):
         self.openDB()
         tm1 = transaction.TransactionManager()
         r1 = self.db.open(transaction_manager=tm1).root()
-        r1["t"] = self.t
+        r1["t"] = orig
         tm1.commit()
 
         tm2 = transaction.TransactionManager()
@@ -653,13 +846,13 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(orig._p_serial, copy._p_serial)
 
         # Now one transaction should add enough keys to cause a split,
         # and another should remove all the keys in one bucket.
 
         for k in range(200, 300, 4):
-            self.t[k] = k
+            orig[k] = k
         tm1.commit()
 
         for k in range(0, 60, 4):
@@ -667,12 +860,12 @@ class NastyConfict(Base, TestCase):
 
         try:
             tm2.commit()
-        except ConflictError, detail:
+        except BTreesConflictError, detail:
             self.assert_(str(detail).startswith('database conflict error'))
         else:
-            self.fail("expected ConflictError")
+            self.fail("expected BTreesConflictError")
 
-    def testConflictWithOneEmptyBucket(self):
+    def functestConflictWithOneEmptyBucket(self):
         # If one transaction empties a bucket, while another adds an item
         # to the bucket, all the changes "look resolvable":  bucket conflict
         # resolution returns a bucket containing (only) the item added by
@@ -680,7 +873,9 @@ class NastyConfict(Base, TestCase):
         # removing the bucket are uncontested:  the bucket is removed from
         # the BTree despite that resolution thinks it's non-empty!  This
         # was first reported by Dieter Maurer, to zodb-dev on 22 Mar 2005.
-        b = self.t
+        import transaction
+        from BTrees.Interfaces import BTreesConflictError
+        b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
         # bucket 0 has 15 values: 0, 4 .. 56
@@ -699,7 +894,7 @@ class NastyConfict(Base, TestCase):
         self.openDB()
         tm1 = transaction.TransactionManager()
         r1 = self.db.open(transaction_manager=tm1).root()
-        r1["t"] = self.t
+        r1["t"] = orig
         tm1.commit()
 
         tm2 = transaction.TransactionManager()
@@ -708,26 +903,26 @@ class NastyConfict(Base, TestCase):
         # Make sure all of copy is loaded.
         list(copy.values())
 
-        self.assertEqual(self.t._p_serial, copy._p_serial)
+        self.assertEqual(orig._p_serial, copy._p_serial)
 
         # Now one transaction empties the first bucket, and another adds a
         # key to the first bucket.
 
         for k in range(0, 60, 4):
-            del self.t[k]
+            del orig[k]
         tm1.commit()
 
         copy[1] = 1
 
         try:
             tm2.commit()
-        except ConflictError, detail:
+        except BTreesConflictError, detail:
             self.assert_(str(detail).startswith('database conflict error'))
         else:
-            self.fail("expected ConflictError")
+            self.fail("expected BTreesConflictError")
 
         # Same thing, except commit the transactions in the opposite order.
-        b = OOBTree()
+        b = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
 
@@ -753,12 +948,12 @@ class NastyConfict(Base, TestCase):
             del copy[k]
         try:
             tm2.commit()
-        except ConflictError, detail:
+        except BTreesConflictError, detail:
             self.assert_(str(detail).startswith('database conflict error'))
         else:
-            self.fail("expected ConflictError")
+            self.fail("expected BTreesConflictError")
 
-    def testConflictOfInsertAndDeleteOfFirstBucketItem(self):
+    def functestConflictOfInsertAndDeleteOfFirstBucketItem(self):
         """
         Recently, BTrees became careful about removing internal keys
         (keys in internal aka BTree nodes) when they were deleted from
@@ -790,7 +985,9 @@ class NastyConfict(Base, TestCase):
           as k2 would be unfindable, so we want a conflict.
 
         """
-        mytype = self.t_type
+        import transaction
+        from BTrees.Interfaces import BTreesConflictError
+        mytype = self._getTargetClass()
         db = self.openDB()
         tm1 = transaction.TransactionManager()
         conn1 = db.open(tm1)
@@ -810,7 +1007,7 @@ class NastyConfict(Base, TestCase):
             conn2.root.t[i] = i
 
         tm1.commit()
-        self.assertRaises(ConflictError, tm2.commit)
+        self.assertRaises(BTreesConflictError, tm2.commit)
         tm2.abort()
 
         k = t.__getstate__()[0][1]
@@ -818,24 +1015,56 @@ class NastyConfict(Base, TestCase):
         del conn2.root.t[k]
 
         tm2.commit()
-        self.assertRaises(ConflictError, tm1.commit)
+        self.assertRaises(BTreesConflictError, tm1.commit)
         tm1.abort()
 
-def test_suite():
-    suite = TestSuite()
 
-    for kv in ('OO',
-               'II', 'IO', 'OI', 'IF',
-               'LL', 'LO', 'OL', 'LF',
-               ):
-        for name, bases in (('BTree', (MappingBase, TestCase)),
-                            ('Bucket', (MappingBase, TestCase)),
-                            ('TreeSet', (SetTests, TestCase)),
-                            ('Set', (SetTests, TestCase)),
-                            ):
-            klass = ClassType(kv + name + 'Test', bases,
-                              dict(t_type=globals()[kv+name]))
-            suite.addTest(makeSuite(klass))
-    
-    suite.addTest(makeSuite(NastyConfict))
-    return suite
+def test_suite():
+    return unittest.TestSuite((
+        unittest.makeSuite(OOBTreeTests),
+        unittest.makeSuite(OOBucketTests),
+        unittest.makeSuite(OOTreeSetTests),
+        unittest.makeSuite(OOSetTests),
+
+        unittest.makeSuite(IIBTreeTests),
+        unittest.makeSuite(IIBucketTests),
+        unittest.makeSuite(IITreeSetTests),
+        unittest.makeSuite(IISetTests),
+
+        unittest.makeSuite(IOBTreeTests),
+        unittest.makeSuite(IOBucketTests),
+        unittest.makeSuite(IOTreeSetTests),
+        unittest.makeSuite(IOSetTests),
+
+        unittest.makeSuite(OIBTreeTests),
+        unittest.makeSuite(OIBucketTests),
+        unittest.makeSuite(OITreeSetTests),
+        unittest.makeSuite(OISetTests),
+
+        unittest.makeSuite(IFBTreeTests),
+        unittest.makeSuite(IFBucketTests),
+        unittest.makeSuite(IFTreeSetTests),
+        unittest.makeSuite(IFSetTests),
+
+        unittest.makeSuite(LLBTreeTests),
+        unittest.makeSuite(LLBucketTests),
+        unittest.makeSuite(LLTreeSetTests),
+        unittest.makeSuite(LLSetTests),
+
+        unittest.makeSuite(LOBTreeTests),
+        unittest.makeSuite(LOBucketTests),
+        unittest.makeSuite(LOTreeSetTests),
+        unittest.makeSuite(LOSetTests),
+
+        unittest.makeSuite(OLBTreeTests),
+        unittest.makeSuite(OLBucketTests),
+        unittest.makeSuite(OLTreeSetTests),
+        unittest.makeSuite(OLSetTests),
+
+        unittest.makeSuite(LFBTreeTests),
+        unittest.makeSuite(LFBucketTests),
+        unittest.makeSuite(LFTreeSetTests),
+        unittest.makeSuite(LFSetTests),
+
+        unittest.makeSuite(NastyConfict),
+    ))

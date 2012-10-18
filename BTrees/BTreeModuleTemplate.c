@@ -485,7 +485,7 @@ INITMODULE (void)
 	return;
 
     /* Grab the ConflictError class */
-    m = PyImport_ImportModule("ZODB.POSException");
+    m = PyImport_ImportModule("BTrees.Interfaces");
     if (m != NULL) {
   	c = PyObject_GetAttrString(m, "BTreesConflictError");
   	if (c != NULL)
