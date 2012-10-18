@@ -802,7 +802,10 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
     # to decref a NULL pointer if conflict resolution was fed 3 empty
     # buckets.  http://collector.zope.org/Zope/553
     def testThreeEmptyBucketsNoSegfault(self):
-        from ZODB.POSException import ConflictError
+        # Note that the conflict is raised by our C extension, rather than
+        # indirectly via the storage, and hence is a more specialized type.
+        # This test therefore does not require ZODB.
+        from BTrees.Interfaces import BTreesConflictError
         t = self._makeOne()
         t[1] = 1
         bucket = t._firstbucket
@@ -815,11 +818,11 @@ class NastyConfictFunctionalTests(Base, unittest.TestCase):
                      state3 is not state1)
         self.assert_(state2 == state1 and
                      state3 == state1)
-        self.assertRaises(ConflictError, bucket._p_resolveConflict,
+        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           state1, state2, state3)
         # When an empty BTree resolves conflicts, it computes the
         # bucket state as None, so...
-        self.assertRaises(ConflictError, bucket._p_resolveConflict,
+        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           None, None, None)
 
     @_skip_wo_ZODB
