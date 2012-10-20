@@ -11,6 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   api
+
 Overview
 --------
 
@@ -249,6 +251,7 @@ used only in a single program run.  It can be disastrous if that BTree-based
 structure is stored to a database, though. 
 
 .. doctest::
+   :options: +SKIP
 
    >>> class C:
    ...     pass
