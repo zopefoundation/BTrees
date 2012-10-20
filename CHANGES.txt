@@ -11,3 +11,24 @@ Platform Changes
 - Dropped support for Python < 2.6.
 
 - Factored ``BTrees`` as a separate distribution.
+
+Testing Changes
+###############
+
+- All covered platforms tested under ``tox``.
+
+- Added support for continuous integration using ``tox`` and ``jenkins``.
+
+- Added ``setup.py dev`` alias (installs ``nose`` and ``coverage``).
+
+- Dropped dependency on ``zope.testing`` / ``zope.testrunner``:  tests now
+  run with ``setup.py test``.
+
+Documentation Changes
+#####################
+
+- Added Sphinx documentation based on ZODB Guide (snippets are exercised
+  via 'tox').
+
+- Added ``setup.py docs`` alias (installs ``Sphinx`` and
+  ``repoze.sphinx.autointerface``).
