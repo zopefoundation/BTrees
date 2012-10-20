@@ -27,6 +27,8 @@ Testing Changes
 Documentation Changes
 #####################
 
+- Added API reference, generated via Spinx' autodoc.
+
 - Added Sphinx documentation based on ZODB Guide (snippets are exercised
   via 'tox').
 
