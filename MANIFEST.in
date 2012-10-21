@@ -1,0 +1,9 @@
+include *.txt
+
+recursive-include BTrees *
+recursive-include include *
+
+global-exclude *.dll
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.so
