@@ -5,7 +5,8 @@
 4.0.1 (unreleased)
 ------------------
 
-- TBD
+- Provide local fallback for persistent C header inclusion if the
+  persistent distribution isn't installed. This makes the winbot happy.
 
 
 4.0.0 (2012-10-20)

@@ -29,7 +29,9 @@ README = (open(os.path.join(here, 'README.txt')).read()
           open(os.path.join(here, 'CHANGES.txt')).read())
 
 # Include directories for C extensions
-# Sniff the location of the headers in 'persistent'.
+# Sniff the location of the headers in 'persistent' or fall back
+# to local headers in the include sub-directory
+
 
 class ModuleHeaderDir(object):
 
@@ -44,9 +46,13 @@ class ModuleHeaderDir(object):
     def __str__(self):
         from pkg_resources import require
         from pkg_resources import resource_filename
-        require(self._require_spec)
-        return os.path.abspath(
-                    resource_filename(self._require_spec, self._where))
+        from pkg_resources import DistributionNotFound
+        try:
+            require(self._require_spec)
+            path = resource_filename(self._require_spec, self._where)
+        except DistributionNotFound:
+            path = os.path.join(here, 'include')
+        return os.path.abspath(path)
 
 include = [ModuleHeaderDir('persistent')]
 
