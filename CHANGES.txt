@@ -2,7 +2,7 @@
 ====================
 
 
-4.0.1 (unreleased)
+4.0.1 (2012-10-21)
 ------------------
 
 - Provide local fallback for persistent C header inclusion if the
