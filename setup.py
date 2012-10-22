@@ -93,13 +93,14 @@ def BTreeExtension(family):
     return Extension(name, sources, **kwargs)
 
 py_impl = getattr(platform, 'python_implementation', lambda: None)
+pure_python = os.environ.get('PURE_PYTHON', False)
 is_pypy = py_impl() == 'PyPy'
 is_jython = 'java' in sys.platform
 
 # Jython cannot build the C optimizations, while on PyPy they are
 # anti-optimizations (the C extension compatibility layer is known-slow,
 # and defeats JIT opportunities).
-if is_pypy or is_jython or sys.version_info[0] > 2:
+if pure_python or is_pypy or is_jython or sys.version_info[0] > 2:
     ext_modules = []
 else:
 
