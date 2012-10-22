@@ -341,6 +341,7 @@ class _MappingBase(_Base):
             set(*i)
 
     def __setitem__(self, key, value):
+        # TODO:  enforce test that key has non-default comparison?
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -1011,8 +1012,8 @@ def _set_operation(s1, s2,
         if MERGE_DEFAULT is not None:
             i1.value = i2.value = MERGE_DEFAULT
         else:
-            if i1.usesValue:
-                if (not i2.usesValue) and c2:
+            if i1.useValues:
+                if (not i2.useValues) and c2:
                     raise TypeError("invalid set operation")
             else:
                 if c1 or c12:
@@ -1023,35 +1024,37 @@ def _set_operation(s1, s2,
         def copy(i, w):
             r._keys.append(i.key)
             r._values.append(MERGE_WEIGHT(i, w))
-            i.advance()
     else:
         r = s1._set_type()
         def copy(i, w):
             r._keys.append(i.key)
-            i.advance()
 
     while i1.active and i2.active:
         cmp_ = cmp(i1.key, i2.key)
         if cmp_ < 0:
             if c1:
                 copy(i1, w1)
+            i1.advance()
         elif cmp_ == 0:
             if c12:
                 r._keys.append(i1.key)
                 if merge:
                     r._values.append(MERGE(i1.value, w1, i2.value, w2))
-                i1.advance()
-                i2.advance()
+            i1.advance()
+            i2.advance()
         else:
             if c2:
                 copy(i2, w2)
+            i2.advance()
 
     if c1:
         while i1.active:
             copy(i1, w1)
+            i1.advance()
     if c2:
         while i2.active:
             copy(i2, w2)
+            i2.advance()
 
     return r
 
