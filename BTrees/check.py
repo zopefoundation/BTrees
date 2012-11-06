@@ -33,6 +33,7 @@ that doesn't exist in the actual BTree).
 """
 
 from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
+from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
 from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
 from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
 from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
@@ -59,6 +60,9 @@ for kv in ('OO',
         ('Set', (TYPE_BUCKET, False)),
         ):
         _type2kind[globals()[kv+name]] = kind
+        py = kv + name + 'Py'
+        if py in globals():
+            _type2kind[globals()[py]] = kind
 
 # Return pair
 #
@@ -114,7 +118,14 @@ for kv in ('OO',
            'LL', 'LO', 'OL', 'LF',
            ):
     _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
+    py = kv + 'BTreePy'
+    if py in globals():
+        _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
     _btree2bucket[globals()[kv+'TreeSet']] = globals()[kv+'Set']
+    py = kv + 'TreeSetPy'
+    if py in globals():
+        _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
+
 
 def crack_btree(t, is_mapping):
     state = t.__getstate__()

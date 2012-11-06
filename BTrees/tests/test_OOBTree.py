@@ -25,6 +25,12 @@ from BTrees.tests.common import NormalSetTests
 class OOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
 
     def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTreePy
+        return OOBTreePy
+
+class OOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+
+    def _getTargetClass(self):
         from BTrees.OOBTree import OOBTree
         return OOBTree
 
@@ -36,11 +42,25 @@ class OOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
         return OOTreeSet
 
 
+class OOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSetPy
+        return OOTreeSetPy
+
+
 class OOBucketTest(MappingBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OOBTree import OOBucket
         return OOBucket
+
+
+class OOBucketPyTest(MappingBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBucketPy
+        return OOBucketPy
 
 
 class OOTreeSetTest(NormalSetTests, unittest.TestCase):
@@ -50,6 +70,13 @@ class OOTreeSetTest(NormalSetTests, unittest.TestCase):
         return OOTreeSet
 
 
+class OOTreeSetPyTest(NormalSetTests, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSetPy
+        return OOTreeSetPy
+
+
 class OOSetTest(ExtendedSetTests, unittest.TestCase):
 
     def _getTargetClass(self):
@@ -57,17 +84,12 @@ class OOSetTest(ExtendedSetTests, unittest.TestCase):
         return OOSet
 
 
-class OOModuleTest(ModuleTest, unittest.TestCase):
+class OOSetPyTest(ExtendedSetTests, unittest.TestCase):
 
-    prefix = 'OO'
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOSetPy
+        return OOSetPy
 
-    def _getModule(self):
-        import BTrees
-        return BTrees.OOBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IObjectObjectBTreeModule
 
 
 class OOBTreeTest(BTreeTests, unittest.TestCase):
@@ -110,13 +132,45 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         t.clear()
 
+
+#class OOBTreePyTest(OOBTreeTest):
+#
+# Right now, we can't match the C extension's test / prohibition of the
+# default 'object' comparison semantics.
+class OOBTreePyTest(BTreeTests, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.OOBTree import OOBTreePy
+        return OOBTreePy()
+
+
+class OOModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'OO'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.OOBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectObjectBTreeModule
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OOBTreeInternalKeyTest),
+        unittest.makeSuite(OOBTreePyInternalKeyTest),
         unittest.makeSuite(OOTreeSetInternalKeyTest),
+        unittest.makeSuite(OOTreeSetPyInternalKeyTest),
         unittest.makeSuite(OOBucketTest),
+        unittest.makeSuite(OOBucketPyTest),
         unittest.makeSuite(OOTreeSetTest),
+        unittest.makeSuite(OOTreeSetPyTest),
         unittest.makeSuite(OOSetTest),
+        unittest.makeSuite(OOSetPyTest),
         unittest.makeSuite(OOModuleTest),
         unittest.makeSuite(OOBTreeTest),
+        unittest.makeSuite(OOBTreePyTest),
+        unittest.makeSuite(OOModuleTest),
     ))

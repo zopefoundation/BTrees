@@ -342,6 +342,8 @@ class _MappingBase(_Base):
 
     def __setitem__(self, key, value):
         # TODO:  enforce test that key has non-default comparison?
+        #if getattr(key, '__cmp__', None) is object.__cmp__:
+        #    raise TypeError("Can't use default __cmp__")
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
