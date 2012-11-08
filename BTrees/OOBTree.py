@@ -37,9 +37,8 @@ class OOBucketPy(Bucket):
 try:
     from _OOBTree import OOBucket
 except ImportError:
-    OOBucket = Bucket = OOBucketPy
-else:
-    Bucket = OOBucket
+    OOBucket = OOBucketPy
+Bucket = OOBucket
 
 
 class OOSetPy(Set):
@@ -48,9 +47,8 @@ class OOSetPy(Set):
 try:
     from _OOBTree import OOSet
 except ImportError:
-    OOSet = Set = OOSetPy
-else:
-    Set = OOSet
+    OOSet = OOSetPy
+Set = OOSet
 
 
 class OOBTreePy(BTree):
@@ -60,9 +58,8 @@ class OOBTreePy(BTree):
 try:
     from _OOBTree import OOBTree
 except ImportError:
-    OOBTree = BTree = OOBTreePy
-else:
-    BTree = OOBTree
+    OOBTree = OOBTreePy
+BTree = OOBTree
 
 
 class OOTreeSetPy(TreeSet):
@@ -71,9 +68,8 @@ class OOTreeSetPy(TreeSet):
 try:
     from _OOBTree import OOTreeSet
 except ImportError:
-    OOTreeSet = TreeSet = OOTreeSetPy
-else:
-    TreeSet = OOTreeSet
+    OOTreeSet = OOTreeSetPy
+TreeSet = OOTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
