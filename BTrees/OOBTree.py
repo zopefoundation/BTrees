@@ -12,6 +12,11 @@
 #
 ##############################################################################
 
+__all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
+           'OOBucket', 'OOSet', 'OOBTree', 'OOTreeSet',
+           'union', 'intersection','difference',  
+          )
+
 from zope.interface import moduleProvides
 
 from BTrees.Interfaces import IObjectObjectBTreeModule
