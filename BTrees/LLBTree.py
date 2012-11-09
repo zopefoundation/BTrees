@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) 2001, 2002 Zope Foundation and Contributors.
+# Copyright (c) 2001-2012 Zope Foundation and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the Zope Public License,
@@ -12,13 +12,140 @@
 #
 ##############################################################################
 
-import zope.interface
-import BTrees.Interfaces
+__all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
+           'LLBucket', 'LLSet', 'LLBTree', 'LLTreeSet',
+           'union', 'intersection', 'difference',  
+           'weightedUnion', 'weightedIntersection', 'multiunion',
+          )
 
+from zope.interface import moduleProvides
+
+from BTrees.Interfaces import IIntegerIntegerBTreeModule
+from BTrees.___BTree import Bucket
+from BTrees.___BTree import MERGE
+from BTrees.___BTree import MERGE_WEIGHT_numeric
+from BTrees.___BTree import MERGE_DEFAULT_int
+from BTrees.___BTree import Set
+from BTrees.___BTree import Tree as BTree
+from BTrees.___BTree import TreeSet
+from BTrees.___BTree import difference as _difference
+from BTrees.___BTree import intersection as _intersection
+from BTrees.___BTree import multiunion as _multiunion
+from BTrees.___BTree import setop as _setop
+from BTrees.___BTree import to_long as _to_key
+from BTrees.___BTree import to_long as _to_value
+from BTrees.___BTree import union as _union
+from BTrees.___BTree import weightedIntersection as _weightedIntersection
+from BTrees.___BTree import weightedUnion as _weightedUnion
+
+_BUCKET_SIZE = 120
+_TREE_SIZE = 500
+using64bits = True
+
+class LLBucketPy(Bucket):
+    MAX_SIZE = _BUCKET_SIZE
+    _to_key = _to_key
+    _to_value = _to_value
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_int
 try:
-    from _LLBTree import *
+    from _LLBTree import LLBucket
 except ImportError:
-    import ___BTree
-    ___BTree._import(globals(), 'LL', 120, 500)
+    LLBucket = LLBucketPy
+Bucket = LLBucket
 
-zope.interface.moduleProvides(BTrees.Interfaces.IIntegerIntegerBTreeModule)
+
+class LLSetPy(Set):
+    MAX_SIZE = _BUCKET_SIZE
+    _to_key = _to_key
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_int
+try:
+    from _LLBTree import LLSet
+except ImportError:
+    LLSet = LLSetPy
+Set = LLSet
+
+
+class LLBTreePy(BTree):
+    MAX_SIZE = _TREE_SIZE
+    _to_key = _to_key
+    _to_value = _to_value
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_int
+try:
+    from _LLBTree import LLBTree
+except ImportError:
+    LLBTree = LLBTreePy
+BTree = LLBTree
+
+
+class LLTreeSetPy(TreeSet):
+    MAX_SIZE = _TREE_SIZE
+    _to_key = _to_key
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_int
+try:
+    from _LLBTree import LLTreeSet
+except ImportError:
+    LLTreeSet = LLTreeSetPy
+TreeSet = LLTreeSet
+
+
+# Can't declare forward refs, so fix up afterwards:
+
+LLBucketPy._mapping_type = LLBucketPy._bucket_type = LLBucketPy
+LLBucketPy._set_type = LLSetPy
+
+LLSetPy._mapping_type = LLBucketPy
+LLSetPy._set_type = LLSetPy._bucket_type = LLSetPy
+
+LLBTreePy._mapping_type = LLBTreePy._bucket_type = LLBucketPy
+LLBTreePy._set_type = LLSetPy
+
+LLTreeSetPy._mapping_type = LLBucketPy
+LLTreeSetPy._set_type = LLTreeSetPy._bucket_type = LLSetPy
+
+
+differencePy = _setop(_difference, LLSetPy)
+try:
+    from _LLBTree import difference
+except ImportError:
+    difference = differencePy
+
+unionPy = _setop(_union, LLSetPy)
+try:
+    from _LLBTree import union
+except ImportError:
+    union = unionPy
+
+intersectionPy = _setop(_intersection, LLSetPy)
+try:
+    from _LLBTree import intersection
+except ImportError:
+    intersection = intersectionPy
+
+multiunionPy = _setop(_multiunion, LLSetPy)
+try:
+    from _LLBTree import multiunion
+except ImportError:
+    multiunion = multiunionPy
+
+weightedUnionPy = _setop(_weightedUnion, LLSetPy)
+try:
+    from _OIBTree import union
+except ImportError:
+    weightedUnion = weightedUnionPy
+
+weightedIntersectionPy = _setop(_weightedIntersection, LLSetPy)
+try:
+    from _OIBTree import weightedIntersection
+except ImportError:
+    weightedIntersection = weightedIntersectionPy
+
+
+moduleProvides(IIntegerIntegerBTreeModule)
