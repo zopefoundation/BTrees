@@ -16,12 +16,14 @@
 
 from struct import pack
 from struct import unpack
-from BTrees.Interfaces import BTreesConflictError
+from struct import error as struct_error
 
 import persistent
-import struct
+
+from BTrees.Interfaces import BTreesConflictError
 
 _marker = object()
+
 
 class _Base(persistent.Persistent):
 
@@ -31,6 +33,7 @@ class _Base(persistent.Persistent):
         self.clear()
         if items:
             self.update(items)
+
 
 class _BucketBase(_Base):
 
@@ -283,6 +286,7 @@ class _BucketBase(_Base):
         result._next = buckets[0]._next
         return result.__getstate__()
 
+
 class _SetIteration(object):
 
     def __init__(self, set, useValues=False, default=None):
@@ -320,6 +324,7 @@ class _SetIteration(object):
 
         return self
 
+
 class _MappingBase(_Base):
 
     def setdefault(self, key, value):
@@ -353,6 +358,7 @@ class _MappingBase(_Base):
     def __delitem__(self, key):
         self._del(self._to_key(key))
 
+
 class _SetBase(_Base):
 
     def add(self, key):
@@ -367,6 +373,7 @@ class _SetBase(_Base):
         add = self.add
         for i in items:
             add(i)
+
 
 class Bucket(_MappingBase, _BucketBase):
 
@@ -541,6 +548,7 @@ class Set(_SetBase, _BucketBase):
         self._next = new_instance
         return new_instance
 
+
 class _TreeItem(object):
 
     __slots__ = 'key', 'child'
@@ -548,6 +556,7 @@ class _TreeItem(object):
     def __init__(self, key, child):
         self.key = key
         self.child = child
+
 
 class _Tree(_MappingBase):
 
@@ -837,6 +846,7 @@ class _Tree(_MappingBase):
         states = map(_get_simple_btree_bucket_state, states)
         return ((self._bucket_type()._p_resolveConflict(*states), ), )
 
+
 def _get_simple_btree_bucket_state(state):
     if state is None:
         return state
@@ -858,6 +868,7 @@ def _get_simple_btree_bucket_state(state):
         raise TypeError("_p_resolveConflict: expected tuple for bucket state")
 
     return state
+
 
 class _TreeItems(object):
 
@@ -956,6 +967,7 @@ class _TreeItems(object):
 #         except AttributeError:
 #             _, _, _, self._len = self._get_len(self.base, self.slice_)
 #             return self._len
+
 
 class Tree(_Tree):
 
@@ -1064,6 +1076,7 @@ def _set_operation(s1, s2,
 
     return r
 
+
 class setop(object):
 
     def __init__(self, func, set_type):
@@ -1072,6 +1085,7 @@ class setop(object):
 
     def __call__(self, *a, **k):
         return self.func(self.set_type, *a, **k)
+
 
 def difference(set_type, o1, o2):
     if o1 is None or o2 is None:
@@ -1136,7 +1150,7 @@ def to_int(self, v):
     try:
         if not unpack("i", pack("i", v))[0] == v:
             raise TypeError('32-bit integer expected')
-    except (struct.error,
+    except (struct_error,
             OverflowError, #PyPy
            ):
         raise TypeError('32-bit integer expected')
@@ -1146,7 +1160,7 @@ def to_int(self, v):
 def to_float(self, v):
     try:
         pack("f", v)
-    except struct.error:
+    except struct_error:
         raise TypeError('float expected')
     return float(v)
 
@@ -1156,7 +1170,7 @@ def to_long(self, v):
             if isinstance(v, int_types):
                 raise ValueError("Value out of range", v)
             raise TypeError('64-bit integer expected')
-    except (struct.error,
+    except (struct_error,
             OverflowError, #PyPy
            ):
         if isinstance(v, int_types):
@@ -1185,72 +1199,3 @@ def MERGE_WEIGHT_default(self, value, weight):
 
 def MERGE_WEIGHT_numeric(self, value, weight):
     return value * weight
-
-def _import(globals, prefix, bucket_size, tree_size,
-            to_key=None, to_value=None):
-    if to_key is None:
-        to_key = tos[prefix[0]]
-    if to_value is None:
-        to_value = tos[prefix[1]]
-    mc = Bucket.__class__
-    b_dict = {'MAX_SIZE': bucket_size,
-              '_to_value': to_value,
-              'MERGE_WEIGHT': MERGE_WEIGHT_default,
-             }
-    t_dict = {'MAX_SIZE': tree_size,
-              '_to_value': to_value,
-              'MERGE_WEIGHT': MERGE_WEIGHT_default,
-             }
-    s_dict = {'MAX_SIZE': bucket_size,
-              'MERGE_WEIGHT': MERGE_WEIGHT_default,
-             }
-    ts_dict = {'MAX_SIZE': tree_size,
-               'MERGE_WEIGHT': MERGE_WEIGHT_default,
-              }
-    if prefix[1] in 'IL':
-        b_dict['MERGE'] = t_dict['MERGE'] = MERGE
-        s_dict['MERGE'] = ts_dict['MERGE'] = MERGE
-        b_dict['MERGE_DEFAULT'] = t_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_int
-        s_dict['MERGE_DEFAULT'] = ts_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_int
-        b_dict['MERGE_WEIGHT'] = t_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
-        s_dict['MERGE_WEIGHT'] = ts_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
-    elif prefix[1] == 'F':
-        b_dict['MERGE'] = t_dict['MERGE'] = MERGE
-        s_dict['MERGE'] = ts_dict['MERGE'] = MERGE
-        b_dict['MERGE_DEFAULT'] = t_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_float
-        s_dict['MERGE_DEFAULT'] = ts_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_float
-        b_dict['MERGE_WEIGHT'] = t_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
-        s_dict['MERGE_WEIGHT'] = ts_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
-
-    bucket = mc(prefix+'Bucket', (Bucket, ), b_dict)
-    set = mc(prefix+'Set', (Set, ), s_dict)
-    tree = mc(prefix+'BTree', (Tree, ), t_dict)
-    treeset = mc(prefix+'TreeSet', (TreeSet, ), ts_dict)
-    for c in bucket, set, tree, treeset:
-        c._mapping_type = bucket
-        c._set_type = set
-        c._bucket_type = set if 'Set' in c.__name__ else bucket
-        c._to_key = to_key
-        c.__module__ = 'BTrees.%sBTree' % prefix
-        globals[c.__name__] = c
-    globals.update(
-        Bucket = bucket,
-        Set = set,
-        BTree = tree,
-        TreeSet = treeset,
-        difference = setop(difference, set),
-        union = setop(union, set),
-        intersection = setop(intersection, set),
-        using64bits='L' in prefix,
-        )
-    if prefix[0] in 'IL':
-        globals.update(
-            multiunion = setop(multiunion, set),
-        )
-    if prefix[1] != 'O':
-        globals.update(
-            weightedUnion = setop(weightedUnion, set),
-            weightedIntersection = setop(weightedIntersection, set),
-        )
-
-    del globals['___BTree']
