@@ -483,6 +483,19 @@ class Bucket(_MappingBase, _BucketBase):
             keys.append(state[i])
             values.append(state[i+1])
 
+    def MERGE_WEIGHT(self, value, weight):
+        return 0  # fload / int value trees override to return value * weight
+
+
+class NumericValueBucket(Bucket):
+    # Base for ?FTree, ?ITree, ?LTree classes.
+    def MERGE(self, value1, weight1, value2, weight2):
+        return (value1 * weight1) + (value2 * weight1)
+
+    def MERGE_WEIGHT(self, value, weight):
+        return value * weight
+
+
 class Set(_SetBase, _BucketBase):
 
     def __getstate__(self):
@@ -989,6 +1002,18 @@ class Tree(_Tree):
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
 
+    def MERGE_WEIGHT(self, value, weight):
+        return 0  # fload / int value trees override to return value * weight
+
+
+class NumericValueTree(Tree):
+    # Base for ?FTree, ?ITree, ?LTree classes.
+    def MERGE(self, value1, weight1, value2, weight2):
+        return (value1 * weight1) + (value2 * weight1)
+
+    def MERGE_WEIGHT(self, value, weight):
+        return value * weight
+
 class TreeSet(_SetBase, _Tree):
     pass
 
@@ -1001,8 +1026,8 @@ def _set_operation(s1, s2,
     i2 = _SetIteration(s2, usevalues2)
     merge = i1.useValues or i2.useValues
     MERGE = getattr(s1, 'MERGE', None)
-    MERGE_WEIGHT = getattr(s1, 'MERGE_WEIGHT', None)
     if merge:
+        MERGE_WEIGHT = getattr(s1, 'MERGE_WEIGHT')
         if MERGE is None and c12 and i1.useValues and i2.useValues:
             raise TypeError("invalid set operation")
 
@@ -1026,7 +1051,7 @@ def _set_operation(s1, s2,
 
         def copy(i, w):
             r._keys.append(i.key)
-            r._values.append(MERGE_WEIGHT(i, w))
+            r._values.append(MERGE_WEIGHT(i.value, w))
     else:
         r = s1._set_type()
         def copy(i, w):
@@ -1172,6 +1197,9 @@ def to_str(l):
     return to
 
 tos = dict(I=to_int, L=to_long, F=to_float, O=to_ob)
+treetypes = dict(I=NumericValueTree, L=NumericValueTree, F=NumericValueTree)
+buckettypes = dict(I=NumericValueBucket, L=NumericValueBucket,
+                   F=NumericValueBucket)
 
 def _import(globals, prefix, bucket_size, tree_size,
             to_key=None, to_value=None):
@@ -1179,11 +1207,13 @@ def _import(globals, prefix, bucket_size, tree_size,
         to_key = tos[prefix[0]]
     if to_value is None:
         to_value = tos[prefix[1]]
-    mc = Bucket.__class__
-    bucket = mc(prefix+'Bucket', (Bucket, ), dict(MAX_SIZE=bucket_size,
+    buckettype = buckettypes.get(prefix[1], Bucket)
+    mc = buckettype.__class__
+    bucket = mc(prefix+'Bucket', (buckettype, ), dict(MAX_SIZE=bucket_size,
                                                   _to_value=to_value))
     set = mc(prefix+'Set', (Set, ), dict(MAX_SIZE=bucket_size))
-    tree = mc(prefix+'BTree', (Tree, ), dict(MAX_SIZE=tree_size,
+    treetype = treetypes.get(prefix[1], Tree)
+    tree = mc(prefix+'BTree', (treetype, ), dict(MAX_SIZE=tree_size,
                                             _to_value=to_value))
     treeset = mc(prefix+'TreeSet', (TreeSet, ), dict(MAX_SIZE=tree_size))
     for c in bucket, set, tree, treeset:
