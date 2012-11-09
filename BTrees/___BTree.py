@@ -283,9 +283,9 @@ class _BucketBase(_Base):
         result._next = buckets[0]._next
         return result.__getstate__()
 
-class _SetIteration:
+class _SetIteration(object):
 
-    def __init__(self, set, useValues=False):
+    def __init__(self, set, useValues=False, default=None):
         if set is None:
             set = ()
         self.set = set
@@ -295,6 +295,8 @@ class _SetIteration:
             except AttributeError:
                 itmeth = set.__iter__
                 useValues = False
+            else:
+                self.value = None
         else:
             itmeth = set.__iter__
 
@@ -302,6 +304,7 @@ class _SetIteration:
         self._next = itmeth().next
         self.active = True
         self.position = 0
+        self.value = default
         self.advance()
 
     def advance(self):
@@ -482,18 +485,6 @@ class Bucket(_MappingBase, _BucketBase):
         for i in range(0, len(state), 2):
             keys.append(state[i])
             values.append(state[i+1])
-
-    def MERGE_WEIGHT(self, value, weight):
-        return 0  # fload / int value trees override to return value * weight
-
-
-class NumericValueBucket(Bucket):
-    # Base for ?FTree, ?ITree, ?LTree classes.
-    def MERGE(self, value1, weight1, value2, weight2):
-        return (value1 * weight1) + (value2 * weight1)
-
-    def MERGE_WEIGHT(self, value, weight):
-        return value * weight
 
 
 class Set(_SetBase, _BucketBase):
@@ -1002,17 +993,6 @@ class Tree(_Tree):
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
 
-    def MERGE_WEIGHT(self, value, weight):
-        return 0  # fload / int value trees override to return value * weight
-
-
-class NumericValueTree(Tree):
-    # Base for ?FTree, ?ITree, ?LTree classes.
-    def MERGE(self, value1, weight1, value2, weight2):
-        return (value1 * weight1) + (value2 * weight1)
-
-    def MERGE_WEIGHT(self, value, weight):
-        return value * weight
 
 class TreeSet(_SetBase, _Tree):
     pass
@@ -1022,8 +1002,9 @@ def _set_operation(s1, s2,
                    usevalues1=False, usevalues2=False,
                    w1=1, w2=1,
                    c1=True, c12=True, c2=True):
-    i1 = _SetIteration(s1, usevalues1)
-    i2 = _SetIteration(s2, usevalues2)
+    MERGE_DEFAULT = getattr(s1, 'MERGE_DEFAULT', None)
+    i1 = _SetIteration(s1, usevalues1, MERGE_DEFAULT)
+    i2 = _SetIteration(s2, usevalues2, MERGE_DEFAULT)
     merge = i1.useValues or i2.useValues
     MERGE = getattr(s1, 'MERGE', None)
     if merge:
@@ -1036,10 +1017,7 @@ def _set_operation(s1, s2,
             t = w1; w1 = w2; w2 = t
             t = c1; c1 = c2; c2 = t
 
-        MERGE_DEFAULT = getattr(s1, 'MERGE_DEFAULT', None)
-        if MERGE_DEFAULT is not None:
-            i1.value = i2.value = MERGE_DEFAULT
-        else:
+        if MERGE_DEFAULT is None:
             if i1.useValues:
                 if (not i2.useValues) and c2:
                     raise TypeError("invalid set operation")
@@ -1123,7 +1101,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     elif o2 is None:
         return w1, o1
     else:
-        return 1, _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
+        return 1, _set_operation(o1, o2, 1, 1, w1, w2, 1, 1, 1)
 
 def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
@@ -1134,10 +1112,8 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     elif o2 is None:
         return w1, o1
     else:
-        return (
-            w1+w2 if isinstance(o1, Set) else 1,
-            _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0),
-            )
+        result = _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
+        return (w1 + w2 if isinstance(result, (Set, TreeSet)) else 1, result)
 
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
@@ -1197,9 +1173,18 @@ def to_str(l):
     return to
 
 tos = dict(I=to_int, L=to_long, F=to_float, O=to_ob)
-treetypes = dict(I=NumericValueTree, L=NumericValueTree, F=NumericValueTree)
-buckettypes = dict(I=NumericValueBucket, L=NumericValueBucket,
-                   F=NumericValueBucket)
+
+MERGE_DEFAULT_int = 1
+MERGE_DEFAULT_float = 1.0
+
+def MERGE(self, value1, weight1, value2, weight2):
+    return (value1 * weight1) + (value2 * weight2)
+
+def MERGE_WEIGHT_default(self, value, weight):
+    return value
+
+def MERGE_WEIGHT_numeric(self, value, weight):
+    return value * weight
 
 def _import(globals, prefix, bucket_size, tree_size,
             to_key=None, to_value=None):
@@ -1207,15 +1192,40 @@ def _import(globals, prefix, bucket_size, tree_size,
         to_key = tos[prefix[0]]
     if to_value is None:
         to_value = tos[prefix[1]]
-    buckettype = buckettypes.get(prefix[1], Bucket)
-    mc = buckettype.__class__
-    bucket = mc(prefix+'Bucket', (buckettype, ), dict(MAX_SIZE=bucket_size,
-                                                  _to_value=to_value))
-    set = mc(prefix+'Set', (Set, ), dict(MAX_SIZE=bucket_size))
-    treetype = treetypes.get(prefix[1], Tree)
-    tree = mc(prefix+'BTree', (treetype, ), dict(MAX_SIZE=tree_size,
-                                            _to_value=to_value))
-    treeset = mc(prefix+'TreeSet', (TreeSet, ), dict(MAX_SIZE=tree_size))
+    mc = Bucket.__class__
+    b_dict = {'MAX_SIZE': bucket_size,
+              '_to_value': to_value,
+              'MERGE_WEIGHT': MERGE_WEIGHT_default,
+             }
+    t_dict = {'MAX_SIZE': tree_size,
+              '_to_value': to_value,
+              'MERGE_WEIGHT': MERGE_WEIGHT_default,
+             }
+    s_dict = {'MAX_SIZE': bucket_size,
+              'MERGE_WEIGHT': MERGE_WEIGHT_default,
+             }
+    ts_dict = {'MAX_SIZE': tree_size,
+               'MERGE_WEIGHT': MERGE_WEIGHT_default,
+              }
+    if prefix[1] in 'IL':
+        b_dict['MERGE'] = t_dict['MERGE'] = MERGE
+        s_dict['MERGE'] = ts_dict['MERGE'] = MERGE
+        b_dict['MERGE_DEFAULT'] = t_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_int
+        s_dict['MERGE_DEFAULT'] = ts_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_int
+        b_dict['MERGE_WEIGHT'] = t_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
+        s_dict['MERGE_WEIGHT'] = ts_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
+    elif prefix[1] == 'F':
+        b_dict['MERGE'] = t_dict['MERGE'] = MERGE
+        s_dict['MERGE'] = ts_dict['MERGE'] = MERGE
+        b_dict['MERGE_DEFAULT'] = t_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_float
+        s_dict['MERGE_DEFAULT'] = ts_dict['MERGE_DEFAULT'] = MERGE_DEFAULT_float
+        b_dict['MERGE_WEIGHT'] = t_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
+        s_dict['MERGE_WEIGHT'] = ts_dict['MERGE_WEIGHT'] = MERGE_WEIGHT_numeric
+
+    bucket = mc(prefix+'Bucket', (Bucket, ), b_dict)
+    set = mc(prefix+'Set', (Set, ), s_dict)
+    tree = mc(prefix+'BTree', (Tree, ), t_dict)
+    treeset = mc(prefix+'TreeSet', (TreeSet, ), ts_dict)
     for c in bucket, set, tree, treeset:
         c._mapping_type = bucket
         c._set_type = set

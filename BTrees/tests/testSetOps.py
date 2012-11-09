@@ -13,16 +13,6 @@
 ##############################################################################
 import unittest
 
-#from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-#from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-#from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
-#from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
-#from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
-#from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-#from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
-#from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
-#from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
-
 # Subclasses have to set up:
 #     builders() - function returning functions to build inputs,
 #     each returned callable tkes an optional keys arg

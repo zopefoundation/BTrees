@@ -34,6 +34,8 @@ class OOBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
+    def MERGE_WEIGHT(self, value, weight):
+        return value
 try:
     from _OOBTree import OOBucket
 except ImportError:
@@ -55,6 +57,8 @@ class OOBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
+    def MERGE_WEIGHT(self, value, weight):
+        return value
 try:
     from _OOBTree import OOBTree
 except ImportError:
