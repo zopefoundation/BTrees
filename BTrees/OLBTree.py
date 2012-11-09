@@ -24,7 +24,7 @@ from BTrees.Interfaces import IObjectIntegerBTreeModule
 from BTrees.___BTree import Bucket
 from BTrees.___BTree import MERGE
 from BTrees.___BTree import MERGE_WEIGHT_numeric
-from BTrees.___BTree import MERGE_DEFAULT_float
+from BTrees.___BTree import MERGE_DEFAULT_int
 from BTrees.___BTree import Set
 from BTrees.___BTree import Tree as BTree
 from BTrees.___BTree import TreeSet
@@ -47,7 +47,7 @@ class OLBucketPy(Bucket):
     _to_value = _to_value
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
-    MERGE_DEFAULT = MERGE_DEFAULT_float
+    MERGE_DEFAULT = MERGE_DEFAULT_int
 try:
     from _OLBTree import OLBucket
 except ImportError:
@@ -60,7 +60,7 @@ class OLSetPy(Set):
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
-    MERGE_DEFAULT = MERGE_DEFAULT_float
+    MERGE_DEFAULT = MERGE_DEFAULT_int
 try:
     from _OLBTree import OLSet
 except ImportError:
@@ -74,7 +74,7 @@ class OLBTreePy(BTree):
     _to_value = _to_value
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
-    MERGE_DEFAULT = MERGE_DEFAULT_float
+    MERGE_DEFAULT = MERGE_DEFAULT_int
 try:
     from _OLBTree import OLBTree
 except ImportError:
@@ -87,7 +87,7 @@ class OLTreeSetPy(TreeSet):
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
-    MERGE_DEFAULT = MERGE_DEFAULT_float
+    MERGE_DEFAULT = MERGE_DEFAULT_int
 try:
     from _OLBTree import OLTreeSet
 except ImportError:
