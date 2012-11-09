@@ -21,6 +21,7 @@ from zope.interface import moduleProvides
 
 from BTrees.Interfaces import IIntegerObjectBTreeModule
 from BTrees.___BTree import Bucket
+from BTrees.___BTree import MERGE_WEIGHT_default
 from BTrees.___BTree import Set
 from BTrees.___BTree import Tree as BTree
 from BTrees.___BTree import TreeSet
@@ -41,9 +42,7 @@ class IOBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
-
-    def MERGE_WEIGHT(self, value, weight):
-        return value
+    MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOSetPy(Set):
@@ -55,9 +54,7 @@ class IOBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
-
-    def MERGE_WEIGHT(self, value, weight):
-        return value
+    MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOTreeSetPy(TreeSet):
