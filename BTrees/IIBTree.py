@@ -42,6 +42,7 @@ _BUCKET_SIZE = 120
 _TREE_SIZE = 500
 using64bits = False
 
+
 class IIBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
@@ -49,11 +50,6 @@ class IIBucketPy(Bucket):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _IIBTree import IIBucket
-except ImportError:
-    IIBucket = IIBucketPy
-Bucket = IIBucket
 
 
 class IISetPy(Set):
@@ -62,11 +58,6 @@ class IISetPy(Set):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _IIBTree import IISet
-except ImportError:
-    IISet = IISetPy
-Set = IISet
 
 
 class IIBTreePy(BTree):
@@ -76,11 +67,6 @@ class IIBTreePy(BTree):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _IIBTree import IIBTree
-except ImportError:
-    IIBTree = IIBTreePy
-BTree = IIBTree
 
 
 class IITreeSetPy(TreeSet):
@@ -89,11 +75,6 @@ class IITreeSetPy(TreeSet):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _IIBTree import IITreeSet
-except ImportError:
-    IITreeSet = IITreeSetPy
-TreeSet = IITreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -112,40 +93,38 @@ IITreeSetPy._set_type = IITreeSetPy._bucket_type = IISetPy
 
 
 differencePy = _setop(_difference, IISetPy)
-try:
-    from _IIBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, IISetPy)
-try:
-    from _IIBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, IISetPy)
-try:
-    from _IIBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 multiunionPy = _setop(_multiunion, IISetPy)
-try:
-    from _IIBTree import multiunion
-except ImportError:
-    multiunion = multiunionPy
-
 weightedUnionPy = _setop(_weightedUnion, IISetPy)
-try:
-    from _IIBTree import weightedUnion
-except ImportError:
-    weightedUnion = weightedUnionPy
 
 weightedIntersectionPy = _setop(_weightedIntersection, IISetPy)
 try:
+    from _IIBTree import IIBucket
+    from _IIBTree import IISet
+    from _IIBTree import IIBTree
+    from _IIBTree import IITreeSet
+    from _IIBTree import difference
+    from _IIBTree import union
+    from _IIBTree import intersection
+    from _IIBTree import multiunion
+    from _IIBTree import weightedUnion
     from _IIBTree import weightedIntersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    IIBucket = IIBucketPy
+    IISet = IISetPy
+    IIBTree = IIBTreePy
+    IITreeSet = IITreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    multiunion = multiunionPy
+    weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 
+Bucket = IIBucket
+Set = IISet
+BTree = IIBTree
+TreeSet = IITreeSet
 
 moduleProvides(IIntegerIntegerBTreeModule)

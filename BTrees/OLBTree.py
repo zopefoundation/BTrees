@@ -41,6 +41,7 @@ _BUCKET_SIZE = 60
 _TREE_SIZE = 250
 using64bits = True
 
+
 class OLBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
@@ -48,11 +49,6 @@ class OLBucketPy(Bucket):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _OLBTree import OLBucket
-except ImportError:
-    OLBucket = OLBucketPy
-Bucket = OLBucket
 
 
 class OLSetPy(Set):
@@ -61,11 +57,6 @@ class OLSetPy(Set):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _OLBTree import OLSet
-except ImportError:
-    OLSet = OLSetPy
-Set = OLSet
 
 
 class OLBTreePy(BTree):
@@ -75,11 +66,6 @@ class OLBTreePy(BTree):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _OLBTree import OLBTree
-except ImportError:
-    OLBTree = OLBTreePy
-BTree = OLBTree
 
 
 class OLTreeSetPy(TreeSet):
@@ -88,11 +74,6 @@ class OLTreeSetPy(TreeSet):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _OLBTree import OLTreeSet
-except ImportError:
-    OLTreeSet = OLTreeSetPy
-TreeSet = OLTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -111,34 +92,35 @@ OLTreeSetPy._set_type = OLTreeSetPy._bucket_type = OLSetPy
 
 
 differencePy = _setop(_difference, OLSetPy)
-try:
-    from _OLBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, OLSetPy)
-try:
-    from _OLBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, OLSetPy)
-try:
-    from _OLBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 weightedUnionPy = _setop(_weightedUnion, OLSetPy)
-try:
-    from _OLBTree import weightedUnion
-except ImportError:
-    weightedUnion = weightedUnionPy
-
 weightedIntersectionPy = _setop(_weightedIntersection, OLSetPy)
+
 try:
+    from _OLBTree import OLBucket
+    from _OLBTree import OLSet
+    from _OLBTree import OLBTree
+    from _OLBTree import OLTreeSet
+    from _OLBTree import difference
+    from _OLBTree import union
+    from _OLBTree import intersection
+    from _OLBTree import weightedUnion
     from _OLBTree import weightedIntersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    OLBucket = OLBucketPy
+    OLSet = OLSetPy
+    OLBTree = OLBTreePy
+    OLTreeSet = OLTreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 
+Bucket = OLBucket
+Set = OLSet
+BTree = OLBTree
+TreeSet = OLTreeSet
 
 moduleProvides(IObjectIntegerBTreeModule)

@@ -35,50 +35,32 @@ _BUCKET_SIZE = 30
 _TREE_SIZE = 250
 using64bits = False
 
+
 class OOBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _OOBTree import OOBucket
-except ImportError:
-    OOBucket = OOBucketPy
-Bucket = OOBucket
-
 
 class OOSetPy(Set):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
-try:
-    from _OOBTree import OOSet
-except ImportError:
-    OOSet = OOSetPy
-Set = OOSet
 
 
 class OOBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _OOBTree import OOBTree
-except ImportError:
-    OOBTree = OOBTreePy
-BTree = OOBTree
 
 
 class OOTreeSetPy(TreeSet):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
-try:
-    from _OOBTree import OOTreeSet
-except ImportError:
-    OOTreeSet = OOTreeSetPy
-TreeSet = OOTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -97,22 +79,29 @@ OOTreeSetPy._set_type = OOTreeSetPy._bucket_type = OOSetPy
 
 
 differencePy = _setop(_difference, OOSetPy)
-try:
-    from _OOBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, OOSetPy)
-try:
-    from _OOBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, OOSetPy)
+
 try:
+    from _OOBTree import OOBucket
+    from _OOBTree import OOSet
+    from _OOBTree import OOBTree
+    from _OOBTree import OOTreeSet
+    from _OOBTree import difference
+    from _OOBTree import union
     from _OOBTree import intersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    OOBucket = OOBucketPy
+    OOSet = OOSetPy
+    OOBTree = OOBTreePy
+    OOTreeSet = OOTreeSetPy
+    difference = differencePy
+    union = unionPy
     intersection = intersectionPy
 
+Bucket = OOBucket
+Set = OOSet
+BTree = OOBTree
+TreeSet = OOTreeSet
 
 moduleProvides(IObjectObjectBTreeModule)

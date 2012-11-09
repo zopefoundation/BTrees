@@ -42,6 +42,7 @@ _BUCKET_SIZE = 120
 _TREE_SIZE = 500
 using64bits = True
 
+
 class LLBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
@@ -49,11 +50,6 @@ class LLBucketPy(Bucket):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _LLBTree import LLBucket
-except ImportError:
-    LLBucket = LLBucketPy
-Bucket = LLBucket
 
 
 class LLSetPy(Set):
@@ -62,11 +58,6 @@ class LLSetPy(Set):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _LLBTree import LLSet
-except ImportError:
-    LLSet = LLSetPy
-Set = LLSet
 
 
 class LLBTreePy(BTree):
@@ -76,11 +67,6 @@ class LLBTreePy(BTree):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _LLBTree import LLBTree
-except ImportError:
-    LLBTree = LLBTreePy
-BTree = LLBTree
 
 
 class LLTreeSetPy(TreeSet):
@@ -89,11 +75,6 @@ class LLTreeSetPy(TreeSet):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_int
-try:
-    from _LLBTree import LLTreeSet
-except ImportError:
-    LLTreeSet = LLTreeSetPy
-TreeSet = LLTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -112,40 +93,38 @@ LLTreeSetPy._set_type = LLTreeSetPy._bucket_type = LLSetPy
 
 
 differencePy = _setop(_difference, LLSetPy)
-try:
-    from _LLBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, LLSetPy)
-try:
-    from _LLBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, LLSetPy)
-try:
-    from _LLBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 multiunionPy = _setop(_multiunion, LLSetPy)
-try:
-    from _LLBTree import multiunion
-except ImportError:
-    multiunion = multiunionPy
-
 weightedUnionPy = _setop(_weightedUnion, LLSetPy)
-try:
-    from _LLBTree import weightedUnion
-except ImportError:
-    weightedUnion = weightedUnionPy
-
 weightedIntersectionPy = _setop(_weightedIntersection, LLSetPy)
+
 try:
+    from _LLBTree import LLBucket
+    from _LLBTree import LLSet
+    from _LLBTree import LLBTree
+    from _LLBTree import LLTreeSet
+    from _LLBTree import difference
+    from _LLBTree import union
+    from _LLBTree import intersection
+    from _LLBTree import multiunion
+    from _LLBTree import weightedUnion
     from _LLBTree import weightedIntersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    LLBucket = LLBucketPy
+    LLSet = LLSetPy
+    LLBTree = LLBTreePy
+    LLTreeSet = LLTreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    multiunion = multiunionPy
+    weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 
+Bucket = LLBucket
+Set = LLSet
+BTree = LLBTree
+TreeSet = LLTreeSet
 
 moduleProvides(IIntegerIntegerBTreeModule)

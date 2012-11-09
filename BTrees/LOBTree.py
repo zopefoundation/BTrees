@@ -36,50 +36,33 @@ _BUCKET_SIZE = 60
 _TREE_SIZE = 500
 using64bits = True
 
+
 class LOBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _LOBTree import LOBucket
-except ImportError:
-    LOBucket = LOBucketPy
-Bucket = LOBucket
 
 
 class LOSetPy(Set):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
-try:
-    from _LOBTree import LOSet
-except ImportError:
-    LOSet = LOSetPy
-Set = LOSet
 
 
 class LOBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _LOBTree import LOBTree
-except ImportError:
-    LOBTree = LOBTreePy
-BTree = LOBTree
 
 
 class LOTreeSetPy(TreeSet):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
-try:
-    from _LOBTree import LOTreeSet
-except ImportError:
-    LOTreeSet = LOTreeSetPy
-TreeSet = LOTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -98,28 +81,32 @@ LOTreeSetPy._set_type = LOTreeSetPy._bucket_type = LOSetPy
 
 
 differencePy = _setop(_difference, LOSetPy)
-try:
-    from _LOBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, LOSetPy)
-try:
-    from _LOBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, LOSetPy)
-try:
-    from _LOBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 multiunionPy = _setop(_multiunion, LOSetPy)
+
 try:
+    from _LOBTree import LOBucket
+    from _LOBTree import LOSet
+    from _LOBTree import LOBTree
+    from _LOBTree import LOTreeSet
+    from _LOBTree import difference
+    from _LOBTree import union
+    from _LOBTree import intersection
     from _LOBTree import multiunion
-except ImportError:
+except ImportError: #pragma NO COVER
+    LOBucket = LOBucketPy
+    LOSet = LOSetPy
+    LOBTree = LOBTreePy
+    LOTreeSet = LOTreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
     multiunion = multiunionPy
 
+Bucket = LOBucket
+Set = LOSet
+BTree = LOBTree
+TreeSet = LOTreeSet
 
 moduleProvides(IIntegerObjectBTreeModule)

@@ -36,50 +36,33 @@ _BUCKET_SIZE = 60
 _TREE_SIZE = 500
 using64bits = False
 
+
 class IOBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _IOBTree import IOBucket
-except ImportError:
-    IOBucket = IOBucketPy
-Bucket = IOBucket
 
 
 class IOSetPy(Set):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
-try:
-    from _IOBTree import IOSet
-except ImportError:
-    IOSet = IOSetPy
-Set = IOSet
 
 
 class IOBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
+
     def MERGE_WEIGHT(self, value, weight):
         return value
-try:
-    from _IOBTree import IOBTree
-except ImportError:
-    IOBTree = IOBTreePy
-BTree = IOBTree
 
 
 class IOTreeSetPy(TreeSet):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
-try:
-    from _IOBTree import IOTreeSet
-except ImportError:
-    IOTreeSet = IOTreeSetPy
-TreeSet = IOTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -98,28 +81,32 @@ IOTreeSetPy._set_type = IOTreeSetPy._bucket_type = IOSetPy
 
 
 differencePy = _setop(_difference, IOSetPy)
-try:
-    from _IOBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, IOSetPy)
-try:
-    from _IOBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, IOSetPy)
-try:
-    from _IOBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 multiunionPy = _setop(_multiunion, IOSetPy)
+
 try:
+    from _IOBTree import IOBucket
+    from _IOBTree import IOSet
+    from _IOBTree import IOBTree
+    from _IOBTree import IOTreeSet
+    from _IOBTree import difference
+    from _IOBTree import union
+    from _IOBTree import intersection
     from _IOBTree import multiunion
-except ImportError:
+except ImportError: #pragma NO COVER
+    IOBucket = IOBucketPy
+    IOSet = IOSetPy
+    IOBTree = IOBTreePy
+    IOTreeSet = IOTreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
     multiunion = multiunionPy
 
+Bucket = IOBucket
+Set = IOSet
+BTree = IOBTree
+TreeSet = IOTreeSet
 
 moduleProvides(IIntegerObjectBTreeModule)

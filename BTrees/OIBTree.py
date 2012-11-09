@@ -48,11 +48,6 @@ class OIBucketPy(Bucket):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _OIBTree import OIBucket
-except ImportError:
-    OIBucket = OIBucketPy
-Bucket = OIBucket
 
 
 class OISetPy(Set):
@@ -61,11 +56,6 @@ class OISetPy(Set):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _OIBTree import OISet
-except ImportError:
-    OISet = OISetPy
-Set = OISet
 
 
 class OIBTreePy(BTree):
@@ -75,11 +65,6 @@ class OIBTreePy(BTree):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _OIBTree import OIBTree
-except ImportError:
-    OIBTree = OIBTreePy
-BTree = OIBTree
 
 
 class OITreeSetPy(TreeSet):
@@ -88,11 +73,6 @@ class OITreeSetPy(TreeSet):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _OIBTree import OITreeSet
-except ImportError:
-    OITreeSet = OITreeSetPy
-TreeSet = OITreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -111,34 +91,36 @@ OITreeSetPy._set_type = OITreeSetPy._bucket_type = OISetPy
 
 
 differencePy = _setop(_difference, OISetPy)
-try:
-    from _OIBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, OISetPy)
-try:
-    from _OIBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, OISetPy)
-try:
-    from _OIBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 weightedUnionPy = _setop(_weightedUnion, OISetPy)
-try:
-    from _OIBTree import union
-except ImportError:
-    weightedUnion = weightedUnionPy
-
 weightedIntersectionPy = _setop(_weightedIntersection, OISetPy)
+
 try:
+    from _OIBTree import OIBucket
+    from _OIBTree import OISet
+    from _OIBTree import OIBTree
+    from _OIBTree import OITreeSet
+    from _OIBTree import difference
+    from _OIBTree import union
+    from _OIBTree import intersection
+    from _OIBTree import weightedUnion
     from _OIBTree import weightedIntersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    OIBucket = OIBucketPy
+    OISet = OISetPy
+    OIBTree = OIBTreePy
+    OITreeSet = OITreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 
+
+Bucket = OIBucket
+Set = OISet
+BTree = OIBTree
+TreeSet = OITreeSet
 
 moduleProvides(IObjectIntegerBTreeModule)

@@ -49,11 +49,6 @@ class IFBucketPy(Bucket):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _IFBTree import IFBucket
-except ImportError:
-    IFBucket = IFBucketPy
-Bucket = IFBucket
 
 
 class IFSetPy(Set):
@@ -62,11 +57,6 @@ class IFSetPy(Set):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _IFBTree import IFSet
-except ImportError:
-    IFSet = IFSetPy
-Set = IFSet
 
 
 class IFBTreePy(BTree):
@@ -76,11 +66,6 @@ class IFBTreePy(BTree):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _IFBTree import IFBTree
-except ImportError:
-    IFBTree = IFBTreePy
-BTree = IFBTree
 
 
 class IFTreeSetPy(TreeSet):
@@ -89,11 +74,6 @@ class IFTreeSetPy(TreeSet):
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
     MERGE_DEFAULT = MERGE_DEFAULT_float
-try:
-    from _IFBTree import IFTreeSet
-except ImportError:
-    IFTreeSet = IFTreeSetPy
-TreeSet = IFTreeSet
 
 
 # Can't declare forward refs, so fix up afterwards:
@@ -112,40 +92,38 @@ IFTreeSetPy._set_type = IFTreeSetPy._bucket_type = IFSetPy
 
 
 differencePy = _setop(_difference, IFSetPy)
-try:
-    from _IFBTree import difference
-except ImportError:
-    difference = differencePy
-
 unionPy = _setop(_union, IFSetPy)
-try:
-    from _IFBTree import union
-except ImportError:
-    union = unionPy
-
 intersectionPy = _setop(_intersection, IFSetPy)
-try:
-    from _IFBTree import intersection
-except ImportError:
-    intersection = intersectionPy
-
 multiunionPy = _setop(_multiunion, IFSetPy)
-try:
-    from _IFBTree import multiunion
-except ImportError:
-    multiunion = multiunionPy
-
 weightedUnionPy = _setop(_weightedUnion, IFSetPy)
-try:
-    from _OIBTree import weightedUnion
-except ImportError:
-    weightedUnion = weightedUnionPy
-
 weightedIntersectionPy = _setop(_weightedIntersection, IFSetPy)
+
 try:
+    from _IFBTree import IFBucket
+    from _IFBTree import IFSet
+    from _IFBTree import IFBTree
+    from _IFBTree import IFTreeSet
+    from _IFBTree import difference
+    from _IFBTree import union
+    from _IFBTree import intersection
+    from _IFBTree import multiunion
+    from _OIBTree import weightedUnion
     from _OIBTree import weightedIntersection
-except ImportError:
+except ImportError: #pragma NO COVER
+    IFBucket = IFBucketPy
+    IFSet = IFSetPy
+    IFBTree = IFBTreePy
+    IFTreeSet = IFTreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    multiunion = multiunionPy
+    weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 
+Bucket = IFBucket
+Set = IFSet
+BTree = IFBTree
+TreeSet = IFTreeSet
 
 moduleProvides(IIntegerFloatBTreeModule)
