@@ -1135,7 +1135,9 @@ def to_int(self, v):
     try:
         if not unpack("i", pack("i", v))[0] == v:
             raise TypeError('32-bit integer expected')
-    except struct.error:
+    except (struct.error,
+            OverflowError, #PyPy
+           ):
         raise TypeError('32-bit integer expected')
 
     return int(v)
@@ -1153,7 +1155,9 @@ def to_long(self, v):
             if isinstance(v, int_types):
                 raise ValueError("Value out of range", v)
             raise TypeError('64-bit integer expected')
-    except struct.error:
+    except (struct.error,
+            OverflowError, #PyPy
+           ):
         if isinstance(v, int_types):
             raise ValueError("Value out of range", v)
         raise TypeError('64-bit integer expected')
