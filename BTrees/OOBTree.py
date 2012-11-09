@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) 2001, 2002 Zope Foundation and Contributors.
+# Copyright (c) 2001-2012 Zope Foundation and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the Zope Public License,
@@ -22,9 +22,9 @@ from BTrees.___BTree import TreeSet
 from BTrees.___BTree import difference as _difference
 from BTrees.___BTree import intersection as _intersection
 from BTrees.___BTree import setop as _setop
-from BTrees.___BTree import union as _union
 from BTrees.___BTree import to_ob as _to_key
 from BTrees.___BTree import to_ob as _to_value
+from BTrees.___BTree import union as _union
 
 _BUCKET_SIZE = 30
 _TREE_SIZE = 250
@@ -81,13 +81,13 @@ TreeSet = OOTreeSet
 OOBucketPy._mapping_type = OOBucketPy._bucket_type = OOBucketPy
 OOBucketPy._set_type = OOSetPy
 
-OOSetPy._mapping_type = OOSetPy
+OOSetPy._mapping_type = OOBucketPy
 OOSetPy._set_type = OOSetPy._bucket_type = OOSetPy
 
 OOBTreePy._mapping_type = OOBTreePy._bucket_type = OOBucketPy
 OOBTreePy._set_type = OOSetPy
 
-OOTreeSetPy._mapping_type = OOSetPy
+OOTreeSetPy._mapping_type = OOBucketPy
 OOTreeSetPy._set_type = OOTreeSetPy._bucket_type = OOSetPy
 
 
