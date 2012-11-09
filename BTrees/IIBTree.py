@@ -137,13 +137,13 @@ except ImportError:
 
 weightedUnionPy = _setop(_weightedUnion, IISetPy)
 try:
-    from _OIBTree import union
+    from _IIBTree import weightedUnion
 except ImportError:
     weightedUnion = weightedUnionPy
 
 weightedIntersectionPy = _setop(_weightedIntersection, IISetPy)
 try:
-    from _OIBTree import weightedIntersection
+    from _IIBTree import weightedIntersection
 except ImportError:
     weightedIntersection = weightedIntersectionPy
 

@@ -137,13 +137,13 @@ except ImportError:
 
 weightedUnionPy = _setop(_weightedUnion, LLSetPy)
 try:
-    from _OIBTree import union
+    from _LLBTree import weightedUnion
 except ImportError:
     weightedUnion = weightedUnionPy
 
 weightedIntersectionPy = _setop(_weightedIntersection, LLSetPy)
 try:
-    from _OIBTree import weightedIntersection
+    from _LLBTree import weightedIntersection
 except ImportError:
     weightedIntersection = weightedIntersectionPy
 

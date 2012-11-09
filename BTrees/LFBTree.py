@@ -137,7 +137,7 @@ except ImportError:
 
 weightedUnionPy = _setop(_weightedUnion, LFSetPy)
 try:
-    from _OIBTree import union
+    from _OIBTree import weightedUnion
 except ImportError:
     weightedUnion = weightedUnionPy
 

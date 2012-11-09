@@ -130,7 +130,7 @@ except ImportError:
 
 weightedUnionPy = _setop(_weightedUnion, OLSetPy)
 try:
-    from _OLBTree import union
+    from _OLBTree import weightedUnion
 except ImportError:
     weightedUnion = weightedUnionPy
 
