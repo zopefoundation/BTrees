@@ -76,6 +76,22 @@ class IOModuleTest(ModuleTest, unittest.TestCase):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerObjectBTreeModule
 
+    def test_weightedUnion_not_present(self):
+        try:
+            from BTrees.IOBTree import weightedUnion
+        except ImportError:
+            pass
+        else:
+            self.fail("IOBTree shouldn't have weightedUnion")
+
+    def test_weightedIntersection_not_present(self):
+        try:
+            from BTrees.IOBTree import weightedIntersection
+        except ImportError:
+            pass
+        else:
+            self.fail("IOBTree shouldn't have weightedIntersection")
+
 
 class IOBTreeTest(BTreeTests, unittest.TestCase):
 

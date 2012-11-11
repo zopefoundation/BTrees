@@ -76,6 +76,14 @@ class OIModuleTest(ModuleTest, unittest.TestCase):
         import BTrees.Interfaces
         return BTrees.Interfaces.IObjectIntegerBTreeModule
 
+    def test_multiunion_not_present(self):
+        try:
+            from BTrees.OIBTree import multiunion
+        except ImportError:
+            pass
+        else:
+            self.fail("OIBTree shouldn't have multiunion")
+
 
 class OIBTreeTest(BTreeTests, unittest.TestCase):
 

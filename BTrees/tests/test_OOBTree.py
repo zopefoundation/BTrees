@@ -158,17 +158,45 @@ class OOModuleTest(ModuleTest, unittest.TestCase):
         import BTrees.Interfaces
         return BTrees.Interfaces.IObjectObjectBTreeModule
 
+    def test_weightedUnion_not_present(self):
+        try:
+            from BTrees.OOBTree import weightedUnion
+        except ImportError:
+            pass
+        else:
+            self.fail("OOBTree shouldn't have weightedUnion")
+
+    def test_weightedIntersection_not_present(self):
+        try:
+            from BTrees.OOBTree import weightedIntersection
+        except ImportError:
+            pass
+        else:
+            self.fail("OOBTree shouldn't have weightedIntersection")
+
+    def test_multiunion_not_present(self):
+        try:
+            from BTrees.OOBTree import multiunion
+        except ImportError:
+            pass
+        else:
+            self.fail("OOBTree shouldn't have multiunion")
+
 
 class PureOO(SetResult, unittest.TestCase):
+
     def union(self, *args):
         from BTrees.OOBTree import union
         return union(*args)
+
     def intersection(self, *args):
         from BTrees.OOBTree import intersection
         return intersection(*args)
+
     def difference(self, *args):
         from BTrees.OOBTree import difference
         return difference(*args)
+
     def builders(self):
         from BTrees.OOBTree import OOBTree
         from BTrees.OOBTree import OOBucket
@@ -189,10 +217,8 @@ def test_suite():
         unittest.makeSuite(OOTreeSetPyTest),
         unittest.makeSuite(OOSetTest),
         unittest.makeSuite(OOSetPyTest),
-        unittest.makeSuite(OOModuleTest),
         unittest.makeSuite(OOBTreeTest),
         unittest.makeSuite(OOBTreePyTest),
         unittest.makeSuite(OOModuleTest),
-
         unittest.makeSuite(PureOO),
     ))

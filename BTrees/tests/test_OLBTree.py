@@ -74,6 +74,14 @@ class OLModuleTest(ModuleTest, unittest.TestCase):
         import BTrees.Interfaces
         return BTrees.Interfaces.IObjectIntegerBTreeModule
 
+    def test_multiunion_not_present(self):
+        try:
+            from BTrees.OLBTree import multiunion
+        except ImportError:
+            pass
+        else:
+            self.fail("OLBTree shouldn't have multiunion")
+
 
 class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 

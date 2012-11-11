@@ -74,6 +74,22 @@ class LOModuleTest(ModuleTest, unittest.TestCase):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerObjectBTreeModule
 
+    def test_weightedUnion_not_present(self):
+        try:
+            from BTrees.LOBTree import weightedUnion
+        except ImportError:
+            pass
+        else:
+            self.fail("LOBTree shouldn't have weightedUnion")
+
+    def test_weightedIntersection_not_present(self):
+        try:
+            from BTrees.LOBTree import weightedIntersection
+        except ImportError:
+            pass
+        else:
+            self.fail("LOBTree shouldn't have weightedIntersection")
+
 
 
 class LOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
