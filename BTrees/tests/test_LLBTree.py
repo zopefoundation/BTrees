@@ -13,16 +13,21 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import I_SetsBase
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntKeys
-from BTrees.tests.common import TestLongIntValues
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import I_SetsBase
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import MultiUnion
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntKeys
+from .common import TestLongIntValues
+from .common import Weighted
+from .common import itemsToSet
+from .common import makeBuilder
 
 
 class LLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -104,6 +109,69 @@ class TestLLTreeSets(I_SetsBase, unittest.TestCase):
         return LLTreeSet()
 
 
+class PureLL(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.LLBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.LLBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.LLBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.LLBTree import LLBTree
+        from BTrees.LLBTree import LLBucket
+        from BTrees.LLBTree import LLTreeSet
+        from BTrees.LLBTree import LLSet
+        return LLSet, LLTreeSet, makeBuilder(LLBTree), makeBuilder(LLBucket)
+
+
+class TestLLMultiUnion(MultiUnion, unittest.TestCase):
+    def multiunion(self, *args):
+        from BTrees.LLBTree import multiunion
+        return multiunion(*args)
+    def union(self, *args):
+        from BTrees.LLBTree import union
+        return union(*args)
+    def mkset(self, *args):
+        from BTrees.LLBTree import LLSet as mkset
+        return mkset(*args)
+    def mktreeset(self, *args):
+        from BTrees.LLBTree import LLTreeSet as mktreeset
+        return mktreeset(*args)
+    def mkbucket(self, *args):
+        from BTrees.LLBTree import LLBucket as mkbucket
+        return mkbucket(*args)
+    def mkbtree(self, *args):
+        from BTrees.LLBTree import LLBTree as mkbtree
+        return mkbtree(*args)
+
+
+class TestWeightedLL(Weighted, unittest.TestCase):
+    def weightedUnion(self):
+        from BTrees.LLBTree import weightedUnion
+        return weightedUnion
+    def weightedIntersection(self):
+        from BTrees.LLBTree import weightedIntersection
+        return weightedIntersection
+    def union(self):
+        from BTrees.LLBTree import union
+        return union
+    def intersection(self):
+        from BTrees.LLBTree import intersection
+        return intersection
+    def mkbucket(self, *args):
+        from BTrees.LLBTree import LLBucket as mkbucket
+        return mkbucket(*args)
+    def builders(self):
+        from BTrees.LLBTree import LLBTree
+        from BTrees.LLBTree import LLBucket
+        from BTrees.LLBTree import LLTreeSet
+        from BTrees.LLBTree import LLSet
+        return LLBucket, LLBTree, itemsToSet(LLSet), itemsToSet(LLTreeSet)
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(LLBTreeInternalKeyTest),
@@ -115,4 +183,8 @@ def test_suite():
         unittest.makeSuite(LLBTreeTest),
         unittest.makeSuite(TestLLSets),
         unittest.makeSuite(TestLLTreeSets),
+
+        unittest.makeSuite(TestLLMultiUnion),
+        unittest.makeSuite(PureLL),
+        unittest.makeSuite(TestWeightedLL),
     ))
