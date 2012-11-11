@@ -13,14 +13,17 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntKeys
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import MultiUnion
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntKeys
+from .common import makeBuilder
 from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
 
 
@@ -121,6 +124,43 @@ class TestIFBTrees(unittest.TestCase):
     def _noneraisesvalue(self):
         self._makeOne()[1] = None
 
+class TestIFMultiUnion(MultiUnion, unittest.TestCase):
+    def multiunion(self, *args):
+        from BTrees.IFBTree import multiunion
+        return multiunion(*args)
+    def union(self, *args):
+        from BTrees.IFBTree import union
+        return union(*args)
+    def mkset(self, *args):
+        from BTrees.IFBTree import IFSet as mkset
+        return mkset(*args)
+    def mktreeset(self, *args):
+        from BTrees.IFBTree import IFTreeSet as mktreeset
+        return mktreeset(*args)
+    def mkbucket(self, *args):
+        from BTrees.IFBTree import IFBucket as mkbucket
+        return mkbucket(*args)
+    def mkbtree(self, *args):
+        from BTrees.IFBTree import IFBTree as mkbtree
+        return mkbtree(*args)
+
+class PureIF(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.IFBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.IFBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.IFBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.IFBTree import IFBTree
+        from BTrees.IFBTree import IFBucket
+        from BTrees.IFBTree import IFTreeSet
+        from BTrees.IFBTree import IFSet
+        return IFSet, IFTreeSet, makeBuilder(IFBTree), makeBuilder(IFBucket)
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(IFBTreeInternalKeyTest),
@@ -131,4 +171,7 @@ def test_suite():
         unittest.makeSuite(IFModuleTest),
         unittest.makeSuite(IFBTreeTest),
         unittest.makeSuite(TestIFBTrees),
+
+        unittest.makeSuite(TestIFMultiUnion),
+        unittest.makeSuite(PureIF),
     ))
