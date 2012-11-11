@@ -146,6 +146,52 @@ class OOBTreePyTest(BTreeTests, unittest.TestCase):
         return OOBTreePy()
 
 
+
+class PureOO(SetResult, unittest.TestCase):
+
+    def union(self, *args):
+        from BTrees.OOBTree import union
+        return union(*args)
+
+    def intersection(self, *args):
+        from BTrees.OOBTree import intersection
+        return intersection(*args)
+
+    def difference(self, *args):
+        from BTrees.OOBTree import difference
+        return difference(*args)
+
+    def builders(self):
+        from BTrees.OOBTree import OOBTree
+        from BTrees.OOBTree import OOBucket
+        from BTrees.OOBTree import OOTreeSet
+        from BTrees.OOBTree import OOSet
+        return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
+
+
+class PureOOPy(SetResult, unittest.TestCase):
+
+    def union(self, *args):
+        from BTrees.OOBTree import unionPy
+        return unionPy(*args)
+
+    def intersection(self, *args):
+        from BTrees.OOBTree import intersectionPy
+        return intersectionPy(*args)
+
+    def difference(self, *args):
+        from BTrees.OOBTree import differencePy
+        return differencePy(*args)
+
+    def builders(self):
+        from BTrees.OOBTree import OOBTreePy
+        from BTrees.OOBTree import OOBucketPy
+        from BTrees.OOBTree import OOTreeSetPy
+        from BTrees.OOBTree import OOSetPy
+        return (OOSetPy, OOTreeSetPy,
+                makeBuilder(OOBTreePy), makeBuilder(OOBucketPy))
+
+
 class OOModuleTest(ModuleTest, unittest.TestCase):
 
     prefix = 'OO'
@@ -183,28 +229,6 @@ class OOModuleTest(ModuleTest, unittest.TestCase):
             self.fail("OOBTree shouldn't have multiunion")
 
 
-class PureOO(SetResult, unittest.TestCase):
-
-    def union(self, *args):
-        from BTrees.OOBTree import union
-        return union(*args)
-
-    def intersection(self, *args):
-        from BTrees.OOBTree import intersection
-        return intersection(*args)
-
-    def difference(self, *args):
-        from BTrees.OOBTree import difference
-        return difference(*args)
-
-    def builders(self):
-        from BTrees.OOBTree import OOBTree
-        from BTrees.OOBTree import OOBucket
-        from BTrees.OOBTree import OOTreeSet
-        from BTrees.OOBTree import OOSet
-        return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
-
-
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OOBTreeInternalKeyTest),
@@ -219,6 +243,7 @@ def test_suite():
         unittest.makeSuite(OOSetPyTest),
         unittest.makeSuite(OOBTreeTest),
         unittest.makeSuite(OOBTreePyTest),
-        unittest.makeSuite(OOModuleTest),
         unittest.makeSuite(PureOO),
+        unittest.makeSuite(PureOOPy),
+        unittest.makeSuite(OOModuleTest),
     ))
