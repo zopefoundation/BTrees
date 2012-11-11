@@ -13,15 +13,19 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntValues
-from BTrees.tests.common import TypeTest
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntValues
+from .common import TypeTest
+from .common import Weighted
+from .common import itemsToSet
+from .common import makeBuilder
 from BTrees.IIBTree import using64bits #XXX Ugly, but necessary
 
 
@@ -120,6 +124,48 @@ class TestOIBTrees(TypeTest, unittest.TestCase):
         self.assertEqual(b.keys()[0], 30)
 
 
+class PureOI(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.OIBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.OIBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.OIBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.OIBTree import OIBTree
+        from BTrees.OIBTree import OIBucket
+        from BTrees.OIBTree import OITreeSet
+        from BTrees.OIBTree import OISet
+        return OISet, OITreeSet, makeBuilder(OIBTree), makeBuilder(OIBucket)
+
+
+class TestWeightedOI(Weighted, unittest.TestCase):
+    def weightedUnion(self):
+        from BTrees.OIBTree import weightedUnion
+        return weightedUnion
+    def weightedIntersection(self):
+        from BTrees.OIBTree import weightedIntersection
+        return weightedIntersection
+    def union(self):
+        from BTrees.OIBTree import union
+        return union
+    def intersection(self):
+        from BTrees.OIBTree import intersection
+        return intersection
+    def mkbucket(self, *args):
+        from BTrees.OIBTree import OIBucket as mkbucket
+        return mkbucket(*args)
+    def builders(self):
+        from BTrees.OIBTree import OIBTree
+        from BTrees.OIBTree import OIBucket
+        from BTrees.OIBTree import OITreeSet
+        from BTrees.OIBTree import OISet
+        return OIBucket, OIBTree, itemsToSet(OISet), itemsToSet(OITreeSet)
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OIBTreeInternalKeyTest),
@@ -130,4 +176,7 @@ def test_suite():
         unittest.makeSuite(OIModuleTest),
         unittest.makeSuite(OIBTreeTest),
         unittest.makeSuite(TestOIBTrees),
+
+        unittest.makeSuite(PureOI),
+        unittest.makeSuite(TestWeightedOI),
     ))

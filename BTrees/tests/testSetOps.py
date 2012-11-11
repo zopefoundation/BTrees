@@ -19,40 +19,6 @@ from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
 
-class PureOO(SetResult, unittest.TestCase):
-    def union(self, *args):
-        from BTrees.OOBTree import union
-        return union(*args)
-    def intersection(self, *args):
-        from BTrees.OOBTree import intersection
-        return intersection(*args)
-    def difference(self, *args):
-        from BTrees.OOBTree import difference
-        return difference(*args)
-    def builders(self):
-        from BTrees.OOBTree import OOBTree
-        from BTrees.OOBTree import OOBucket
-        from BTrees.OOBTree import OOTreeSet
-        from BTrees.OOBTree import OOSet
-        return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
-
-class PureOI(SetResult, unittest.TestCase):
-    def union(self, *args):
-        from BTrees.OIBTree import union
-        return union(*args)
-    def intersection(self, *args):
-        from BTrees.OIBTree import intersection
-        return intersection(*args)
-    def difference(self, *args):
-        from BTrees.OIBTree import difference
-        return difference(*args)
-    def builders(self):
-        from BTrees.OIBTree import OIBTree
-        from BTrees.OIBTree import OIBucket
-        from BTrees.OIBTree import OITreeSet
-        from BTrees.OIBTree import OISet
-        return OISet, OITreeSet, makeBuilder(OIBTree), makeBuilder(OIBucket)
-
 class PureOL(SetResult, unittest.TestCase):
     def union(self, *args):
         from BTrees.OLBTree import union
@@ -157,29 +123,6 @@ class TestImports(unittest.TestCase):
         else:
             self.fail("OOBTree shouldn't have multiunion")
 
-class TestWeightedOI(Weighted, unittest.TestCase):
-    def weightedUnion(self):
-        from BTrees.OIBTree import weightedUnion
-        return weightedUnion
-    def weightedIntersection(self):
-        from BTrees.OIBTree import weightedIntersection
-        return weightedIntersection
-    def union(self):
-        from BTrees.OIBTree import union
-        return union
-    def intersection(self):
-        from BTrees.OIBTree import intersection
-        return intersection
-    def mkbucket(self, *args):
-        from BTrees.OIBTree import OIBucket as mkbucket
-        return mkbucket(*args)
-    def builders(self):
-        from BTrees.OIBTree import OIBTree
-        from BTrees.OIBTree import OIBucket
-        from BTrees.OIBTree import OITreeSet
-        from BTrees.OIBTree import OISet
-        return OIBucket, OIBTree, itemsToSet(OISet), itemsToSet(OITreeSet)
-
 class TestWeightedOL(Weighted, unittest.TestCase):
     def weightedUnion(self):
         from BTrees.OLBTree import weightedUnion
@@ -206,11 +149,6 @@ class TestWeightedOL(Weighted, unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
-
-        unittest.makeSuite(PureOO),
-
-        unittest.makeSuite(PureOI),
-        unittest.makeSuite(TestWeightedOI),
 
         unittest.makeSuite(PureOL),
         unittest.makeSuite(TestWeightedOL),

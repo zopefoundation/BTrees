@@ -13,13 +13,15 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import NormalSetTests
+from .common import SetResult
+from .common import makeBuilder
 
 
 class OOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -157,6 +159,24 @@ class OOModuleTest(ModuleTest, unittest.TestCase):
         return BTrees.Interfaces.IObjectObjectBTreeModule
 
 
+class PureOO(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.OOBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.OOBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.OOBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.OOBTree import OOBTree
+        from BTrees.OOBTree import OOBucket
+        from BTrees.OOBTree import OOTreeSet
+        from BTrees.OOBTree import OOSet
+        return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OOBTreeInternalKeyTest),
@@ -173,4 +193,6 @@ def test_suite():
         unittest.makeSuite(OOBTreeTest),
         unittest.makeSuite(OOBTreePyTest),
         unittest.makeSuite(OOModuleTest),
+
+        unittest.makeSuite(PureOO),
     ))
