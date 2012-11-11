@@ -19,23 +19,6 @@ from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
 
-class PureOL(SetResult, unittest.TestCase):
-    def union(self, *args):
-        from BTrees.OLBTree import union
-        return union(*args)
-    def intersection(self, *args):
-        from BTrees.OLBTree import intersection
-        return intersection(*args)
-    def difference(self, *args):
-        from BTrees.OLBTree import difference
-        return difference(*args)
-    def builders(self):
-        from BTrees.OLBTree import OLBTree
-        from BTrees.OLBTree import OLBucket
-        from BTrees.OLBTree import OLTreeSet
-        from BTrees.OLBTree import OLSet
-        return OLSet, OLTreeSet, makeBuilder(OLBTree), makeBuilder(OLBucket)
-
 # Check that various special module functions are and aren't imported from
 # the expected BTree modules.
 class TestImports(unittest.TestCase):
@@ -123,35 +106,9 @@ class TestImports(unittest.TestCase):
         else:
             self.fail("OOBTree shouldn't have multiunion")
 
-class TestWeightedOL(Weighted, unittest.TestCase):
-    def weightedUnion(self):
-        from BTrees.OLBTree import weightedUnion
-        return weightedUnion
-    def weightedIntersection(self):
-        from BTrees.OLBTree import weightedIntersection
-        return weightedIntersection
-    def union(self):
-        from BTrees.OLBTree import union
-        return union
-    def intersection(self):
-        from BTrees.OLBTree import intersection
-        return intersection
-    def mkbucket(self, *args):
-        from BTrees.OLBTree import OLBucket as mkbucket
-        return mkbucket(*args)
-    def builders(self):
-        from BTrees.OLBTree import OLBTree
-        from BTrees.OLBTree import OLBucket
-        from BTrees.OLBTree import OLTreeSet
-        from BTrees.OLBTree import OLSet
-        return OLBucket, OLBTree, itemsToSet(OLSet), itemsToSet(OLTreeSet)
-
 
 def test_suite():
     return unittest.TestSuite((
-
-        unittest.makeSuite(PureOL),
-        unittest.makeSuite(TestWeightedOL),
 
         unittest.makeSuite(TestImports),
     ))

@@ -13,14 +13,18 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntValues
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntValues
+from .common import Weighted
+from .common import itemsToSet
+from .common import makeBuilder
 
 
 class OLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -81,6 +85,48 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return object(), object()
 
 
+class PureOL(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.OLBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.OLBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.OLBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.OLBTree import OLBTree
+        from BTrees.OLBTree import OLBucket
+        from BTrees.OLBTree import OLTreeSet
+        from BTrees.OLBTree import OLSet
+        return OLSet, OLTreeSet, makeBuilder(OLBTree), makeBuilder(OLBucket)
+
+
+class TestWeightedOL(Weighted, unittest.TestCase):
+    def weightedUnion(self):
+        from BTrees.OLBTree import weightedUnion
+        return weightedUnion
+    def weightedIntersection(self):
+        from BTrees.OLBTree import weightedIntersection
+        return weightedIntersection
+    def union(self):
+        from BTrees.OLBTree import union
+        return union
+    def intersection(self):
+        from BTrees.OLBTree import intersection
+        return intersection
+    def mkbucket(self, *args):
+        from BTrees.OLBTree import OLBucket as mkbucket
+        return mkbucket(*args)
+    def builders(self):
+        from BTrees.OLBTree import OLBTree
+        from BTrees.OLBTree import OLBucket
+        from BTrees.OLBTree import OLTreeSet
+        from BTrees.OLBTree import OLSet
+        return OLBucket, OLBTree, itemsToSet(OLSet), itemsToSet(OLTreeSet)
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OLBTreeInternalKeyTest),
@@ -90,4 +136,7 @@ def test_suite():
         unittest.makeSuite(OLSetTest),
         unittest.makeSuite(OLModuleTest),
         unittest.makeSuite(OLBTreeTest),
+
+        unittest.makeSuite(PureOL),
+        unittest.makeSuite(TestWeightedOL),
     ))
