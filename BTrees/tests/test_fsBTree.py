@@ -23,6 +23,10 @@ class fsBucketTests(unittest.TestCase):
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
 
+    def test_MERGE_WEIGHT(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.MERGE_WEIGHT(42, 17), 42)
+
     def test_toString(self):
         bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
         self.assertEqual(bucket.toString(),
@@ -32,6 +36,29 @@ class fsBucketTests(unittest.TestCase):
         before = self._makeOne([(c*2, c*6) for c in 'abcdef'])
         after = before.fromString(before.toString())
         self.assertEqual(before.__getstate__(), after.__getstate__())
+
+    def test_fromString_empty(self):
+        before = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        after = before.fromString('')
+        self.assertEqual(after.__getstate__(), ((),))
+
+    def test_fromString_invalid(self):
+        bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        self.assertRaises(ValueError, bucket.fromString, 'xxx')
+
+
+class fsBTreeTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.fsBTree import fsBTree
+        return fsBTree
+
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
+
+    def test_MERGE_WEIGHT(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.MERGE_WEIGHT(42, 17), 42)
 
 
 def test_suite():
