@@ -11,26 +11,30 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-import doctest
 import unittest
 
-def test_fsbucket_string_conversion():
-    """
-fsBuckets have toString and fromString methods that can be used to
-get and set their state very efficiently:
 
-    >>> from BTrees.fsBTree import fsBucket
-    >>> b = fsBucket([(c*2, c*6) for c in 'abcdef'])
-    >>> import pprint
-    >>> b.toString()
-    'aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff'
+class fsBucketTests(unittest.TestCase):
 
-    >>> b2 = fsBucket().fromString(b.toString())
-    >>> b.__getstate__() == b2.__getstate__()
-    True
+    def _getTargetClass(self):
+        from BTrees.fsBTree import fsBucket
+        return fsBucket
 
-    """
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
+
+    def test_toString(self):
+        bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        self.assertEqual(bucket.toString(),
+                         'aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff')
+
+    def test_fromString(self):
+        before = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        after = before.fromString(before.toString())
+        self.assertEqual(before.__getstate__(), after.__getstate__())
+
 
 def test_suite():
-    return doctest.DocTestSuite()
-
+    return unittest.TestSuite((
+        unittest.makeSuite(fsBucketTests),
+    ))
