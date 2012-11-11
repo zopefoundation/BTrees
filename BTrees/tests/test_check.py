@@ -11,12 +11,14 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Test the BTree check.check() function."""
-
 import unittest
 
 
-class CheckTest(unittest.TestCase):
+class Test_check(unittest.TestCase):
+
+    def _callFUT(self, tree):
+        from BTrees.check import check
+        return check(tree)
 
     def _makeOne(self):
         from BTrees.OOBTree import OOBTree
@@ -25,21 +27,19 @@ class CheckTest(unittest.TestCase):
             tree[i] = 2*i
         return tree
 
-    def testNormal(self):
+    def test_normal(self):
         # Looks like (state, first_bucket)
         # where state looks like (bucket0, 15, bucket1).
-        from BTrees.check import check
         tree = self._makeOne()
         state = tree.__getstate__()
         self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 3)
         self.assertEqual(state[0][1], 15)
         tree._check() # shouldn't blow up
-        check(tree)   # shouldn't blow up
+        self._callFUT(tree)   # shouldn't blow up
 
-    def testKeyTooLarge(self):
+    def test_key_too_large(self):
         # Damage an invariant by dropping the BTree key to 14.
-        from BTrees.check import check
         tree = self._makeOne()
         state = tree.__getstate__()
         news = (state[0][0], 14, state[0][2]), state[1]
@@ -47,15 +47,14 @@ class CheckTest(unittest.TestCase):
         tree._check() # not caught
         try:
             # Expecting "... key %r >= upper bound %r at index %d"
-            check(tree)
+            self._callFUT(tree)
         except AssertionError as detail:
             self.assertTrue(">= upper bound" in str(detail))
         else:
             self.fail("expected check(tree) to catch the problem")
 
-    def testKeyTooSmall(self):
+    def test_key_too_small(self):
         # Damage an invariant by bumping the BTree key to 16.
-        from BTrees.check import check
         tree = self._makeOne()
         state = tree.__getstate__()
         news = (state[0][0], 16, state[0][2]), state[1]
@@ -63,15 +62,14 @@ class CheckTest(unittest.TestCase):
         tree._check() # not caught
         try:
             # Expecting "... key %r < lower bound %r at index %d"
-            check(tree)
+            self._callFUT(tree)
         except AssertionError as detail:
             self.assertTrue("< lower bound" in str(detail))
         else:
             self.fail("expected check(tree) to catch the problem")
 
-    def testKeysSwapped(self):
+    def test_keys_swapped(self):
         # Damage an invariant by swapping two key/value pairs.
-        from BTrees.check import check
         tree = self._makeOne()
         state = tree.__getstate__()
         # Looks like (state, first_bucket)
@@ -92,12 +90,13 @@ class CheckTest(unittest.TestCase):
         b0.__setstate__((newpairs, nextbucket))
         tree._check() # not caught
         try:
-            check(tree)
+            self._callFUT(tree)
         except AssertionError, detail:
             self.assertTrue(
                 "key 5 at index 4 >= key 4 at index 5" in str(detail))
         else:
             self.fail("expected check(tree) to catch the problem")
 
+
 def test_suite():
-    return unittest.makeSuite(CheckTest)
+    return unittest.makeSuite(Test_check)
