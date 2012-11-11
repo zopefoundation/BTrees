@@ -13,16 +13,19 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import I_SetsBase
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TypeTest
-from BTrees.tests.common import TestLongIntKeys
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import I_SetsBase
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import MultiUnion
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TypeTest
+from .common import TestLongIntKeys
+from .common import makeBuilder
 from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
 
 
@@ -117,6 +120,43 @@ class TestIOTreeSets(I_SetsBase, unittest.TestCase):
         from BTrees.IOBTree import IOTreeSet
         return IOTreeSet()
 
+class PureIO(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.IOBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.IOBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.IOBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.IOBTree import IOBTree
+        from BTrees.IOBTree import IOBucket
+        from BTrees.IOBTree import IOTreeSet
+        from BTrees.IOBTree import IOSet
+        return IOSet, IOTreeSet, makeBuilder(IOBTree), makeBuilder(IOBucket)
+
+class TestIOMultiUnion(MultiUnion, unittest.TestCase):
+    def multiunion(self, *args):
+        from BTrees.IOBTree import multiunion
+        return multiunion(*args)
+    def union(self, *args):
+        from BTrees.IOBTree import union
+        return union(*args)
+    def mkset(self, *args):
+        from BTrees.IOBTree import IOSet as mkset
+        return mkset(*args)
+    def mktreeset(self, *args):
+        from BTrees.IOBTree import IOTreeSet as mktreeset
+        return mktreeset(*args)
+    def mkbucket(self, *args):
+        from BTrees.IOBTree import IOBucket as mkbucket
+        return mkbucket(*args)
+    def mkbtree(self, *args):
+        from BTrees.IOBTree import IOBTree as mkbtree
+        return mkbtree(*args)
+
 
 def test_suite():
     return unittest.TestSuite((
@@ -130,4 +170,6 @@ def test_suite():
         unittest.makeSuite(TestIOBTrees),
         unittest.makeSuite(TestIOSets),
         unittest.makeSuite(TestIOTreeSets),
+        unittest.makeSuite(TestIOMultiUnion),
+        unittest.makeSuite(PureIO),
     ))

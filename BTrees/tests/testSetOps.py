@@ -36,23 +36,6 @@ class PureOO(SetResult, unittest.TestCase):
         from BTrees.OOBTree import OOSet
         return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
 
-class PureIO(SetResult, unittest.TestCase):
-    def union(self, *args):
-        from BTrees.IOBTree import union
-        return union(*args)
-    def intersection(self, *args):
-        from BTrees.IOBTree import intersection
-        return intersection(*args)
-    def difference(self, *args):
-        from BTrees.IOBTree import difference
-        return difference(*args)
-    def builders(self):
-        from BTrees.IOBTree import IOBTree
-        from BTrees.IOBTree import IOBucket
-        from BTrees.IOBTree import IOTreeSet
-        from BTrees.IOBTree import IOSet
-        return IOSet, IOTreeSet, makeBuilder(IOBTree), makeBuilder(IOBucket)
-
 class PureIF(SetResult, unittest.TestCase):
     def union(self, *args):
         from BTrees.IFBTree import union
@@ -154,26 +137,6 @@ class PureOL(SetResult, unittest.TestCase):
         from BTrees.OLBTree import OLTreeSet
         from BTrees.OLBTree import OLSet
         return OLSet, OLTreeSet, makeBuilder(OLBTree), makeBuilder(OLBucket)
-
-class TestIOMultiUnion(MultiUnion, unittest.TestCase):
-    def multiunion(self, *args):
-        from BTrees.IOBTree import multiunion
-        return multiunion(*args)
-    def union(self, *args):
-        from BTrees.IOBTree import union
-        return union(*args)
-    def mkset(self, *args):
-        from BTrees.IOBTree import IOSet as mkset
-        return mkset(*args)
-    def mktreeset(self, *args):
-        from BTrees.IOBTree import IOTreeSet as mktreeset
-        return mktreeset(*args)
-    def mkbucket(self, *args):
-        from BTrees.IOBTree import IOBucket as mkbucket
-        return mkbucket(*args)
-    def mkbtree(self, *args):
-        from BTrees.IOBTree import IOBTree as mkbtree
-        return mkbtree(*args)
 
 class TestIFMultiUnion(MultiUnion, unittest.TestCase):
     def multiunion(self, *args):
@@ -414,9 +377,6 @@ class TestWeightedOL(Weighted, unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
-
-        unittest.makeSuite(TestIOMultiUnion),
-        unittest.makeSuite(PureIO),
 
         unittest.makeSuite(TestIFMultiUnion),
         unittest.makeSuite(PureIF),
