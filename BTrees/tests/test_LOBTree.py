@@ -13,15 +13,18 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import I_SetsBase
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntKeys
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import I_SetsBase
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import MultiUnion
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntKeys
+from .common import makeBuilder
 
 
 class LOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -94,6 +97,45 @@ class TestLOTreeSets(I_SetsBase, unittest.TestCase):
         return LOTreeSet()
 
 
+class TestLOMultiUnion(MultiUnion, unittest.TestCase):
+    def multiunion(self, *args):
+        from BTrees.LOBTree import multiunion
+        return multiunion(*args)
+    def union(self, *args):
+        from BTrees.LOBTree import union
+        return union(*args)
+    def mkset(self, *args):
+        from BTrees.LOBTree import LOSet as mkset
+        return mkset(*args)
+    def mktreeset(self, *args):
+        from BTrees.LOBTree import LOTreeSet as mktreeset
+        return mktreeset(*args)
+    def mkbucket(self, *args):
+        from BTrees.LOBTree import LOBucket as mkbucket
+        return mkbucket(*args)
+    def mkbtree(self, *args):
+        from BTrees.LOBTree import LOBTree as mkbtree
+        return mkbtree(*args)
+
+
+class PureLO(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.LOBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.LOBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.LOBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.LOBTree import LOBTree
+        from BTrees.LOBTree import LOBucket
+        from BTrees.LOBTree import LOTreeSet
+        from BTrees.LOBTree import LOSet
+        return LOSet, LOTreeSet, makeBuilder(LOBTree), makeBuilder(LOBucket)
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(LOBTreeInternalKeyTest),
@@ -105,4 +147,7 @@ def test_suite():
         unittest.makeSuite(LOBTreeTest),
         unittest.makeSuite(TestLOSets),
         unittest.makeSuite(TestLOTreeSets),
+
+        unittest.makeSuite(TestLOMultiUnion),
+        unittest.makeSuite(PureLO),
     ))
