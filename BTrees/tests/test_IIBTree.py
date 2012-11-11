@@ -13,16 +13,21 @@
 ##############################################################################
 import unittest
 
-from BTrees.tests.common import BTreeTests
-from BTrees.tests.common import ExtendedSetTests
-from BTrees.tests.common import I_SetsBase
-from BTrees.tests.common import InternalKeysMappingTest
-from BTrees.tests.common import InternalKeysSetTest
-from BTrees.tests.common import MappingBase
-from BTrees.tests.common import ModuleTest
-from BTrees.tests.common import NormalSetTests
-from BTrees.tests.common import TestLongIntKeys
-from BTrees.tests.common import TestLongIntValues
+from .common import BTreeTests
+from .common import ExtendedSetTests
+from .common import I_SetsBase
+from .common import InternalKeysMappingTest
+from .common import InternalKeysSetTest
+from .common import MappingBase
+from .common import ModuleTest
+from .common import MultiUnion
+from .common import NormalSetTests
+from .common import SetResult
+from .common import TestLongIntKeys
+from .common import TestLongIntValues
+from .common import Weighted
+from .common import itemsToSet
+from .common import makeBuilder
 from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
 
  
@@ -162,6 +167,68 @@ class TestIITreeSets(I_SetsBase, unittest.TestCase):
         return IITreeSet()
 
 
+class PureII(SetResult, unittest.TestCase):
+    def union(self, *args):
+        from BTrees.IIBTree import union
+        return union(*args)
+    def intersection(self, *args):
+        from BTrees.IIBTree import intersection
+        return intersection(*args)
+    def difference(self, *args):
+        from BTrees.IIBTree import difference
+        return difference(*args)
+    def builders(self):
+        from BTrees.IIBTree import IIBTree
+        from BTrees.IIBTree import IIBucket
+        from BTrees.IIBTree import IITreeSet
+        from BTrees.IIBTree import IISet
+        return IISet, IITreeSet, makeBuilder(IIBTree), makeBuilder(IIBucket)
+
+
+class TestIIMultiUnion(MultiUnion, unittest.TestCase):
+    def multiunion(self, *args):
+        from BTrees.IIBTree import multiunion
+        return multiunion(*args)
+    def union(self, *args):
+        from BTrees.IIBTree import union
+        return union(*args)
+    def mkset(self, *args):
+        from BTrees.IIBTree import IISet as mkset
+        return mkset(*args)
+    def mktreeset(self, *args):
+        from BTrees.IIBTree import IITreeSet as mktreeset
+        return mktreeset(*args)
+    def mkbucket(self, *args):
+        from BTrees.IIBTree import IIBucket as mkbucket
+        return mkbucket(*args)
+    def mkbtree(self, *args):
+        from BTrees.IIBTree import IIBTree as mkbtree
+        return mkbtree(*args)
+
+class TestWeightedII(Weighted, unittest.TestCase):
+    def weightedUnion(self):
+        from BTrees.IIBTree import weightedUnion
+        return weightedUnion
+    def weightedIntersection(self):
+        from BTrees.IIBTree import weightedIntersection
+        return weightedIntersection
+    def union(self):
+        from BTrees.IIBTree import union
+        return union
+    def intersection(self):
+        from BTrees.IIBTree import intersection
+        return intersection
+    def mkbucket(self, *args):
+        from BTrees.IIBTree import IIBucket as mkbucket
+        return mkbucket(*args)
+    def builders(self):
+        from BTrees.IIBTree import IIBTree
+        from BTrees.IIBTree import IIBucket
+        from BTrees.IIBTree import IITreeSet
+        from BTrees.IIBTree import IISet
+        return IIBucket, IIBTree, itemsToSet(IISet), itemsToSet(IITreeSet)
+
+
 
 def test_suite():
     return unittest.TestSuite((
@@ -175,4 +242,7 @@ def test_suite():
         unittest.makeSuite(TestIIBTrees),
         unittest.makeSuite(TestIISets),
         unittest.makeSuite(TestIITreeSets),
+        unittest.makeSuite(TestIIMultiUnion),
+        unittest.makeSuite(PureII),
+        unittest.makeSuite(TestWeightedII),
     ))
