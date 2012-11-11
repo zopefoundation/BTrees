@@ -72,6 +72,14 @@ class LengthTestCase(unittest.TestCase):
         self.assertEqual(length(), minint - 1)
         self.assert_(type(length()) is long)
 
+    def test___call___no_args(self):
+        length = self._makeOne(42)
+        self.assertEqual(length(), 42)
+
+    def test___call___w_args(self):
+        length = self._makeOne(42)
+        self.assertEqual(length(0, None, (), [], {}), 42)
+
     def test_lp_516653(self):
         # Test for https://bugs.launchpad.net/zodb/+bug/516653
         import copy
