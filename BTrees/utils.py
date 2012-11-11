@@ -1,18 +1,31 @@
+##############################################################################
+#
+# Copyright (c) 2001-2012 Zope Foundation and Contributors.
+# All Rights Reserved.
+#
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE
+#
+##############################################################################
 # Copied from ZODB/utils.py
 
 from binascii import hexlify
-from struct import calcsize
 
-_ADDRESS_MASK = 256 ** calcsize('P')
+def non_negative(int_val):
+    if int_val < 0:
+        # Coerce to non-negative.
+        int_val &= 0x7FFFFFFFFFFFFFFF
+    return int_val
 
-def positive_id(obj):
+
+def positive_id(obj): #pragma NO COVER
     """Return id(obj) as a non-negative integer."""
+    return non_negative(id(obj))
 
-    result = id(obj)
-    if result < 0:
-        result += _ADDRESS_MASK
-        assert result > 0
-    return result
 
 def oid_repr(oid):
     if isinstance(oid, str) and len(oid) == 8:
