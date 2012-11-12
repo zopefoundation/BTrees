@@ -29,6 +29,38 @@ class _BucketBaseTests(unittest.TestCase):
         self.assertEqual(bucket._next, None)
         self.assertEqual(bucket.size, 0)
 
+    def test__deleteNextBucket_none(self):
+        bucket = self._makeOne()
+        bucket._deleteNextBucket() # no raise
+        self.assertTrue(bucket._next is None)
+
+    def test__deleteNextBucket_one(self):
+        bucket1 = self._makeOne()
+        bucket2 = bucket1._next = self._makeOne()
+        bucket1._deleteNextBucket() # no raise
+        self.assertTrue(bucket1._next is None)
+
+    def test__deleteNextBucket_two(self):
+        bucket1 = self._makeOne()
+        bucket2 = bucket1._next = self._makeOne()
+        bucket3 = bucket2._next = self._makeOne()
+        bucket1._deleteNextBucket() # no raise
+        self.assertTrue(bucket1._next is bucket3)
+
+    def test__search_empty(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket._search('nonesuch'), -1)
+
+    def test__search_nonempty_miss(self):
+        bucket = self._makeOne()
+        bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        self.assertEqual(bucket._search('candy'), -2)
+
+    def test__search_nonempty_hit(self):
+        bucket = self._makeOne()
+        bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        self.assertEqual(bucket._search('charlie'), 2)
+
 
 def test_suite():
     return unittest.TestSuite((
