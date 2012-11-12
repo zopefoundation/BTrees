@@ -75,14 +75,13 @@ class _BucketBase(_Base):
             return self._keys[0]
         key = self._to_key(key)
         index = self._search(key)
-        if index >- 0:
+        if index >= 0:
             return key
+        index = -index - 1
+        if index < len(self._keys):
+            return self._keys[index]
         else:
-            index = -index - 1
-            if index < len(self._keys):
-                return self._keys[index]
-            else:
-                raise ValueError("no key satisfies the conditions")
+            raise ValueError("no key satisfies the conditions")
 
     def maxKey(self, key=_marker):
         if key is _marker:
@@ -140,13 +139,13 @@ class _BucketBase(_Base):
     def __iter__(self):
         return iter(self._keys)
 
-    def has_key(self, key):
-        return (self._search(self._to_key(key)) >= 0) and 1
+    def __contains__(self, key):
+        return (self._search(self._to_key(key)) >= 0)
 
-    __contains__ = has_key
+    has_key = __contains__
 
     def _p_resolveConflict(self, *states):
-        set = not hasattr(self, '_values')
+        is_set = getattr(self, '_values', None) is not None
 
         buckets = []
         for state in states:
@@ -171,7 +170,7 @@ class _BucketBase(_Base):
 
         result = self.__class__()
 
-        if set:
+        if is_set:
             def merge_output(it):
                 result._keys.append(it.key)
                 it.advance()
@@ -186,7 +185,7 @@ class _BucketBase(_Base):
             cmp13 = cmp(i1.key, i3.key)
             if cmp12==0:
                 if cmp13==0:
-                    if set:
+                    if is_set:
                         result.add(i1.key)
                     elif i2.value == i1.value:
                         result[i1.key] = i3.value
@@ -199,7 +198,7 @@ class _BucketBase(_Base):
                     i3.advance()
                 elif (cmp13 > 0): # insert in new
                     merge_output(i3)
-                elif set or i1.value == i2.value: # deleted new
+                elif is_set or i1.value == i2.value: # deleted new
                     if i3.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -212,7 +211,7 @@ class _BucketBase(_Base):
             elif cmp13 == 0:
                 if cmp12 > 0: # insert committed
                     merge_output(i2)
-                elif set or i1.value == i3.value: # delete committed
+                elif is_set or i1.value == i3.value: # delete committed
                     if i2.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -249,7 +248,7 @@ class _BucketBase(_Base):
             cmp12 = cmp(i1.key, i2.key)
             if cmp12 > 0: # insert committed
                 merge_output(i2)
-            elif cmp12 == 0 and (set or i1.value == i2.value): # deleted in new
+            elif cmp12 == 0 and (is_set or i1.value == i2.value): # del in new
                 i1.advance()
                 i2.advance()
             else: # dueling deletes or delete and change
@@ -259,7 +258,7 @@ class _BucketBase(_Base):
             cmp13 = cmp(i1.key, i3.key)
             if cmp13 > 0: # insert new
                 merge_output(i3)
-            elif cmp13 == 0 and (set or i1.value == i3.value):
+            elif cmp13 == 0 and (is_set or i1.value == i3.value):
                 # deleted in committed
                 i1.advance()
                 i3.advance()
