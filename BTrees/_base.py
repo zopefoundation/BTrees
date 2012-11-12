@@ -145,7 +145,7 @@ class _BucketBase(_Base):
     has_key = __contains__
 
     def _p_resolveConflict(self, *states):
-        is_set = getattr(self, '_values', None) is None
+        is_set = getattr(self, '_values', self) is self
 
         buckets = []
         for state in states:

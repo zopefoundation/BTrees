@@ -362,15 +362,29 @@ class Test_BucketBase(unittest.TestCase):
         for key in KEYS:
             self.assertTrue(key in bucket)
 
-    def _with_setstate(self):
+    def _with_setstate_set(self):
         class _WithSetState(self._getTargetClass()):
             def __setstate__(self, state):
                 self._keys, self._next = state
         return _WithSetState()
 
+    def _with_setstate_bucket(self):
+        class _WithSetState(self._getTargetClass()):
+            _values = None
+            def __setstate__(self, state):
+                state, self._next = state
+                self._keys = []
+                self._values = []
+                for i in range(len(state) // 2):
+                    self._keys.append(state[i])
+                    self._values.append(state[i+1])
+            def iteritems(self):
+                return iter(zip(self._keys, self._values))
+        return _WithSetState()
+
     def test__p_resolveConflict_new_next(self):
         from ..Interfaces import BTreesConflictError
-        bucket = self._with_setstate()
+        bucket = self._with_setstate_set()
         N_NEW = object()
         s_old = ([], None)
         s_com = ([], N_NEW)
@@ -381,7 +395,7 @@ class Test_BucketBase(unittest.TestCase):
 
     def test__p_resolveConflict_committed_next(self):
         from ..Interfaces import BTreesConflictError
-        bucket = self._with_setstate()
+        bucket = self._with_setstate_set()
         N_NEW = object()
         s_old = ([], None)
         s_com = ([], None)
@@ -392,7 +406,7 @@ class Test_BucketBase(unittest.TestCase):
 
     def test__p_resolveConflict_empty_committed(self):
         from ..Interfaces import BTreesConflictError
-        bucket = self._with_setstate()
+        bucket = self._with_setstate_set()
         s_old = ([], None)
         s_com = ([], None)
         s_new = (['a'], None)
@@ -402,13 +416,53 @@ class Test_BucketBase(unittest.TestCase):
 
     def test__p_resolveConflict_empty_new(self):
         from ..Interfaces import BTreesConflictError
-        bucket = self._with_setstate()
+        bucket = self._with_setstate_set()
         s_old = ([], None)
         s_com = (['a'], None)
         s_new = ([], None)
         e = self.assertRaises(BTreesConflictError,
                               bucket._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 12)
+
+    def test__p_resolveConflict_delete_first_new_set(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._with_setstate_set()
+        s_old = (['a','b'], None)
+        s_com = (['a','b','c'], None)
+        s_new = (['b'], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_delete_first_new_bucket(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._with_setstate_bucket()
+        s_old = (['a', 0, 'b', 1], None)
+        s_com = (['a', 1, 'b', 2, 'c', 3], None)
+        s_new = (['b', 4], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 2)
+
+    def test__p_resolveConflict_delete_first_committed_set(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._with_setstate_set()
+        s_old = (['a','b'], None)
+        s_com = (['b'], None)
+        s_new = (['a', 'b', 'c'], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_delete_first_committed_bucket(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._with_setstate_bucket()
+        s_old = (['a', 0, 'b', 1], None)
+        s_com = (['b', 4], None)
+        s_new = (['a', 1, 'b', 2, 'c', 3], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 3)
 
 
 def test_suite():
