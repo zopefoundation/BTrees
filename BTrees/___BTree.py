@@ -55,7 +55,7 @@ class _BucketBase(_Base):
 
     def _search(self, key):
         # Return non-negative index on success
-        # return -(insertion_index+1) on fail
+        # return -(insertion_index + 1) on fail
         low = 0
         keys = self._keys
         high = len(keys)
@@ -65,7 +65,7 @@ class _BucketBase(_Base):
             if k == key:
                 return i
             if k < key:
-                low = i+1
+                low = i + 1
             else:
                 high = i
         return -1 - low
