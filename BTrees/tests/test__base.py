@@ -18,7 +18,7 @@ import unittest
 class Test_BucketBase(unittest.TestCase):
 
     def _getTargetClass(self):
-        from BTrees.___BTree import _BucketBase
+        from .._base import _BucketBase
         return _BucketBase
 
     def _makeOne(self, *args, **kw):

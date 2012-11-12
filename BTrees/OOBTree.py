@@ -19,17 +19,17 @@ __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
 
 from zope.interface import moduleProvides
 
-from BTrees.Interfaces import IObjectObjectBTreeModule
-from BTrees.___BTree import Bucket
-from BTrees.___BTree import Set
-from BTrees.___BTree import Tree as BTree
-from BTrees.___BTree import TreeSet
-from BTrees.___BTree import difference as _difference
-from BTrees.___BTree import intersection as _intersection
-from BTrees.___BTree import setop as _setop
-from BTrees.___BTree import to_ob as _to_key
-from BTrees.___BTree import to_ob as _to_value
-from BTrees.___BTree import union as _union
+from .Interfaces import IObjectObjectBTreeModule
+from ._base import Bucket
+from ._base import Set
+from ._base import Tree as BTree
+from ._base import TreeSet
+from ._base import difference as _difference
+from ._base import intersection as _intersection
+from ._base import setop as _setop
+from ._base import to_ob as _to_key
+from ._base import to_ob as _to_value
+from ._base import union as _union
 
 _BUCKET_SIZE = 30
 _TREE_SIZE = 250

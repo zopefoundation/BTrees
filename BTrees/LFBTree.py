@@ -20,23 +20,23 @@ __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
 
 from zope.interface import moduleProvides
 
-from BTrees.Interfaces import IIntegerFloatBTreeModule
-from BTrees.___BTree import Bucket
-from BTrees.___BTree import MERGE
-from BTrees.___BTree import MERGE_WEIGHT_numeric
-from BTrees.___BTree import MERGE_DEFAULT_float
-from BTrees.___BTree import Set
-from BTrees.___BTree import Tree as BTree
-from BTrees.___BTree import TreeSet
-from BTrees.___BTree import difference as _difference
-from BTrees.___BTree import intersection as _intersection
-from BTrees.___BTree import multiunion as _multiunion
-from BTrees.___BTree import setop as _setop
-from BTrees.___BTree import to_long as _to_key
-from BTrees.___BTree import to_float as _to_value
-from BTrees.___BTree import union as _union
-from BTrees.___BTree import weightedIntersection as _weightedIntersection
-from BTrees.___BTree import weightedUnion as _weightedUnion
+from .Interfaces import IIntegerFloatBTreeModule
+from ._base import Bucket
+from ._base import MERGE
+from ._base import MERGE_WEIGHT_numeric
+from ._base import MERGE_DEFAULT_float
+from ._base import Set
+from ._base import Tree as BTree
+from ._base import TreeSet
+from ._base import difference as _difference
+from ._base import intersection as _intersection
+from ._base import multiunion as _multiunion
+from ._base import setop as _setop
+from ._base import to_long as _to_key
+from ._base import to_float as _to_value
+from ._base import union as _union
+from ._base import weightedIntersection as _weightedIntersection
+from ._base import weightedUnion as _weightedUnion
 
 _BUCKET_SIZE = 120
 _TREE_SIZE = 500
