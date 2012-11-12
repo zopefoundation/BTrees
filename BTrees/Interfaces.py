@@ -511,7 +511,9 @@ try:
     from ZODB.POSException import BTreesConflictError
 except ImportError:
     class BTreesConflictError(ValueError):
-        pass
+        @property
+        def reason(self):
+            return self.args[-1]
 
 ###############################################################
 # IMPORTANT NOTE
