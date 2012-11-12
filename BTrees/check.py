@@ -32,17 +32,18 @@ addresses and/or object identity (the synthesized bucket has an address
 that doesn't exist in the actual BTree).
 """
 
-from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
+from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
+from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
+from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
+from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
+from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
+from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
 from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
 from BTrees.OIBTree import OIBTreePy, OIBucketPy, OISetPy, OITreeSetPy
-from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
-from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
 from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
-from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
-from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
+from BTrees.OLBTree import OLBTreePy, OLBucketPy, OLSetPy, OLTreeSetPy
+from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
+from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
 
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr

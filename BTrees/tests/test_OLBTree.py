@@ -36,11 +36,25 @@ class OLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
         return OLBTree
 
 
+class OLBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBTreePy
+        return OLBTreePy
+
+
 class OLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OLBTree import OLTreeSet
         return OLTreeSet
+
+
+class OLTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSetPy
+        return OLTreeSetPy
 
 
 class OLBucketTest(MappingBase, unittest.TestCase):
@@ -50,6 +64,13 @@ class OLBucketTest(MappingBase, unittest.TestCase):
         return OLBucket
 
 
+class OLBucketPyTest(MappingBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBucketPy
+        return OLBucketPy
+
+
 class OLTreeSetTest(NormalSetTests, unittest.TestCase):
 
     def _getTargetClass(self):
@@ -57,11 +78,25 @@ class OLTreeSetTest(NormalSetTests, unittest.TestCase):
         return OLTreeSet
 
 
+class OLTreeSetPyTest(NormalSetTests, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSetPy
+        return OLTreeSetPy
+
+
 class OLSetTest(ExtendedSetTests, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OLBTree import OLSet
         return OLSet
+
+
+class OLSetPyTest(ExtendedSetTests, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLSetPy
+        return OLSetPy
 
 
 class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
@@ -74,16 +109,30 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return object(), object()
 
 
+class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.OLBTree import OLBTreePy
+        return OLBTreePy()
+
+    def getTwoKeys(self):
+        return object(), object()
+
+
 class PureOL(SetResult, unittest.TestCase):
+
     def union(self, *args):
         from BTrees.OLBTree import union
         return union(*args)
+
     def intersection(self, *args):
         from BTrees.OLBTree import intersection
         return intersection(*args)
+
     def difference(self, *args):
         from BTrees.OLBTree import difference
         return difference(*args)
+
     def builders(self):
         from BTrees.OLBTree import OLBTree
         from BTrees.OLBTree import OLBucket
@@ -92,28 +141,88 @@ class PureOL(SetResult, unittest.TestCase):
         return OLSet, OLTreeSet, makeBuilder(OLBTree), makeBuilder(OLBucket)
 
 
+class PureOLPy(SetResult, unittest.TestCase):
+
+    def union(self, *args):
+        from BTrees.OLBTree import unionPy
+        return unionPy(*args)
+
+    def intersection(self, *args):
+        from BTrees.OLBTree import intersectionPy
+        return intersectionPy(*args)
+
+    def difference(self, *args):
+        from BTrees.OLBTree import differencePy
+        return differencePy(*args)
+
+    def builders(self):
+        from BTrees.OLBTree import OLBTreePy
+        from BTrees.OLBTree import OLBucketPy
+        from BTrees.OLBTree import OLTreeSetPy
+        from BTrees.OLBTree import OLSetPy
+        return (OLSetPy, OLTreeSetPy,
+                makeBuilder(OLBTreePy), makeBuilder(OLBucketPy))
+
+
 class TestWeightedOL(Weighted, unittest.TestCase):
+
     def weightedUnion(self):
         from BTrees.OLBTree import weightedUnion
         return weightedUnion
+
     def weightedIntersection(self):
         from BTrees.OLBTree import weightedIntersection
         return weightedIntersection
+
     def union(self):
         from BTrees.OLBTree import union
         return union
+
     def intersection(self):
         from BTrees.OLBTree import intersection
         return intersection
+
     def mkbucket(self, *args):
         from BTrees.OLBTree import OLBucket as mkbucket
         return mkbucket(*args)
+
     def builders(self):
         from BTrees.OLBTree import OLBTree
         from BTrees.OLBTree import OLBucket
         from BTrees.OLBTree import OLTreeSet
         from BTrees.OLBTree import OLSet
         return OLBucket, OLBTree, itemsToSet(OLSet), itemsToSet(OLTreeSet)
+
+
+class TestWeightedOLPy(Weighted, unittest.TestCase):
+
+    def weightedUnion(self):
+        from BTrees.OLBTree import weightedUnionPy
+        return weightedUnionPy
+
+    def weightedIntersection(self):
+        from BTrees.OLBTree import weightedIntersectionPy
+        return weightedIntersectionPy
+
+    def union(self):
+        from BTrees.OLBTree import unionPy
+        return unionPy
+
+    def intersection(self):
+        from BTrees.OLBTree import intersectionPy
+        return intersectionPy
+
+    def mkbucket(self, *args):
+        from BTrees.OLBTree import OLBucketPy as mkbucket
+        return mkbucket(*args)
+
+    def builders(self):
+        from BTrees.OLBTree import OLBTreePy
+        from BTrees.OLBTree import OLBucketPy
+        from BTrees.OLBTree import OLTreeSetPy
+        from BTrees.OLBTree import OLSetPy
+        return (OLBucketPy, OLBTreePy,
+                itemsToSet(OLSetPy), itemsToSet(OLTreeSetPy))
 
 
 class OLBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
@@ -123,11 +232,25 @@ class OLBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
         return OLBucket
 
 
+class OLBucketPyConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBucketPy
+        return OLBucketPy
+
+
 class OLSetConflictTests(SetConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OLBTree import OLSet
         return OLSet
+
+
+class OLSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLSetPy
+        return OLSetPy
 
 
 class OLBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
@@ -137,11 +260,25 @@ class OLBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
         return OLBTree
 
 
+class OLBTreePyConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBTreePy
+        return OLBTreePy
+
+
 class OLTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OLBTree import OLTreeSet
         return OLTreeSet
+
+
+class OLTreeSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSetPy
+        return OLTreeSetPy
 
 
 class OLModuleTest(ModuleTest, unittest.TestCase):
@@ -168,16 +305,28 @@ class OLModuleTest(ModuleTest, unittest.TestCase):
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OLBTreeInternalKeyTest),
+        unittest.makeSuite(OLBTreePyInternalKeyTest),
         unittest.makeSuite(OLTreeSetInternalKeyTest),
+        unittest.makeSuite(OLTreeSetPyInternalKeyTest),
         unittest.makeSuite(OLBucketTest),
+        unittest.makeSuite(OLBucketPyTest),
         unittest.makeSuite(OLTreeSetTest),
+        unittest.makeSuite(OLTreeSetPyTest),
         unittest.makeSuite(OLSetTest),
+        unittest.makeSuite(OLSetPyTest),
         unittest.makeSuite(OLBTreeTest),
+        unittest.makeSuite(OLBTreePyTest),
         unittest.makeSuite(PureOL),
+        unittest.makeSuite(PureOLPy),
         unittest.makeSuite(TestWeightedOL),
+        unittest.makeSuite(TestWeightedOLPy),
         unittest.makeSuite(OLBucketConflictTests),
+        unittest.makeSuite(OLBucketPyConflictTests),
         unittest.makeSuite(OLSetConflictTests),
+        unittest.makeSuite(OLSetPyConflictTests),
         unittest.makeSuite(OLBTreeConflictTests),
+        unittest.makeSuite(OLBTreePyConflictTests),
         unittest.makeSuite(OLTreeSetConflictTests),
+        unittest.makeSuite(OLTreeSetPyConflictTests),
         unittest.makeSuite(OLModuleTest),
     ))
