@@ -56,11 +56,11 @@ class _BucketBase(_Base):
     def _search(self, key):
         # Return non-negative index on success
         # return -(insertion_index+1) on fail
-        low=0
+        low = 0
         keys = self._keys
-        high=len(keys)
+        high = len(keys)
         while low < high:
-            i = (low+high)//2
+            i = (low + high) // 2
             k = keys[i]
             if k == key:
                 return i
@@ -68,38 +68,35 @@ class _BucketBase(_Base):
                 low = i+1
             else:
                 high = i
-        return -1-low
-
+        return -1 - low
 
     def minKey(self, key=_marker):
         if key is _marker:
             return self._keys[0]
+        key = self._to_key(key)
+        index = self._search(key)
+        if index >- 0:
+            return key
         else:
-            key = self._to_key(key)
-            index = self._search(key)
-            if index >- 0:
-                return key
+            index = -index - 1
+            if index < len(self._keys):
+                return self._keys[index]
             else:
-                index = -index-1
-                if index < len(self._keys):
-                    return self._keys[index]
-                else:
-                    raise ValueError("no key satisfies the conditions")
+                raise ValueError("no key satisfies the conditions")
 
     def maxKey(self, key=_marker):
         if key is _marker:
             return self._keys[-1]
+        key = self._to_key(key)
+        index = self._search(key)
+        if index >= 0:
+            return key
         else:
-            key = self._to_key(key)
-            index = self._search(key)
-            if index >= 0:
-                return key
+            index = -index-1
+            if index:
+                return self._keys[index-1]
             else:
-                index = -index-1
-                if index:
-                    return self._keys[index-1]
-                else:
-                    raise ValueError("no key satisfies the conditions")
+                raise ValueError("no key satisfies the conditions")
 
     def _range(self, min=_marker, max=_marker,
                excludemin=False, excludemax=False):
@@ -418,7 +415,7 @@ class Bucket(_MappingBase, _BucketBase):
             return 0, value
         else:
             self._p_changed = True
-            index = -index-1
+            index = -index - 1
             self._keys.insert(index, key)
             self._values.insert(index, value)
             return 1, value
@@ -429,8 +426,7 @@ class Bucket(_MappingBase, _BucketBase):
             self._p_changed = True
             del self._keys[index]
             return 0, self._values.pop(index)
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
@@ -473,8 +469,7 @@ class Bucket(_MappingBase, _BucketBase):
 
         if self._next:
             return data, self._next
-        else:
-            return (data, )
+        return (data, )
 
     def __setstate__(self, state):
         if not isinstance(state[0], tuple):
@@ -500,8 +495,7 @@ class Set(_SetBase, _BucketBase):
         data = tuple(self._keys)
         if self._next:
             return data, self._next
-        else:
-            return (data, )
+        return (data, )
 
     def __setstate__(self, state):
         if not isinstance(state[0], tuple):
@@ -520,11 +514,10 @@ class Set(_SetBase, _BucketBase):
     def _set(self, key, value=None, ifunset=False):
         index = self._search(key)
         if index < 0:
-            index = -index-1
+            index = -index - 1
             self._keys.insert(index, key)
             return True, None
-        else:
-            return False, None
+        return False, None
 
     def _del(self, key):
         index = self._search(key)
@@ -532,8 +525,7 @@ class Set(_SetBase, _BucketBase):
             self._p_changed = True
             del self._keys[index]
             return 0, 0
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def __getitem__(self, i):
         return self._keys[i]
@@ -646,8 +638,7 @@ class _Tree(_MappingBase):
             bucket = self._findbucket(min)
         if bucket is not None:
             return bucket.minKey(min)
-        else:
-            raise ValueError('empty tree')
+        raise ValueError('empty tree')
 
     def maxKey(self, max=_marker):
         data = self._data
@@ -925,48 +916,6 @@ class _TreeItems(object):
                 return
             bucket = bucket._next
             done = 1
-
-# class _Slice:
-
-#     def __init__(self, base, slice_):
-#         self.base = base
-#         start = slice_.start
-#         end = slice_.end
-#         if start < 0 or end < 0:
-#             start, end, self.step, self._len = self._get_len(base, slice_)
-#         else:
-#             self.slice_ = slice_
-#             self.step = slice_.step or 1
-
-#         self.start = start
-#         self.end = end
-
-#     def _get_len(self, base, slice_):
-#         start, end, step = slice_.indices(len(base))
-#         l = (end - start - 1)//step + 1
-#         if l < 0:
-#             l = 0
-#         return start, end, step, l
-
-#     def __getitem__(self, i):
-#         if isinstance(i, slice):
-#             return _slice(self, i)
-#         if i < 0:
-#             i += len(self)
-#             if i < 0:
-#                 raise IndexError(i)
-
-#         j = i*self.step+self.start
-#         if i > self.end:
-#             raise IndexError(i)
-#         return self.base[j]
-
-#     def __len__(self):
-#         try:
-#             return self._len
-#         except AttributeError:
-#             _, _, _, self._len = self._get_len(self.base, self.slice_)
-#             return self._len
 
 
 class Tree(_Tree):
