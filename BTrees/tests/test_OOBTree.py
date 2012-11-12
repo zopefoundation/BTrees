@@ -202,11 +202,25 @@ class OOBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
         return OOBucket
 
 
+class OOBucketPyConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBucketPy
+        return OOBucketPy
+
+
 class OOSetConflictTests(SetConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OOBTree import OOSet
         return OOSet
+
+
+class OOSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOSetPy
+        return OOSetPy
 
 
 class OOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
@@ -216,11 +230,25 @@ class OOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
         return OOBTree
 
 
+class OOBTreePyConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTreePy
+        return OOBTreePy
+
+
 class OOTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OOBTree import OOTreeSet
         return OOTreeSet
+
+
+class OOTreeSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSetPy
+        return OOTreeSetPy
 
 
 class OOModuleTest(ModuleTest, unittest.TestCase):
@@ -277,8 +305,12 @@ def test_suite():
         unittest.makeSuite(PureOO),
         unittest.makeSuite(PureOOPy),
         unittest.makeSuite(OOBucketConflictTests),
+        unittest.makeSuite(OOBucketPyConflictTests),
         unittest.makeSuite(OOSetConflictTests),
+        unittest.makeSuite(OOSetPyConflictTests),
         unittest.makeSuite(OOBTreeConflictTests),
+        unittest.makeSuite(OOBTreePyConflictTests),
         unittest.makeSuite(OOTreeSetConflictTests),
+        unittest.makeSuite(OOTreeSetPyConflictTests),
         unittest.makeSuite(OOModuleTest),
     ))
