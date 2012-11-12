@@ -14,7 +14,8 @@
 import unittest
 
 
-class _BucketBaseTests(unittest.TestCase):
+
+class Test_BucketBase(unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.___BTree import _BucketBase
@@ -54,7 +55,7 @@ class _BucketBaseTests(unittest.TestCase):
     def test__search_nonempty_miss(self):
         bucket = self._makeOne()
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._search('candy'), -2)
+        self.assertEqual(bucket._search('candy'), -3)
 
     def test__search_nonempty_hit(self):
         bucket = self._makeOne()
@@ -64,5 +65,5 @@ class _BucketBaseTests(unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
-        unittest.makeSuite(_BucketBaseTests),
+        unittest.makeSuite(Test_BucketBase),
     ))
