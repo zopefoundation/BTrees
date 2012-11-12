@@ -35,6 +35,7 @@ that doesn't exist in the actual BTree).
 from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
 from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
 from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
+from BTrees.OIBTree import OIBTreePy, OIBucketPy, OISetPy, OITreeSetPy
 from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
 from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
 from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
