@@ -18,9 +18,11 @@ from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntKeys
 from .common import makeBuilder
@@ -59,19 +61,6 @@ class LFSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LFBTree import LFSet
         return LFSet
-
-
-class LFModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'LF'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.LFBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerFloatBTreeModule
 
 
 class LFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
@@ -123,6 +112,47 @@ class PureLF(SetResult, unittest.TestCase):
         return LFSet, LFTreeSet, makeBuilder(LFBTree), makeBuilder(LFBucket)
 
 
+class LFBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBTree
+        return LFBTree
+
+
+class LFBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFBucket
+        return LFBucket
+
+
+class LFTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFTreeSet
+        return LFTreeSet
+
+
+class LFSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LFBTree import LFSet
+        return LFSet
+
+
+class LFModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'LF'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.LFBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerFloatBTreeModule
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(LFBTreeInternalKeyTest),
@@ -130,9 +160,12 @@ def test_suite():
         unittest.makeSuite(LFBucketTest),
         unittest.makeSuite(LFTreeSetTest),
         unittest.makeSuite(LFSetTest),
-        unittest.makeSuite(LFModuleTest),
         unittest.makeSuite(LFBTreeTest),
-
         unittest.makeSuite(TestLFMultiUnion),
         unittest.makeSuite(PureLF),
+        unittest.makeSuite(LFBTreeConflictTests),
+        unittest.makeSuite(LFBucketConflictTests),
+        unittest.makeSuite(LFTreeSetConflictTests),
+        unittest.makeSuite(LFSetConflictTests),
+        unittest.makeSuite(LFModuleTest),
     ))

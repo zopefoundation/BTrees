@@ -18,8 +18,10 @@ from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntValues
 from .common import Weighted
@@ -60,27 +62,6 @@ class OLSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OLBTree import OLSet
         return OLSet
-
-
-class OLModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'OL'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.OLBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IObjectIntegerBTreeModule
-
-    def test_multiunion_not_present(self):
-        try:
-            from BTrees.OLBTree import multiunion
-        except ImportError:
-            pass
-        else:
-            self.fail("OLBTree shouldn't have multiunion")
 
 
 class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
@@ -135,6 +116,55 @@ class TestWeightedOL(Weighted, unittest.TestCase):
         return OLBucket, OLBTree, itemsToSet(OLSet), itemsToSet(OLTreeSet)
 
 
+class OLBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBucket
+        return OLBucket
+
+
+class OLSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLSet
+        return OLSet
+
+
+class OLBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLBTree
+        return OLBTree
+
+
+class OLTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OLBTree import OLTreeSet
+        return OLTreeSet
+
+
+class OLModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'OL'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.OLBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectIntegerBTreeModule
+
+    def test_multiunion_not_present(self):
+        try:
+            from BTrees.OLBTree import multiunion
+        except ImportError:
+            pass
+        else:
+            self.fail("OLBTree shouldn't have multiunion")
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OLBTreeInternalKeyTest),
@@ -142,9 +172,12 @@ def test_suite():
         unittest.makeSuite(OLBucketTest),
         unittest.makeSuite(OLTreeSetTest),
         unittest.makeSuite(OLSetTest),
-        unittest.makeSuite(OLModuleTest),
         unittest.makeSuite(OLBTreeTest),
-
         unittest.makeSuite(PureOL),
         unittest.makeSuite(TestWeightedOL),
+        unittest.makeSuite(OLBucketConflictTests),
+        unittest.makeSuite(OLSetConflictTests),
+        unittest.makeSuite(OLBTreeConflictTests),
+        unittest.makeSuite(OLTreeSetConflictTests),
+        unittest.makeSuite(OLModuleTest),
     ))

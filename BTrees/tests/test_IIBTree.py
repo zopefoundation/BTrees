@@ -19,9 +19,11 @@ from .common import I_SetsBase
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntKeys
 from .common import TestLongIntValues
@@ -64,18 +66,6 @@ class IISetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IIBTree import IISet
         return IISet
-
-
-class IIModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'II'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.IIBTree
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerIntegerBTreeModule
 
 
 class IIBTreeTest(BTreeTests, unittest.TestCase):
@@ -229,6 +219,46 @@ class TestWeightedII(Weighted, unittest.TestCase):
         return IIBucket, IIBTree, itemsToSet(IISet), itemsToSet(IITreeSet)
 
 
+class IIBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBTree
+        return IIBTree
+
+
+class IIBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBucket
+        return IIBucket
+
+
+class IITreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSet
+        return IITreeSet
+
+
+class IISetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IISet
+        return IISet
+
+
+class IIModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'II'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.IIBTree
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerIntegerBTreeModule
+
+
 
 def test_suite():
     return unittest.TestSuite((
@@ -237,7 +267,6 @@ def test_suite():
         unittest.makeSuite(IIBucketTest),
         unittest.makeSuite(IITreeSetTest),
         unittest.makeSuite(IISetTest),
-        unittest.makeSuite(IIModuleTest),
         unittest.makeSuite(IIBTreeTest),
         unittest.makeSuite(TestIIBTrees),
         unittest.makeSuite(TestIISets),
@@ -245,4 +274,9 @@ def test_suite():
         unittest.makeSuite(TestIIMultiUnion),
         unittest.makeSuite(PureII),
         unittest.makeSuite(TestWeightedII),
+        unittest.makeSuite(IIBTreeConflictTests),
+        unittest.makeSuite(IIBucketConflictTests),
+        unittest.makeSuite(IITreeSetConflictTests),
+        unittest.makeSuite(IISetConflictTests),
+        unittest.makeSuite(IIModuleTest),
     ))

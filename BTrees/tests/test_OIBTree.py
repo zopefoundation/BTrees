@@ -18,8 +18,10 @@ from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntValues
 from .common import TypeTest
@@ -62,27 +64,6 @@ class OISetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OIBTree import OISet
         return OISet
-
-
-class OIModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'OI'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.OIBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IObjectIntegerBTreeModule
-
-    def test_multiunion_not_present(self):
-        try:
-            from BTrees.OIBTree import multiunion
-        except ImportError:
-            pass
-        else:
-            self.fail("OIBTree shouldn't have multiunion")
 
 
 class OIBTreeTest(BTreeTests, unittest.TestCase):
@@ -174,6 +155,55 @@ class TestWeightedOI(Weighted, unittest.TestCase):
         return OIBucket, OIBTree, itemsToSet(OISet), itemsToSet(OITreeSet)
 
 
+class OIBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBucket
+        return OIBucket
+
+
+class OISetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OISet
+        return OISet
+
+
+class OIBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OIBTree
+        return OIBTree
+
+
+class OITreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OIBTree import OITreeSet
+        return OITreeSet
+
+
+class OIModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'OI'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.OIBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IObjectIntegerBTreeModule
+
+    def test_multiunion_not_present(self):
+        try:
+            from BTrees.OIBTree import multiunion
+        except ImportError:
+            pass
+        else:
+            self.fail("OIBTree shouldn't have multiunion")
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(OIBTreeInternalKeyTest),
@@ -181,10 +211,13 @@ def test_suite():
         unittest.makeSuite(OIBucketTest),
         unittest.makeSuite(OITreeSetTest),
         unittest.makeSuite(OISetTest),
-        unittest.makeSuite(OIModuleTest),
         unittest.makeSuite(OIBTreeTest),
         unittest.makeSuite(TestOIBTrees),
-
         unittest.makeSuite(PureOI),
         unittest.makeSuite(TestWeightedOI),
+        unittest.makeSuite(OIBucketConflictTests),
+        unittest.makeSuite(OISetConflictTests),
+        unittest.makeSuite(OIBTreeConflictTests),
+        unittest.makeSuite(OITreeSetConflictTests),
+        unittest.makeSuite(OIModuleTest),
     ))

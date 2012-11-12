@@ -19,9 +19,11 @@ from .common import I_SetsBase
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntKeys
 from .common import makeBuilder
@@ -60,35 +62,6 @@ class LOSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LOBTree import LOSet
         return LOSet
-
-
-class LOModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'LO'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.LOBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerObjectBTreeModule
-
-    def test_weightedUnion_not_present(self):
-        try:
-            from BTrees.LOBTree import weightedUnion
-        except ImportError:
-            pass
-        else:
-            self.fail("LOBTree shouldn't have weightedUnion")
-
-    def test_weightedIntersection_not_present(self):
-        try:
-            from BTrees.LOBTree import weightedIntersection
-        except ImportError:
-            pass
-        else:
-            self.fail("LOBTree shouldn't have weightedIntersection")
 
 
 
@@ -152,6 +125,63 @@ class PureLO(SetResult, unittest.TestCase):
         return LOSet, LOTreeSet, makeBuilder(LOBTree), makeBuilder(LOBucket)
 
 
+class LOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBTree
+        return LOBTree
+
+
+class LOBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOBucket
+        return LOBucket
+
+
+class LOTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOTreeSet
+        return LOTreeSet
+
+
+class LOSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LOBTree import LOSet
+        return LOSet
+
+
+class LOModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'LO'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.LOBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerObjectBTreeModule
+
+    def test_weightedUnion_not_present(self):
+        try:
+            from BTrees.LOBTree import weightedUnion
+        except ImportError:
+            pass
+        else:
+            self.fail("LOBTree shouldn't have weightedUnion")
+
+    def test_weightedIntersection_not_present(self):
+        try:
+            from BTrees.LOBTree import weightedIntersection
+        except ImportError:
+            pass
+        else:
+            self.fail("LOBTree shouldn't have weightedIntersection")
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(LOBTreeInternalKeyTest),
@@ -159,11 +189,14 @@ def test_suite():
         unittest.makeSuite(LOBucketTest),
         unittest.makeSuite(LOTreeSetTest),
         unittest.makeSuite(LOSetTest),
-        unittest.makeSuite(LOModuleTest),
         unittest.makeSuite(LOBTreeTest),
         unittest.makeSuite(TestLOSets),
         unittest.makeSuite(TestLOTreeSets),
-
         unittest.makeSuite(TestLOMultiUnion),
         unittest.makeSuite(PureLO),
+        unittest.makeSuite(LOBTreeConflictTests),
+        unittest.makeSuite(LOBucketConflictTests),
+        unittest.makeSuite(LOTreeSetConflictTests),
+        unittest.makeSuite(LOSetConflictTests),
+        unittest.makeSuite(LOModuleTest),
     ))

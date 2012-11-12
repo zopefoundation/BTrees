@@ -18,10 +18,13 @@ from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import NormalSetTests
 from .common import SetResult
+from .common import SetConflictTestBase
 from .common import makeBuilder
+
 
 
 class OOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -192,6 +195,34 @@ class PureOOPy(SetResult, unittest.TestCase):
                 makeBuilder(OOBTreePy), makeBuilder(OOBucketPy))
 
 
+class OOBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBucket
+        return OOBucket
+
+
+class OOSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOSet
+        return OOSet
+
+
+class OOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOBTree
+        return OOBTree
+
+
+class OOTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.OOBTree import OOTreeSet
+        return OOTreeSet
+
+
 class OOModuleTest(ModuleTest, unittest.TestCase):
 
     prefix = 'OO'
@@ -245,5 +276,9 @@ def test_suite():
         unittest.makeSuite(OOBTreePyTest),
         unittest.makeSuite(PureOO),
         unittest.makeSuite(PureOOPy),
+        unittest.makeSuite(OOBucketConflictTests),
+        unittest.makeSuite(OOSetConflictTests),
+        unittest.makeSuite(OOBTreeConflictTests),
+        unittest.makeSuite(OOTreeSetConflictTests),
         unittest.makeSuite(OOModuleTest),
     ))

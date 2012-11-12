@@ -19,9 +19,11 @@ from .common import I_SetsBase
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TypeTest
 from .common import TestLongIntKeys
@@ -62,35 +64,6 @@ class IOSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IOBTree import IOSet
         return IOSet
-
-
-class IOModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'IO'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.IOBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerObjectBTreeModule
-
-    def test_weightedUnion_not_present(self):
-        try:
-            from BTrees.IOBTree import weightedUnion
-        except ImportError:
-            pass
-        else:
-            self.fail("IOBTree shouldn't have weightedUnion")
-
-    def test_weightedIntersection_not_present(self):
-        try:
-            from BTrees.IOBTree import weightedIntersection
-        except ImportError:
-            pass
-        else:
-            self.fail("IOBTree shouldn't have weightedIntersection")
 
 
 class IOBTreeTest(BTreeTests, unittest.TestCase):
@@ -174,6 +147,63 @@ class TestIOMultiUnion(MultiUnion, unittest.TestCase):
         return mkbtree(*args)
 
 
+class IOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBTree
+        return IOBTree
+
+
+class IOBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOBucket
+        return IOBucket
+
+
+class IOTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOTreeSet
+        return IOTreeSet
+
+
+class IOSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IOBTree import IOSet
+        return IOSet
+
+
+class IOModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'IO'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.IOBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerObjectBTreeModule
+
+    def test_weightedUnion_not_present(self):
+        try:
+            from BTrees.IOBTree import weightedUnion
+        except ImportError:
+            pass
+        else:
+            self.fail("IOBTree shouldn't have weightedUnion")
+
+    def test_weightedIntersection_not_present(self):
+        try:
+            from BTrees.IOBTree import weightedIntersection
+        except ImportError:
+            pass
+        else:
+            self.fail("IOBTree shouldn't have weightedIntersection")
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(IOBTreeInternalKeyTest),
@@ -181,11 +211,15 @@ def test_suite():
         unittest.makeSuite(IOBucketTest),
         unittest.makeSuite(IOTreeSetTest),
         unittest.makeSuite(IOSetTest),
-        unittest.makeSuite(IOModuleTest),
         unittest.makeSuite(IOBTreeTest),
         unittest.makeSuite(TestIOBTrees),
         unittest.makeSuite(TestIOSets),
         unittest.makeSuite(TestIOTreeSets),
         unittest.makeSuite(TestIOMultiUnion),
         unittest.makeSuite(PureIO),
+        unittest.makeSuite(IOBTreeConflictTests),
+        unittest.makeSuite(IOBucketConflictTests),
+        unittest.makeSuite(IOTreeSetConflictTests),
+        unittest.makeSuite(IOSetConflictTests),
+        unittest.makeSuite(IOModuleTest),
     ))

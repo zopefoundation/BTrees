@@ -18,9 +18,11 @@ from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntKeys
 from .common import makeBuilder
@@ -59,18 +61,6 @@ class IFSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IFBTree import IFSet
         return IFSet
-
-class IFModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'IF'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.IFBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerFloatBTreeModule
 
 
 class IFBTreeTest(BTreeTests, unittest.TestCase):
@@ -161,6 +151,47 @@ class PureIF(SetResult, unittest.TestCase):
         from BTrees.IFBTree import IFSet
         return IFSet, IFTreeSet, makeBuilder(IFBTree), makeBuilder(IFBucket)
 
+
+class IFBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBTree
+        return IFBTree
+
+
+class IFBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFBucket
+        return IFBucket
+
+
+class IFTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFTreeSet
+        return IFTreeSet
+
+
+class IFSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IFBTree import IFSet
+        return IFSet
+
+
+class IFModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'IF'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.IFBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerFloatBTreeModule
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(IFBTreeInternalKeyTest),
@@ -171,7 +202,10 @@ def test_suite():
         unittest.makeSuite(IFModuleTest),
         unittest.makeSuite(IFBTreeTest),
         unittest.makeSuite(TestIFBTrees),
-
         unittest.makeSuite(TestIFMultiUnion),
         unittest.makeSuite(PureIF),
+        unittest.makeSuite(IFBTreeConflictTests),
+        unittest.makeSuite(IFBucketConflictTests),
+        unittest.makeSuite(IFTreeSetConflictTests),
+        unittest.makeSuite(IFSetConflictTests),
     ))

@@ -19,9 +19,11 @@ from .common import I_SetsBase
 from .common import InternalKeysMappingTest
 from .common import InternalKeysSetTest
 from .common import MappingBase
+from .common import MappingConflictTestBase
 from .common import ModuleTest
 from .common import MultiUnion
 from .common import NormalSetTests
+from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TestLongIntKeys
 from .common import TestLongIntValues
@@ -70,19 +72,6 @@ class LLSetTest(ExtendedSetTests, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LLBTree import LLSet
         return LLSet
-
-
-class LLModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'LL'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.LLBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IIntegerIntegerBTreeModule
 
 
 class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
@@ -172,6 +161,47 @@ class TestWeightedLL(Weighted, unittest.TestCase):
         return LLBucket, LLBTree, itemsToSet(LLSet), itemsToSet(LLTreeSet)
 
 
+class LLBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBTree
+        return LLBTree
+
+
+class LLBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLBucket
+        return LLBucket
+
+
+class LLTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLTreeSet
+        return LLTreeSet
+
+
+class LLSetConflictTests(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.LLBTree import LLSet
+        return LLSet
+
+
+class LLModuleTest(ModuleTest, unittest.TestCase):
+
+    prefix = 'LL'
+
+    def _getModule(self):
+        import BTrees
+        return BTrees.LLBTree
+
+    def _getInterface(self):
+        import BTrees.Interfaces
+        return BTrees.Interfaces.IIntegerIntegerBTreeModule
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(LLBTreeInternalKeyTest),
@@ -183,8 +213,11 @@ def test_suite():
         unittest.makeSuite(LLBTreeTest),
         unittest.makeSuite(TestLLSets),
         unittest.makeSuite(TestLLTreeSets),
-
         unittest.makeSuite(TestLLMultiUnion),
         unittest.makeSuite(PureLL),
         unittest.makeSuite(TestWeightedLL),
+        unittest.makeSuite(LLBTreeConflictTests),
+        unittest.makeSuite(LLBucketConflictTests),
+        unittest.makeSuite(LLTreeSetConflictTests),
+        unittest.makeSuite(LLSetConflictTests),
     ))
