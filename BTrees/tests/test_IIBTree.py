@@ -39,12 +39,26 @@ class IIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
         from BTrees.IIBTree import IIBTree
         return IIBTree
 
+ 
+class IIBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBTreePy
+        return IIBTreePy
+
 
 class IITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IITreeSet
         return IITreeSet
+
+
+class IITreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSetPy
+        return IITreeSetPy
 
 
 class IIBucketTest(MappingBase, unittest.TestCase):
@@ -54,11 +68,25 @@ class IIBucketTest(MappingBase, unittest.TestCase):
         return IIBucket
 
 
+class IIBucketPyTest(MappingBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBucketPy
+        return IIBucketPy
+
+
 class IITreeSetTest(NormalSetTests, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IITreeSet
         return IITreeSet
+
+
+class IITreeSetPyTest(NormalSetTests, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSetPy
+        return IITreeSetPy
 
 
 class IISetTest(ExtendedSetTests, unittest.TestCase):
@@ -68,11 +96,14 @@ class IISetTest(ExtendedSetTests, unittest.TestCase):
         return IISet
 
 
-class IIBTreeTest(BTreeTests, unittest.TestCase):
+class IISetPyTest(ExtendedSetTests, unittest.TestCase):
 
-    def _makeOne(self):
-        from BTrees.IIBTree import IIBTree
-        return IIBTree()
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IISetPy
+        return IISetPy
+
+
+class _IIBTreeTestBase(BTreeTests):
 
     def testIIBTreeOverflow(self):
         good = set()
@@ -97,22 +128,44 @@ class IIBTreeTest(BTreeTests, unittest.TestCase):
         self.assertEqual(sorted(good), sorted(b))
 
 
-if using64bits:
-
-    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-        def _makeOne(self):
-            from BTrees.IIBTree import IIBTree
-            return IIBTree()
-        def getTwoValues(self):
-            return 1, 2
-
-
-class TestIIBTrees(unittest.TestCase):
+class IIBTreeTest(_IIBTreeTestBase, unittest.TestCase):
 
     def _makeOne(self):
         from BTrees.IIBTree import IIBTree
         return IIBTree()
+
+
+class IIBTreeTestPy(_IIBTreeTestBase, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.IIBTree import IIBTreePy
+        return IIBTreePy()
+
+
+if using64bits:
+
+    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
+                      unittest.TestCase):
+
+        def _makeOne(self):
+            from BTrees.IIBTree import IIBTree
+            return IIBTree()
+
+        def getTwoValues(self):
+            return 1, 2
+
+    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
+                      unittest.TestCase):
+
+        def _makeOne(self):
+            from BTrees.IIBTree import IIBTreePy
+            return IIBTreePy()
+
+        def getTwoValues(self):
+            return 1, 2
+
+
+class _TestIIBTreesBase(object):
 
     def testNonIntegerKeyRaises(self):
         self.assertRaises(TypeError, self._stringraiseskey)
@@ -143,11 +196,32 @@ class TestIIBTrees(unittest.TestCase):
         self._makeOne()[1] = None
 
 
+class TestIIBTrees(_TestIIBTreesBase, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.IIBTree import IIBTree
+        return IIBTree()
+
+
+class TestIIBTreesPy(_TestIIBTreesBase, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.IIBTree import IIBTreePy
+        return IIBTreePy()
+
+
 class TestIISets(I_SetsBase, unittest.TestCase):
 
     def _makeOne(self):
         from BTrees.IIBTree import IISet
         return IISet()
+
+
+class TestIISetsPy(I_SetsBase, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.IIBTree import IISetPy
+        return IISetPy()
 
 
 class TestIITreeSets(I_SetsBase, unittest.TestCase):
@@ -157,16 +231,27 @@ class TestIITreeSets(I_SetsBase, unittest.TestCase):
         return IITreeSet()
 
 
+class TestIITreeSetsPy(I_SetsBase, unittest.TestCase):
+
+    def _makeOne(self):
+        from BTrees.IIBTree import IITreeSetPy
+        return IITreeSetPy()
+
+
 class PureII(SetResult, unittest.TestCase):
+
     def union(self, *args):
         from BTrees.IIBTree import union
         return union(*args)
+
     def intersection(self, *args):
         from BTrees.IIBTree import intersection
         return intersection(*args)
+
     def difference(self, *args):
         from BTrees.IIBTree import difference
         return difference(*args)
+
     def builders(self):
         from BTrees.IIBTree import IIBTree
         from BTrees.IIBTree import IIBucket
@@ -175,48 +260,142 @@ class PureII(SetResult, unittest.TestCase):
         return IISet, IITreeSet, makeBuilder(IIBTree), makeBuilder(IIBucket)
 
 
+class PureIIPy(SetResult, unittest.TestCase):
+
+    def union(self, *args):
+        from BTrees.IIBTree import unionPy
+        return unionPy(*args)
+
+    def intersection(self, *args):
+        from BTrees.IIBTree import intersectionPy
+        return intersectionPy(*args)
+
+    def difference(self, *args):
+        from BTrees.IIBTree import differencePy
+        return differencePy(*args)
+
+    def builders(self):
+        from BTrees.IIBTree import IIBTreePy
+        from BTrees.IIBTree import IIBucketPy
+        from BTrees.IIBTree import IITreeSetPy
+        from BTrees.IIBTree import IISetPy
+        return (IISetPy, IITreeSetPy,
+                makeBuilder(IIBTreePy), makeBuilder(IIBucketPy))
+
+
 class TestIIMultiUnion(MultiUnion, unittest.TestCase):
+
     def multiunion(self, *args):
         from BTrees.IIBTree import multiunion
         return multiunion(*args)
+
     def union(self, *args):
         from BTrees.IIBTree import union
         return union(*args)
+
     def mkset(self, *args):
         from BTrees.IIBTree import IISet as mkset
         return mkset(*args)
+
     def mktreeset(self, *args):
         from BTrees.IIBTree import IITreeSet as mktreeset
         return mktreeset(*args)
+
     def mkbucket(self, *args):
         from BTrees.IIBTree import IIBucket as mkbucket
         return mkbucket(*args)
+
     def mkbtree(self, *args):
         from BTrees.IIBTree import IIBTree as mkbtree
         return mkbtree(*args)
 
+
+class TestIIMultiUnionPy(MultiUnion, unittest.TestCase):
+
+    def multiunion(self, *args):
+        from BTrees.IIBTree import multiunionPy
+        return multiunionPy(*args)
+
+    def union(self, *args):
+        from BTrees.IIBTree import unionPy
+        return unionPy(*args)
+
+    def mkset(self, *args):
+        from BTrees.IIBTree import IISetPy as mkset
+        return mkset(*args)
+
+    def mktreeset(self, *args):
+        from BTrees.IIBTree import IITreeSetPy as mktreeset
+        return mktreeset(*args)
+
+    def mkbucket(self, *args):
+        from BTrees.IIBTree import IIBucketPy as mkbucket
+        return mkbucket(*args)
+
+    def mkbtree(self, *args):
+        from BTrees.IIBTree import IIBTreePy as mkbtree
+        return mkbtree(*args)
+
+
 class TestWeightedII(Weighted, unittest.TestCase):
+
     def weightedUnion(self):
         from BTrees.IIBTree import weightedUnion
         return weightedUnion
+
     def weightedIntersection(self):
         from BTrees.IIBTree import weightedIntersection
         return weightedIntersection
+
     def union(self):
         from BTrees.IIBTree import union
         return union
+
     def intersection(self):
         from BTrees.IIBTree import intersection
         return intersection
+
     def mkbucket(self, *args):
         from BTrees.IIBTree import IIBucket as mkbucket
         return mkbucket(*args)
+
     def builders(self):
         from BTrees.IIBTree import IIBTree
         from BTrees.IIBTree import IIBucket
         from BTrees.IIBTree import IITreeSet
         from BTrees.IIBTree import IISet
         return IIBucket, IIBTree, itemsToSet(IISet), itemsToSet(IITreeSet)
+
+
+class TestWeightedIIPy(Weighted, unittest.TestCase):
+
+    def weightedUnion(self):
+        from BTrees.IIBTree import weightedUnionPy
+        return weightedUnionPy
+
+    def weightedIntersection(self):
+        from BTrees.IIBTree import weightedIntersectionPy
+        return weightedIntersectionPy
+
+    def union(self):
+        from BTrees.IIBTree import unionPy
+        return unionPy
+
+    def intersection(self):
+        from BTrees.IIBTree import intersectionPy
+        return intersectionPy
+
+    def mkbucket(self, *args):
+        from BTrees.IIBTree import IIBucketPy as mkbucket
+        return mkbucket(*args)
+
+    def builders(self):
+        from BTrees.IIBTree import IIBTreePy
+        from BTrees.IIBTree import IIBucketPy
+        from BTrees.IIBTree import IITreeSetPy
+        from BTrees.IIBTree import IISetPy
+        return (IIBucketPy, IIBTreePy,
+                itemsToSet(IISetPy), itemsToSet(IITreeSetPy))
 
 
 class IIBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
@@ -226,11 +405,25 @@ class IIBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
         return IIBTree
 
 
+class IIBTreeConflictTestsPy(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBTreePy
+        return IIBTreePy
+
+
 class IIBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IIBucket
         return IIBucket
+
+
+class IIBucketConflictTestsPy(MappingConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IIBucketPy
+        return IIBucketPy
 
 
 class IITreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
@@ -240,11 +433,25 @@ class IITreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
         return IITreeSet
 
 
+class IITreeSetConflictTestsPy(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IITreeSetPy
+        return IITreeSetPy
+
+
 class IISetConflictTests(SetConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IISet
         return IISet
+
+
+class IISetConflictTestsPy(SetConflictTestBase, unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.IIBTree import IISetPy
+        return IISetPy
 
 
 class IIModuleTest(ModuleTest, unittest.TestCase):
@@ -263,20 +470,36 @@ class IIModuleTest(ModuleTest, unittest.TestCase):
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(IIBTreeInternalKeyTest),
+        unittest.makeSuite(IIBTreePyInternalKeyTest),
         unittest.makeSuite(IITreeSetInternalKeyTest),
+        unittest.makeSuite(IITreeSetPyInternalKeyTest),
         unittest.makeSuite(IIBucketTest),
+        unittest.makeSuite(IIBucketPyTest),
         unittest.makeSuite(IITreeSetTest),
+        unittest.makeSuite(IITreeSetPyTest),
         unittest.makeSuite(IISetTest),
+        unittest.makeSuite(IISetPyTest),
         unittest.makeSuite(IIBTreeTest),
+        unittest.makeSuite(IIBTreeTestPy),
         unittest.makeSuite(TestIIBTrees),
+        unittest.makeSuite(TestIIBTreesPy),
         unittest.makeSuite(TestIISets),
+        unittest.makeSuite(TestIISetsPy),
         unittest.makeSuite(TestIITreeSets),
+        unittest.makeSuite(TestIITreeSetsPy),
         unittest.makeSuite(TestIIMultiUnion),
+        unittest.makeSuite(TestIIMultiUnionPy),
         unittest.makeSuite(PureII),
+        unittest.makeSuite(PureIIPy),
         unittest.makeSuite(TestWeightedII),
+        unittest.makeSuite(TestWeightedIIPy),
         unittest.makeSuite(IIBTreeConflictTests),
+        unittest.makeSuite(IIBTreeConflictTestsPy),
         unittest.makeSuite(IIBucketConflictTests),
+        unittest.makeSuite(IIBucketConflictTestsPy),
         unittest.makeSuite(IITreeSetConflictTests),
+        unittest.makeSuite(IITreeSetConflictTestsPy),
         unittest.makeSuite(IISetConflictTests),
+        unittest.makeSuite(IISetConflictTestsPy),
         unittest.makeSuite(IIModuleTest),
     ))
