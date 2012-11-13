@@ -37,6 +37,7 @@ from BTrees.IFBTree import IFBTreePy, IFBucketPy, IFSetPy, IFTreeSetPy
 from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
 from BTrees.IIBTree import IIBTreePy, IIBucketPy, IISetPy, IITreeSetPy
 from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
+from BTrees.IOBTree import IOBTreePy, IOBucketPy, IOSetPy, IOTreeSetPy
 from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
 from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
 from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
