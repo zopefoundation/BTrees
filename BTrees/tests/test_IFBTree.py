@@ -133,7 +133,7 @@ if using64bits:
             return 0.5, 1.5
 
 
-class _TestIFBTreesBase(unittest.TestCase):
+class _TestIFBTreesBase(object):
 
     def testNonIntegerKeyRaises(self):
         self.assertRaises(TypeError, self._stringraiseskey)
