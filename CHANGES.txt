@@ -5,6 +5,8 @@
 4.0.2 (unreleased)
 ------------------
 
+- Python reference implementations now tested separately from the C
+  verions on all platforms.
 
 
 4.0.1 (2012-10-21)
