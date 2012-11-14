@@ -18,14 +18,15 @@ from struct import pack
 from struct import unpack
 from struct import error as struct_error
 
-import persistent
+from persistent import Persistent
 
-from BTrees.Interfaces import BTreesConflictError
+from .Interfaces import BTreesConflictError
+
 
 _marker = object()
 
 
-class _Base(persistent.Persistent):
+class _Base(Persistent):
 
     _key_type = list
 
@@ -183,148 +184,11 @@ class _SetIteration(object):
         return self
 
 
-class _SetBase(_Base):
+class Bucket(_BucketBase):
 
-    #_next = None
-    def add(self, key):
-        return self._set(self._to_key(key))[0]
-
-    insert = add
-
-    def remove(self, key):
-        self._del(self._to_key(key))
-
-    def update(self, items):
-        add = self.add
-        for i in items:
-            add(i)
-
-    def _p_resolveConflict(self, s_old, s_com, s_new):
-
-        b_old = self.__class__()
-        if s_old is not None:
-            b_old.__setstate__(s_old)
-        b_com = self.__class__()
-        if s_com is not None:
-            b_com.__setstate__(s_com)
-        b_new = self.__class__()
-        if s_new is not None:
-            b_new.__setstate__(s_new)
-
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next): # conflict: com or new changed _next
-            raise BTreesConflictError(-1, -1, -1, 0)
-
-        if not b_com or not b_new: # conflict: com or new empty
-            raise BTreesConflictError(-1, -1, -1, 12)
-
-        i_old = _SetIteration(b_old, True)
-        i_com = _SetIteration(b_com, True)
-        i_new = _SetIteration(b_new, True)
-
-        def merge_error(reason):
-            return BTreesConflictError(
-                i_old.position, i_com.position, i_new.position, reason)
-
-        result = self.__class__()
-
-        def merge_output(it):
-            result._keys.append(it.key)
-            it.advance()
-
-        while i_old.active and i_com.active and i_new.active:
-            cmpOC = cmp(i_old.key, i_com.key)
-            cmpON = cmp(i_old.key, i_new.key)
-            if cmpOC == 0:
-                if cmpON == 0: # all match
-                    merge_output(i_old)
-                    i_com.advance()
-                    i_new.advance()
-                elif cmpON > 0: # insert in new
-                    merge_output(i_new)
-                else: # deleted new
-                    if i_new.position == 1:
-                        # Deleted the first item.  This will modify the
-                        # parent node, so we don't know if merging will be
-                        # safe
-                        raise merge_error(13)
-                    i_old.advance()
-                    i_com.advance()
-            elif cmpON == 0:
-                if cmpOC > 0: # insert committed
-                    merge_output(i_com)
-                else: # delete committed
-                    if i_com.position == 1:
-                        # Deleted the first item.  This will modify the
-                        # parent node, so we don't know if merging will be
-                        # safe
-                        raise merge_error(13)
-                    i_old.advance()
-                    i_new.advance()
-            else: # both com and new keys changed
-                cmpCN = cmp(i_com.key, i_new.key)
-                if cmpCN == 0: # both inserted same key
-                    raise merge_error(4)
-                if cmpOC > 0: # insert committed
-                    if cmpCN > 0: # insert i_new first
-                        merge_output(i_new)
-                    else:
-                        merge_output(i_com)
-                elif cmpON > 0: # insert i_new
-                    merge_output(i_new)
-                else: # both com and new deleted same key
-                    raise merge_error(5)
-
-        while i_com.active and i_new.active: # new inserts
-            cmpCN = cmp(i_com.key, i_new.key)
-            if cmpCN == 0: # dueling insert
-                raise merge_error(6)
-            if cmpCN > 0: # insert new
-                merge_output(i_new)
-            else: # insert committed
-                merge_output(i_com)
-
-        while i_old.active and i_com.active: # new deletes rest of original
-            cmpOC = cmp(i_old.key, i_com.key)
-            if cmpOC > 0: # insert committed
-                merge_output(i_com)
-            elif cmpOC == 0: # del in new
-                i_old.advance()
-                i_com.advance()
-            else: # dueling deletes or delete and change
-                raise merge_error(7)
-
-        while i_old.active and i_new.active:
-            # committed deletes rest of original
-            cmpON = cmp(i_old.key, i_new.key)
-            if cmpON > 0: # insert new
-                merge_output(i_new)
-            elif cmpON == 0: # deleted in committed
-                i_old.advance()
-                i_new.advance()
-            else: # dueling deletes or delete and change
-                raise merge_error(8)
-
-        if i_old.active: # dueling deletes
-            raise merge_error(9)
-
-        while i_com.active:
-            merge_output(i_com)
-
-        while i_new.active:
-            merge_output(i_new)
-
-        if len(result._keys) == 0:
-            # If the output bucket is empty, conflict resolution doesn't have
-            # enough info to unlink it from its containing BTree correctly.
-            assert 0, "CAN'T GET HERE"
-            raise merge_error(10)
-
-        result._next = b_old._next
-        return result.__getstate__()
-
-
-class _MappingBase(_Base):
+    _value_type = list
+    _to_value = lambda x: x
+    VALUE_SAME_CHECK = False
 
     def setdefault(self, key, value):
         return self._set(self._to_key(key), self._to_value(value), True)[1]
@@ -356,6 +220,118 @@ class _MappingBase(_Base):
 
     def __delitem__(self, key):
         self._del(self._to_key(key))
+
+    def clear(self):
+        _BucketBase.clear(self)
+        self._values = self._value_type()
+
+    def get(self, key, default=None):
+        index = self._search(self._to_key(key))
+        if index < 0:
+            return default
+        return self._values[index]
+
+    def __getitem__(self, key):
+        index = self._search(self._to_key(key))
+        if index < 0:
+            raise KeyError(key)
+        return self._values[index]
+
+    def _set(self, key, value, ifunset=False):
+        """Set a value
+
+        Return: status, value
+
+        Status is:
+              None if no change
+                  0 if change, but not size change
+                  1 if change and size change
+        """
+        index = self._search(key)
+        if index >= 0:
+            if (ifunset or
+                self.VALUE_SAME_CHECK and value == self._values[index]
+                ):
+                return None, self._values[index]
+            self._p_changed = True
+            self._values[index] = value
+            return 0, value
+        else:
+            self._p_changed = True
+            index = -index - 1
+            self._keys.insert(index, key)
+            self._values.insert(index, value)
+            return 1, value
+
+    def _del(self, key):
+        index = self._search(key)
+        if index >= 0:
+            self._p_changed = True
+            del self._keys[index]
+            return 0, self._values.pop(index)
+        raise KeyError(key)
+
+    def _split(self, index=-1):
+        if index < 0 or index >= len(self._keys):
+            index = len(self._keys) / 2
+        new_instance = self.__class__()
+        new_instance._keys = self._keys[index:]
+        new_instance._values = self._values[index:]
+        del self._keys[index:]
+        del self._values[index:]
+        new_instance._next = self._next
+        self._next = new_instance
+        return new_instance
+
+    def values(self, *args, **kw):
+        start, end = self._range(*args, **kw)
+        return self._values[start:end]
+
+    def itervalues(self, *args, **kw):
+        values = self._values
+        return (values[i] for i in xrange(*self._range(*args, **kw)))
+
+    def items(self, *args, **kw):
+        keys = self._keys
+        values = self._values
+        return [(keys[i], values[i])
+                    for i in xrange(*self._range(*args, **kw))]
+
+    def iteritems(self, *args, **kw):
+        keys = self._keys
+        values = self._values
+        return ((keys[i], values[i])
+                    for i in xrange(*self._range(*args, **kw)))
+
+    def __getstate__(self):
+        keys = self._keys
+        values = self._values
+        data = []
+        for i in range(len(keys)):
+            data.append(keys[i])
+            data.append(values[i])
+        data = tuple(data)
+
+        if self._next:
+            return data, self._next
+        return (data, )
+
+    def __setstate__(self, state):
+        if not isinstance(state[0], tuple):
+            raise TypeError("tuple required for first state element")
+
+        self.clear()
+        if len(state) == 2:
+            state, self._next = state
+        else:
+            self._next = None
+            state = state[0]
+
+        keys = self._keys
+        values = self._values
+        for i in range(0, len(state), 2):
+            keys.append(state[i])
+            values.append(state[i+1])
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
         b_old = self.__class__()
@@ -491,126 +467,20 @@ class _MappingBase(_Base):
         return result.__getstate__()
 
 
-class Bucket(_MappingBase, _BucketBase):
+class Set(_BucketBase):
 
-    _value_type = list
-    _to_value = lambda x: x
-    VALUE_SAME_CHECK = False
+    def add(self, key):
+        return self._set(self._to_key(key))[0]
 
-    def clear(self):
-        _BucketBase.clear(self)
-        self._values = self._value_type()
+    insert = add
 
-    def get(self, key, default=None):
-        index = self._search(self._to_key(key))
-        if index < 0:
-            return default
-        return self._values[index]
+    def remove(self, key):
+        self._del(self._to_key(key))
 
-    def __getitem__(self, key):
-        index = self._search(self._to_key(key))
-        if index < 0:
-            raise KeyError(key)
-        return self._values[index]
-
-    def _set(self, key, value, ifunset=False):
-        """Set a value
-
-        Return: status, value
-
-        Status is:
-              None if no change
-                  0 if change, but not size change
-                  1 if change and size change
-        """
-        index = self._search(key)
-        if index >= 0:
-            if (ifunset or
-                self.VALUE_SAME_CHECK and value == self._values[index]
-                ):
-                return None, self._values[index]
-            self._p_changed = True
-            self._values[index] = value
-            return 0, value
-        else:
-            self._p_changed = True
-            index = -index - 1
-            self._keys.insert(index, key)
-            self._values.insert(index, value)
-            return 1, value
-
-    def _del(self, key):
-        index = self._search(key)
-        if index >= 0:
-            self._p_changed = True
-            del self._keys[index]
-            return 0, self._values.pop(index)
-        raise KeyError(key)
-
-    def _split(self, index=-1):
-        if index < 0 or index >= len(self._keys):
-            index = len(self._keys) / 2
-        new_instance = self.__class__()
-        new_instance._keys = self._keys[index:]
-        new_instance._values = self._values[index:]
-        del self._keys[index:]
-        del self._values[index:]
-        new_instance._next = self._next
-        self._next = new_instance
-        return new_instance
-
-    def values(self, *args, **kw):
-        start, end = self._range(*args, **kw)
-        return self._values[start:end]
-
-    def itervalues(self, *args, **kw):
-        values = self._values
-        return (values[i] for i in xrange(*self._range(*args, **kw)))
-
-    def items(self, *args, **kw):
-        keys = self._keys
-        values = self._values
-        return [(keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw))]
-
-    def iteritems(self, *args, **kw):
-        keys = self._keys
-        values = self._values
-        return ((keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw)))
-
-    def __getstate__(self):
-        keys = self._keys
-        values = self._values
-        data = []
-        for i in range(len(keys)):
-            data.append(keys[i])
-            data.append(values[i])
-        data = tuple(data)
-
-        if self._next:
-            return data, self._next
-        return (data, )
-
-    def __setstate__(self, state):
-        if not isinstance(state[0], tuple):
-            raise TypeError("tuple required for first state element")
-
-        self.clear()
-        if len(state) == 2:
-            state, self._next = state
-        else:
-            self._next = None
-            state = state[0]
-
-        keys = self._keys
-        values = self._values
-        for i in range(0, len(state), 2):
-            keys.append(state[i])
-            values.append(state[i+1])
-
-
-class Set(_SetBase, _BucketBase):
+    def update(self, items):
+        add = self.add
+        for i in items:
+            add(i)
 
     def __getstate__(self):
         data = tuple(self._keys)
@@ -661,6 +531,130 @@ class Set(_SetBase, _BucketBase):
         self._next = new_instance
         return new_instance
 
+    def _p_resolveConflict(self, s_old, s_com, s_new):
+
+        b_old = self.__class__()
+        if s_old is not None:
+            b_old.__setstate__(s_old)
+        b_com = self.__class__()
+        if s_com is not None:
+            b_com.__setstate__(s_com)
+        b_new = self.__class__()
+        if s_new is not None:
+            b_new.__setstate__(s_new)
+
+        if (b_com._next != b_old._next or
+            b_new._next != b_old._next): # conflict: com or new changed _next
+            raise BTreesConflictError(-1, -1, -1, 0)
+
+        if not b_com or not b_new: # conflict: com or new empty
+            raise BTreesConflictError(-1, -1, -1, 12)
+
+        i_old = _SetIteration(b_old, True)
+        i_com = _SetIteration(b_com, True)
+        i_new = _SetIteration(b_new, True)
+
+        def merge_error(reason):
+            return BTreesConflictError(
+                i_old.position, i_com.position, i_new.position, reason)
+
+        result = self.__class__()
+
+        def merge_output(it):
+            result._keys.append(it.key)
+            it.advance()
+
+        while i_old.active and i_com.active and i_new.active:
+            cmpOC = cmp(i_old.key, i_com.key)
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpOC == 0:
+                if cmpON == 0: # all match
+                    merge_output(i_old)
+                    i_com.advance()
+                    i_new.advance()
+                elif cmpON > 0: # insert in new
+                    merge_output(i_new)
+                else: # deleted new
+                    if i_new.position == 1:
+                        # Deleted the first item.  This will modify the
+                        # parent node, so we don't know if merging will be
+                        # safe
+                        raise merge_error(13)
+                    i_old.advance()
+                    i_com.advance()
+            elif cmpON == 0:
+                if cmpOC > 0: # insert committed
+                    merge_output(i_com)
+                else: # delete committed
+                    if i_com.position == 1:
+                        # Deleted the first item.  This will modify the
+                        # parent node, so we don't know if merging will be
+                        # safe
+                        raise merge_error(13)
+                    i_old.advance()
+                    i_new.advance()
+            else: # both com and new keys changed
+                cmpCN = cmp(i_com.key, i_new.key)
+                if cmpCN == 0: # both inserted same key
+                    raise merge_error(4)
+                if cmpOC > 0: # insert committed
+                    if cmpCN > 0: # insert i_new first
+                        merge_output(i_new)
+                    else:
+                        merge_output(i_com)
+                elif cmpON > 0: # insert i_new
+                    merge_output(i_new)
+                else: # both com and new deleted same key
+                    raise merge_error(5)
+
+        while i_com.active and i_new.active: # new inserts
+            cmpCN = cmp(i_com.key, i_new.key)
+            if cmpCN == 0: # dueling insert
+                raise merge_error(6)
+            if cmpCN > 0: # insert new
+                merge_output(i_new)
+            else: # insert committed
+                merge_output(i_com)
+
+        while i_old.active and i_com.active: # new deletes rest of original
+            cmpOC = cmp(i_old.key, i_com.key)
+            if cmpOC > 0: # insert committed
+                merge_output(i_com)
+            elif cmpOC == 0: # del in new
+                i_old.advance()
+                i_com.advance()
+            else: # dueling deletes or delete and change
+                raise merge_error(7)
+
+        while i_old.active and i_new.active:
+            # committed deletes rest of original
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpON > 0: # insert new
+                merge_output(i_new)
+            elif cmpON == 0: # deleted in committed
+                i_old.advance()
+                i_new.advance()
+            else: # dueling deletes or delete and change
+                raise merge_error(8)
+
+        if i_old.active: # dueling deletes
+            raise merge_error(9)
+
+        while i_com.active:
+            merge_output(i_com)
+
+        while i_new.active:
+            merge_output(i_new)
+
+        if len(result._keys) == 0:
+            # If the output bucket is empty, conflict resolution doesn't have
+            # enough info to unlink it from its containing BTree correctly.
+            assert 0, "CAN'T GET HERE"
+            raise merge_error(10)
+
+        result._next = b_old._next
+        return result.__getstate__()
+
 
 class _TreeItem(object):
 
@@ -671,7 +665,38 @@ class _TreeItem(object):
         self.child = child
 
 
-class _Tree(_MappingBase):
+class _Tree(_Base):
+
+    def setdefault(self, key, value):
+        return self._set(self._to_key(key), self._to_value(value), True)[1]
+
+    def pop(self, key, default=_marker):
+        try:
+            return self._del(self._to_key(key))[1]
+        except KeyError:
+            if default is _marker:
+                raise
+            return default
+
+    def update(self, items):
+        if hasattr(items, 'iteritems'):
+            items = items.iteritems()
+        elif hasattr(items, 'items'):
+            items = items.items()
+
+        set = self.__setitem__
+        for i in items:
+            set(*i)
+
+    def __setitem__(self, key, value):
+        # Enforce test that key has non-default comparison.
+        if ( getattr(key, '__lt__', None) is None and
+            getattr(key, '__cmp__', None) is None):
+            raise TypeError("Can't use default __cmp__")
+        self._set(self._to_key(key), self._to_value(value))
+
+    def __delitem__(self, key):
+        self._del(self._to_key(key))
 
     def clear(self):
         self._data = []
@@ -1075,7 +1100,22 @@ class Tree(_Tree):
         return bool(self._set(key, value, True)[0])
 
 
-class TreeSet(_SetBase, _Tree):
+class TreeSet(_Tree):
+
+    #_next = None
+    def add(self, key):
+        return self._set(self._to_key(key))[0]
+
+    insert = add
+
+    def remove(self, key):
+        self._del(self._to_key(key))
+
+    def update(self, items):
+        add = self.add
+        for i in items:
+            add(i)
+
     _p_resolveConflict = _Tree._p_resolveConflict
 
 

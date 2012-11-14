@@ -386,7 +386,7 @@ class Test_BucketBase(unittest.TestCase):
             self.assertTrue(key in bucket)
 
 
-class Test__SetIteration(unittest.TestCase):
+class Test_SetIteration(unittest.TestCase):
 
     assertRaises = _assertRaises
 
@@ -414,176 +414,13 @@ class Test__SetIteration(unittest.TestCase):
         self.assertEqual(si.position, 1)
 
 
-class Test__SetBase(unittest.TestCase):
+class BucketTests(unittest.TestCase):
 
     assertRaises = _assertRaises
 
     def _getTargetClass(self):
-        from .._base import _SetBase
-        return _SetBase
-
-    def _makeOne(self):
-        class _TestSet(self._getTargetClass()):
-            def __setstate__(self, state):
-                self._keys, self._next = state
-            def clear(self):
-                self._keys, self._next = [], None
-            def __len__(self):
-                return len(self._keys)
-            def __iter__(self):
-                return iter(self._keys)
-        return _TestSet()
-
-    def test__p_resolveConflict_x_on_com_next(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        N_NEW = object()
-        s_old = ([], None)
-        s_com = ([], N_NEW)
-        s_new = ([], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 0)
-
-    def test__p_resolveConflict_x_on_new_next(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        N_NEW = object()
-        s_old = ([], None)
-        s_com = ([], None)
-        s_new = ([], N_NEW)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 0)
-
-    def test__p_resolveConflict_x_on_com_empty(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b'], None)
-        s_com = ([], None)
-        s_new = (['a'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 12)
-
-    def test__p_resolveConflict_x_on_new_empty(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b'], None)
-        s_com = (['a'], None)
-        s_new = ([], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 12)
-
-    def test__p_resolveConflict_x_on_del_first_com(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a','b'], None)
-        s_com = (['b'], None)
-        s_new = (['a', 'b', 'c'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 13)
-
-    def test__p_resolveConflict_x_on_del_first_new(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b'], None)
-        s_com = (['a', 'b', 'c'], None)
-        s_new = (['b'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 13)
-
-    def test__p_resolveConflict_x_on_ins_same_after_del(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b'], None)
-        s_com = (['a', 'c'], None)
-        s_new = (['a', 'c', 'd'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 4)
-
-    def test__p_resolveConflict_x_on_del_same(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b', 'c'], None)
-        s_com = (['a', 'c'], None)
-        s_new = (['a', 'd', 'e'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 5)
-
-    def test__p_resolveConflict_x_on_append_same(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a'], None)
-        s_com = (['a', 'b'], None)
-        s_new = (['a', 'b', 'c'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 6)
-
-    def test__p_resolveConflict_x_on_new_deletes_all_com_adds(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b', 'c'], None)
-        s_com = (['a', 'd', 'e', 'f'], None)
-        s_new = (['a'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 7)
-
-    def test__p_resolveConflict_x_on_com_deletes_all_new_adds(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b', 'c'], None)
-        s_com = (['a'], None)
-        s_new = (['a', 'd', 'e', 'f'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 8)
-
-    def test__p_resolveConflict_x_on_com_deletes_all_new_deletes(self):
-        from ..Interfaces import BTreesConflictError
-        _set = self._makeOne()
-        s_old = (['a', 'b', 'c'], None)
-        s_com = (['a'], None)
-        s_new = (['a', 'b'], None)
-        e = self.assertRaises(BTreesConflictError,
-                              _set._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 9)
-
-    def test__p_resolveConflict_ok_both_add_new_max(self):
-        _set = self._makeOne()
-        s_old = (['a'], None)
-        s_com = (['a', 'b', 'c'], None)
-        s_new = (['a', 'd'], None)
-        result = _set._p_resolveConflict(s_old, s_com, s_new)
-        # Note that _SetBase uses default __getstate__
-        self.assertEqual(result['_keys'], ['a', 'b', 'c', 'd'])
-        self.assertEqual(result['_next'], None)
-
-    def test__p_resolveConflict_add_new_gt_old_com_lt_old(self):
-        _set = self._makeOne()
-        s_old = (['a', 'b', 'c'], None)
-        s_com = (['a', 'b', 'bb', 'c'], None)
-        s_new = (['a', 'b', 'c', 'd'], None)
-        result = _set._p_resolveConflict(s_old, s_com, s_new)
-        # Note that _SetBase uses default __getstate__
-        self.assertEqual(result['_keys'], ['a', 'b', 'bb', 'c', 'd'])
-        self.assertEqual(result['_next'], None)
-
-
-class Test__MappingBase(unittest.TestCase):
-
-    assertRaises = _assertRaises
-
-    def _getTargetClass(self):
-        from .._base import _MappingBase
-        return _MappingBase
+        from .._base import Bucket
+        return Bucket
 
     def _makeOne(self):
         class _TestMapping(self._getTargetClass()):
@@ -622,7 +459,174 @@ class Test__MappingBase(unittest.TestCase):
         self.assertEqual(e.reason, 3)
 
 
+class SetTests(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import Set
+        return Set
+
+    def _makeOneXXX(self):
+        class _TestSet(self._getTargetClass()):
+            def __setstate__(self, state):
+                self._keys, self._next = state
+            def clear(self):
+                self._keys, self._next = [], None
+            def __len__(self):
+                return len(self._keys)
+            def __iter__(self):
+                return iter(self._keys)
+        return _TestSet()
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def test__p_resolveConflict_x_on_com_next(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = ((), None)
+        s_com = ((), N_NEW)
+        s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_new_next(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = ((), None)
+        s_com = ((), None)
+        s_new = ((), N_NEW)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_com_empty(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b'), None)
+        s_com = ((), None)
+        s_new = (('a',), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 12)
+
+    def test__p_resolveConflict_x_on_new_empty(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b'), None)
+        s_com = (('a',), None)
+        s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 12)
+
+    def test__p_resolveConflict_x_on_del_first_com(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a','b'), None)
+        s_com = (('b',), None)
+        s_new = (('a', 'b', 'c'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_x_on_del_first_new(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b'), None)
+        s_com = (('a', 'b', 'c'), None)
+        s_new = (('b',), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_x_on_ins_same_after_del(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b'), None)
+        s_com = (('a', 'c'), None)
+        s_new = (('a', 'c', 'd'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 4)
+
+    def test__p_resolveConflict_x_on_del_same(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a', 'c'), None)
+        s_new = (('a', 'd', 'e'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 5)
+
+    def test__p_resolveConflict_x_on_append_same(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a',), None)
+        s_com = (('a', 'b'), None)
+        s_new = (('a', 'b', 'c'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 6)
+
+    def test__p_resolveConflict_x_on_new_deletes_all_com_adds(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a', 'd', 'e', 'f'), None)
+        s_new = (('a',), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 7)
+
+    def test__p_resolveConflict_x_on_com_deletes_all_new_adds(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a',), None)
+        s_new = (('a', 'd', 'e', 'f'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 8)
+
+    def test__p_resolveConflict_x_on_com_deletes_all_new_deletes(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a',), None)
+        s_new = (('a', 'b'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 9)
+
+    def test__p_resolveConflict_ok_both_add_new_max(self):
+        _set = self._makeOne()
+        s_old = (('a',), None)
+        s_com = (('a', 'b', 'c'), None)
+        s_new = (('a', 'd'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        # Note that _SetBase uses default __getstate__
+        self.assertEqual(result, (('a', 'b', 'c', 'd'),))
+
+    def test__p_resolveConflict_add_new_gt_old_com_lt_old(self):
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a', 'b', 'bb', 'c'), None)
+        s_new = (('a', 'b', 'c', 'd'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'bb', 'c', 'd'),))
+
+
 def test_suite():
     return unittest.TestSuite((
+        unittest.makeSuite(Test_Base),
         unittest.makeSuite(Test_BucketBase),
+        unittest.makeSuite(Test_SetIteration),
+        unittest.makeSuite(BucketTests),
+        unittest.makeSuite(SetTests),
     ))
