@@ -317,6 +317,7 @@ class _SetBase(_Base):
         if len(result._keys) == 0:
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
+            assert 0, "CAN'T GET HERE"
             raise merge_error(10)
 
         result._next = b_old._next
