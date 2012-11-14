@@ -200,6 +200,7 @@ class _SetBase(_Base):
             add(i)
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
+
         b_old = self.__class__()
         if s_old is not None:
             b_old.__setstate__(s_old)
@@ -209,11 +210,12 @@ class _SetBase(_Base):
         b_new = self.__class__()
         if s_new is not None:
             b_new.__setstate__(s_new)
+
         if (b_com._next != b_old._next or
-            b_new._next != b_old._next):
+            b_new._next != b_old._next): # conflict: com or new changed _next
             raise BTreesConflictError(-1, -1, -1, 0)
 
-        if not b_com or not b_new:
+        if not b_com or not b_new: # conflict: com or new empty
             raise BTreesConflictError(-1, -1, -1, 12)
 
         i_old = _SetIteration(b_old, True)
@@ -231,15 +233,14 @@ class _SetBase(_Base):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmp12 = cmp(i_old.key, i_com.key)
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp12 == 0:
-                if cmp13 == 0:
-                    result.add(i_old.key)
-                    i_old.advance()
+            cmpOC = cmp(i_old.key, i_com.key)
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpOC == 0:
+                if cmpON == 0: # all match
+                    merge_output(i_old)
                     i_com.advance()
                     i_new.advance()
-                elif cmp13 > 0: # insert in new
+                elif cmpON > 0: # insert in new
                     merge_output(i_new)
                 else: # deleted new
                     if i_new.position == 1:
@@ -249,8 +250,8 @@ class _SetBase(_Base):
                         raise merge_error(13)
                     i_old.advance()
                     i_com.advance()
-            elif cmp13 == 0:
-                if cmp12 > 0: # insert committed
+            elif cmpON == 0:
+                if cmpOC > 0: # insert committed
                     merge_output(i_com)
                 else: # delete committed
                     if i_com.position == 1:
@@ -260,34 +261,34 @@ class _SetBase(_Base):
                         raise merge_error(13)
                     i_old.advance()
                     i_new.advance()
-            else: # both keys changed
-                cmp23 = cmp(i_com.key, i_new.key)
-                if cmp23 == 0:
+            else: # both com and new keys changed
+                cmpCN = cmp(i_com.key, i_new.key)
+                if cmpCN == 0: # both inserted same key
                     raise merge_error(4)
-                if cmp12 > 0: # insert committed
-                    if cmp23 > 0: # insert i_new first
+                if cmpOC > 0: # insert committed
+                    if cmpCN > 0: # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmp13 > 0: # insert i_new
+                elif cmpON > 0: # insert i_new
                     merge_output(i_new)
-                else:
-                    raise merge_error(5) # both deleted same key
+                else: # both com and new deleted same key
+                    raise merge_error(5)
 
         while i_com.active and i_new.active: # new inserts
-            cmp23 = cmp(i_com.key, i_new.key)
-            if cmp23 == 0:
-                raise merge_error(6) # dueling insert
-            if cmp23 > 0: # insert new
+            cmpCN = cmp(i_com.key, i_new.key)
+            if cmpCN == 0: # dueling insert
+                raise merge_error(6)
+            if cmpCN > 0: # insert new
                 merge_output(i_new)
             else: # insert committed
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmp12 = cmp(i_old.key, i_com.key)
-            if cmp12 > 0: # insert committed
+            cmpOC = cmp(i_old.key, i_com.key)
+            if cmpOC > 0: # insert committed
                 merge_output(i_com)
-            elif cmp12 == 0: # del in new
+            elif cmpOC == 0: # del in new
                 i_old.advance()
                 i_com.advance()
             else: # dueling deletes or delete and change
@@ -295,10 +296,10 @@ class _SetBase(_Base):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp13 > 0: # insert new
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpON > 0: # insert new
                 merge_output(i_new)
-            elif cmp13 == 0: # deleted in committed
+            elif cmpON == 0: # deleted in committed
                 i_old.advance()
                 i_new.advance()
             else: # dueling deletes or delete and change
@@ -388,10 +389,10 @@ class _MappingBase(_Base):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmp12 = cmp(i_old.key, i_com.key)
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp12==0:
-                if cmp13==0:
+            cmpOC = cmp(i_old.key, i_com.key)
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpOC==0:
+                if cmpON==0:
                     if i_com.value == i_old.value:
                         result[i_old.key] = i_new.value
                     elif i_new.value == i_old.value:
@@ -401,7 +402,7 @@ class _MappingBase(_Base):
                     i_old.advance()
                     i_com.advance()
                     i_new.advance()
-                elif (cmp13 > 0): # insert in new
+                elif (cmpON > 0): # insert in new
                     merge_output(i_new)
                 elif i_old.value == i_com.value: # deleted new
                     if i_new.position == 1:
@@ -413,8 +414,8 @@ class _MappingBase(_Base):
                     i_com.advance()
                 else:
                     raise merge_error(2)
-            elif cmp13 == 0:
-                if cmp12 > 0: # insert committed
+            elif cmpON == 0:
+                if cmpOC > 0: # insert committed
                     merge_output(i_com)
                 elif i_old.value == i_new.value: # delete committed
                     if i_com.position == 1:
@@ -427,33 +428,33 @@ class _MappingBase(_Base):
                 else:
                     raise merge_error(3)
             else: # both keys changed
-                cmp23 = cmp(i_com.key, i_new.key)
-                if cmp23 == 0:
+                cmpCN = cmp(i_com.key, i_new.key)
+                if cmpCN == 0:
                     raise merge_error(4)
-                if cmp12 > 0: # insert committed
-                    if cmp23 > 0: # insert i_new first
+                if cmpOC > 0: # insert committed
+                    if cmpCN > 0: # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmp13 > 0: # insert i_new
+                elif cmpON > 0: # insert i_new
                     merge_output(i_new)
                 else:
                     raise merge_error(5) # both deleted same key
 
         while i_com.active and i_new.active: # new inserts
-            cmp23 = cmp(i_com.key, i_new.key)
-            if cmp23 == 0:
+            cmpCN = cmp(i_com.key, i_new.key)
+            if cmpCN == 0:
                 raise merge_error(6) # dueling insert
-            if cmp23 > 0: # insert new
+            if cmpCN > 0: # insert new
                 merge_output(i_new)
             else: # insert committed
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmp12 = cmp(i_old.key, i_com.key)
-            if cmp12 > 0: # insert committed
+            cmpOC = cmp(i_old.key, i_com.key)
+            if cmpOC > 0: # insert committed
                 merge_output(i_com)
-            elif cmp12 == 0 and (i_old.value == i_com.value): # del in new
+            elif cmpOC == 0 and (i_old.value == i_com.value): # del in new
                 i_old.advance()
                 i_com.advance()
             else: # dueling deletes or delete and change
@@ -461,10 +462,10 @@ class _MappingBase(_Base):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp13 > 0: # insert new
+            cmpON = cmp(i_old.key, i_new.key)
+            if cmpON > 0: # insert new
                 merge_output(i_new)
-            elif cmp13 == 0 and (i_old.value == i_new.value):
+            elif cmpON == 0 and (i_old.value == i_new.value):
                 # deleted in committed
                 i_old.advance()
                 i_new.advance()
