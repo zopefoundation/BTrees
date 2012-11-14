@@ -144,29 +144,32 @@ class _BucketBase(_Base):
 
     has_key = __contains__
 
-    def _p_resolveConflict(self, *states):
+    def _p_resolveConflict(self, s_old, s_com, s_new):
         is_set = getattr(self, '_values', self) is self
 
-        buckets = []
-        for state in states:
-            bucket = self.__class__()
-            if state:
-                bucket.__setstate__(state)
-            buckets.append(bucket)
-        if (buckets[1]._next != buckets[0]._next or
-            buckets[2]._next != buckets[0]._next):
+        b_old = self.__class__()
+        if s_old is not None:
+            b_old.__setstate__(s_old)
+        b_com = self.__class__()
+        if s_com is not None:
+            b_com.__setstate__(s_com)
+        b_new = self.__class__()
+        if s_new is not None:
+            b_new.__setstate__(s_new)
+        if (b_com._next != b_old._next or
+            b_new._next != b_old._next):
             raise BTreesConflictError(-1, -1, -1, 0)
 
-        if not (buckets[1] and buckets[2]):
+        if not b_com or not b_new:
             raise BTreesConflictError(-1, -1, -1, 12)
 
-        i1 = _SetIteration(buckets[0], True)
-        i2 = _SetIteration(buckets[1], True)
-        i3 = _SetIteration(buckets[2], True)
+        i_old = _SetIteration(b_old, True)
+        i_com = _SetIteration(b_com, True)
+        i_new = _SetIteration(b_new, True)
 
         def merge_error(reason):
             return BTreesConflictError(
-                i1.position, i2.position, i3.position, reason)
+                i_old.position, i_com.position, i_new.position, reason)
 
         result = self.__class__()
 
@@ -180,106 +183,106 @@ class _BucketBase(_Base):
                 result._values.append(it.value)
                 it.advance()
 
-        while i1.active and i2.active and i3.active:
-            cmp12 = cmp(i1.key, i2.key)
-            cmp13 = cmp(i1.key, i3.key)
+        while i_old.active and i_com.active and i_new.active:
+            cmp12 = cmp(i_old.key, i_com.key)
+            cmp13 = cmp(i_old.key, i_new.key)
             if cmp12==0:
                 if cmp13==0:
                     if is_set:
-                        result.add(i1.key)
-                    elif i2.value == i1.value:
-                        result[i1.key] = i3.value
-                    elif i3.value == i1.value:
-                        result[i1.key] = i2.value
+                        result.add(i_old.key)
+                    elif i_com.value == i_old.value:
+                        result[i_old.key] = i_new.value
+                    elif i_new.value == i_old.value:
+                        result[i_old.key] = i_com.value
                     else:
                         raise merge_error(1)
-                    i1.advance()
-                    i2.advance()
-                    i3.advance()
+                    i_old.advance()
+                    i_com.advance()
+                    i_new.advance()
                 elif (cmp13 > 0): # insert in new
-                    merge_output(i3)
-                elif is_set or i1.value == i2.value: # deleted new
-                    if i3.position == 1:
+                    merge_output(i_new)
+                elif is_set or i_old.value == i_com.value: # deleted new
+                    if i_new.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
                         # safe
                         raise merge_error(13)
-                    i1.advance()
-                    i2.advance()
+                    i_old.advance()
+                    i_com.advance()
                 else:
                     raise merge_error(2)
             elif cmp13 == 0:
                 if cmp12 > 0: # insert committed
-                    merge_output(i2)
-                elif is_set or i1.value == i3.value: # delete committed
-                    if i2.position == 1:
+                    merge_output(i_com)
+                elif is_set or i_old.value == i_new.value: # delete committed
+                    if i_com.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
                         # safe
                         raise merge_error(13)
-                    i1.advance()
-                    i3.advance()
+                    i_old.advance()
+                    i_new.advance()
                 else:
                     raise merge_error(3)
             else: # both keys changed
-                cmp23 = cmp(i2.key, i3.key)
+                cmp23 = cmp(i_com.key, i_new.key)
                 if cmp23 == 0:
                     raise merge_error(4)
                 if cmp12 > 0: # insert committed
-                    if cmp23 > 0: # insert i3 first
-                        merge_output(i3)
+                    if cmp23 > 0: # insert i_new first
+                        merge_output(i_new)
                     else:
-                        merge_output(i2)
-                elif cmp13 > 0: # insert i3
-                    merge_output(i3)
+                        merge_output(i_com)
+                elif cmp13 > 0: # insert i_new
+                    merge_output(i_new)
                 else:
                     raise merge_error(5) # both deleted same key
 
-        while i2.active and i3.active: # new inserts
-            cmp23 = cmp(i2.key, i3.key)
+        while i_com.active and i_new.active: # new inserts
+            cmp23 = cmp(i_com.key, i_new.key)
             if cmp23 == 0:
                 raise merge_error(6) # dueling insert
             if cmp23 > 0: # insert new
-                merge_output(i3)
+                merge_output(i_new)
             else: # insert committed
-                merge_output(i2)
+                merge_output(i_com)
 
-        while i1.active and i2.active: # new deletes rest of original
-            cmp12 = cmp(i1.key, i2.key)
+        while i_old.active and i_com.active: # new deletes rest of original
+            cmp12 = cmp(i_old.key, i_com.key)
             if cmp12 > 0: # insert committed
-                merge_output(i2)
-            elif cmp12 == 0 and (is_set or i1.value == i2.value): # del in new
-                i1.advance()
-                i2.advance()
+                merge_output(i_com)
+            elif cmp12 == 0 and (is_set or i_old.value == i_com.value): # del in new
+                i_old.advance()
+                i_com.advance()
             else: # dueling deletes or delete and change
                 raise merge_error(7)
 
-        while i1.active and i3.active: # committed deletes rest of original
-            cmp13 = cmp(i1.key, i3.key)
+        while i_old.active and i_new.active: # committed deletes rest of original
+            cmp13 = cmp(i_old.key, i_new.key)
             if cmp13 > 0: # insert new
-                merge_output(i3)
-            elif cmp13 == 0 and (is_set or i1.value == i3.value):
+                merge_output(i_new)
+            elif cmp13 == 0 and (is_set or i_old.value == i_new.value):
                 # deleted in committed
-                i1.advance()
-                i3.advance()
+                i_old.advance()
+                i_new.advance()
             else: # dueling deletes or delete and change
                 raise merge_error(8)
 
-        if i1.active: # dueling deletes
+        if i_old.active: # dueling deletes
             raise merge_error(9)
 
-        while i2.active:
-            merge_output(i2)
+        while i_com.active:
+            merge_output(i_com)
 
-        while i3.active:
-            merge_output(i3)
+        while i_new.active:
+            merge_output(i_new)
 
         if len(result._keys) == 0:
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             raise merge_error(10)
 
-        result._next = buckets[0]._next
+        result._next = b_old._next
         return result.__getstate__()
 
 
@@ -832,31 +835,30 @@ class _Tree(_MappingBase):
         else:
             assert_(False, "Incorrect child type")
 
-    def _p_resolveConflict(self, *states):
-        states = map(_get_simple_btree_bucket_state, states)
-        return ((self._bucket_type()._p_resolveConflict(*states), ), )
+    def _p_resolveConflict(self, old, com, new):
+        s_old = _get_simple_btree_bucket_state(old)
+        s_com = _get_simple_btree_bucket_state(com)
+        s_new = _get_simple_btree_bucket_state(new)
+        return ((
+            self._bucket_type()._p_resolveConflict(s_old, s_com, s_new), ), )
 
 
 def _get_simple_btree_bucket_state(state):
     if state is None:
         return state
-
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple or None for state")
     if len(state) == 2:
         raise BTreesConflictError(-1, -1, -1, 11)
-
     if len(state) != 1:
         raise TypeError("_p_resolveConflict: expected 1- or 2-tuple for state")
-
     state = state[0]
     if not isinstance(state, tuple) or len(state) != 1:
         raise TypeError("_p_resolveConflict: expected 1-tuple containing "
-                        "bucket state");
+                        "bucket state")
     state = state[0]
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple for bucket state")
-
     return state
 
 
