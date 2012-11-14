@@ -22,6 +22,29 @@ def _assertRaises(self, e_type, checked, *args, **kw):
     self.fail("Didn't raise: %s" % e_type.__name__)
 
 
+class Test_Base(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from .._base import _Base
+        return _Base
+
+    def _makeOne(self, items=None):
+        class _Test(self._getTargetClass()):
+            def clear(self):
+                self._data = {}
+            def update(self, d):
+                self._data.update(d)
+        return _Test(items)
+
+    def test_ctor_wo_items(self):
+        base = self._makeOne()
+        self.assertEqual(base._data, {})
+
+    def test_ctor_w_items(self):
+        base = self._makeOne({'a': 'b'})
+        self.assertEqual(base._data, {'a': 'b'})
+
+
 class Test_BucketBase(unittest.TestCase):
 
     def _getTargetClass(self):
@@ -532,7 +555,26 @@ class Test__SetBase(unittest.TestCase):
         e = self.assertRaises(BTreesConflictError,
                               _set._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 9)
-        self.assertEqual(e.reason, 10)
+
+    def test__p_resolveConflict_ok_both_add_new_max(self):
+        _set = self._makeOne()
+        s_old = (['a'], None)
+        s_com = (['a', 'b', 'c'], None)
+        s_new = (['a', 'd'], None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        # Note that _SetBase uses default __getstate__
+        self.assertEqual(result['_keys'], ['a', 'b', 'c', 'd'])
+        self.assertEqual(result['_next'], None)
+
+    def test__p_resolveConflict_add_new_gt_old_com_lt_old(self):
+        _set = self._makeOne()
+        s_old = (['a', 'b', 'c'], None)
+        s_com = (['a', 'b', 'bb', 'c'], None)
+        s_new = (['a', 'b', 'c', 'd'], None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        # Note that _SetBase uses default __getstate__
+        self.assertEqual(result['_keys'], ['a', 'b', 'bb', 'c', 'd'])
+        self.assertEqual(result['_next'], None)
 
 
 class Test__MappingBase(unittest.TestCase):
