@@ -183,6 +183,145 @@ class _SetIteration(object):
         return self
 
 
+class _SetBase(_Base):
+
+    #_next = None
+    def add(self, key):
+        return self._set(self._to_key(key))[0]
+
+    insert = add
+
+    def remove(self, key):
+        self._del(self._to_key(key))
+
+    def update(self, items):
+        add = self.add
+        for i in items:
+            add(i)
+
+    def _p_resolveConflict(self, s_old, s_com, s_new):
+        b_old = self.__class__()
+        if s_old is not None:
+            b_old.__setstate__(s_old)
+        b_com = self.__class__()
+        if s_com is not None:
+            b_com.__setstate__(s_com)
+        b_new = self.__class__()
+        if s_new is not None:
+            b_new.__setstate__(s_new)
+        if (b_com._next != b_old._next or
+            b_new._next != b_old._next):
+            raise BTreesConflictError(-1, -1, -1, 0)
+
+        if not b_com or not b_new:
+            raise BTreesConflictError(-1, -1, -1, 12)
+
+        i_old = _SetIteration(b_old, True)
+        i_com = _SetIteration(b_com, True)
+        i_new = _SetIteration(b_new, True)
+
+        def merge_error(reason):
+            return BTreesConflictError(
+                i_old.position, i_com.position, i_new.position, reason)
+
+        result = self.__class__()
+
+        def merge_output(it):
+            result._keys.append(it.key)
+            it.advance()
+
+        while i_old.active and i_com.active and i_new.active:
+            cmp12 = cmp(i_old.key, i_com.key)
+            cmp13 = cmp(i_old.key, i_new.key)
+            if cmp12 == 0:
+                if cmp13 == 0:
+                    result.add(i_old.key)
+                    i_old.advance()
+                    i_com.advance()
+                    i_new.advance()
+                elif cmp13 > 0: # insert in new
+                    merge_output(i_new)
+                else: # deleted new
+                    if i_new.position == 1:
+                        # Deleted the first item.  This will modify the
+                        # parent node, so we don't know if merging will be
+                        # safe
+                        raise merge_error(13)
+                    i_old.advance()
+                    i_com.advance()
+            elif cmp13 == 0:
+                if cmp12 > 0: # insert committed
+                    merge_output(i_com)
+                else: # delete committed
+                    if i_com.position == 1:
+                        # Deleted the first item.  This will modify the
+                        # parent node, so we don't know if merging will be
+                        # safe
+                        raise merge_error(13)
+                    i_old.advance()
+                    i_new.advance()
+            else: # both keys changed
+                cmp23 = cmp(i_com.key, i_new.key)
+                if cmp23 == 0:
+                    raise merge_error(4)
+                if cmp12 > 0: # insert committed
+                    if cmp23 > 0: # insert i_new first
+                        merge_output(i_new)
+                    else:
+                        merge_output(i_com)
+                elif cmp13 > 0: # insert i_new
+                    merge_output(i_new)
+                else:
+                    raise merge_error(5) # both deleted same key
+
+        while i_com.active and i_new.active: # new inserts
+            cmp23 = cmp(i_com.key, i_new.key)
+            if cmp23 == 0:
+                raise merge_error(6) # dueling insert
+            if cmp23 > 0: # insert new
+                merge_output(i_new)
+            else: # insert committed
+                merge_output(i_com)
+
+        while i_old.active and i_com.active: # new deletes rest of original
+            cmp12 = cmp(i_old.key, i_com.key)
+            if cmp12 > 0: # insert committed
+                merge_output(i_com)
+            elif cmp12 == 0: # del in new
+                i_old.advance()
+                i_com.advance()
+            else: # dueling deletes or delete and change
+                raise merge_error(7)
+
+        while i_old.active and i_new.active:
+            # committed deletes rest of original
+            cmp13 = cmp(i_old.key, i_new.key)
+            if cmp13 > 0: # insert new
+                merge_output(i_new)
+            elif cmp13 == 0: # deleted in committed
+                i_old.advance()
+                i_new.advance()
+            else: # dueling deletes or delete and change
+                raise merge_error(8)
+
+        if i_old.active: # dueling deletes
+            raise merge_error(9)
+
+        while i_com.active:
+            merge_output(i_com)
+
+        while i_new.active:
+            merge_output(i_new)
+
+        if len(result._keys) == 0:
+            # If the output bucket is empty, conflict resolution doesn't have
+            # enough info to unlink it from its containing BTree correctly.
+            raise merge_error(10)
+
+        result._next = b_old._next
+        return result.__getstate__()
+
+
 class _MappingBase(_Base):
 
     def setdefault(self, key, value):
@@ -327,145 +466,6 @@ class _MappingBase(_Base):
                 merge_output(i_new)
             elif cmp13 == 0 and (i_old.value == i_new.value):
                 # deleted in committed
-                i_old.advance()
-                i_new.advance()
-            else: # dueling deletes or delete and change
-                raise merge_error(8)
-
-        if i_old.active: # dueling deletes
-            raise merge_error(9)
-
-        while i_com.active:
-            merge_output(i_com)
-
-        while i_new.active:
-            merge_output(i_new)
-
-        if len(result._keys) == 0:
-            # If the output bucket is empty, conflict resolution doesn't have
-            # enough info to unlink it from its containing BTree correctly.
-            raise merge_error(10)
-
-        result._next = b_old._next
-        return result.__getstate__()
-
-
-class _SetBase(_Base):
-
-    #_next = None
-    def add(self, key):
-        return self._set(self._to_key(key))[0]
-
-    insert = add
-
-    def remove(self, key):
-        self._del(self._to_key(key))
-
-    def update(self, items):
-        add = self.add
-        for i in items:
-            add(i)
-
-    def _p_resolveConflict(self, s_old, s_com, s_new):
-        b_old = self.__class__()
-        if s_old is not None:
-            b_old.__setstate__(s_old)
-        b_com = self.__class__()
-        if s_com is not None:
-            b_com.__setstate__(s_com)
-        b_new = self.__class__()
-        if s_new is not None:
-            b_new.__setstate__(s_new)
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next):
-            raise BTreesConflictError(-1, -1, -1, 0)
-
-        if not b_com or not b_new:
-            raise BTreesConflictError(-1, -1, -1, 12)
-
-        i_old = _SetIteration(b_old, True)
-        i_com = _SetIteration(b_com, True)
-        i_new = _SetIteration(b_new, True)
-
-        def merge_error(reason):
-            return BTreesConflictError(
-                i_old.position, i_com.position, i_new.position, reason)
-
-        result = self.__class__()
-
-        def merge_output(it):
-            result._keys.append(it.key)
-            it.advance()
-
-        while i_old.active and i_com.active and i_new.active:
-            cmp12 = cmp(i_old.key, i_com.key)
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp12 == 0:
-                if cmp13 == 0:
-                    result.add(i_old.key)
-                    i_old.advance()
-                    i_com.advance()
-                    i_new.advance()
-                elif cmp13 > 0: # insert in new
-                    merge_output(i_new)
-                else: # deleted new
-                    if i_new.position == 1:
-                        # Deleted the first item.  This will modify the
-                        # parent node, so we don't know if merging will be
-                        # safe
-                        raise merge_error(13)
-                    i_old.advance()
-                    i_com.advance()
-            elif cmp13 == 0:
-                if cmp12 > 0: # insert committed
-                    merge_output(i_com)
-                else: # delete committed
-                    if i_com.position == 1:
-                        # Deleted the first item.  This will modify the
-                        # parent node, so we don't know if merging will be
-                        # safe
-                        raise merge_error(13)
-                    i_old.advance()
-                    i_new.advance()
-            else: # both keys changed
-                cmp23 = cmp(i_com.key, i_new.key)
-                if cmp23 == 0:
-                    raise merge_error(4)
-                if cmp12 > 0: # insert committed
-                    if cmp23 > 0: # insert i_new first
-                        merge_output(i_new)
-                    else:
-                        merge_output(i_com)
-                elif cmp13 > 0: # insert i_new
-                    merge_output(i_new)
-                else:
-                    raise merge_error(5) # both deleted same key
-
-        while i_com.active and i_new.active: # new inserts
-            cmp23 = cmp(i_com.key, i_new.key)
-            if cmp23 == 0:
-                raise merge_error(6) # dueling insert
-            if cmp23 > 0: # insert new
-                merge_output(i_new)
-            else: # insert committed
-                merge_output(i_com)
-
-        while i_old.active and i_com.active: # new deletes rest of original
-            cmp12 = cmp(i_old.key, i_com.key)
-            if cmp12 > 0: # insert committed
-                merge_output(i_com)
-            elif cmp12 == 0: # del in new
-                i_old.advance()
-                i_com.advance()
-            else: # dueling deletes or delete and change
-                raise merge_error(7)
-
-        while i_old.active and i_new.active:
-            # committed deletes rest of original
-            cmp13 = cmp(i_old.key, i_new.key)
-            if cmp13 > 0: # insert new
-                merge_output(i_new)
-            elif cmp13 == 0: # deleted in committed
                 i_old.advance()
                 i_new.advance()
             else: # dueling deletes or delete and change

@@ -363,56 +363,13 @@ class Test_BucketBase(unittest.TestCase):
             self.assertTrue(key in bucket)
 
 
-def _assertRaises(self, e_type, checked, *args, **kw):
-    try:
-        checked(*args, **kw)
-    except e_type as e:
-        return e
-    self.fail("Didn't raise: %s" % e_type.__name__)
-
-class Test__MappingBase(unittest.TestCase):
+class Test__SetIteration(unittest.TestCase):
 
     assertRaises = _assertRaises
 
     def _getTargetClass(self):
-        from .._base import _MappingBase
-        return _MappingBase
-
-    def _makeOne(self):
-        class _TestMapping(self._getTargetClass()):
-            _values = None
-            def __setstate__(self, state):
-                state, self._next = state
-                self._keys = []
-                self._values = []
-                for i in range(len(state) // 2):
-                    self._keys.append(state[i])
-                    self._values.append(state[i+1])
-            def clear(self):
-                self._keys, self._values, self._next = [], [], None
-            def iteritems(self):
-                return iter(zip(self._keys, self._values))
-        return _TestMapping()
-
-    def test__p_resolveConflict_delete_first_new(self):
-        from ..Interfaces import BTreesConflictError
-        bucket = self._makeOne()
-        s_old = (['a', 0, 'b', 1], None)
-        s_com = (['a', 1, 'b', 2, 'c', 3], None)
-        s_new = (['b', 4], None)
-        e = self.assertRaises(BTreesConflictError,
-                              bucket._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 2)
-
-    def test__p_resolveConflict_delete_first_committed(self):
-        from ..Interfaces import BTreesConflictError
-        bucket = self._makeOne()
-        s_old = (['a', 0, 'b', 1], None)
-        s_com = (['b', 4], None)
-        s_new = (['a', 1, 'b', 2, 'c', 3], None)
-        e = self.assertRaises(BTreesConflictError,
-                              bucket._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 3)
+        from .._base import _SetIteration
+        return _SetIteration
 
 
 class Test__SetBase(unittest.TestCase):
@@ -496,6 +453,51 @@ class Test__SetBase(unittest.TestCase):
         e = self.assertRaises(BTreesConflictError,
                               bucket._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 13)
+
+
+class Test__MappingBase(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import _MappingBase
+        return _MappingBase
+
+    def _makeOne(self):
+        class _TestMapping(self._getTargetClass()):
+            _values = None
+            def __setstate__(self, state):
+                state, self._next = state
+                self._keys = []
+                self._values = []
+                for i in range(len(state) // 2):
+                    self._keys.append(state[i])
+                    self._values.append(state[i+1])
+            def clear(self):
+                self._keys, self._values, self._next = [], [], None
+            def iteritems(self):
+                return iter(zip(self._keys, self._values))
+        return _TestMapping()
+
+    def test__p_resolveConflict_delete_first_new(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._makeOne()
+        s_old = (['a', 0, 'b', 1], None)
+        s_com = (['a', 1, 'b', 2, 'c', 3], None)
+        s_new = (['b', 4], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 2)
+
+    def test__p_resolveConflict_delete_first_committed(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._makeOne()
+        s_old = (['a', 0, 'b', 1], None)
+        s_com = (['b', 4], None)
+        s_new = (['a', 1, 'b', 2, 'c', 3], None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 3)
 
 
 def test_suite():
