@@ -147,20 +147,20 @@ class _BucketBase(_Base):
 
 class _SetIteration(object):
 
-    def __init__(self, set, useValues=False, default=None):
-        if set is None:
-            set = ()
-        self.set = set
+    def __init__(self, to_iterate, useValues=False, default=None):
+        if to_iterate is None:
+            to_iterate = ()
+        self.to_iterate = to_iterate
         if useValues:
             try:
-                itmeth = set.iteritems
+                itmeth = to_iterate.iteritems
             except AttributeError:
-                itmeth = set.__iter__
+                itmeth = to_iterate.__iter__
                 useValues = False
             else:
                 self.value = None
         else:
-            itmeth = set.__iter__
+            itmeth = to_iterate.__iter__
 
         self.useValues = useValues
         self._next = itmeth().next

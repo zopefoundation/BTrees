@@ -14,6 +14,13 @@
 import unittest
 
 
+def _assertRaises(self, e_type, checked, *args, **kw):
+    try:
+        checked(*args, **kw)
+    except e_type as e:
+        return e
+    self.fail("Didn't raise: %s" % e_type.__name__)
+
 
 class Test_BucketBase(unittest.TestCase):
 
