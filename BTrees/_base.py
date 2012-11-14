@@ -187,19 +187,23 @@ class _SetIteration(object):
 class Bucket(_BucketBase):
 
     _value_type = list
-    _to_value = lambda x: x
+    _to_value = lambda self, x: x
     VALUE_SAME_CHECK = False
 
     def setdefault(self, key, value):
-        return self._set(self._to_key(key), self._to_value(value), True)[1]
+        key, value = self._to_key(key), self._to_value(value)
+        status, value = self._set(key, value, True)
+        return value
 
     def pop(self, key, default=_marker):
         try:
-            return self._del(self._to_key(key))[1]
+            status, value = self._del(self._to_key(key))
         except KeyError:
             if default is _marker:
                 raise
             return default
+        else:
+            return value
 
     def update(self, items):
         if hasattr(items, 'iteritems'):
@@ -207,9 +211,9 @@ class Bucket(_BucketBase):
         elif hasattr(items, 'items'):
             items = items.items()
 
-        set = self.__setitem__
-        for i in items:
-            set(*i)
+        _si = self.__setitem__
+        for key, value in items:
+            _si(key, value)
 
     def __setitem__(self, key, value):
         # Enforce test that key has non-default comparison.

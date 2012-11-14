@@ -423,27 +423,138 @@ class BucketTests(unittest.TestCase):
         return Bucket
 
     def _makeOne(self):
-        class _TestMapping(self._getTargetClass()):
-            _values = None
-            def __setstate__(self, state):
-                state, self._next = state
-                self._keys = []
-                self._values = []
-                for i in range(len(state) // 2):
-                    self._keys.append(state[i])
-                    self._values.append(state[i+1])
-            def clear(self):
-                self._keys, self._values, self._next = [], [], None
-            def iteritems(self):
-                return iter(zip(self._keys, self._values))
-        return _TestMapping()
+        return self._getTargetClass()()
+
+    def test_ctor_defaults(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertEqual(bucket._keys, [])
+        self.assertEqual(bucket._values, [])
+
+    def test_setdefault_miss(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertEqual(bucket.setdefault('a', 'b'), 'b')
+        self.assertEqual(bucket._keys, ['a'])
+        self.assertEqual(bucket._values, ['b'])
+
+    def test_setdefault_hit(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket._keys.append('a')
+        bucket._values.append('b')
+        self.assertEqual(bucket.setdefault('a', 'b'), 'b')
+        self.assertEqual(bucket._keys, ['a'])
+        self.assertEqual(bucket._values, ['b'])
+
+    def test_pop_miss_no_default(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertRaises(KeyError, bucket.pop, 'nonesuch')
+
+    def test_pop_miss_w_default(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertEqual(bucket.pop('nonesuch', 'b'), 'b')
+
+    def test_pop_hit(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket._keys.append('a')
+        bucket._values.append('b')
+        self.assertEqual(bucket.pop('a'), 'b')
+        self.assertEqual(bucket._keys, [])
+        self.assertEqual(bucket._values, [])
+
+    def test_update_value_w_iteritems(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket.update({'a': 'b'})
+        self.assertEqual(bucket._keys, ['a'])
+        self.assertEqual(bucket._values, ['b'])
+
+    def test_update_value_w_items(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        class Foo(object):
+            def items(self):
+                return [('a', 'b')]
+        bucket.update(Foo())
+        self.assertEqual(bucket._keys, ['a'])
+        self.assertEqual(bucket._values, ['b'])
+
+    def test_update_sequence(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket.update([('a', 'b')])
+        self.assertEqual(bucket._keys, ['a'])
+        self.assertEqual(bucket._values, ['b'])
+
+    def test___setitem___incomparable(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        def _should_error():
+            bucket[object()] = 'b'
+        self.assertRaises(TypeError, _should_error)
+
+    def test___setitem___comparable(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket['a'] = 'b'
+
+    def test___delitem___miss(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        def _should_error():
+            del bucket['nonesuch']
+        self.assertRaises(KeyError, _should_error)
+
+    def test___delitem___hit(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket._keys.append('a')
+        bucket._values.append('b')
+        del bucket['a']
+        self.assertEqual(bucket._keys, [])
+        self.assertEqual(bucket._values, [])
+
+    def test_get_miss_no_default(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertEqual(bucket.get('nonesuch'), None)
+
+    def test_get_miss_w_default(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        self.assertEqual(bucket.get('nonesuch', 'b'), 'b')
+
+    def test_get_hit(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket._keys.append('a')
+        bucket._values.append('b')
+        self.assertEqual(bucket.get('a'), 'b')
+
+    def test___getitem___miss(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        def _should_error():
+            return bucket['nonesuch']
+        self.assertRaises(KeyError, _should_error)
+
+    def test___getitem___hit(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket._keys.append('a')
+        bucket._values.append('b')
+        self.assertEqual(bucket['a'], 'b')
 
     def test__p_resolveConflict_delete_first_new(self):
         from ..Interfaces import BTreesConflictError
         _mapping = self._makeOne()
-        s_old = (['a', 0, 'b', 1], None)
-        s_com = (['a', 1, 'b', 2, 'c', 3], None)
-        s_new = (['b', 4], None)
+        s_old = (('a', 0, 'b', 1), None)
+        s_com = (('a', 1, 'b', 2, 'c', 3), None)
+        s_new = (('b', 4), None)
         e = self.assertRaises(BTreesConflictError,
                               _mapping._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 2)
@@ -451,9 +562,9 @@ class BucketTests(unittest.TestCase):
     def test__p_resolveConflict_delete_first_committed(self):
         from ..Interfaces import BTreesConflictError
         _mapping = self._makeOne()
-        s_old = (['a', 0, 'b', 1], None)
-        s_com = (['b', 4], None)
-        s_new = (['a', 1, 'b', 2, 'c', 3], None)
+        s_old = (('a', 0, 'b', 1), None)
+        s_com = (('b', 4), None)
+        s_new = (('a', 1, 'b', 2, 'c', 3), None)
         e = self.assertRaises(BTreesConflictError,
                               _mapping._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 3)
