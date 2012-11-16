@@ -319,7 +319,7 @@ class Bucket(_BucketBase):
             data.append(values[i])
         data = tuple(data)
 
-        if self._next:
+        if self._next is not None:
             return data, self._next
         return (data, )
 

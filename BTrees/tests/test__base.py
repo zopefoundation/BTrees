@@ -483,6 +483,14 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(bucket._keys, ['a'])
         self.assertEqual(bucket._values, ['b'])
 
+    def test_update_value_w_invalid_items(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        class Foo(object):
+            def items(self):
+                return ('a', 'b', 'c')
+        self.assertRaises(TypeError, bucket.update, Foo())
+
     def test_update_sequence(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
@@ -501,6 +509,14 @@ class BucketTests(unittest.TestCase):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket['a'] = 'b'
+        self.assertEqual(bucket['a'], 'b')
+
+    def test___setitem___replace(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket['a'] = 'b'
+        bucket['a'] = 'c'
+        self.assertEqual(bucket['a'], 'c')
 
     def test___delitem___miss(self):
         bucket = self._makeOne()
@@ -517,6 +533,21 @@ class BucketTests(unittest.TestCase):
         del bucket['a']
         self.assertEqual(bucket._keys, [])
         self.assertEqual(bucket._values, [])
+
+    def test_clear_filled(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        bucket['a'] = 'b'
+        bucket['c'] = 'd'
+        bucket.clear()
+        self.assertEqual(len(bucket._keys), 0)
+        self.assertEqual(len(bucket._values), 0)
+
+    def test_clear_empty(self):
+        bucket = self._makeOne()
+        bucket.clear()
+        self.assertEqual(len(bucket._keys), 0)
+        self.assertEqual(len(bucket._values), 0)
 
     def test_get_miss_no_default(self):
         bucket = self._makeOne()
@@ -549,17 +580,274 @@ class BucketTests(unittest.TestCase):
         bucket._values.append('b')
         self.assertEqual(bucket['a'], 'b')
 
-    def test__p_resolveConflict_delete_first_new(self):
-        from ..Interfaces import BTreesConflictError
-        _mapping = self._makeOne()
-        s_old = (('a', 0, 'b', 1), None)
-        s_com = (('a', 1, 'b', 2, 'c', 3), None)
-        s_new = (('b', 4), None)
-        e = self.assertRaises(BTreesConflictError,
-                              _mapping._p_resolveConflict, s_old, s_com, s_new)
-        self.assertEqual(e.reason, 2)
+    def test__split_empty(self):
+        bucket = self._makeOne()
+        next_b = bucket._next = self._makeOne()
+        new_b = bucket._split()
+        self.assertEqual(len(bucket._keys), 0)
+        self.assertEqual(len(bucket._values), 0)
+        self.assertEqual(len(new_b._keys), 0)
+        self.assertEqual(len(new_b._values), 0)
+        self.assertTrue(bucket._next is new_b)
+        self.assertTrue(new_b._next is next_b)
 
-    def test__p_resolveConflict_delete_first_committed(self):
+    def test__split_filled_default_index(self):
+        bucket = self._makeOne()
+        next_b = bucket._next = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        new_b = bucket._split()
+        self.assertEqual(list(bucket._keys), ['a', 'b', 'c'])
+        self.assertEqual(list(bucket._values), [0, 1, 2])
+        self.assertEqual(list(new_b._keys), ['d', 'e', 'f'])
+        self.assertEqual(list(new_b._values), [3, 4, 5])
+        self.assertTrue(bucket._next is new_b)
+        self.assertTrue(new_b._next is next_b)
+
+    def test_keys_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.keys(), [])
+
+    def test_keys_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(bucket.keys(),
+                         ['a', 'b', 'c', 'd', 'e', 'f'])
+
+    def test_keys_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(bucket.keys(min='b', excludemin=True,
+                                     max='f', excludemax=True), ['c', 'd', 'e'])
+
+    def test_iterkeys_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(list(bucket.iterkeys()), [])
+
+    def test_iterkeys_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(list(bucket.iterkeys()),
+                         ['a', 'b', 'c', 'd', 'e', 'f'])
+
+    def test_iterkeys_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(list(bucket.iterkeys(
+                                   min='b', excludemin=True,
+                                   max='f', excludemax=True)), ['c', 'd', 'e'])
+
+    def test_values_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.values(), [])
+
+    def test_values_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(bucket.values(), range(6))
+
+    def test_values_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(bucket.values(min='b', excludemin=True,
+                                       max='f', excludemax=True), [2, 3, 4])
+
+    def test_itervalues_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(list(bucket.itervalues()), [])
+
+    def test_itervalues_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(list(bucket.itervalues()), range(6))
+
+    def test_itervalues_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        self.assertEqual(list(bucket.itervalues(
+                                       min='b', excludemin=True,
+                                       max='f', excludemax=True)), [2, 3, 4])
+
+    def test_items_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.items(), [])
+
+    def test_items_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = []
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED.append((c, i))
+        self.assertEqual(bucket.items(), EXPECTED)
+
+    def test_items_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = []
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED.append((c, i))
+        self.assertEqual(bucket.items(min='b', excludemin=True,
+                                       max='f', excludemax=True),
+                        EXPECTED[2:5])
+
+    def test_iteritems_empty_no_args(self):
+        bucket = self._makeOne()
+        self.assertEqual(list(bucket.iteritems()), [])
+
+    def test_iteritems_filled_no_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = []
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED.append((c, i))
+        self.assertEqual(list(bucket.iteritems()), EXPECTED)
+
+    def test_iteritems_filled_w_args(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = []
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED.append((c, i))
+        self.assertEqual(list(bucket.iteritems(min='b', excludemin=True,
+                                               max='f', excludemax=True)),
+                        EXPECTED[2:5])
+
+    def test___getstate___empty_no_next(self):
+        bucket = self._makeOne()
+        self.assertEqual(bucket.__getstate__(), ((),))
+
+    def test___getstate___empty_w_next(self):
+        bucket = self._makeOne()
+        bucket._next = next_b = self._makeOne()
+        self.assertEqual(bucket.__getstate__(), ((), next_b))
+
+    def test___getstate___non_empty_no_next(self):
+        bucket = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = ()
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED += (c, i)
+        self.assertEqual(bucket.__getstate__(), (EXPECTED,))
+
+    def test___getstate___non_empty_w_next(self):
+        bucket = self._makeOne()
+        bucket._next = next_b = self._makeOne()
+        bucket._to_key = lambda x: x
+        EXPECTED = ()
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            EXPECTED += (c, i)
+        self.assertEqual(bucket.__getstate__(), (EXPECTED, next_b))
+
+    def test___setstate___w_empty_no_next(self):
+        bucket = self._makeOne()
+        bucket._next = next_b = self._makeOne()
+        bucket._to_key = lambda x: x
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        bucket.__setstate__(((),))
+        self.assertEqual(len(bucket.keys()), 0)
+        self.assertTrue(bucket._next is None)
+
+    def test___setstate___w_non_empty_w_next(self):
+        bucket = self._makeOne()
+        next_b = self._makeOne()
+        bucket._to_key = lambda x: x
+        ITEMS = ()
+        EXPECTED = []
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+            ITEMS += (c, i)
+            EXPECTED.append((c, i))
+        bucket.__setstate__((ITEMS, next_b))
+        self.assertEqual(bucket.items(), EXPECTED)
+        self.assertTrue(bucket._next is next_b)
+
+    def test__p_resolveConflict_x_on_com_next(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = ((), None)
+        s_com = ((), N_NEW)
+        s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_new_next(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = ((), None)
+        s_com = ((), None)
+        s_new = ((), N_NEW)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_com_empty(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c', 'd'), None)
+        s_com = ((), None)
+        s_new = (('a', 'b'), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 12)
+
+    def test__p_resolveConflict_x_on_new_empty(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 0, 'b', 1), None)
+        s_com = (('a', 0), None)
+        s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 12)
+
+    def test__p_resolveConflict_x_on_del_first_com_x(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 0, 'b', 1, 'c', 2), None)
+        s_com = (('b', 1), None)
+        s_new = (('a', 0, 'b', 1), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_x_on_del_first_new_x(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        s_old = (('a', 0, 'b', 1, 'c', 2), None)
+        s_com = (('a', 0, 'b', 1), None)
+        s_new = (('b', 1), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 13)
+
+    def test__p_resolveConflict_x_on_del_first_com(self):
         from ..Interfaces import BTreesConflictError
         _mapping = self._makeOne()
         s_old = (('a', 0, 'b', 1), None)
@@ -568,6 +856,16 @@ class BucketTests(unittest.TestCase):
         e = self.assertRaises(BTreesConflictError,
                               _mapping._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 3)
+
+    def test__p_resolveConflict_x_on_del_first_new(self):
+        from ..Interfaces import BTreesConflictError
+        _mapping = self._makeOne()
+        s_old = (('a', 0, 'b', 1), None)
+        s_com = (('a', 1, 'b', 2, 'c', 3), None)
+        s_new = (('b', 4), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _mapping._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 2)
 
 
 class SetTests(unittest.TestCase):
