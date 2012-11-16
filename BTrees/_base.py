@@ -212,8 +212,11 @@ class Bucket(_BucketBase):
             items = items.items()
 
         _si = self.__setitem__
-        for key, value in items:
-            _si(key, value)
+        try:
+            for key, value in items:
+                _si(key, value)
+        except ValueError:
+            raise TypeError('items must be a sequence of 2-tuples')
 
     def __setitem__(self, key, value):
         # Enforce test that key has non-default comparison.
