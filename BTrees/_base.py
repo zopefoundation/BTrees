@@ -375,8 +375,8 @@ class Bucket(_BucketBase):
         while i_old.active and i_com.active and i_new.active:
             cmpOC = cmp(i_old.key, i_com.key)
             cmpON = cmp(i_old.key, i_new.key)
-            if cmpOC==0:
-                if cmpON==0:
+            if cmpOC == 0:
+                if cmpON == 0:
                     if i_com.value == i_old.value:
                         result[i_old.key] = i_new.value
                     elif i_new.value == i_old.value:
@@ -413,7 +413,7 @@ class Bucket(_BucketBase):
                     raise merge_error(3)
             else: # both keys changed
                 cmpCN = cmp(i_com.key, i_new.key)
-                if cmpCN == 0:
+                if cmpCN == 0: # dueling insert
                     raise merge_error(4)
                 if cmpOC > 0: # insert committed
                     if cmpCN > 0: # insert i_new first
@@ -468,6 +468,9 @@ class Bucket(_BucketBase):
         if len(result._keys) == 0:
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
+            #
+            # XXX TS, 2012-11-16:  I don't think this is possible
+            #
             raise merge_error(10)
 
         result._next = b_old._next
@@ -656,7 +659,9 @@ class Set(_BucketBase):
         if len(result._keys) == 0:
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
-            assert 0, "CAN'T GET HERE"
+            #
+            # XXX TS, 2012-11-16:  I don't think this is possible
+            #
             raise merge_error(10)
 
         result._next = b_old._next
