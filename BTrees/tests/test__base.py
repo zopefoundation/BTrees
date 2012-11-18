@@ -1276,14 +1276,94 @@ class SetTests(unittest.TestCase):
                               _set._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 9)
 
-    def test__p_resolveConflict_ok_both_add_new_max(self):
+    def test__p_resolveConflict_ok_insert_in_new_add_in_com(self):
+        _set = self._makeOne()
+        s_old = (('a', 'c'), None)
+        s_com = (('a', 'c', 'd'), None)
+        s_new = (('a', 'b', 'c'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        # Note that _SetBase uses default __getstate__
+        self.assertEqual(result, (('a', 'b', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_insert_in_com_add_in_new(self):
+        _set = self._makeOne()
+        s_old = (('a', 'c'), None)
+        s_com = (('a', 'b', 'c'), None)
+        s_new = (('a', 'c', 'd'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_delete_in_new_add_in_com(self):
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a', 'b', 'c', 'd'), None)
+        s_new = (('a', 'c'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_delete_in_com_add_in_new(self):
+        _set = self._makeOne()
+        s_old = (('a', 'b', 'c'), None)
+        s_com = (('a', 'c'), None)
+        s_new = (('a', 'b', 'c', 'd'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_add_new_lt_add_com(self):
+        _set = self._makeOne()
+        s_old = (('a',), None)
+        s_com = (('a', 'd'), None)
+        s_new = (('a', 'b', 'c'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_add_com_lt_add_new(self):
         _set = self._makeOne()
         s_old = (('a',), None)
         s_com = (('a', 'b', 'c'), None)
         s_new = (('a', 'd'), None)
         result = _set._p_resolveConflict(s_old, s_com, s_new)
-        # Note that _SetBase uses default __getstate__
         self.assertEqual(result, (('a', 'b', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_ins_in_com_del_add_in_new(self):
+        _set = self._makeOne()
+        s_old = (('a', 'c'), None)
+        s_com = (('a', 'b', 'c'), None)
+        s_new = (('a', 'd', 'e'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'd', 'e'),))
+
+    def test__p_resolveConflict_ok_ins_in_new_del_add_in_com(self):
+        _set = self._makeOne()
+        s_old = (('a', 'c'), None)
+        s_com = (('a', 'd', 'e'), None)
+        s_new = (('a', 'b', 'c'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'd', 'e'),))
+
+    def test__p_resolveConflict_ok_ins_both_new_lt_com(self):
+        _set = self._makeOne()
+        s_old = (('a', 'e'), None)
+        s_com = (('a', 'c', 'd', 'e'), None)
+        s_new = (('a', 'b', 'e'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'b', 'c', 'd', 'e'),))
+
+    def test__p_resolveConflict_ok_del_new_add_com(self):
+        _set = self._makeOne()
+        s_old = (('a', 'e'), None)
+        s_com = (('a', 'c', 'd', 'e'), None)
+        s_new = (('a',), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'c', 'd'),))
+
+    def test__p_resolveConflict_ok_del_com_add_new(self):
+        _set = self._makeOne()
+        s_old = (('a', 'e'), None)
+        s_com = (('a',), None)
+        s_new = (('a', 'c', 'd', 'e'), None)
+        result = _set._p_resolveConflict(s_old, s_com, s_new)
+        self.assertEqual(result, (('a', 'c', 'd'),))
 
     def test__p_resolveConflict_add_new_gt_old_com_lt_old(self):
         _set = self._makeOne()
