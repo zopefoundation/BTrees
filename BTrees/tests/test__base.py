@@ -749,7 +749,6 @@ class BucketTests(unittest.TestCase):
         ITEMS = ()
         EXPECTED = []
         for i, c in enumerate('abcdef'):
-            bucket[c] = i
             ITEMS += (c, i)
             EXPECTED.append((c, i))
         bucket.__setstate__((ITEMS, next_b))
@@ -1034,7 +1033,126 @@ class SetTests(unittest.TestCase):
         return _TestSet()
 
     def _makeOne(self):
-        return self._getTargetClass()()
+        class _Set(self._getTargetClass()):
+            def _to_key(self, x):
+                return x
+        return _Set()
+
+    def test_add_not_extant(self):
+        _set = self._makeOne()
+        _set.add('not_extant')
+        self.assertEqual(list(_set), ['not_extant'])
+
+    def test_add_extant(self):
+        _set = self._makeOne()
+        _set.add('extant')
+        _set.add('extant')
+        self.assertEqual(list(_set), ['extant'])
+
+    def test_insert(self):
+        _set = self._makeOne()
+        _set.insert('inserted')
+        self.assertEqual(list(_set), ['inserted'])
+
+    def test_remove_miss(self):
+        _set = self._makeOne()
+        self.assertRaises(KeyError, _set.remove, 'not_extant')
+
+    def test_remove_extant(self):
+        _set = self._makeOne()
+        _set.add('one')
+        _set.add('another')
+        _set.remove('one')
+        self.assertEqual(list(_set), ['another'])
+
+    def test_update(self):
+        _set = self._makeOne()
+        _set.update(['one', 'after', 'another'])
+        self.assertEqual(sorted(_set), ['after', 'another', 'one'])
+
+    def test___getstate___empty_no_next(self):
+        _set = self._makeOne()
+        self.assertEqual(_set.__getstate__(), ((),))
+
+    def test___getstate___empty_w_next(self):
+        _set = self._makeOne()
+        _set._next = next_s = self._makeOne()
+        self.assertEqual(_set.__getstate__(), ((), next_s))
+
+    def test___getstate___non_empty_no_next(self):
+        _set = self._makeOne()
+        EXPECTED = ()
+        for c in 'abcdef':
+            _set.add(c)
+            EXPECTED += (c,)
+        self.assertEqual(_set.__getstate__(), (EXPECTED,))
+
+    def test___getstate___non_empty_w_next(self):
+        _set = self._makeOne()
+        _set._next = next_s = self._makeOne()
+        EXPECTED = ()
+        for c in 'abcdef':
+            _set.add(c)
+            EXPECTED += (c,)
+        self.assertEqual(_set.__getstate__(), (EXPECTED, next_s))
+
+    def test___setstate___w_non_tuple(self):
+        _set = self._makeOne()
+        self.assertRaises(TypeError, _set.__setstate__, (None,))
+
+    def test___setstate___w_empty_no_next(self):
+        _set = self._makeOne()
+        _set._next = next_s = self._makeOne()
+        for c in 'abcdef':
+            _set.add(c)
+        _set.__setstate__(((),))
+        self.assertEqual(len(_set), 0)
+        self.assertTrue(_set._next is None)
+
+    def test___setstate___w_non_empty_w_next(self):
+        _set = self._makeOne()
+        next_s = self._makeOne()
+        ITEMS = ()
+        EXPECTED = []
+        for c in 'abcdef':
+            ITEMS += (c,)
+            EXPECTED.append(c)
+        _set.__setstate__((ITEMS, next_s))
+        self.assertEqual(sorted(_set), EXPECTED)
+        self.assertTrue(_set._next is next_s)
+
+    def test___getitem___out_of_bounds(self):
+        _set = self._makeOne()
+        self.assertRaises(IndexError, _set.__getitem__, 1)
+
+    def test___getitem___hit_bounds(self):
+        _set = self._makeOne()
+        _set.add('b')
+        _set.add('a')
+        _set.add('c')
+        self.assertEqual(_set[0], 'a')
+        self.assertEqual(_set[1], 'b')
+        self.assertEqual(_set[2], 'c')
+
+    def test__split_empty(self):
+        _set = self._makeOne()
+        next_b = _set._next = self._makeOne()
+        new_b = _set._split()
+        self.assertEqual(len(_set._keys), 0)
+        self.assertEqual(len(new_b._keys), 0)
+        self.assertTrue(_set._next is new_b)
+        self.assertTrue(new_b._next is next_b)
+
+    def test__split_filled_default_index(self):
+        _set = self._makeOne()
+        next_b = _set._next = self._makeOne()
+        for c in 'abcdef':
+            _set.add(c)
+        new_b = _set._split()
+        self.assertEqual(list(_set._keys), ['a', 'b', 'c'])
+        self.assertEqual(list(new_b._keys), ['d', 'e', 'f'])
+        self.assertTrue(_set._next is new_b)
+        self.assertTrue(new_b._next is next_b)
 
     def test__p_resolveConflict_x_on_com_next(self):
         from ..Interfaces import BTreesConflictError

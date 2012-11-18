@@ -465,7 +465,7 @@ class Bucket(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0:
+        if len(result._keys) == 0: #pragma NO COVER
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -494,7 +494,7 @@ class Set(_BucketBase):
 
     def __getstate__(self):
         data = tuple(self._keys)
-        if self._next:
+        if self._next is not None:
             return data, self._next
         return (data, )
 
@@ -656,7 +656,7 @@ class Set(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0:
+        if len(result._keys) == 0: #pragma NO COVER
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
