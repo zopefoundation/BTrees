@@ -808,7 +808,7 @@ class _Tree(_Base):
         max = self._to_key(max)
         index = self._search(max)
         if index and data[index].child.minKey() > max:
-            index -= 1
+            index -= 1 #pragma NO COVER  no idea how to provoke this
         return data[index].child.maxKey(max)
 
 
@@ -862,6 +862,8 @@ class _Tree(_Base):
         next._data = data[index:]
         first = data[index]
         del data[index:]
+        if len(data) == 0:
+            self._firstbucket = None # lost our bucket, can't buy no beer
         if isinstance(first.child, self.__class__):
             next._firstbucket = first.child._firstbucket
         else:
@@ -873,16 +875,18 @@ class _Tree(_Base):
             self._p_oid is not None and
             self._p_serial is not None):
             self._p_jar.readCurrent(self)
+
         data = self._data
-        if data:
-            index = self._search(key)
-            child = data[index].child
-        else:
+        if not data:
             raise KeyError(key)
+
+        index = self._search(key)
+        child = data[index].child
 
         removed_first_bucket, value = child._del(key)
 
-        if index and child.size and key == data[index].key:
+        # fix up the node key, but not for the 0'th one.
+        if index > 0 and child.size and key == data[index].key:
             self._p_changed = True
             data[index].key = child.minKey()
 

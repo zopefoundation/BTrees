@@ -493,6 +493,12 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(bucket._keys, ['a'])
         self.assertEqual(bucket._values, ['b'])
 
+    def test_update_replacing(self):
+        bucket = self._makeOne()
+        bucket['a'] = 'b'
+        bucket.update([('a', 'c')])
+        self.assertEqual(bucket['a'], 'c')
+
     def test___setitem___incomparable(self):
         bucket = self._makeOne()
         def _should_error():
@@ -1374,6 +1380,532 @@ class SetTests(unittest.TestCase):
         self.assertEqual(result, (('a', 'b', 'bb', 'c', 'd'),))
 
 
+class Test_TreeItem(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from .._base import _TreeItem
+        return _TreeItem
+
+    def _makeOne(self, key, child):
+        return self._getTargetClass()(key, child)
+
+    def test_ctor(self):
+        child = object()
+        item = self._makeOne('key', child)
+        self.assertEqual(item.key, 'key')
+        self.assertTrue(item.child is child)
+
+
+class Test_Tree(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import _Tree
+        return _Tree
+
+    def _makeOne(self, items=None):
+        from .._base import Bucket
+        class _Bucket(Bucket):
+            MAX_SIZE = 10
+            def _to_key(self, k):
+                return k
+        class _Test(self._getTargetClass()):
+            _to_key = _to_value = lambda self, x: x
+            _bucket_type = _Bucket
+            MAX_SIZE = 15
+        return _Test(items)
+
+    def test_setdefault_miss(self):
+        tree = self._makeOne()
+        value = object()
+        self.assertTrue(tree.setdefault('non_extant', value) is value)
+        self.assertTrue('non_extant' in tree)
+        self.assertTrue(tree._findbucket('non_extant')['non_extant'] is value)
+
+    def test_setdefault_hit(self):
+        tree = self._makeOne()
+        value1 = object()
+        value2 = object()
+        tree['extant'] = value1
+        self.assertTrue(tree.setdefault('extant', value2) is value1)
+        self.assertTrue('extant' in tree)
+        self.assertTrue(tree._findbucket('extant')['extant'] is value1)
+
+    def test_pop_miss_no_default(self):
+        tree = self._makeOne()
+        self.assertRaises(KeyError, tree.pop, 'nonesuch')
+
+    def test_pop_miss_w_default(self):
+        default = object()
+        tree = self._makeOne()
+        self.assertTrue(tree.pop('nonesuch', default) is default)
+
+    def test_pop_hit(self):
+        tree = self._makeOne()
+        value = object()
+        tree['extant'] = value
+        self.assertTrue(tree.pop('extant', value) is value)
+        self.assertFalse('extant' in tree)
+
+    def test_update_value_w_iteritems(self):
+        tree = self._makeOne()
+        tree.update({'a': 'b'})
+        self.assertEqual(tree._findbucket('a')['a'], 'b')
+
+    def test_update_value_w_items(self):
+        tree = self._makeOne()
+        class Foo(object):
+            def items(self):
+                return [('a', 'b')]
+        tree.update(Foo())
+        self.assertEqual(tree._findbucket('a')['a'], 'b')
+
+    def test_update_value_w_invalid_items(self):
+        tree = self._makeOne()
+        class Foo(object):
+            def items(self):
+                return ('a', 'b', 'c')
+        self.assertRaises(TypeError, tree.update, Foo())
+
+    def test_update_sequence(self):
+        tree = self._makeOne()
+        tree.update([('a', 'b')])
+        self.assertEqual(tree._findbucket('a')['a'], 'b')
+
+    def test_update_replacing(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        tree.update([('a', 'c')])
+        self.assertEqual(tree._findbucket('a')['a'], 'c')
+
+    def test___setitem___incomparable(self):
+        tree = self._makeOne()
+        def _should_error():
+            tree[object()] = 'b'
+        self.assertRaises(TypeError, _should_error)
+
+    def test___delitem___miss(self):
+        tree = self._makeOne()
+        def _should_error():
+            del tree['a']
+        self.assertRaises(KeyError, _should_error)
+
+    def test___delitem___hit(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        del tree['a']
+        self.assertFalse('a' in tree)
+
+    def test_clear(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        tree.clear()
+        self.assertFalse('a' in tree)
+        self.assertEqual(tree._firstbucket, None)
+
+    def test___nonzero___empty(self):
+        tree = self._makeOne()
+        self.assertFalse(tree)
+
+    def test___nonzero___nonempty(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        self.assertTrue(tree)
+
+    def test___len__empty(self):
+        tree = self._makeOne()
+        self.assertEqual(len(tree), 0)
+
+    def test___len__nonempty(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        self.assertEqual(len(tree), 1)
+
+    def test___len__nonempty_multiple_buckets(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[str(i)] = i
+        self.assertEqual(len(tree), 100)
+        b_count = 0
+        bucket = tree._firstbucket
+
+    def test_size_empty(self):
+        tree = self._makeOne()
+        self.assertEqual(tree.size, 0)
+
+    def test_size_nonempty(self):
+        tree = self._makeOne()
+        tree['a'] = 'b'
+        self.assertEqual(tree.size, 1)
+
+    def test_size_nonempty_multiple_buckets(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[str(i)] = i
+        b_count = 0
+        bucket = tree._firstbucket
+        while bucket is not None:
+            b_count += 1
+            bucket = bucket._next
+        self.assertEqual(tree.size, b_count)
+
+    def test__search_empty(self):
+        tree = self._makeOne()
+        self.assertEqual(tree._search('nonesuch'), -1)
+
+    def test__search_miss_high(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[float(i)] = i
+        b_count = 0
+        bucket = tree._firstbucket
+        while bucket is not None:
+            b_count += 1
+            bucket = bucket._next
+        self.assertEqual(tree.size, b_count)
+        self.assertEqual(tree._search(99.5), b_count - 1)
+
+    def test__search_miss_low(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[float(i)] = i
+        self.assertEqual(tree._search(0.1), 0)
+
+    def test__search_miss_between(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[float(i)] = i
+        self.assertEqual(tree._search(1.5), 0)
+
+    def test__search_hit(self):
+        tree = self._makeOne()
+        for i in range(100):
+            tree[float(i)] = i
+        key = tree._data[1].key
+        self.assertEqual(tree._search(key), 1)
+
+    def test__find_bucket_low(self):
+        tree = self._makeOne()
+        for i in range(1000):
+            tree[float(i)] = i
+        self.assertTrue(tree._findbucket(0.1) is tree._firstbucket)
+
+    def test__find_bucket_high(self):
+        tree = self._makeOne()
+        for i in range(1000):
+            tree[float(i)] = i
+        bucket = tree._firstbucket
+        while bucket._next is not None:
+            bucket = bucket._next
+        self.assertTrue(tree._findbucket(999.5) is bucket)
+
+    def test___contains___empty(self):
+        tree = self._makeOne()
+        self.assertFalse('nonesuch' in tree)
+
+    def test___contains___miss(self):
+        tree = self._makeOne()
+        for i in range(1000):
+            tree[float(i)] = i
+        self.assertFalse(1000.0 in tree)
+
+    def test___contains___hit(self):
+        tree = self._makeOne()
+        keys = []
+        for i in range(1000):
+            key = float(i)
+            tree[key] = i
+            keys.append(key)
+        for key in keys:
+            self.assertTrue(key in tree)
+
+    def test_has_key_empty(self):
+        tree = self._makeOne()
+        self.assertFalse(tree.has_key('nonesuch'))
+
+    def test_has_key_miss(self):
+        tree = self._makeOne()
+        for i in range(1000):
+            tree[float(i)] = i
+        self.assertFalse(tree.has_key(1000.0))
+
+    def test_has_key_hit(self):
+        tree = self._makeOne()
+        KEYS = []
+        for i in range(1000):
+            key = float(i)
+            tree[key] = i
+            KEYS.append(key)
+        for key in KEYS:
+            # XXX should we be testing for the 'depth' value?
+            self.assertTrue(tree.has_key(key))
+
+    def test_keys_defaults_empty(self):
+        tree = self._makeOne()
+        self.assertEqual(list(tree.keys()), [])
+
+    def test_keys_defaults_filled(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys()), KEYS[:])
+
+    def test_keys_defaults_exclude_min(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(excludemin=True)), KEYS[1: 5])
+
+    def test_keys_defaults_exclude_max(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(excludemax=True)), KEYS[0: 4])
+
+    def test_keys_w_min_hit(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(min='bravo')), KEYS[1: 5])
+
+    def test_keys_w_min_miss(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(min='candy')), KEYS[2: 5])
+
+    def test_keys_w_min_hit_w_exclude_min(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(min='bravo', excludemin=True)),
+                         KEYS[2: 5])
+
+    def test_keys_w_min_miss_w_exclude_min(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        # 'excludemin' doesn't fire on miss
+        self.assertEqual(list(tree.keys(min='candy', excludemin=True)),
+                         KEYS[2: 5])
+
+    def test_keys_w_max_hit(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(max='delta')), KEYS[0: 4])
+
+    def test_keys_w_max_miss(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(max='dandy')), KEYS[0: 3])
+
+    def test_keys_w_max_hit_w_exclude_max(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.keys(max='delta', excludemax=True)),
+                         KEYS[0: 3])
+
+    def test_keys_w_max_miss_w_exclude_max(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        # 'excludemax' doesn't fire on miss
+        self.assertEqual(list(tree.keys(max='dandy', excludemax=True)),
+                         KEYS[0: 3])
+
+    def test_iterkeys(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree.iterkeys()), KEYS)
+
+    def test___iter__(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(list(tree), KEYS)
+
+    def test_minKey_empty(self):
+        tree = self._makeOne()
+        self.assertRaises(ValueError, tree.minKey)
+
+    def test_minKey_filled_default(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.minKey(), KEYS[0])
+
+    def test_minKey_filled_explicit_hit(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.minKey(min='bravo'), 'bravo')
+
+    def test_minKey_filled_explicit_miss(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.minKey(min='basso'), 'bravo')
+
+    def test_maxKey_empty(self):
+        tree = self._makeOne()
+        self.assertRaises(ValueError, tree.maxKey)
+
+    def test_maxKey_filled_default(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.maxKey(), 'echo')
+
+    def test_maxKey_filled_explicit_hit(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.maxKey('bravo'), 'bravo')
+
+    def test_maxKey_filled_explicit_miss(self):
+        tree = self._makeOne()
+        KEYS = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
+        for key in KEYS:
+            tree[key] = key.upper()
+        self.assertEqual(tree.maxKey('candy'), 'bravo')
+
+    def test__set_calls_readCurrent_on_jar(self):
+        tree = self._makeOne()
+        tree._p_oid = 'OID'
+        tree._p_serial = '01234567'
+        tree._p_jar = jar = _Jar()
+        tree._set('a', 'b')
+        self.assertTrue(tree in jar._current)
+
+    def test__split_empty(self):
+        tree = self._makeOne()
+        self.assertRaises(IndexError, tree._split)
+
+    def test__split_filled_empties_original(self):
+        tree = self._makeOne()
+        next_t = tree._next = self._makeOne()
+        for i, c in enumerate('abcdef'):
+            tree[c] = i
+        fb = tree._firstbucket
+        new_t = tree._split()
+        self.assertEqual(list(tree), [])
+        self.assertTrue(tree._firstbucket is None)
+        self.assertEqual(list(new_t), ['a', 'b', 'c', 'd', 'e', 'f'])
+        self.assertTrue(new_t._firstbucket is fb)
+
+    def test__split_filled_divides_original(self):
+        tree = self._makeOne()
+        next_t = tree._next = self._makeOne()
+        LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+        for i, c in enumerate(LETTERS):
+            tree[c] = i
+        fb = tree._firstbucket
+        new_t = tree._split()
+        # Note that original tree still links to split buckets
+        self.assertEqual(''.join(list(tree)), LETTERS)
+        self.assertTrue(tree._firstbucket is fb)
+        self.assertEqual(''.join(list(new_t)), LETTERS[10:])
+        self.assertFalse(new_t._firstbucket is fb)
+
+    def test__split_filled_divides_deeper(self):
+        tree = self._makeOne()
+        next_t = tree._next = self._makeOne()
+        KEYS = []
+        FMT = '%05d'
+        for i in range(1000):
+            key = FMT % i
+            tree[key] = i
+            KEYS.append(key)
+        fb = tree._firstbucket
+        new_t = tree._split()
+        # Note that original tree still links to split buckets
+        self.assertEqual(list(tree), KEYS)
+        self.assertTrue(tree._firstbucket is fb)
+        new_min = new_t.minKey()
+        self.assertEqual(list(new_t), KEYS[int(new_min):])
+        self.assertFalse(new_t._firstbucket is fb)
+
+    def test__del_calls_readCurrent_on_jar(self):
+        tree = self._makeOne({'a': 'b'})
+        tree._p_oid = 'OID'
+        tree._p_serial = '01234567'
+        tree._p_jar = jar = _Jar()
+        tree._del('a')
+        self.assertTrue(tree in jar._current)
+
+    def test__del_miss(self):
+        tree = self._makeOne({'a': 'b'})
+        self.assertRaises(KeyError, tree._del, 'nonesuch')
+
+    def test__del_fixes_up_node_key(self):
+        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        tree = self._makeOne(SOURCE)
+        before = tree._data[1].key
+        del tree[before]
+        after = tree._data[1].key
+        self.assertTrue(after > before)
+
+    def test__del_empties_first_bucket_not_zeroth_item(self):
+        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        tree = self._makeOne(SOURCE)
+        bucket = tree._data[1].child._firstbucket
+        next_b = bucket._next
+        for key in list(bucket): # don't del while iterting
+            del tree[key]
+        self.assertTrue(tree._data[1].child._firstbucket is next_b)
+
+    def test__del_empties_first_bucket_zeroth_item(self):
+        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        tree = self._makeOne(SOURCE)
+        bucket = tree._data[0].child._firstbucket
+        next_b = bucket._next
+        for key in list(bucket): # don't del while iterting
+            del tree[key]
+        self.assertTrue(tree._data[0].child._firstbucket is next_b)
+        self.assertTrue(tree._firstbucket is next_b)
+
+    def test__del_empties_other_bucket_not_zeroth_item(self):
+        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        tree = self._makeOne(SOURCE)
+        bucket = tree._data[1].child._firstbucket._next
+        next_b = bucket._next
+        for key in list(bucket): # don't del while iterting
+            del tree[key]
+        self.assertTrue(tree._data[1].child._firstbucket._next is next_b)
+
+
+class _Jar(object):
+    def __init__(self):
+        self._current = set()
+    def readCurrent(self, obj):
+        self._current.add(obj)
+    def register(self, obj):
+        pass
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(Test_Base),
@@ -1381,4 +1913,6 @@ def test_suite():
         unittest.makeSuite(Test_SetIteration),
         unittest.makeSuite(BucketTests),
         unittest.makeSuite(SetTests),
+        unittest.makeSuite(Test_TreeItem),
+        unittest.makeSuite(Test_Tree),
     ))
