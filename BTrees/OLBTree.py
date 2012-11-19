@@ -30,7 +30,7 @@ from ._base import Tree as BTree
 from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_ob as _to_key
 from ._base import to_int as _to_value
 from ._base import union as _union
@@ -91,11 +91,11 @@ OLTreeSetPy._mapping_type = OLBucketPy
 OLTreeSetPy._set_type = OLTreeSetPy._bucket_type = OLSetPy
 
 
-differencePy = _setop(_difference, OLSetPy)
-unionPy = _setop(_union, OLSetPy)
-intersectionPy = _setop(_intersection, OLSetPy)
-weightedUnionPy = _setop(_weightedUnion, OLSetPy)
-weightedIntersectionPy = _setop(_weightedIntersection, OLSetPy)
+differencePy = _set_operation(_difference, OLSetPy)
+unionPy = _set_operation(_union, OLSetPy)
+intersectionPy = _set_operation(_intersection, OLSetPy)
+weightedUnionPy = _set_operation(_weightedUnion, OLSetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, OLSetPy)
 
 try:
     from _OLBTree import OLBucket

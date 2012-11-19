@@ -31,7 +31,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_long as _to_key
 from ._base import to_long as _to_value
 from ._base import union as _union
@@ -92,12 +92,12 @@ LLTreeSetPy._mapping_type = LLBucketPy
 LLTreeSetPy._set_type = LLTreeSetPy._bucket_type = LLSetPy
 
 
-differencePy = _setop(_difference, LLSetPy)
-unionPy = _setop(_union, LLSetPy)
-intersectionPy = _setop(_intersection, LLSetPy)
-multiunionPy = _setop(_multiunion, LLSetPy)
-weightedUnionPy = _setop(_weightedUnion, LLSetPy)
-weightedIntersectionPy = _setop(_weightedIntersection, LLSetPy)
+differencePy = _set_operation(_difference, LLSetPy)
+unionPy = _set_operation(_union, LLSetPy)
+intersectionPy = _set_operation(_intersection, LLSetPy)
+multiunionPy = _set_operation(_multiunion, LLSetPy)
+weightedUnionPy = _set_operation(_weightedUnion, LLSetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, LLSetPy)
 
 try:
     from _LLBTree import LLBucket

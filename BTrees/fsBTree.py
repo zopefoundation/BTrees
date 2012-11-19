@@ -31,7 +31,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_str as _to_str
 from ._base import union as _union
 
@@ -101,10 +101,10 @@ fsTreeSetPy._mapping_type = fsBucketPy
 fsTreeSetPy._set_type = fsTreeSetPy._bucket_type = fsSetPy
 
 
-differencePy = _setop(_difference, fsSetPy)
-unionPy = _setop(_union, fsSetPy)
-intersectionPy = _setop(_intersection, fsSetPy)
-multiunionPy = _setop(_multiunion, fsSetPy)
+differencePy = _set_operation(_difference, fsSetPy)
+unionPy = _set_operation(_union, fsSetPy)
+intersectionPy = _set_operation(_intersection, fsSetPy)
+multiunionPy = _set_operation(_multiunion, fsSetPy)
 
 try:
     from _fsBTree import fsBucket

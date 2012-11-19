@@ -31,7 +31,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_int as _to_key
 from ._base import to_float as _to_value
 from ._base import union as _union
@@ -91,12 +91,12 @@ IFTreeSetPy._mapping_type = IFBucketPy
 IFTreeSetPy._set_type = IFTreeSetPy._bucket_type = IFSetPy
 
 
-differencePy = _setop(_difference, IFSetPy)
-unionPy = _setop(_union, IFSetPy)
-intersectionPy = _setop(_intersection, IFSetPy)
-multiunionPy = _setop(_multiunion, IFSetPy)
-weightedUnionPy = _setop(_weightedUnion, IFSetPy)
-weightedIntersectionPy = _setop(_weightedIntersection, IFSetPy)
+differencePy = _set_operation(_difference, IFSetPy)
+unionPy = _set_operation(_union, IFSetPy)
+intersectionPy = _set_operation(_intersection, IFSetPy)
+multiunionPy = _set_operation(_multiunion, IFSetPy)
+weightedUnionPy = _set_operation(_weightedUnion, IFSetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, IFSetPy)
 
 try:
     from _IFBTree import IFBucket

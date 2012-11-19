@@ -1203,7 +1203,7 @@ def _set_operation(s1, s2,
     return r
 
 
-class setop(object):
+class set_operation(object):
 
     def __init__(self, func, set_type):
         self.func = func

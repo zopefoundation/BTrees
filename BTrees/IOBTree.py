@@ -28,7 +28,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_int as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
@@ -77,10 +77,10 @@ IOTreeSetPy._mapping_type = IOBucketPy
 IOTreeSetPy._set_type = IOTreeSetPy._bucket_type = IOSetPy
 
 
-differencePy = _setop(_difference, IOSetPy)
-unionPy = _setop(_union, IOSetPy)
-intersectionPy = _setop(_intersection, IOSetPy)
-multiunionPy = _setop(_multiunion, IOSetPy)
+differencePy = _set_operation(_difference, IOSetPy)
+unionPy = _set_operation(_union, IOSetPy)
+intersectionPy = _set_operation(_intersection, IOSetPy)
+multiunionPy = _set_operation(_multiunion, IOSetPy)
 
 try:
     from _IOBTree import IOBucket

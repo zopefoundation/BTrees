@@ -28,7 +28,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_long as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
@@ -77,10 +77,10 @@ LOTreeSetPy._mapping_type = LOBucketPy
 LOTreeSetPy._set_type = LOTreeSetPy._bucket_type = LOSetPy
 
 
-differencePy = _setop(_difference, LOSetPy)
-unionPy = _setop(_union, LOSetPy)
-intersectionPy = _setop(_intersection, LOSetPy)
-multiunionPy = _setop(_multiunion, LOSetPy)
+differencePy = _set_operation(_difference, LOSetPy)
+unionPy = _set_operation(_union, LOSetPy)
+intersectionPy = _set_operation(_intersection, LOSetPy)
+multiunionPy = _set_operation(_multiunion, LOSetPy)
 
 try:
     from _LOBTree import LOBucket

@@ -31,7 +31,7 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_int as _to_key
 from ._base import to_int as _to_value
 from ._base import union as _union
@@ -92,13 +92,13 @@ IITreeSetPy._mapping_type = IIBucketPy
 IITreeSetPy._set_type = IITreeSetPy._bucket_type = IISetPy
 
 
-differencePy = _setop(_difference, IISetPy)
-unionPy = _setop(_union, IISetPy)
-intersectionPy = _setop(_intersection, IISetPy)
-multiunionPy = _setop(_multiunion, IISetPy)
-weightedUnionPy = _setop(_weightedUnion, IISetPy)
+differencePy = _set_operation(_difference, IISetPy)
+unionPy = _set_operation(_union, IISetPy)
+intersectionPy = _set_operation(_intersection, IISetPy)
+multiunionPy = _set_operation(_multiunion, IISetPy)
+weightedUnionPy = _set_operation(_weightedUnion, IISetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, IISetPy)
 
-weightedIntersectionPy = _setop(_weightedIntersection, IISetPy)
 try:
     from _IIBTree import IIBucket
     from _IIBTree import IISet

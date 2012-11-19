@@ -26,7 +26,7 @@ from ._base import Tree as BTree
 from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
-from ._base import setop as _setop
+from ._base import set_operation as _set_operation
 from ._base import to_ob as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
@@ -78,9 +78,9 @@ OOTreeSetPy._mapping_type = OOBucketPy
 OOTreeSetPy._set_type = OOTreeSetPy._bucket_type = OOSetPy
 
 
-differencePy = _setop(_difference, OOSetPy)
-unionPy = _setop(_union, OOSetPy)
-intersectionPy = _setop(_intersection, OOSetPy)
+differencePy = _set_operation(_difference, OOSetPy)
+unionPy = _set_operation(_union, OOSetPy)
+intersectionPy = _set_operation(_intersection, OOSetPy)
 
 try:
     from _OOBTree import OOBucket
