@@ -1008,8 +1008,9 @@ def _get_simple_btree_bucket_state(state):
         return state
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple or None for state")
-    if len(state) == 2:
+    if len(state) == 2: # non-degenerate BTree, can't resolve
         raise BTreesConflictError(-1, -1, -1, 11)
+    # Peel away wrapper to get to only-bucket state.
     if len(state) != 1:
         raise TypeError("_p_resolveConflict: expected 1- or 2-tuple for state")
     state = state[0]

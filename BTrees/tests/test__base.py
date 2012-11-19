@@ -2034,6 +2034,102 @@ class Test_Tree(unittest.TestCase):
         tree._data.append(first.__class__('c', b2))
         tree._check() #no raise
 
+    def test__p_resolveConflict_invalid_state_non_tuple(self):
+        tree = self._makeOne()
+        INVALID = []
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_non_degenerate_state(self):
+        from ..Interfaces import BTreesConflictError
+        tree = self._makeOne()
+        FIRST = object()
+        NON_DEGEN = ((FIRST, 'a', object(), 'b', object()), FIRST)
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        e = self.assertRaises(BTreesConflictError, tree._p_resolveConflict,
+                              NON_DEGEN, EMPTY, DEGEN)
+        self.assertEqual(e.reason, 11)
+        e = self.assertRaises(BTreesConflictError, tree._p_resolveConflict,
+                              EMPTY, NON_DEGEN, DEGEN)
+        self.assertEqual(e.reason, 11)
+        e = self.assertRaises(BTreesConflictError, tree._p_resolveConflict,
+                              EMPTY, DEGEN, NON_DEGEN)
+        self.assertEqual(e.reason, 11)
+
+    def test__p_resolveConflict_invalid_state_non_1_tuple(self):
+        tree = self._makeOne()
+        INVALID = ('a', 'b', 'c')
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_invalid_state_nested_non_tuple(self):
+        tree = self._makeOne()
+        INVALID = ([],)
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_invalid_state_nested_non_1_tuple(self):
+        tree = self._makeOne()
+        INVALID = (('a', 'b', 'c'),)
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_invalid_state_nested2_non_tuple(self):
+        tree = self._makeOne()
+        INVALID = (([],),)
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_invalid_state_nested2_non_1_tuple(self):
+        tree = self._makeOne()
+        INVALID = ((('a', 'b', 'c'),))
+        EMPTY = None
+        DEGEN = (((('a', 'b'),),),)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          INVALID, EMPTY, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, INVALID, DEGEN)
+        self.assertRaises(TypeError, tree._p_resolveConflict,
+                          EMPTY, DEGEN, INVALID)
+
+    def test__p_resolveConflict_w_degenerate_state(self):
+        tree = self._makeOne()
+        OLD = (((('a', 'b', 'c', 'd'),),),)
+        COM = (((('a', 'b', 'c', 'd', 'e', 'f'),),),)
+        NEW = (((('a', 'b'),),),)
+        resolved = tree._p_resolveConflict(OLD, COM, NEW)
+        self.assertEqual(resolved, (((('a', 'b', 'e', 'f'),),),))
 
 
 class _Jar(object):
