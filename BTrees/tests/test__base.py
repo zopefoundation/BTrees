@@ -1026,18 +1026,6 @@ class SetTests(unittest.TestCase):
         from .._base import Set
         return Set
 
-    def _makeOneXXX(self):
-        class _TestSet(self._getTargetClass()):
-            def __setstate__(self, state):
-                self._keys, self._next = state
-            def clear(self):
-                self._keys, self._next = [], None
-            def __len__(self):
-                return len(self._keys)
-            def __iter__(self):
-                return iter(self._keys)
-        return _TestSet()
-
     def _makeOne(self):
         class _Set(self._getTargetClass()):
             def _to_key(self, x):
@@ -2214,6 +2202,151 @@ class Test_TreeItems(unittest.TestCase):
         self.assertEqual(list(ti), [x[0] for x in ITEMS])
 
 
+class TreeTests(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import Tree
+        return Tree
+
+    def _makeOne(self, items=None):
+        from .._base import Bucket
+        class _Bucket(Bucket):
+            MAX_SIZE = 10
+            def _to_key(self, k):
+                return k
+        class _Test(self._getTargetClass()):
+            _to_key = _to_value = lambda self, x: x
+            _bucket_type = _Bucket
+            MAX_SIZE = 15
+        return _Test(items)
+
+    def test_get_empty_miss(self):
+        tree = self._makeOne()
+        self.assertEqual(tree.get('nonesuch'), None)
+
+    def test_get_empty_miss_w_default(self):
+        DEFAULT = object()
+        tree = self._makeOne()
+        self.assertTrue(tree.get('nonesuch', DEFAULT) is DEFAULT)
+
+    def test_get_filled_miss(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(tree.get('nonesuch'), None)
+
+    def test_get_filled_miss_w_default(self):
+        DEFAULT = object()
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertTrue(tree.get('nonesuch', DEFAULT) is DEFAULT)
+
+    def test_get_filled_hit(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(tree.get('a'), 0)
+
+    def test___getitem___empty_miss(self):
+        tree = self._makeOne()
+        def _should_error():
+            return tree['nonesuch']
+        self.assertRaises(KeyError, _should_error)
+
+    def test___getitem___filled_miss(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        def _should_error():
+            return tree['nonesuch']
+        self.assertRaises(KeyError, _should_error)
+
+    def test___getitem___filled_hit(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(tree['a'], 0)
+
+    def test_values_empty_no_args(self):
+        tree = self._makeOne()
+        self.assertEqual(list(tree.values()), [])
+
+    def test_values_filled_no_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.values()), range(26))
+
+    def test_values_filled_w_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.values(min='b', excludemin=True,
+                                          max='f', excludemax=True)),
+                         [2, 3, 4])
+
+    def test_itervalues_empty_no_args(self):
+        tree = self._makeOne()
+        self.assertEqual(list(tree.itervalues()), [])
+
+    def test_itervalues_filled_no_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.itervalues()), range(26))
+
+    def test_itervalues_filled_w_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.itervalues(min='b', excludemin=True,
+                                             max='f', excludemax=True)),
+                         [2, 3, 4])
+
+    def test_items_empty_no_args(self):
+        tree = self._makeOne()
+        self.assertEqual(list(tree.items()), [])
+
+    def test_items_filled_no_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.items()), ITEMS)
+
+    def test_items_filled_w_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.items(min='b', excludemin=True,
+                                          max='f', excludemax=True)),
+                         ITEMS[2:5])
+
+    def test_iteritems_empty_no_args(self):
+        tree = self._makeOne()
+        self.assertEqual(list(tree.iteritems()), [])
+
+    def test_iteritems_filled_no_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.iteritems()), ITEMS)
+
+    def test_iteritems_filled_w_args(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.iteritems(min='b', excludemin=True,
+                                             max='f', excludemax=True)),
+                         ITEMS[2:5])
+
+    def test_byValue(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.byValue(min=22)),
+                         [(y, x) for x, y in ITEMS[22:]])
+
+    def test_insert_new_key(self):
+        tree = self._makeOne()
+        self.assertTrue(tree.insert('a', 0))
+        self.assertEqual(tree['a'], 0)
+
+    def test_insert_would_change_key(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertFalse(tree.insert('a', 1))
+        self.assertEqual(tree['a'], 0)
+
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
@@ -2233,4 +2366,5 @@ def test_suite():
         unittest.makeSuite(Test_TreeItem),
         unittest.makeSuite(Test_Tree),
         unittest.makeSuite(Test_TreeItems),
+        unittest.makeSuite(TreeTests),
     ))
