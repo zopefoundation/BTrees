@@ -973,7 +973,7 @@ class _Tree(_Base):
         for i in data:
             assert_(i.child is not None, "BTree has NULL child")
             assert_(i.child.__class__ is child_class,
-                    "BTree children have different types");
+                    "BTree children have different types")
             assert_(i.child.size, "Bucket length < 1")
 
         if child_class is self.__class__:

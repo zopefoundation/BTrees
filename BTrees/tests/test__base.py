@@ -1960,6 +1960,81 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(tree._data[1].child, b2)
         self.assertTrue(tree._firstbucket is b1)
 
+    def test__check_empty_wo_firstbucket(self):
+        tree = self._makeOne()
+        tree._check() # no raise
+
+    def test__check_empty_w_firstbucket(self):
+        tree = self._makeOne()
+        tree._firstbucket = object()
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "Empty BTree has non-NULL firstbucket")
+
+    def test__check_nonempty_wo_firstbucket(self):
+        tree = self._makeOne({'a': 'b'})
+        tree._firstbucket = None
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "Non-empty BTree has NULL firstbucket")
+
+    def test__check_nonempty_w_null_child(self):
+        tree = self._makeOne({'a': 'b'})
+        tree._data.append(tree._data[0].__class__('c', None))
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "BTree has NULL child")
+
+    def test__check_nonempty_w_heterogenous_child(self):
+        class Other(object):
+            pass
+        tree = self._makeOne({'a': 'b'})
+        tree._data.append(tree._data[0].__class__('c', Other()))
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "BTree children have different types")
+
+    def test__check_nonempty_w_empty_child(self):
+        tree = self._makeOne({'a': 'b'})
+        first = tree._data[0]
+        tree._data.append(first.__class__('c', first.child.__class__()))
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "Bucket length < 1")
+
+    def test__check_branch_w_mismatched_firstbucket(self):
+        tree = self._makeOne()
+        c_tree = tree.__class__({'a': 'b'})
+        c_first = c_tree._data[0]
+        tree._data.append(c_first.__class__('a', c_tree))
+        tree._firstbucket = object()
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "BTree has firstbucket different than "
+                                 "its first child's firstbucket")
+
+    def test__check_nonempty_w_invalid_child(self):
+        class Invalid(object):
+            size = 2
+        tree = self._makeOne({'a': 'b'})
+        tree._data[0].child = Invalid()
+        e = self.assertRaises(AssertionError, tree._check)
+        self.assertEqual(str(e), "Incorrect child type")
+
+    def test__check_branch_traverse_bucket_pointers(self):
+        tree = self._makeOne()
+        t_first = tree.__class__({'a': 'b'})
+        c_first = t_first._data[0]
+        b_first = c_first.child
+        t_second = tree.__class__({'c': 'd'})
+        b_first._next = t_second._firstbucket
+        tree._data.append(c_first.__class__('a', t_first))
+        tree._data.append(c_first.__class__('c', t_second))
+        tree._firstbucket = t_first._firstbucket
+        tree._check() #no raise
+
+    def test__check_nonempty_leaf_traverse_bucket_pointers(self):
+        tree = self._makeOne({'a': 'b'})
+        first = tree._data[0]
+        first.child._next = b2 = first.child.__class__({'c': 'd'})
+        tree._data.append(first.__class__('c', b2))
+        tree._check() #no raise
+
+
 
 class _Jar(object):
     def __init__(self):
