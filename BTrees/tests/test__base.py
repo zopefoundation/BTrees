@@ -2347,6 +2347,69 @@ class TreeTests(unittest.TestCase):
         self.assertEqual(tree['a'], 0)
 
 
+class TreeSetTests(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import TreeSet
+        return TreeSet
+
+    def _makeOne(self, items=None):
+        from .._base import Bucket
+        class _Bucket(Bucket):
+            MAX_SIZE = 10
+            def _to_key(self, k):
+                return k
+        class _Test(self._getTargetClass()):
+            _to_key = _to_value = lambda self, x: x
+            _bucket_type = _Bucket
+            MAX_SIZE = 15
+        return _Test(items)
+
+    def test_add_new_key(self):
+        _set = self._makeOne()
+        self.assertTrue(_set.add('a'))
+        self.assertTrue('a' in _set)
+
+    def test_add_existing_key(self):
+        _set = self._makeOne()
+        _set.add('a')
+        self.assertFalse(_set.add('a'))
+
+    def test_remove_miss(self):
+        _set = self._makeOne()
+        self.assertRaises(KeyError, _set.remove, 'a')
+
+    def test_remove_hit(self):
+        _set = self._makeOne()
+        _set.add('a')
+        self.assertEqual(_set.remove('a'), None)
+        self.assertFalse('a' in _set)
+
+    def test_update_empty_sequence(self):
+        _set = self._makeOne()
+        _set.update(())
+        self.assertEqual(len(_set), 0)
+
+    def test_update_simple_sequence(self):
+        _set = self._makeOne()
+        LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+        _set.update(LETTERS)
+        self.assertEqual(len(_set), len(LETTERS))
+        for letter in LETTERS:
+            self.assertTrue(letter in _set)
+
+    def test_update_mppaing(self):
+        _set = self._makeOne()
+        LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+        a_dict = dict([(y, x) for x, y in enumerate(LETTERS)])
+        _set.update(a_dict)
+        self.assertEqual(len(_set), len(LETTERS))
+        for letter in LETTERS:
+            self.assertTrue(letter in _set)
+
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
@@ -2367,4 +2430,5 @@ def test_suite():
         unittest.makeSuite(Test_Tree),
         unittest.makeSuite(Test_TreeItems),
         unittest.makeSuite(TreeTests),
+        unittest.makeSuite(TreeSetTests),
     ))
