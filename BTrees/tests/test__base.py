@@ -2132,6 +2132,88 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(resolved, (((('a', 'b', 'e', 'f'),),),))
 
 
+class Test_TreeItems(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import _TreeItems
+        return _TreeItems
+
+    def _makeOne(self, firstbucket, itertype, iterargs):
+        return self._getTargetClass()(firstbucket, itertype, iterargs)
+
+    def _makeBucket(self, items=None):
+        from .._base import Bucket
+        class _Bucket(Bucket):
+            MAX_SIZE = 10
+            def _to_key(self, k):
+                return k
+        return _Bucket(items)
+
+    def test___getitem___w_slice(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        self.assertEqual(list(ti[0:3]), ['a', 'b', 'c'])
+
+    def test___getitem___w_negative_index_le_minus_length(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        def _should_error():
+            return ti[-27]
+        self.assertRaises(IndexError, _should_error)
+
+    def test___getitem___w_index_gt_length(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        def _should_error():
+            return ti[27]
+        self.assertRaises(IndexError, _should_error)
+
+    def test___getitem___w_index_smaller_than_cursor(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        ti[12]
+        self.assertEqual(ti[1], 'b')
+
+    def test___len__(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        self.assertEqual(len(ti), 26)
+        # short-circuit on second pass
+        self.assertEqual(len(ti), 26)
+
+    def test___iter___w_iterkeys(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iterkeys', ())
+        self.assertEqual(list(ti), [x[0] for x in ITEMS])
+
+    def test___iter___w_iteritems(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'iteritems', ())
+        self.assertEqual(list(ti), ITEMS)
+
+    def test___iter___w_itervalues(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket = self._makeBucket(ITEMS)
+        ti = self._makeOne(bucket, 'itervalues', ())
+        self.assertEqual(list(ti), [x[1] for x in ITEMS])
+
+    def test___iter___w_empty_last_bucket(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        bucket1 = self._makeBucket(ITEMS)
+        bucket2 = bucket1._next = self._makeBucket()
+        ti = self._makeOne(bucket1, 'iterkeys', ())
+        self.assertEqual(list(ti), [x[0] for x in ITEMS])
+
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
@@ -2150,4 +2232,5 @@ def test_suite():
         unittest.makeSuite(SetTests),
         unittest.makeSuite(Test_TreeItem),
         unittest.makeSuite(Test_Tree),
+        unittest.makeSuite(Test_TreeItems),
     ))
