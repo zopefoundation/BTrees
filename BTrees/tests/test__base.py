@@ -2410,6 +2410,60 @@ class TreeSetTests(unittest.TestCase):
             self.assertTrue(letter in _set)
 
 
+class _SetObBase(object):
+
+    def _makeSet(self, *args):
+        return  _Set(*args)
+
+    def _makeMapping(self, *args, **kw):
+        return  _Mapping(*args, **kw)
+
+
+class Test_difference(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import difference
+        return difference(*args, **kw)
+
+    def test_lhs_none(self):
+        rhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(rhs.__class__, None, rhs), None)
+
+    def test_rhs_none(self):
+        lhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(lhs.__class__, lhs, None), lhs)
+
+
+class Test_union(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import union
+        return union(*args, **kw)
+
+    def test_lhs_none(self):
+        rhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(rhs.__class__, None, rhs), rhs)
+
+    def test_rhs_none(self):
+        lhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(lhs.__class__, lhs, None), lhs)
+
+
+class Test_intersection(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import intersection
+        return intersection(*args, **kw)
+
+    def test_lhs_none(self):
+        rhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(rhs.__class__, None, rhs), rhs)
+
+    def test_rhs_none(self):
+        lhs = self._makeSet(('a', 'b', 'c'))
+        self.assertEqual(self._callFUT(lhs.__class__, lhs, None), lhs)
+
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
@@ -2417,6 +2471,35 @@ class _Jar(object):
         self._current.add(obj)
     def register(self, obj):
         pass
+
+
+class _Set(object):
+    def __init__(self, *args, **kw):
+        keys = set(args)
+        self._keys = sorted(keys)
+    def keys(self):
+        return self._keys
+    def __iter__(self):
+        return iter(self._keys)
+_Set._set_type = _Set
+
+
+class _Mapping(dict):
+    def __init__(self, source=None):
+        if source is None:
+            source = {}
+        self._keys = []
+        self._values = []
+        for k, v in sorted(source.items()):
+            self._keys.append(k)
+            self._values.append(k)
+    def MERGE_WEIGHT(self, v, w):
+        return v
+    def iteritems(self):
+        for k, v in zip(self._keys, self._values):
+            yield k,v
+_Mapping._set_type = _Set
+_Mapping._mapping_type = _Mapping
 
 
 def test_suite():
@@ -2431,4 +2514,7 @@ def test_suite():
         unittest.makeSuite(Test_TreeItems),
         unittest.makeSuite(TreeTests),
         unittest.makeSuite(TreeSetTests),
+        unittest.makeSuite(Test_difference),
+        unittest.makeSuite(Test_union),
+        unittest.makeSuite(Test_intersection),
     ))
