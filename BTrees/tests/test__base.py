@@ -2490,12 +2490,13 @@ class Test_difference(unittest.TestCase, _SetObBase):
         self.assertEqual(result['c'], 11)
 
     def test_both_mappings_rhs_non_empty(self):
-        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
-        rhs = self._makeMapping({'b': 22})
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11, 'f': 10})
+        rhs = self._makeMapping({'b': 22, 'e': 37})
         result = self._callFUT(lhs.__class__, lhs, rhs)
-        self.assertEqual(list(result), ['a', 'c'])
+        self.assertEqual(list(result), ['a', 'c', 'f'])
         self.assertEqual(result['a'], 13)
         self.assertEqual(result['c'], 11)
+        self.assertEqual(result['f'], 10)
 
 
 class Test_union(unittest.TestCase, _SetObBase):
