@@ -2426,12 +2426,54 @@ class Test_difference(unittest.TestCase, _SetObBase):
         return difference(*args, **kw)
 
     def test_lhs_none(self):
-        rhs = self._makeSet(('a', 'b', 'c'))
+        rhs = self._makeSet('a', 'b', 'c')
         self.assertEqual(self._callFUT(rhs.__class__, None, rhs), None)
 
     def test_rhs_none(self):
-        lhs = self._makeSet(('a', 'b', 'c'))
+        lhs = self._makeSet('a', 'b', 'c')
         self.assertEqual(self._callFUT(lhs.__class__, lhs, None), lhs)
+
+    def test_both_sets_rhs_empty(self):
+        lhs = self._makeSet('a', 'b', 'c')
+        rhs = self._makeSet()
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), list(lhs))
+
+    def test_both_sets_lhs_empty(self):
+        lhs = self._makeSet()
+        rhs = self._makeSet('a', 'b', 'c')
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), list(lhs))
+
+    def test_lhs_set_rhs_mapping(self):
+        lhs = self._makeSet('a', 'b', 'c')
+        rhs = self._makeMapping({'a': 13, 'b': 12})
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), ['c'])
+
+    def test_lhs_mapping_rhs_set(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeSet('a', 'b')
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), ['c'])
+        self.assertEqual(diff['c'], 11)
+
+    def test_both_mappings_rhs_empty(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeMapping({})
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), ['a', 'b', 'c'])
+        self.assertEqual(diff['a'], 13)
+        self.assertEqual(diff['b'], 12)
+        self.assertEqual(diff['c'], 11)
+
+    def test_both_mappings_rhs_non_empty(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeMapping({'b': 22})
+        diff = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(diff), ['a', 'c'])
+        self.assertEqual(diff['a'], 13)
+        self.assertEqual(diff['c'], 11)
 
 
 class Test_union(unittest.TestCase, _SetObBase):
@@ -2492,12 +2534,19 @@ class _Mapping(dict):
         self._values = []
         for k, v in sorted(source.items()):
             self._keys.append(k)
-            self._values.append(k)
+            self._values.append(v)
     def MERGE_WEIGHT(self, v, w):
         return v
     def iteritems(self):
         for k, v in zip(self._keys, self._values):
             yield k,v
+    def __iter__(self):
+        return iter(self._keys)
+    def __getitem__(self, key):
+        search = dict(zip(self._keys, self._values))
+        return search[key]
+    def __repr__(self):
+        return repr(dict(zip(self._keys, self._values)))
 _Mapping._set_type = _Set
 _Mapping._mapping_type = _Mapping
 
