@@ -2653,6 +2653,14 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         self.assertEqual(result['d'], 33)
         self.assertEqual(result['e'], 11)
 
+    def test_w_lhs_Set_rhs_Set(self):
+        from BTrees.IIBTree import IISetPy
+        lhs = IISetPy([1, 2, 3])
+        rhs = IISetPy([1, 4])
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(weight, 1)
+        self.assertEqual(list(result), [1, 2, 3, 4])
+
 
 class Test_weightedIntersection(unittest.TestCase, _SetObBase):
 
@@ -2694,6 +2702,14 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
         self.assertEqual(weight, 1)
         self.assertEqual(list(result), ['a'])
         self.assertEqual(result['a'], 23)
+
+    def test_w_lhs_Set_rhs_Set(self):
+        from BTrees.IIBTree import IISetPy
+        lhs = IISetPy([1, 2, 3])
+        rhs = IISetPy([1, 4])
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(weight, 2)
+        self.assertEqual(list(result), [1])
 
 
 class Test_multiunion(unittest.TestCase, _SetObBase):
