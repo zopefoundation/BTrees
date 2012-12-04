@@ -2629,9 +2629,16 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         self.assertEqual(result['e'], 11)
 
 
+class _Cache(object):
+    def __init__(self):
+        self._mru = []
+    def mru(self, oid):
+        self._mru.append(oid)
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
+        self._cache = _Cache()
     def readCurrent(self, obj):
         self._current.add(obj)
     def register(self, obj):
