@@ -1352,8 +1352,41 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         return w2, o2
     if o2 is None:
         return w1, o1
-    result = _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
-    return (w1 + w2 if isinstance(result, (Set, TreeSet)) else 1, result)
+    #result = _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
+    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
+    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
+    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    result = o1._mapping_type()
+    MERGE = getattr(o1, 'MERGE', None)
+    if MERGE is None and i1.useValues and i2.useValues:
+        raise TypeError("invalid set operation")
+    MERGE_WEIGHT = getattr(o1, 'MERGE_WEIGHT')
+    if (not i1.useValues) and i2.useValues:
+        i1, i2 = i2, i1
+        w1, w2 = w2, w1
+    if MERGE_DEFAULT is None:
+        if i1.useValues:
+            if (not i2.useValues):
+                raise TypeError("invalid set operation")
+        else:
+            raise TypeError("invalid set operation")
+    def copy(i, w):
+        result._keys.append(i.key)
+        result._values.append(MERGE_WEIGHT(i.value, w))
+    while i1.active and i2.active:
+        cmp_ = cmp(i1.key, i2.key)
+        if cmp_ < 0:
+            i1.advance()
+        elif cmp_ == 0:
+            result._keys.append(i1.key)
+            result._values.append(MERGE(i1.value, w1, i2.value, w2))
+            i1.advance()
+            i2.advance()
+        else:
+            i2.advance()
+    if isinstance(result, (Set, TreeSet)):
+        return w1 + w2, result
+    return 1, result
 
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
