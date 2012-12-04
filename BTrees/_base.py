@@ -1237,7 +1237,6 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
     i1 = _SetIteration(o1, True, MERGE_DEFAULT)
     i2 = _SetIteration(o2, True, MERGE_DEFAULT)
-    result = o1._mapping_type()
     MERGE = getattr(o1, 'MERGE', None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
@@ -1251,9 +1250,16 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
                 raise TypeError("invalid set operation")
         else:
             raise TypeError("invalid set operation")
-    def copy(i, w):
-        result._keys.append(i.key)
-        result._values.append(MERGE_WEIGHT(i.value, w))
+    _merging = i1.useValues or i2.useValues
+    if _merging:
+        result = o1._mapping_type()
+        def copy(i, w):
+            result._keys.append(i.key)
+            result._values.append(MERGE_WEIGHT(i.value, w))
+    else:
+        result = o1._set_type()
+        def copy(i, w):
+            result._keys.append(i.key)
 
     while i1.active and i2.active:
         cmp_ = cmp(i1.key, i2.key)
@@ -1262,7 +1268,8 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
             i1.advance()
         elif cmp_ == 0:
             result._keys.append(i1.key)
-            result._values.append(MERGE(i1.value, w1, i2.value, w2))
+            if _merging:
+                result._values.append(MERGE(i1.value, w1, i2.value, w2))
             i1.advance()
             i2.advance()
         else:
