@@ -1253,8 +1253,6 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
 
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
-    if not seqs:
-        return set_type()
     result = set_type()
     for s in seqs:
         try:

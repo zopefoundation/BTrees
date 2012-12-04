@@ -2690,6 +2690,29 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
         self.assertEqual(result['a'], 23)
 
 
+class Test_multiunion(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import multiunion
+        return multiunion(*args, **kw)
+
+    def test_no_seqs(self):
+        result = self._callFUT(_Set, ())
+        self.assertEqual(list(result), [])
+
+    def test_w_non_iterable_seq(self):
+        result = self._callFUT(_Set, (1, 2))
+        self.assertEqual(list(result), [1, 2])
+
+    def test_w_iterable_seqs(self):
+        result = self._callFUT(_Set, [(1,), (2,)])
+        self.assertEqual(list(result), [1, 2])
+
+    def test_w_mix(self):
+        result = self._callFUT(_Set, [1, (2,)])
+        self.assertEqual(list(result), [1, 2])
+
+
 class _Cache(object):
     def __init__(self):
         self._mru = []
@@ -2709,12 +2732,17 @@ class _Jar(object):
 
 class _Set(object):
     def __init__(self, *args, **kw):
-        keys = set(args)
+        if len(args) == 1 and isinstance(args[0], tuple):
+            keys = args[0]
+        else:
+            keys = set(args)
         self._keys = sorted(keys)
     def keys(self):
         return self._keys
     def __iter__(self):
         return iter(self._keys)
+    def update(self, items):
+        self._keys = sorted(self._keys + list(items))
 _Set._set_type = _Set
 
 
@@ -2764,4 +2792,5 @@ def test_suite():
         unittest.makeSuite(Test_intersection),
         unittest.makeSuite(Test_weightedUnion),
         unittest.makeSuite(Test_weightedIntersection),
+        unittest.makeSuite(Test_multiunion),
     ))
