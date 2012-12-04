@@ -14,6 +14,46 @@
 import unittest
 
 
+class Test_classify(unittest.TestCase):
+
+    def _callFUT(self, obj):
+        from BTrees.check import classify
+        return classify(obj)
+
+    def test_classify_w_unknown(self):
+        class NotClassified(object):
+            pass
+        self.assertRaises(KeyError, self._callFUT, NotClassified())
+
+    def test_classify_w_bucket(self):
+        from BTrees.OOBTree import OOBucketPy
+        from BTrees.check import TYPE_BUCKET
+        kind, is_mapping = self._callFUT(OOBucketPy())
+        self.assertEqual(kind, TYPE_BUCKET)
+        self.assertTrue(is_mapping)
+
+    def test_classify_w_set(self):
+        from BTrees.OOBTree import OOSetPy
+        from BTrees.check import TYPE_BUCKET
+        kind, is_mapping = self._callFUT(OOSetPy())
+        self.assertEqual(kind, TYPE_BUCKET)
+        self.assertFalse(is_mapping)
+
+    def test_classify_w_tree(self):
+        from BTrees.OOBTree import OOBTreePy
+        from BTrees.check import TYPE_BTREE
+        kind, is_mapping = self._callFUT(OOBTreePy())
+        self.assertEqual(kind, TYPE_BTREE)
+        self.assertTrue(is_mapping)
+
+    def test_classify_w_treeset(self):
+        from BTrees.OOBTree import OOTreeSetPy
+        from BTrees.check import TYPE_BTREE
+        kind, is_mapping = self._callFUT(OOTreeSetPy())
+        self.assertEqual(kind, TYPE_BTREE)
+        self.assertFalse(is_mapping)
+
+
 class Test_check(unittest.TestCase):
 
     def _callFUT(self, tree):
@@ -99,4 +139,7 @@ class Test_check(unittest.TestCase):
 
 
 def test_suite():
-    return unittest.makeSuite(Test_check)
+    return unittest.TestSuite((
+        unittest.makeSuite(Test_classify),
+        unittest.makeSuite(Test_check),
+    ))
