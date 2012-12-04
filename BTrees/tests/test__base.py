@@ -2580,6 +2580,55 @@ class Test_intersection(unittest.TestCase, _SetObBase):
         self.assertEqual(list(result), ['c'])
 
 
+class Test_weightedUnion(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import weightedUnion
+        return weightedUnion(*args, **kw)
+
+    def test_both_none(self):
+        self.assertEqual(self._callFUT(_Mapping, None, None), (0, None))
+
+    def test_lhs_none(self):
+        rhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        self.assertEqual(self._callFUT(rhs.__class__, None, rhs), (1, rhs))
+
+    def test_rhs_none(self):
+        lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        self.assertEqual(self._callFUT(lhs.__class__, lhs, None), (1, lhs))
+
+    def test_lhs_mapping_rhs_set(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeSet('a', 'd')
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertTrue(isinstance(result, _Mapping))
+        self.assertEqual(list(result), ['a', 'b', 'c', 'd'])
+        self.assertEqual(result['a'], 55)
+        self.assertEqual(result['b'], 12)
+        self.assertEqual(result['c'], 11)
+        self.assertEqual(result['d'], 42)
+
+    def test_both_mappings_rhs_empty(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeMapping({})
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), ['a', 'b', 'c'])
+        self.assertEqual(result['a'], 13)
+        self.assertEqual(result['b'], 12)
+        self.assertEqual(result['c'], 11)
+
+    def test_both_mappings_rhs_non_empty(self):
+        lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        rhs = self._makeMapping({'a': 10, 'b': 22, 'd': 33})
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), ['a', 'b', 'c', 'd', 'e'])
+        self.assertEqual(result['a'], 23)
+        self.assertEqual(result['b'], 22)
+        self.assertEqual(result['c'], 12)
+        self.assertEqual(result['d'], 33)
+        self.assertEqual(result['e'], 11)
+
+
 class _Jar(object):
     def __init__(self):
         self._current = set()
@@ -2609,8 +2658,11 @@ class _Mapping(dict):
         for k, v in sorted(source.items()):
             self._keys.append(k)
             self._values.append(v)
+    MERGE_DEFAULT = 42
     def MERGE_WEIGHT(self, v, w):
         return v
+    def MERGE(self, v1, w1, v2, w2):
+        return v1 * w1 + v2 * w2
     def iteritems(self):
         for k, v in zip(self._keys, self._values):
             yield k,v
@@ -2640,4 +2692,5 @@ def test_suite():
         unittest.makeSuite(Test_difference),
         unittest.makeSuite(Test_union),
         unittest.makeSuite(Test_intersection),
+        unittest.makeSuite(Test_weightedUnion),
     ))
