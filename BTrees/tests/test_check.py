@@ -54,6 +54,45 @@ class Test_classify(unittest.TestCase):
         self.assertFalse(is_mapping)
 
 
+class Test_crack_btree(unittest.TestCase):
+
+    def _callFUT(self, obj, is_mapping):
+        from BTrees.check import crack_btree
+        return crack_btree(obj, is_mapping)
+
+    def test_w_empty_tree(self):
+        from BTrees.check import BTREE_EMPTY
+        class Empty(object):
+            def __getstate__(self):
+                return None
+        kind, keys, kids = self._callFUT(Empty(), True)
+        self.assertEqual(kind, BTREE_EMPTY)
+        self.assertEqual(keys, [])
+        self.assertEqual(kids, [])
+
+    def test_w_degenerate_tree(self):
+        from BTrees.check import BTREE_ONE
+        class Degenerate(object):
+            def __getstate__(self):
+                return ((('a', 1, 'b', 2),),)
+        kind, keys, kids = self._callFUT(Degenerate(), True)
+        self.assertEqual(kind, BTREE_ONE)
+        self.assertEqual(keys, ('a', 1, 'b', 2))
+        self.assertEqual(kids, None)
+
+    def test_w_normal_tree(self):
+        from BTrees.check import BTREE_NORMAL
+        first_bucket = [object()] * 8
+        second_bucket = [object()] * 8
+        class Normal(object):
+            def __getstate__(self):
+                return ((first_bucket, 'b', second_bucket), first_bucket)
+        kind, keys, kids = self._callFUT(Normal(), True)
+        self.assertEqual(kind, BTREE_NORMAL)
+        self.assertEqual(keys, ['b'])
+        self.assertEqual(kids, [first_bucket, second_bucket])
+
+
 class Test_check(unittest.TestCase):
 
     def _callFUT(self, tree):
@@ -138,8 +177,20 @@ class Test_check(unittest.TestCase):
             self.fail("expected check(tree) to catch the problem")
 
 
+class Test_helpers(unittest.TestCase):
+
+    def test_type_and_adr_w_oid(self):
+        from BTrees.check import type_and_adr
+        class WOid(object):
+            _p_oid = 'DEADBEEF'
+        t_and_a = type_and_adr(WOid())
+        self.assertTrue(t_and_a.startswith('WOid'))
+
+
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(Test_classify),
+        unittest.makeSuite(Test_crack_btree),
         unittest.makeSuite(Test_check),
+        unittest.makeSuite(Test_helpers),
     ))
