@@ -2699,6 +2699,8 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         self.assertEqual(weight, 1)
         self.assertEqual(list(result), [1, 2, 3, 4])
 
+    #TODO:  test non-default weights
+
 
 class Test_weightedIntersection(unittest.TestCase, _SetObBase):
 
@@ -2770,6 +2772,8 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
         self.assertEqual(weight, 2)
         self.assertEqual(list(result), [1])
 
+    #TODO:  test non-default weights
+
 
 class Test_multiunion(unittest.TestCase, _SetObBase):
 
@@ -2792,6 +2796,34 @@ class Test_multiunion(unittest.TestCase, _SetObBase):
     def test_w_mix(self):
         result = self._callFUT(_Set, [1, (2,)])
         self.assertEqual(list(result), [1, 2])
+
+
+class Test_converters(unittest.TestCase):
+
+    def test_to_ob(self):
+        from BTrees._base import to_ob
+        faux_self = object()
+        for thing in "abc", 0, 1.3, (), frozenset((1, 2)), object():
+            self.assertTrue(to_ob(faux_self, thing) is thing)
+
+    def test_to_int_w_int(self):
+        from BTrees._base import to_int
+        faux_self = object()
+        self.assertEqual(to_int(faux_self, 3), 3)
+
+    def test_to_int_w_long_in_range(self):
+        from BTrees._base import to_int
+        faux_self = object()
+        try:
+            self.assertEqual(to_int(faux_self, long(3)), 3)
+        except NameError: #Python3
+            pass
+
+    def test_to_int_w_overflow(self):
+        import sys
+        from BTrees._base import to_int
+        faux_self = object()
+        self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
 
 
 class _Cache(object):

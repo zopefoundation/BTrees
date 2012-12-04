@@ -1344,7 +1344,8 @@ def to_ob(self, v):
 int_types = int, long
 def to_int(self, v):
     try:
-        if not unpack("i", pack("i", v))[0] == v:
+        # XXX Python 2.6 doesn't truncate, it spews a warning.
+        if not unpack("i", pack("i", v))[0] == v: #pragma NO COVER
             raise TypeError('32-bit integer expected')
     except (struct_error,
             OverflowError, #PyPy
