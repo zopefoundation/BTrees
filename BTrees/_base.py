@@ -1235,25 +1235,21 @@ def intersection(set_type, o1, o2):
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
-            return 0, o2
-        else:
-            return w2, o2
-    elif o2 is None:
+            return 0, None
+        return w2, o2
+    if o2 is None:
         return w1, o1
-    else:
-        return 1, _set_operation(o1, o2, 1, 1, w1, w2, 1, 1, 1)
+    return 1, _set_operation(o1, o2, 1, 1, w1, w2, 1, 1, 1)
 
 def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
             return 0, o2
-        else:
-            return w2, o2
-    elif o2 is None:
+        return w2, o2
+    if o2 is None:
         return w1, o1
-    else:
-        result = _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
-        return (w1 + w2 if isinstance(result, (Set, TreeSet)) else 1, result)
+    result = _set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0)
+    return (w1 + w2 if isinstance(result, (Set, TreeSet)) else 1, result)
 
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
