@@ -2882,6 +2882,24 @@ class Test_helpers(unittest.TestCase):
         self.assertRaises(TypeError, conv, faux_self, 'ab')
         self.assertRaises(TypeError, conv, faux_self, 'abcd')
 
+    def test_MERGE(self):
+        from BTrees._base import MERGE
+        faux_self = object()
+        self.assertEqual(MERGE(faux_self, 1, 1, 1, 1), 2)
+        self.assertEqual(MERGE(faux_self, 1, 2, 1, 3), 5)
+
+    def test_MERGE_WEIGHT_default(self):
+        from BTrees._base import MERGE_WEIGHT_default
+        faux_self = object()
+        self.assertEqual(MERGE_WEIGHT_default(faux_self, 1, 17), 1)
+        self.assertEqual(MERGE_WEIGHT_default(faux_self, 7, 1), 7)
+
+    def test_MERGE_WEIGHT_numeric(self):
+        from BTrees._base import MERGE_WEIGHT_numeric
+        faux_self = object()
+        self.assertEqual(MERGE_WEIGHT_numeric(faux_self, 1, 17), 17)
+        self.assertEqual(MERGE_WEIGHT_numeric(faux_self, 7, 1), 7)
+
 
 class _Cache(object):
     def __init__(self):
@@ -2963,4 +2981,5 @@ def test_suite():
         unittest.makeSuite(Test_weightedUnion),
         unittest.makeSuite(Test_weightedIntersection),
         unittest.makeSuite(Test_multiunion),
+        unittest.makeSuite(Test_helpers),
     ))
