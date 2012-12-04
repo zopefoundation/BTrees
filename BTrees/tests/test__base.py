@@ -2825,6 +2825,21 @@ class Test_converters(unittest.TestCase):
         faux_self = object()
         self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
 
+    def test_to_float_w_float(self):
+        from BTrees._base import to_float
+        faux_self = object()
+        self.assertEqual(to_float(faux_self, 3.14159), 3.14159)
+
+    def test_to_float_w_int(self):
+        from BTrees._base import to_float
+        faux_self = object()
+        self.assertEqual(to_float(faux_self, 3), 3.0)
+
+    def test_to_float_w_invalid(self):
+        from BTrees._base import to_float
+        faux_self = object()
+        self.assertRaises(TypeError, to_float, faux_self, ())
+
 
 class _Cache(object):
     def __init__(self):
