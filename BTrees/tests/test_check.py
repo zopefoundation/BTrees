@@ -93,6 +93,45 @@ class Test_crack_btree(unittest.TestCase):
         self.assertEqual(kids, [first_bucket, second_bucket])
 
 
+class Test_crack_bucket(unittest.TestCase):
+
+    def _callFUT(self, obj, is_mapping):
+        from BTrees.check import crack_bucket
+        return crack_bucket(obj, is_mapping)
+
+    def test_w_empty_set(self):
+        class EmptySet(object):
+            def __getstate__(self):
+                return ([],)
+        keys, values = self._callFUT(EmptySet(), False)
+        self.assertEqual(keys, [])
+        self.assertEqual(values, [])
+
+    def test_w_non_empty_set(self):
+        class NonEmptySet(object):
+            def __getstate__(self):
+                return (['a', 'b', 'c'],)
+        keys, values = self._callFUT(NonEmptySet(), False)
+        self.assertEqual(keys, ['a', 'b', 'c'])
+        self.assertEqual(values, [])
+
+    def test_w_empty_mapping(self):
+        class EmptyMapping(object):
+            def __getstate__(self):
+                return ([], object())
+        keys, values = self._callFUT(EmptyMapping(), True)
+        self.assertEqual(keys, [])
+        self.assertEqual(values, [])
+
+    def test_w_non_empty_mapping(self):
+        class NonEmptyMapping(object):
+            def __getstate__(self):
+                return (['a', 1, 'b', 2, 'c', 3], object())
+        keys, values = self._callFUT(NonEmptyMapping(), True)
+        self.assertEqual(keys, ['a', 'b', 'c'])
+        self.assertEqual(values, [1, 2, 3])
+
+
 class Test_check(unittest.TestCase):
 
     def _callFUT(self, tree):
@@ -191,6 +230,7 @@ def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(Test_classify),
         unittest.makeSuite(Test_crack_btree),
+        unittest.makeSuite(Test_crack_bucket),
         unittest.makeSuite(Test_check),
         unittest.makeSuite(Test_helpers),
     ))
