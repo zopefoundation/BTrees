@@ -2410,6 +2410,28 @@ class TreeSetTests(unittest.TestCase):
             self.assertTrue(letter in _set)
 
 
+class Test_set_operation(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from .._base import set_operation
+        return set_operation
+
+    def _makeOne(self, func, set_type):
+        return self._getTargetClass()(func, set_type)
+
+    def test_it(self):
+        class _SetType(object):
+            pass
+        _called_with = []
+        def _func(*args, **kw):
+            _called_with.append((args, kw))
+        set_op = self._makeOne(_func, _SetType)
+        set_op('a', b=1)
+        self.assertEqual(_called_with, [((_SetType, 'a',), {'b': 1})])
+
+
 class _SetObBase(object):
 
     def _makeSet(self, *args):
@@ -2629,11 +2651,51 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         self.assertEqual(result['e'], 11)
 
 
+class Test_weightedIntersection(unittest.TestCase, _SetObBase):
+
+    def _callFUT(self, *args, **kw):
+        from .._base import weightedIntersection
+        return weightedIntersection(*args, **kw)
+
+    def test_both_none(self):
+        self.assertEqual(self._callFUT(_Mapping, None, None), (0, None))
+
+    def test_lhs_none(self):
+        rhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        self.assertEqual(self._callFUT(rhs.__class__, None, rhs), (1, rhs))
+
+    def test_rhs_none(self):
+        lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        self.assertEqual(self._callFUT(lhs.__class__, lhs, None), (1, lhs))
+
+    def test_lhs_mapping_rhs_set(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeSet('a', 'd')
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertTrue(isinstance(result, _Mapping))
+        self.assertEqual(list(result), ['a'])
+        self.assertEqual(result['a'], 55)
+
+    def test_both_mappings_rhs_empty(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeMapping({})
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), [])
+
+    def test_both_mappings_rhs_non_empty(self):
+        lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        rhs = self._makeMapping({'a': 10, 'b': 22, 'd': 33})
+        weight, result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), ['a'])
+        self.assertEqual(result['a'], 23)
+
+
 class _Cache(object):
     def __init__(self):
         self._mru = []
     def mru(self, oid):
         self._mru.append(oid)
+
 
 class _Jar(object):
     def __init__(self):
@@ -2696,8 +2758,10 @@ def test_suite():
         unittest.makeSuite(Test_TreeItems),
         unittest.makeSuite(TreeTests),
         unittest.makeSuite(TreeSetTests),
+        unittest.makeSuite(Test_set_operation),
         unittest.makeSuite(Test_difference),
         unittest.makeSuite(Test_union),
         unittest.makeSuite(Test_intersection),
         unittest.makeSuite(Test_weightedUnion),
+        unittest.makeSuite(Test_weightedIntersection),
     ))
