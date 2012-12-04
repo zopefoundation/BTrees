@@ -1277,7 +1277,23 @@ def intersection(set_type, o1, o2):
         return o2
     if o2 is None:
         return o1
-    return _set_operation(o1, o2, 0, 0, 1, 1, 0, 1, 0)
+    #return _set_operation(o1, o2, 0, 0, 1, 1, 0, 1, 0)
+    i1 = _SetIteration(o1, False, 0)
+    i2 = _SetIteration(o2, False, 0)
+    result = o1._set_type()
+    def copy(i):
+        result._keys.append(i.key)
+    while i1.active and i2.active:
+        cmp_ = cmp(i1.key, i2.key)
+        if cmp_ < 0:
+            i1.advance()
+        elif cmp_ == 0:
+            copy(i1)
+            i1.advance()
+            i2.advance()
+        else:
+            i2.advance()
+    return result
 
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
