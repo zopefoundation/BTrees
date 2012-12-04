@@ -2542,6 +2542,43 @@ class Test_intersection(unittest.TestCase, _SetObBase):
         lhs = self._makeSet(('a', 'b', 'c'))
         self.assertEqual(self._callFUT(lhs.__class__, lhs, None), lhs)
 
+    def test_both_sets_rhs_empty(self):
+        lhs = self._makeSet('a', 'b', 'c')
+        rhs = self._makeSet()
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), [])
+
+    def test_both_sets_lhs_empty(self):
+        lhs = self._makeSet()
+        rhs = self._makeSet('a', 'b', 'c')
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), [])
+
+    def test_lhs_set_rhs_mapping(self):
+        lhs = self._makeSet('a', 'b', 'c')
+        rhs = self._makeMapping({'a': 13, 'd': 12})
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), ['a'])
+
+    def test_lhs_mapping_rhs_set(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeSet('a', 'd')
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertTrue(isinstance(result, _Set))
+        self.assertEqual(list(result), ['a'])
+
+    def test_both_mappings_rhs_empty(self):
+        lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
+        rhs = self._makeMapping({})
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), [])
+
+    def test_both_mappings_rhs_non_empty(self):
+        lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
+        rhs = self._makeMapping({'b': 22, 'c': 44, 'd': 33})
+        result = self._callFUT(lhs.__class__, lhs, rhs)
+        self.assertEqual(list(result), ['c'])
+
 
 class _Jar(object):
     def __init__(self):
