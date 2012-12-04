@@ -1244,7 +1244,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
 def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
-            return 0, o2
+            return 0, None
         return w2, o2
     if o2 is None:
         return w1, o1
