@@ -2798,7 +2798,7 @@ class Test_multiunion(unittest.TestCase, _SetObBase):
         self.assertEqual(list(result), [1, 2])
 
 
-class Test_converters(unittest.TestCase):
+class Test_helpers(unittest.TestCase):
 
     def test_to_ob(self):
         from BTrees._base import to_ob
@@ -2825,6 +2825,11 @@ class Test_converters(unittest.TestCase):
         faux_self = object()
         self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
 
+    def test_to_int_w_invalid(self):
+        from BTrees._base import to_int
+        faux_self = object()
+        self.assertRaises(TypeError, to_int, faux_self, ())
+
     def test_to_float_w_float(self):
         from BTrees._base import to_float
         faux_self = object()
@@ -2839,6 +2844,43 @@ class Test_converters(unittest.TestCase):
         from BTrees._base import to_float
         faux_self = object()
         self.assertRaises(TypeError, to_float, faux_self, ())
+
+    def test_to_long_w_int(self):
+        from BTrees._base import to_long
+        faux_self = object()
+        self.assertEqual(to_long(faux_self, 3), 3)
+
+    def test_to_long_w_long_in_range(self):
+        from BTrees._base import to_long
+        faux_self = object()
+        try:
+            self.assertEqual(to_long(faux_self, long(3)), 3)
+        except NameError: #Python3
+            pass
+
+    def test_to_long_w_overflow(self):
+        import sys
+        from BTrees._base import to_long
+        faux_self = object()
+        self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+
+    def test_to_long_w_invalid(self):
+        from BTrees._base import to_long
+        faux_self = object()
+        self.assertRaises(TypeError, to_long, faux_self, ())
+
+    def test_to_str_w_ok(self):
+        from BTrees._base import to_str
+        faux_self = object()
+        conv = to_str(3)
+        self.assertEqual(conv(faux_self, 'abc'), 'abc')
+
+    def test_to_str_w_invalid_length(self):
+        from BTrees._base import to_str
+        faux_self = object()
+        conv = to_str(3)
+        self.assertRaises(TypeError, conv, faux_self, 'ab')
+        self.assertRaises(TypeError, conv, faux_self, 'abcd')
 
 
 class _Cache(object):

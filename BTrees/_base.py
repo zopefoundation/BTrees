@@ -1363,7 +1363,8 @@ def to_float(self, v):
 
 def to_long(self, v):
     try:
-        if not unpack("q", pack("q", v))[0] == v:
+        # XXX Python 2.6 doesn't truncate, it spews a warning.
+        if not unpack("q", pack("q", v))[0] == v: #pragma NO COVER
             if isinstance(v, int_types):
                 raise ValueError("Value out of range", v)
             raise TypeError('64-bit integer expected')
