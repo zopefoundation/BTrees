@@ -1190,7 +1190,6 @@ def _set_operation(s1, s2,
             if c2:
                 copy(i2, w2)
             i2.advance()
-
     if c1:
         while i1.active:
             copy(i1, w1)
@@ -1199,7 +1198,6 @@ def _set_operation(s1, s2,
         while i2.active:
             copy(i2, w2)
             i2.advance()
-
     return r
 
 
@@ -1216,7 +1214,32 @@ class set_operation(object):
 def difference(set_type, o1, o2):
     if o1 is None or o2 is None:
         return o1
-    return _set_operation(o1, o2, 1, 0, 1, 0, 1, 0, 0)
+    #return _set_operation(o1, o2, 1, 0, 1, 0, 1, 0, 0)
+    i1 = _SetIteration(o1, True, 0)
+    i2 = _SetIteration(o2, False, 0)
+    if i1.useValues:
+        result = o1._mapping_type()
+        def copy(i):
+            result._keys.append(i.key)
+            result._values.append(i.value)
+    else:
+        result = o1._set_type()
+        def copy(i):
+            result._keys.append(i.key)
+    while i1.active and i2.active:
+        cmp_ = cmp(i1.key, i2.key)
+        if cmp_ < 0:
+            copy(i1)
+            i1.advance()
+        elif cmp_ == 0:
+            i1.advance()
+            i2.advance()
+        else:
+            i2.advance()
+    while i1.active:
+        copy(i1)
+        i1.advance()
+    return result
 
 def union(set_type, o1, o2):
     if o1 is None:
