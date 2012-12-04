@@ -2620,6 +2620,11 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         lhs = self._makeMapping({'a': 13, 'c': 12, 'e': 11})
         self.assertEqual(self._callFUT(lhs.__class__, lhs, None), (1, lhs))
 
+    def test_both_mappings_but_no_merge(self):
+        lhs = {'a': 13, 'b': 12, 'c': 11}
+        rhs = {'b': 22, 'd': 14}
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
     def test_lhs_mapping_rhs_set(self):
         lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
         rhs = self._makeSet('a', 'd')
