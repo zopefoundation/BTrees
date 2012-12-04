@@ -1309,13 +1309,8 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
-        def copy(i, w):
-            result._keys.append(i.key)
-            result._values.append(MERGE_WEIGHT(i.value, w))
     else:
         result = o1._set_type()
-        def copy(i, w):
-            result._keys.append(i.key)
     while i1.active and i2.active:
         cmp_ = cmp(i1.key, i2.key)
         if cmp_ < 0:
