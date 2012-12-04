@@ -216,14 +216,26 @@ class Test_check(unittest.TestCase):
             self.fail("expected check(tree) to catch the problem")
 
 
-class Test_helpers(unittest.TestCase):
+class Test_type_and_adr(unittest.TestCase):
+
+    def _callFUT(self, obj):
+        from BTrees.check import type_and_adr
+        return type_and_adr(obj)
 
     def test_type_and_adr_w_oid(self):
-        from BTrees.check import type_and_adr
-        class WOid(object):
+        from BTrees.utils import oid_repr
+        class WithOid(object):
             _p_oid = 'DEADBEEF'
-        t_and_a = type_and_adr(WOid())
-        self.assertTrue(t_and_a.startswith('WOid'))
+        t_and_a = self._callFUT(WithOid())
+        self.assertTrue(t_and_a.startswith('WithOid (0x'))
+        self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr('DEADBEEF')))
+
+    def test_type_and_adr_wo_oid(self):
+        class WithoutOid(object):
+            pass
+        t_and_a = self._callFUT(WithoutOid())
+        self.assertTrue(t_and_a.startswith('WithoutOid (0x'))
+        self.assertTrue(t_and_a.endswith('oid=None)'))
 
 
 def test_suite():
@@ -232,5 +244,5 @@ def test_suite():
         unittest.makeSuite(Test_crack_btree),
         unittest.makeSuite(Test_crack_bucket),
         unittest.makeSuite(Test_check),
-        unittest.makeSuite(Test_helpers),
+        unittest.makeSuite(Test_type_and_adr),
     ))
