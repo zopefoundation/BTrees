@@ -398,9 +398,10 @@ class Test_SetIteration(unittest.TestCase):
         return self._getTargetClass()(to_iterate, useValues, default)
 
     def test_ctor_w_None(self):
+        from .._base import _marker
         si = self._makeOne(None)
         self.assertEqual(si.useValues, False)
-        self.failIf('key' in si.__dict__)
+        self.assertTrue(si.key is _marker)
         self.assertEqual(si.value, None)
         self.assertEqual(si.active, False)
         self.assertEqual(si.position, -1)

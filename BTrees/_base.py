@@ -28,6 +28,7 @@ _marker = object()
 
 class _Base(Persistent):
 
+    __slots__ = ()
     _key_type = list
 
     def __init__(self, items=None):
@@ -37,6 +38,11 @@ class _Base(Persistent):
 
 
 class _BucketBase(_Base):
+
+    __slots__ = ('_keys',
+                 '_next',
+                 '_to_key',
+                )
 
     def clear(self):
         self._keys = self._key_type()
@@ -148,6 +154,16 @@ class _BucketBase(_Base):
 
 class _SetIteration(object):
 
+    __slots__ = ('to_iterate',
+                 'useValues',
+                 '_next',
+                 'active',
+                 'position',
+                 'key',
+                 'value',
+                )
+
+
     def __init__(self, to_iterate, useValues=False, default=None):
         if to_iterate is None:
             to_iterate = ()
@@ -167,6 +183,7 @@ class _SetIteration(object):
         self._next = itmeth().next
         self.active = True
         self.position = 0
+        self.key = _marker
         self.value = default
         self.advance()
 
@@ -186,6 +203,7 @@ class _SetIteration(object):
 
 class Bucket(_BucketBase):
 
+    __slots__ = ()
     _value_type = list
     _to_value = lambda self, x: x
     VALUE_SAME_CHECK = False
@@ -479,6 +497,8 @@ class Bucket(_BucketBase):
 
 class Set(_BucketBase):
 
+    __slots__ = ()
+
     def add(self, key):
         return self._set(self._to_key(key))[0]
 
@@ -670,7 +690,9 @@ class Set(_BucketBase):
 
 class _TreeItem(object):
 
-    __slots__ = 'key', 'child'
+    __slots__ = ('key',
+                 'child',
+                )
 
     def __init__(self, key, child):
         self.key = key
@@ -678,6 +700,10 @@ class _TreeItem(object):
 
 
 class _Tree(_Base):
+
+    __slots__ = ('_data',
+                 '_firstbucket',
+                )
 
     def setdefault(self, key, value):
         return self._set(self._to_key(key), self._to_value(value), True)[1]
@@ -1025,12 +1051,23 @@ def _get_simple_btree_bucket_state(state):
 
 class _TreeItems(object):
 
+    __slots__ = ('firstbucket',
+                 'itertype',
+                 'iterargs',
+                 'index',
+                 'it',
+                 'v',
+                 '_len',
+                )
+
     def __init__(self, firstbucket, itertype, iterargs):
         self.firstbucket = firstbucket
         self.itertype = itertype
         self.iterargs = iterargs
         self.index = -1
         self.it = iter(self)
+        self.v = None
+        self._len = None
 
     def __getitem__(self, i):
         if isinstance(i, slice):
@@ -1054,14 +1091,12 @@ class _TreeItems(object):
         return self.v
 
     def __len__(self):
-        try:
-            return self._len
-        except AttributeError:
+        if self._len is None:
             i = 0
             for _ in self:
                 i += 1
             self._len = i
-            return self._len
+        return self._len
 
     def __iter__(self):
         bucket = self.firstbucket
@@ -1081,6 +1116,8 @@ class _TreeItems(object):
 
 
 class Tree(_Tree):
+
+    __slots__ = ()
 
     def get(self, key, default=None):
         bucket = self._findbucket(key)
@@ -1119,6 +1156,8 @@ class Tree(_Tree):
 
 class TreeSet(_Tree):
 
+    __slots__ = ()
+
     #_next = None
     def add(self, key):
         return self._set(self._to_key(key))[0]
@@ -1137,6 +1176,10 @@ class TreeSet(_Tree):
 
 
 class set_operation(object):
+
+    __slots__ = ('func',
+                 'set_type',
+                )
 
     def __init__(self, func, set_type):
         self.func = func
