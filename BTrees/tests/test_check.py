@@ -264,15 +264,6 @@ class CheckerTests(unittest.TestCase):
     def _makeOne(self, obj):
         return self._getTargetClass()(obj)
 
-    def _makeTree(self, fill):
-        from BTrees.OOBTree import OOBTree
-        from BTrees.OOBTree import _BUCKET_SIZE
-        tree = OOBTree()
-        if fill:
-            for i in range(_BUCKET_SIZE + 1):
-                tree[i] = 2*i
-        return tree
-
     def test_walk_w_empty_bucket(self):
         from BTrees.OOBTree import OOBucket
         obj = OOBucket()
@@ -287,7 +278,7 @@ class CheckerTests(unittest.TestCase):
         checker.check() #noraise
 
     def test_walk_w_empty_btree(self):
-        obj = self._makeTree(False)
+        obj = _makeTree(False)
         checker = self._makeOne(obj)
         path = '/'
         parent = object()
@@ -299,7 +290,7 @@ class CheckerTests(unittest.TestCase):
         checker.check() #noraise
 
     def test_walk_w_degenerate_btree(self):
-        obj = self._makeTree(False)
+        obj = _makeTree(False)
         obj['a'] = 1
         checker = self._makeOne(obj)
         path = '/'
@@ -312,7 +303,7 @@ class CheckerTests(unittest.TestCase):
         checker.check() #noraise
 
     def test_walk_w_normal_btree(self):
-        obj = self._makeTree(False)
+        obj = _makeTree(False)
         checker = self._makeOne(obj)
         path = '/'
         parent = object()
@@ -324,7 +315,7 @@ class CheckerTests(unittest.TestCase):
         checker.check() #noraise
 
     def test_walk_w_key_too_large(self):
-        obj = self._makeTree(True)
+        obj = _makeTree(True)
         state = obj.__getstate__()
         # Damage an invariant by dropping the BTree key to 14.
         new_state = (state[0][0], 14, state[0][2]), state[1]
@@ -341,7 +332,7 @@ class CheckerTests(unittest.TestCase):
         self.assertTrue(">= upper bound" in str(e))
 
     def test_walk_w_key_too_small(self):
-        obj = self._makeTree(True)
+        obj = _makeTree(True)
         state = obj.__getstate__()
         # Damage an invariant by bumping the BTree key to 16.
         new_state = (state[0][0], 16, state[0][2]), state[1]
@@ -358,7 +349,7 @@ class CheckerTests(unittest.TestCase):
         self.assertTrue("< lower bound" in str(e))
 
     def test_walk_w_keys_swapped(self):
-        obj = self._makeTree(True)
+        obj = _makeTree(True)
         state = obj.__getstate__()
         # Damage an invariant by bumping the BTree key to 16.
         (b0, num, b1), firstbucket = state
@@ -401,74 +392,25 @@ class Test_check(unittest.TestCase):
         return tree
 
     def test_normal(self):
-        # Looks like (state, first_bucket)
-        # where state looks like (bucket0, 15, bucket1).
-        tree = self._makeOne()
+        from BTrees.OOBTree import OOBTree
+        tree = OOBTree()
+        for i in range(31):
+            tree[i] = 2*i
         state = tree.__getstate__()
         self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 3)
         self.assertEqual(state[0][1], 15)
-        tree._check() # shouldn't blow up
-        self._callFUT(tree)   # shouldn't blow up
+        self._callFUT(tree)   #noraise
 
-    def test_key_too_large(self):
-        # Damage an invariant by dropping the BTree key to 14.
-        tree = self._makeOne()
-        state = tree.__getstate__()
-        news = (state[0][0], 14, state[0][2]), state[1]
-        tree.__setstate__(news)
-        tree._check() # not caught
-        try:
-            # Expecting "... key %r >= upper bound %r at index %d"
-            self._callFUT(tree)
-        except AssertionError as detail:
-            self.assertTrue(">= upper bound" in str(detail))
-        else:
-            self.fail("expected check(tree) to catch the problem")
 
-    def test_key_too_small(self):
-        # Damage an invariant by bumping the BTree key to 16.
-        tree = self._makeOne()
-        state = tree.__getstate__()
-        news = (state[0][0], 16, state[0][2]), state[1]
-        tree.__setstate__(news)
-        tree._check() # not caught
-        try:
-            # Expecting "... key %r < lower bound %r at index %d"
-            self._callFUT(tree)
-        except AssertionError as detail:
-            self.assertTrue("< lower bound" in str(detail))
-        else:
-            self.fail("expected check(tree) to catch the problem")
-
-    def test_keys_swapped(self):
-        # Damage an invariant by swapping two key/value pairs.
-        tree = self._makeOne()
-        state = tree.__getstate__()
-        # Looks like (state, first_bucket)
-        # where state looks like (bucket0, 15, bucket1).
-        (b0, num, b1), firstbucket = state
-        self.assertEqual(b0[4], 8)
-        self.assertEqual(b0[5], 10)
-        b0state = b0.__getstate__()
-        self.assertEqual(len(b0state), 2)
-        # b0state looks like
-        # ((k0, v0, k1, v1, ...), nextbucket)
-        pairs, nextbucket = b0state
-        self.assertEqual(pairs[8], 4)
-        self.assertEqual(pairs[9], 8)
-        self.assertEqual(pairs[10], 5)
-        self.assertEqual(pairs[11], 10)
-        newpairs = pairs[:8] + (5, 10, 4, 8) + pairs[12:]
-        b0.__setstate__((newpairs, nextbucket))
-        tree._check() # not caught
-        try:
-            self._callFUT(tree)
-        except AssertionError, detail:
-            self.assertTrue(
-                "key 5 at index 4 >= key 4 at index 5" in str(detail))
-        else:
-            self.fail("expected check(tree) to catch the problem")
+def _makeTree(fill):
+    from BTrees.OOBTree import OOBTree
+    from BTrees.OOBTree import _BUCKET_SIZE
+    tree = OOBTree()
+    if fill:
+        for i in range(_BUCKET_SIZE + 1):
+            tree[i] = 2*i
+    return tree
 
 
 def test_suite():
