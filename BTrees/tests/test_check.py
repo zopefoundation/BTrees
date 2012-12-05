@@ -14,6 +14,14 @@
 import unittest
 
 
+def _assertRaises(self, e_type, checked, *args, **kw):
+    try:
+        checked(*args, **kw)
+    except e_type as e:
+        return e
+    self.fail("Didn't raise: %s" % e_type.__name__)
+
+
 class Test_classify(unittest.TestCase):
 
     def _callFUT(self, obj):
@@ -132,6 +140,253 @@ class Test_crack_bucket(unittest.TestCase):
         self.assertEqual(values, [1, 2, 3])
 
 
+class Test_type_and_adr(unittest.TestCase):
+
+    def _callFUT(self, obj):
+        from BTrees.check import type_and_adr
+        return type_and_adr(obj)
+
+    def test_type_and_adr_w_oid(self):
+        from BTrees.utils import oid_repr
+        class WithOid(object):
+            _p_oid = 'DEADBEEF'
+        t_and_a = self._callFUT(WithOid())
+        self.assertTrue(t_and_a.startswith('WithOid (0x'))
+        self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr('DEADBEEF')))
+
+    def test_type_and_adr_wo_oid(self):
+        class WithoutOid(object):
+            pass
+        t_and_a = self._callFUT(WithoutOid())
+        self.assertTrue(t_and_a.startswith('WithoutOid (0x'))
+        self.assertTrue(t_and_a.endswith('oid=None)'))
+
+
+class WalkerTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.check import Walker
+        return Walker
+
+    def _makeOne(self, obj):
+        return self._getTargetClass()(obj)
+
+    def test_visit_btree_abstract(self):
+        walker = self._makeOne(object())
+        obj = object()
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.visit_btree,
+                          obj, path, parent, is_mapping, keys, kids, lo, hi)
+
+    def test_visit_bucket_abstract(self):
+        walker = self._makeOne(object())
+        obj = object()
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.visit_bucket,
+                          obj, path, parent, is_mapping, keys, kids, lo, hi)
+
+    def test_walk_w_empty_bucket(self):
+        from BTrees.OOBTree import OOBucket
+        obj = OOBucket()
+        walker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.walk)
+
+    def test_walk_w_empty_btree(self):
+        from BTrees.OOBTree import OOBTree
+        obj = OOBTree()
+        walker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.walk)
+
+    def test_walk_w_degenerate_btree(self):
+        from BTrees.OOBTree import OOBTree
+        obj = OOBTree()
+        obj['a'] = 1
+        walker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.walk)
+
+    def test_walk_w_normal_btree(self):
+        from BTrees.IIBTree import IIBTree
+        obj = IIBTree()
+        for i in range(1000):
+            obj[i] = i
+        walker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        self.assertRaises(NotImplementedError, walker.walk)
+
+
+class CheckerTests(unittest.TestCase):
+
+    assertRaises = _assertRaises
+
+    def _getTargetClass(self):
+        from BTrees.check import Checker
+        return Checker
+
+    def _makeOne(self, obj):
+        return self._getTargetClass()(obj)
+
+    def _makeTree(self, fill):
+        from BTrees.OOBTree import OOBTree
+        from BTrees.OOBTree import _BUCKET_SIZE
+        tree = OOBTree()
+        if fill:
+            for i in range(_BUCKET_SIZE + 1):
+                tree[i] = 2*i
+        return tree
+
+    def test_walk_w_empty_bucket(self):
+        from BTrees.OOBTree import OOBucket
+        obj = OOBucket()
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        checker.check() #noraise
+
+    def test_walk_w_empty_btree(self):
+        obj = self._makeTree(False)
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        checker.check() #noraise
+
+    def test_walk_w_degenerate_btree(self):
+        obj = self._makeTree(False)
+        obj['a'] = 1
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        checker.check() #noraise
+
+    def test_walk_w_normal_btree(self):
+        obj = self._makeTree(False)
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        checker.check() #noraise
+
+    def test_walk_w_key_too_large(self):
+        obj = self._makeTree(True)
+        state = obj.__getstate__()
+        # Damage an invariant by dropping the BTree key to 14.
+        new_state = (state[0][0], 14, state[0][2]), state[1]
+        obj.__setstate__(new_state)
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        e = self.assertRaises(AssertionError, checker.check)
+        self.assertTrue(">= upper bound" in str(e))
+
+    def test_walk_w_key_too_small(self):
+        obj = self._makeTree(True)
+        state = obj.__getstate__()
+        # Damage an invariant by bumping the BTree key to 16.
+        new_state = (state[0][0], 16, state[0][2]), state[1]
+        obj.__setstate__(new_state)
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        e = self.assertRaises(AssertionError, checker.check)
+        self.assertTrue("< lower bound" in str(e))
+
+    def test_walk_w_keys_swapped(self):
+        obj = self._makeTree(True)
+        state = obj.__getstate__()
+        # Damage an invariant by bumping the BTree key to 16.
+        (b0, num, b1), firstbucket = state
+        self.assertEqual(b0[4], 8)
+        self.assertEqual(b0[5], 10)
+        b0state = b0.__getstate__()
+        self.assertEqual(len(b0state), 2)
+        # b0state looks like
+        # ((k0, v0, k1, v1, ...), nextbucket)
+        pairs, nextbucket = b0state
+        self.assertEqual(pairs[8], 4)
+        self.assertEqual(pairs[9], 8)
+        self.assertEqual(pairs[10], 5)
+        self.assertEqual(pairs[11], 10)
+        newpairs = pairs[:8] + (5, 10, 4, 8) + pairs[12:]
+        b0.__setstate__((newpairs, nextbucket))
+        checker = self._makeOne(obj)
+        path = '/'
+        parent = object()
+        is_mapping = True
+        keys = []
+        kids = []
+        lo = 0
+        hi = None
+        e = self.assertRaises(AssertionError, checker.check)
+        self.assertTrue("key 5 at index 4 >= key 4 at index 5" in str(e))
+
+
 class Test_check(unittest.TestCase):
 
     def _callFUT(self, tree):
@@ -216,33 +471,13 @@ class Test_check(unittest.TestCase):
             self.fail("expected check(tree) to catch the problem")
 
 
-class Test_type_and_adr(unittest.TestCase):
-
-    def _callFUT(self, obj):
-        from BTrees.check import type_and_adr
-        return type_and_adr(obj)
-
-    def test_type_and_adr_w_oid(self):
-        from BTrees.utils import oid_repr
-        class WithOid(object):
-            _p_oid = 'DEADBEEF'
-        t_and_a = self._callFUT(WithOid())
-        self.assertTrue(t_and_a.startswith('WithOid (0x'))
-        self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr('DEADBEEF')))
-
-    def test_type_and_adr_wo_oid(self):
-        class WithoutOid(object):
-            pass
-        t_and_a = self._callFUT(WithoutOid())
-        self.assertTrue(t_and_a.startswith('WithoutOid (0x'))
-        self.assertTrue(t_and_a.endswith('oid=None)'))
-
-
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(Test_classify),
         unittest.makeSuite(Test_crack_btree),
         unittest.makeSuite(Test_crack_bucket),
-        unittest.makeSuite(Test_check),
         unittest.makeSuite(Test_type_and_adr),
+        unittest.makeSuite(WalkerTests),
+        unittest.makeSuite(CheckerTests),
+        unittest.makeSuite(Test_check),
     ))
