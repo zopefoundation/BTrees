@@ -2160,9 +2160,8 @@ class SetConflictTestBase(ConflictTestBase):
 def lsubtract(l1, l2):
     l1 = list(l1)
     l2 = list(l2)
-    l = filter(lambda x, l1=l1: x not in l1, l2)
-    l = l + filter(lambda x, l2=l2: x not in l2, l1)
-    return l
+    return (list(filter(lambda x, l1=l1: x not in l1, l2)) +
+            list(filter(lambda x, l2=l2: x not in l2, l1)))
 
 def realseq(itemsob):
     return [x for x in itemsob]
