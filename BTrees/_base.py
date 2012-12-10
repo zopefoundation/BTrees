@@ -159,7 +159,7 @@ class _SetIteration(object):
 
     __slots__ = ('to_iterate',
                  'useValues',
-                 '_next',
+                 '_iter',
                  'active',
                  'position',
                  'key',
@@ -183,7 +183,7 @@ class _SetIteration(object):
             itmeth = to_iterate.__iter__
 
         self.useValues = useValues
-        self._next = itmeth().next
+        self._iter = itmeth()
         self.active = True
         self.position = 0
         self.key = _marker
@@ -193,9 +193,9 @@ class _SetIteration(object):
     def advance(self):
         try:
             if self.useValues:
-                self.key, self.value = self._next()
+                self.key, self.value = next(self._iter)
             else:
-                self.key = self._next()
+                self.key = next(self._iter)
             self.position += 1
         except StopIteration:
             self.active = False
@@ -1161,7 +1161,6 @@ class TreeSet(_Tree):
 
     __slots__ = ()
 
-    #_next = None
     def add(self, key):
         return self._set(self._to_key(key))[0]
 
