@@ -563,7 +563,7 @@ class MappingBase(Base):
             x = []
             try:
                 while 1:
-                    x.append(it.next())
+                    x.append(next(it))
             except StopIteration:
                 pass
             self.assertEqual(x, keys)
@@ -1250,7 +1250,7 @@ class NormalSetTests(Base):
             x = []
             try:
                 while 1:
-                    x.append(it.next())
+                    x.append(next(it))
             except StopIteration:
                 pass
             self.assertEqual(x, keys)
