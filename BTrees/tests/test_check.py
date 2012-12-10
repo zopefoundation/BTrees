@@ -149,10 +149,10 @@ class Test_type_and_adr(unittest.TestCase):
     def test_type_and_adr_w_oid(self):
         from BTrees.utils import oid_repr
         class WithOid(object):
-            _p_oid = 'DEADBEEF'
+            _p_oid = b'DEADBEEF'
         t_and_a = self._callFUT(WithOid())
         self.assertTrue(t_and_a.startswith('WithOid (0x'))
-        self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr('DEADBEEF')))
+        self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr(b'DEADBEEF')))
 
     def test_type_and_adr_wo_oid(self):
         class WithoutOid(object):

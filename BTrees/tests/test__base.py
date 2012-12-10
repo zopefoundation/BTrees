@@ -1783,7 +1783,7 @@ class Test_Tree(unittest.TestCase):
 
     def test__set_calls_readCurrent_on_jar(self):
         tree = self._makeOne()
-        tree._p_oid = 'OID'
+        tree._p_oid = b'OID'
         tree._p_serial = '01234567'
         tree._p_jar = jar = _Jar()
         tree._set('a', 'b')
@@ -1839,7 +1839,7 @@ class Test_Tree(unittest.TestCase):
 
     def test__del_calls_readCurrent_on_jar(self):
         tree = self._makeOne({'a': 'b'})
-        tree._p_oid = 'OID'
+        tree._p_oid = b'OID'
         tree._p_serial = '01234567'
         tree._p_jar = jar = _Jar()
         tree._del('a')
@@ -1898,7 +1898,7 @@ class Test_Tree(unittest.TestCase):
         bucket = tree._firstbucket
         jar = _Jar()
         bucket._p_jar = jar
-        bucket._p_oid = 'OID'
+        bucket._p_oid = b'OID'
         self.assertEqual(tree.__getstate__(), ((bucket,), bucket))
 
     def test___getstate___multiple_buckets(self):
