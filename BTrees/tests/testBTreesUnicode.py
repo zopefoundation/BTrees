@@ -52,7 +52,7 @@ class TestBTreesUnicode(unittest.TestCase):
         for k, v in self.data:
             if isinstance(k, str):
                 k = unicode(k, encoding)
-            self.assert_(self.tree.has_key(k))
+            self.assertTrue(k in self.tree)
             self.assertEqual(self.tree[k], v)
 
     @_skip_under_Py3k

@@ -136,7 +136,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         numtoadd = 16
         candidate = 60
         while numtoadd:
-            if not b.has_key(candidate):
+            if candidate not in b:
                 b[candidate] = candidate
                 numtoadd -= 1
             candidate += 1

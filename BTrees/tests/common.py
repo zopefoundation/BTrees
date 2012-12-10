@@ -251,9 +251,11 @@ class MappingBase(Base):
         self.assertEqual(len(t) , len(addl), len(t))
 
     def testHasKeyWorks(self):
+        from .._compat import PY2
         t = self._makeOne()
         t[1] = 1
-        self.assert_(t.has_key(1))
+        if PY2:
+            self.assert_(t.has_key(1))
         self.assert_(1 in t)
         self.assert_(0 not in t)
         self.assert_(2 not in t)
@@ -830,7 +832,7 @@ class BTreeTests(MappingBase):
         r = range(100)
         for x in r:
             k = random.choice(r)
-            if not added.has_key(k):
+            if k not in added:
                 t[k] = x
                 added[k] = 1
         addl = sorted(added.keys())
@@ -864,15 +866,15 @@ class BTreeTests(MappingBase):
         deleted = []
         for x in r:
             k = random.choice(r)
-            if t.has_key(k):
+            if k in t:
                 self.assert_(k in t)
                 del t[k]
                 deleted.append(k)
-                if t.has_key(k):
+                if k in t:
                     self.fail( "had problems deleting %s" % k )
         badones = []
         for x in deleted:
-            if t.has_key(x):
+            if x in t:
                 badones.append(x)
         self.assertEqual(badones , [], (badones, added, deleted))
         self._checkIt(t)
@@ -959,9 +961,10 @@ class BTreeTests(MappingBase):
         for x in add_order:
             t[x] = 1
         for x in delete_order:
-            try: del t[x]
+            try:
+                del t[x]
             except KeyError:
-                if t.has_key(x):
+                if x in t:
                     self.assertEqual(1,2,"failed to delete %s" % x)
         self._checkIt(t)
 
@@ -1073,19 +1076,23 @@ class NormalSetTests(Base):
         self.assertEqual(t.add(5) , 0)
 
     def testInsert(self):
+        from .._compat import PY2
         t = self._makeOne()
         t.insert(1)
-        self.assert_(t.has_key(1))
+        if PY2:
+            self.assert_(t.has_key(1))
         self.assert_(1 in t)
         self.assert_(2 not in t)
 
     def testBigInsert(self):
+        from .._compat import PY2
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
             t.insert(x)
         for x in r:
-            self.assert_(t.has_key(x))
+            if PY2:
+                self.assert_(t.has_key(x))
             self.assert_(x in t)
 
     def testRemoveSucceeds(self):
@@ -1101,8 +1108,10 @@ class NormalSetTests(Base):
         self._makeOne().remove(1)
 
     def testHasKeyFails(self):
+        from .._compat import PY2
         t = self._makeOne()
-        self.assert_(not t.has_key(1))
+        if PY2:
+            self.assert_(not t.has_key(1))
         self.assert_(1 not in t)
 
     def testKeys(self):
