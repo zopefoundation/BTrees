@@ -277,12 +277,10 @@ class MappingBase(Base):
             t[99-x] = x
 
         for x in range(40):
-            lst = list(t.values(0+x,99-x))
-            lst.sort()
+            lst = sorted(t.values(0+x,99-x))
             self.assertEqual(lst,range(0+x,99-x+1))
 
-            lst = list(t.values(max=99-x, min=0+x))
-            lst.sort()
+            lst = sorted(t.values(max=99-x, min=0+x))
             self.assertEqual(lst,range(0+x,99-x+1))
 
     def testValuesNegativeIndex(self):
@@ -290,7 +288,7 @@ class MappingBase(Base):
         L = [-3, 6, -11, 4]
         for i in L:
             t[i] = i
-        L.sort()
+        L = sorted(L)
         vals = t.values()
         for i in range(-1, -5, -1):
             self.assertEqual(vals[i], L[i])
@@ -321,7 +319,7 @@ class MappingBase(Base):
         L = [-3, 6, -11, 4]
         for i in L:
             t[i] = i
-        L.sort()
+        L = sorted(L)
         keys = t.keys()
         for i in range(-1, -5, -1):
             self.assertEqual(keys[i], L[i])
@@ -355,7 +353,7 @@ class MappingBase(Base):
         L = [-3, 6, -11, 4]
         for i in L:
             t[i] = i
-        L.sort()
+        L = sorted(L)
         items = t.items()
         for i in range(-1, -5, -1):
             self.assertEqual(items[i], (L[i], L[i]))
@@ -421,8 +419,7 @@ class MappingBase(Base):
             d[k]=i
             l.append((k, i))
 
-        items=d.items()
-        items.sort()
+        items= sorted(d.items())
 
         t.update(d)
         self.assertEqual(list(t.items()), items)
@@ -836,8 +833,7 @@ class BTreeTests(MappingBase):
             if not added.has_key(k):
                 t[k] = x
                 added[k] = 1
-        addl = added.keys()
-        addl.sort()
+        addl = sorted(added.keys())
         diff = lsubtract(list(t.keys()), addl)
         self.assertEqual(diff , [], (diff, addl, list(t.keys())))
         self._checkIt(t)
@@ -851,8 +847,7 @@ class BTreeTests(MappingBase):
             k = random.choice(r)
             t[k] = x
             added[k] = 1
-        addl = added.keys()
-        addl.sort()
+        addl = sorted(added.keys())
         diff = lsubtract(t.keys(), addl)
         self.assertEqual(diff , [], diff)
         self._checkIt(t)
@@ -911,8 +906,7 @@ class BTreeTests(MappingBase):
     def testPathologicalLeftBranching(self):
         t = self._makeOne()
         r = range(1000)
-        revr = r[:]
-        revr.reverse()
+        revr = list(reversed(r[:]))
         for x in revr:
             t[x] = 1
         self.assertEqual(realseq(t.keys()) , r, realseq(t.keys()))
@@ -1173,8 +1167,7 @@ class NormalSetTests(Base):
             d[k]=i
             l.append(k)
 
-        items = d.keys()
-        items.sort()
+        items = sorted(d.keys())
 
         t.update(l)
         self.assertEqual(list(t.keys()), items)
@@ -1486,8 +1479,7 @@ class TestLongIntValues(TestLongIntSupport):
         if not using64bits:
             return
         t = self._makeOne()
-        keys = list(self.getTwoKeys())
-        keys.sort()
+        keys = sorted(self.getTwoKeys())
         k1, k2 = keys
         assert k1 != k2
 
@@ -1538,8 +1530,7 @@ class SetResult(object):
         for e in y:
             if e not in result:
                 result.append(e)
-        result.sort()
-        return result
+        return sorted(result)
 
     def _intersection(self, x, y):
         result = []
@@ -1815,10 +1806,8 @@ class MultiUnion(object):
     def testOne(self):
         for sequence in [3], range(20), range(-10, 0, 2) + range(1, 10, 2):
             seq1 = sequence[:]
-            seq2 = sequence[:]
-            seq2.reverse()
-            seqsorted = sequence[:]
-            seqsorted.sort()
+            seq2 = list(reversed(sequence[:]))
+            seqsorted = sorted(sequence[:])
             for seq in seq1, seq2, seqsorted:
                 for builder in self.mkset, self.mktreeset:
                     input = builder(seq)
