@@ -143,6 +143,7 @@ class _TestOIBTreesBase(TypeTest):
         self._makeOne()[1] = None
 
     def testEmptyFirstBucketReportedByGuido(self):
+        from .._compat import xrange
         b = self._makeOne()
         for i in xrange(29972): # reduce to 29971 and it works
             b[i] = i

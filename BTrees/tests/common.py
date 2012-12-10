@@ -473,6 +473,7 @@ class MappingBase(Base):
         # This tests fixes to several bugs in this area, starting with
         # http://collector.zope.org/Zope/419,
         # "BTreeItems slice contains 1 too many elements".
+        from .._compat import xrange
         t = self._makeOne()
         for n in range(10):
             t.clear()
@@ -1086,6 +1087,7 @@ class NormalSetTests(Base):
 
     def testBigInsert(self):
         from .._compat import PY2
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
@@ -1096,6 +1098,7 @@ class NormalSetTests(Base):
             self.assert_(x in t)
 
     def testRemoveSucceeds(self):
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
@@ -1115,6 +1118,7 @@ class NormalSetTests(Base):
         self.assert_(1 not in t)
 
     def testKeys(self):
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(1000)
         for x in r:
@@ -1124,6 +1128,7 @@ class NormalSetTests(Base):
 
 
     def testClear(self):
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(1000)
         for x in r: t.insert(x)
@@ -1260,12 +1265,14 @@ class NormalSetTests(Base):
 class ExtendedSetTests(NormalSetTests):
 
     def testLen(self):
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
         self.assertEqual(len(t) , 10000, len(t))
 
     def testGetItem(self):
+        from .._compat import xrange
         t = self._makeOne()
         r = xrange(10000)
         for x in r: t.insert(x)
