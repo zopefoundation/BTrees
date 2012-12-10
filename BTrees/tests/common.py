@@ -199,7 +199,8 @@ class MappingBase(Base):
 
     def _populate(self, t, l):
         # Make some data
-        for i in range(l): t[i]=i
+        for i in range(l):
+            t[i]=i
 
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -280,10 +281,10 @@ class MappingBase(Base):
 
         for x in range(40):
             lst = sorted(t.values(0+x,99-x))
-            self.assertEqual(lst,range(0+x,99-x+1))
+            self.assertEqual(lst, list(range(0+x,99-x+1)))
 
             lst = sorted(t.values(max=99-x, min=0+x))
-            self.assertEqual(lst,range(0+x,99-x+1))
+            self.assertEqual(lst, list(range(0+x,99-x+1)))
 
     def testValuesNegativeIndex(self):
         t = self._makeOne()
@@ -309,10 +310,10 @@ class MappingBase(Base):
 
         for x in range(40):
             lst = t.keys(0+x,99-x)
-            self.assertEqual(list(lst), range(0+x, 99-x+1))
+            self.assertEqual(list(lst), list(range(0+x, 99-x+1)))
 
             lst = t.keys(max=99-x, min=0+x)
-            self.assertEqual(list(lst), range(0+x, 99-x+1))
+            self.assertEqual(list(lst), list(range(0+x, 99-x+1)))
 
         self.assertEqual(len(v), 100)
 
@@ -1004,7 +1005,7 @@ class BTreeTests(MappingBase):
         firstkey = items[1]
         therange = t.keys(-1, firstkey)
         self.assertEqual(len(therange), firstkey + 1)
-        self.assertEqual(list(therange), range(firstkey + 1))
+        self.assertEqual(list(therange), list(range(firstkey + 1)))
         # Now for the tricky part.  If we delete firstkey, the second bucket
         # loses its smallest key, but firstkey remains in the BTree node.
         # If we then do a high-end range search on firstkey, the BTree node
@@ -1016,7 +1017,7 @@ class BTreeTests(MappingBase):
         del t[firstkey]
         therange = t.keys(min=-1, max=firstkey)
         self.assertEqual(len(therange), firstkey)
-        self.assertEqual(list(therange), range(firstkey))
+        self.assertEqual(list(therange), list(range(firstkey)))
         self._checkIt(t)
 
     def testInsertMethod(self):
@@ -1820,7 +1821,10 @@ class MultiUnion(object):
         self.assertEqual(len(self.multiunion([])), 0)
 
     def testOne(self):
-        for sequence in [3], range(20), range(-10, 0, 2) + range(1, 10, 2):
+        for sequence in ([3],
+                         list(range(20)),
+                         list(range(-10, 0, 2)) + list(range(1, 10, 2)),
+                        ):
             seq1 = sequence[:]
             seq2 = list(reversed(sequence[:]))
             seqsorted = sorted(sequence[:])
@@ -1839,12 +1843,12 @@ class MultiUnion(object):
 
     def testBigInput(self):
         N = 100000
-        input = self.mkset(range(N))
+        input = self.mkset(list(range(N)))
         output = self.multiunion([input] * 10)
         self.assertEqual(len(output), N)
         self.assertEqual(output.minKey(), 0)
         self.assertEqual(output.maxKey(), N-1)
-        self.assertEqual(list(output), range(N))
+        self.assertEqual(list(output), list(range(N)))
 
     def testLotsOfLittleOnes(self):
         from random import shuffle
@@ -1858,7 +1862,7 @@ class MultiUnion(object):
         shuffle(inputs)
         output = self.multiunion(inputs)
         self.assertEqual(len(output), N*4)
-        self.assertEqual(list(output), range(-N, 3*N))
+        self.assertEqual(list(output), list(range(-N, 3*N)))
 
     def testFunkyKeyIteration(self):
         # The internal set iteration protocol allows "iterating over" a
@@ -1868,11 +1872,11 @@ class MultiUnion(object):
         slow = mkset()
         for i in range(N):
             slow = union(slow, mkset([i]))
-        fast = self.multiunion(range(N)) # acts like N distinct singleton sets
+        fast = self.multiunion(list(range(N))) # like N distinct singleton sets
         self.assertEqual(len(slow), N)
         self.assertEqual(len(fast), N)
         self.assertEqual(list(slow), list(fast))
-        self.assertEqual(list(fast), range(N))
+        self.assertEqual(list(fast), list(range(N)))
 
 
 class ConflictTestBase(object):
