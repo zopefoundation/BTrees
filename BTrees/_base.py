@@ -1086,7 +1086,7 @@ class _TreeItems(object):
 
         while i > self.index:
             try:
-                self.v = self.it.next()
+                self.v = next(self.it)
             except StopIteration:
                 raise IndexError(i)
             else:
