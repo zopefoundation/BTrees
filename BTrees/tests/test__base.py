@@ -1784,7 +1784,7 @@ class Test_Tree(unittest.TestCase):
     def test__set_calls_readCurrent_on_jar(self):
         tree = self._makeOne()
         tree._p_oid = b'OID'
-        tree._p_serial = '01234567'
+        tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._set('a', 'b')
         self.assertTrue(tree in jar._current)
@@ -1840,7 +1840,7 @@ class Test_Tree(unittest.TestCase):
     def test__del_calls_readCurrent_on_jar(self):
         tree = self._makeOne({'a': 'b'})
         tree._p_oid = b'OID'
-        tree._p_serial = '01234567'
+        tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._del('a')
         self.assertTrue(tree in jar._current)
