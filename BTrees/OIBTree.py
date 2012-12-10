@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) 2001, 2002 Zope Foundation and Contributors.
+# Copyright (c) 2001-2012 Zope Foundation and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the Zope Public License,
@@ -12,10 +12,115 @@
 #
 ##############################################################################
 
-import zope.interface
-import BTrees.Interfaces
+__all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
+           'OIBucket', 'OISet', 'OIBTree', 'OITreeSet',
+           'union', 'intersection', 'difference',  
+           'weightedUnion', 'weightedIntersection',
+          )
 
-# hack to overcome dynamic-linking headache.
-from _OIBTree import *
+from zope.interface import moduleProvides
 
-zope.interface.moduleProvides(BTrees.Interfaces.IObjectIntegerBTreeModule)
+from .Interfaces import IObjectIntegerBTreeModule
+from ._base import Bucket
+from ._base import MERGE
+from ._base import MERGE_WEIGHT_numeric
+from ._base import MERGE_DEFAULT_float
+from ._base import Set
+from ._base import Tree as BTree
+from ._base import TreeSet
+from ._base import difference as _difference
+from ._base import intersection as _intersection
+from ._base import set_operation as _set_operation
+from ._base import to_ob as _to_key
+from ._base import to_int as _to_value
+from ._base import union as _union
+from ._base import weightedIntersection as _weightedIntersection
+from ._base import weightedUnion as _weightedUnion
+
+_BUCKET_SIZE = 60
+_TREE_SIZE = 250
+using64bits = True
+
+class OIBucketPy(Bucket):
+    MAX_SIZE = _BUCKET_SIZE
+    _to_key = _to_key
+    _to_value = _to_value
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_float
+
+
+class OISetPy(Set):
+    MAX_SIZE = _BUCKET_SIZE
+    _to_key = _to_key
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_float
+
+
+class OIBTreePy(BTree):
+    MAX_SIZE = _TREE_SIZE
+    _to_key = _to_key
+    _to_value = _to_value
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_float
+
+
+class OITreeSetPy(TreeSet):
+    MAX_SIZE = _TREE_SIZE
+    _to_key = _to_key
+    MERGE = MERGE
+    MERGE_WEIGHT = MERGE_WEIGHT_numeric
+    MERGE_DEFAULT = MERGE_DEFAULT_float
+
+
+# Can't declare forward refs, so fix up afterwards:
+
+OIBucketPy._mapping_type = OIBucketPy._bucket_type = OIBucketPy
+OIBucketPy._set_type = OISetPy
+
+OISetPy._mapping_type = OIBucketPy
+OISetPy._set_type = OISetPy._bucket_type = OISetPy
+
+OIBTreePy._mapping_type = OIBTreePy._bucket_type = OIBucketPy
+OIBTreePy._set_type = OISetPy
+
+OITreeSetPy._mapping_type = OIBucketPy
+OITreeSetPy._set_type = OITreeSetPy._bucket_type = OISetPy
+
+
+differencePy = _set_operation(_difference, OISetPy)
+unionPy = _set_operation(_union, OISetPy)
+intersectionPy = _set_operation(_intersection, OISetPy)
+weightedUnionPy = _set_operation(_weightedUnion, OISetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, OISetPy)
+
+try:
+    from _OIBTree import OIBucket
+    from _OIBTree import OISet
+    from _OIBTree import OIBTree
+    from _OIBTree import OITreeSet
+    from _OIBTree import difference
+    from _OIBTree import union
+    from _OIBTree import intersection
+    from _OIBTree import weightedUnion
+    from _OIBTree import weightedIntersection
+except ImportError: #pragma NO COVER
+    OIBucket = OIBucketPy
+    OISet = OISetPy
+    OIBTree = OIBTreePy
+    OITreeSet = OITreeSetPy
+    difference = differencePy
+    union = unionPy
+    intersection = intersectionPy
+    weightedUnion = weightedUnionPy
+    weightedIntersection = weightedIntersectionPy
+
+
+Bucket = OIBucket
+Set = OISet
+BTree = OIBTree
+TreeSet = OITreeSet
+
+moduleProvides(IObjectIntegerBTreeModule)

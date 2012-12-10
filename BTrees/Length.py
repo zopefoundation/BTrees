@@ -28,8 +28,9 @@ class Length(persistent.Persistent):
     longer works as expected, because new-style classes cache
     class-defined slot methods (like __len__) in C type slots.  Thus,
     instance-defined slot fillers are ignored.
-
     """
+    # class-level default required to keep copy.deepcopy happy -- see
+    # https://bugs.launchpad.net/zodb/+bug/516653
     value = 0
 
     def __init__(self, v=0):

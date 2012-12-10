@@ -32,15 +32,24 @@ addresses and/or object identity (the synthesized bucket has an address
 that doesn't exist in the actual BTree).
 """
 
-from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
-from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
 from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
-from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
-from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
+from BTrees.IFBTree import IFBTreePy, IFBucketPy, IFSetPy, IFTreeSetPy
+from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
+from BTrees.IIBTree import IIBTreePy, IIBucketPy, IISetPy, IITreeSetPy
+from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
+from BTrees.IOBTree import IOBTreePy, IOBucketPy, IOSetPy, IOTreeSetPy
 from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
+from BTrees.LFBTree import LFBTreePy, LFBucketPy, LFSetPy, LFTreeSetPy
+from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
+from BTrees.LLBTree import LLBTreePy, LLBucketPy, LLSetPy, LLTreeSetPy
+from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
+from BTrees.LOBTree import LOBTreePy, LOBucketPy, LOSetPy, LOTreeSetPy
+from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
+from BTrees.OIBTree import OIBTreePy, OIBucketPy, OISetPy, OITreeSetPy
+from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
+from BTrees.OLBTree import OLBTreePy, OLBucketPy, OLSetPy, OLTreeSetPy
+from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
+from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
 
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr
@@ -59,6 +68,9 @@ for kv in ('OO',
         ('Set', (TYPE_BUCKET, False)),
         ):
         _type2kind[globals()[kv+name]] = kind
+        py = kv + name + 'Py'
+        if py in globals():
+            _type2kind[globals()[py]] = kind
 
 # Return pair
 #
@@ -114,7 +126,14 @@ for kv in ('OO',
            'LL', 'LO', 'OL', 'LF',
            ):
     _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
+    py = kv + 'BTreePy'
+    if py in globals():
+        _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
     _btree2bucket[globals()[kv+'TreeSet']] = globals()[kv+'Set']
+    py = kv + 'TreeSetPy'
+    if py in globals():
+        _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
+
 
 def crack_btree(t, is_mapping):
     state = t.__getstate__()
@@ -349,7 +368,7 @@ class Checker(Walker):
                 ".".join(map(str, path)))
         self.errors.append(s)
 
-class Printer(Walker):
+class Printer(Walker): #pragma NO COVER
     def __init__(self, obj):
         Walker.__init__(self, obj)
 
@@ -403,6 +422,6 @@ def check(btree):
 
     Checker(btree).check()
 
-def display(btree):
+def display(btree): #pragma NO COVER
     "Display the internal structure of a BTree, Bucket, TreeSet or Set."
     Printer(btree).display()
