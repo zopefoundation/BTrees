@@ -206,6 +206,24 @@ class ToBeDeleted(object):
     def __cmp__(self, other):
         return cmp(self.id, other.id)
 
+    def __le__(self, other):
+        return self.id <= other.id
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return self.id != other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
+
+    def __ge__(self, other):
+        return self.id >= other.id
+
     def __hash__(self):
         return hash(self.id)
 
@@ -236,6 +254,8 @@ class BugFixes(unittest.TestCase):
         import gc
         import random
         from BTrees.OOBTree import OOBTree
+        from .._compat import _u
+        from .._compat import xrange
 
         t = OOBTree()
 
@@ -257,12 +277,12 @@ class BugFixes(unittest.TestCase):
                 t[id] = ToBeDeleted(id)
             else:
                 #del
-                id = trandom.choice(ids.keys())
+                id = trandom.choice(list(ids.keys()))
                 del t[id]
                 del ids[id]
 
         ids = ids.keys()
-        trandom.shuffle(ids)
+        trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
         ids = None
@@ -287,15 +307,15 @@ class BugFixes(unittest.TestCase):
                     id = trandom.randint(0,1000000)
 
                 ids[id] = 1
-                t[id] = (id, ToBeDeleted(id), u'somename')
+                t[id] = (id, ToBeDeleted(id), _u('somename'))
             else:
                 #del
-                id = trandom.choice(ids.keys())
+                id = trandom.choice(list(ids.keys()))
                 del t[id]
                 del ids[id]
 
         ids = ids.keys()
-        trandom.shuffle(ids)
+        trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
         ids = None
@@ -325,12 +345,12 @@ class BugFixes(unittest.TestCase):
                 t[id] = 1
             else:
                 #del
-                id = trandom.choice(ids.keys())
+                id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
 
         ids = ids.keys()
-        trandom.shuffle(ids)
+        trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
         #release all refs
@@ -354,18 +374,18 @@ class BugFixes(unittest.TestCase):
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0,1000000)
-                    id = (id, ToBeDeleted(id), u'somename')
+                    id = (id, ToBeDeleted(id), _u('somename'))
 
                 ids[id] = 1
                 t[id] = 1
             else:
                 #del
-                id = trandom.choice(ids.keys())
+                id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
 
         ids = ids.keys()
-        trandom.shuffle(ids)
+        trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
         #release all refs
@@ -387,7 +407,7 @@ class DoesntLikeBeingCompared:
 
     def __cmp__(self,other):
         raise ValueError('incomparable')
-
+    __lt__ = __le__ = __eq__ = __ne__ = __ge__ = __gt__ = __cmp__
 
 class TestCmpError(unittest.TestCase):
 
@@ -397,7 +417,7 @@ class TestCmpError(unittest.TestCase):
         t['hello world'] = None
         try:
             t[DoesntLikeBeingCompared()] = None
-        except ValueError,e:
+        except ValueError as e:
             self.assertEqual(str(e), 'incomparable')
         else:
             self.fail('incomarable objects should not be allowed into '
@@ -468,7 +488,7 @@ class FamilyTest(unittest.TestCase):
         # unpickling, whether from the same unpickler or different
         # unpicklers.
         import pickle
-        import StringIO
+        from .._compat import BytesIO
 
         s = pickle.dumps((family, family))
         (f1, f2) = pickle.loads(s)
@@ -476,23 +496,23 @@ class FamilyTest(unittest.TestCase):
         self.failUnless(f2 is family)
 
         # Using a single memo across multiple pickles:
-        sio = StringIO.StringIO()
+        sio = BytesIO()
         p = pickle.Pickler(sio)
         p.dump(family)
         p.dump([family])
-        u = pickle.Unpickler(StringIO.StringIO(sio.getvalue()))
+        u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
         self.failUnless(f1 is family)
         self.failUnless(f2 is family)
 
         # Using separate memos for each pickle:
-        sio = StringIO.StringIO()
+        sio = BytesIO()
         p = pickle.Pickler(sio)
         p.dump(family)
         p.clear_memo()
         p.dump([family])
-        u = pickle.Unpickler(StringIO.StringIO(sio.getvalue()))
+        u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
         self.failUnless(f1 is family)

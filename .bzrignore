@@ -6,3 +6,4 @@ nosetests.xml
 coverage.xml
 *.egg
 docs/_build
+__pycache__

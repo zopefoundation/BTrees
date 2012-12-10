@@ -15,9 +15,10 @@
 
 import unittest
 
+from .._compat import _u
 
 STR = "A string with hi-bit-set characters: \700\701"
-UNICODE = u"A unicode string"
+UNICODE = _u("A unicode string")
 
 
 class CompareTest(unittest.TestCase):

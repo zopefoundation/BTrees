@@ -22,6 +22,16 @@ def _skip_wo_ZODB(test_method): #pragma NO COVER
     else:
         return test_method
 
+def _skip_under_Py3k(test_method): #pragma NO COVER
+    try:
+        unicode
+    except NameError: # skip this test
+        def _dummy(*args):
+            pass
+        return _dummy
+    else:
+        return test_method
+
 
 class Base(object):
     # Tests common to all types: sets, buckets, and BTrees 
@@ -75,7 +85,7 @@ class Base(object):
     def testSetstateArgumentChecking(self):
         try:
             self._makeOne().__setstate__(('',))
-        except TypeError, v:
+        except TypeError as v:
             self.assertEqual(str(v), 'tuple required for first state element')
         else:
             raise AssertionError("Expected exception")
@@ -219,7 +229,7 @@ class MappingBase(Base):
         t = self._makeOne()
         t[1] = 1
         a = t[1]
-        self.assertEqual(a , 1, `a`)
+        self.assertEqual(a , 1, repr(a))
 
     def testReplaceWorks(self):
         t = self._makeOne()
@@ -378,14 +388,14 @@ class MappingBase(Base):
 
         try:
             t.maxKey(t.minKey() - 1)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), "no key satisfies the conditions")
         else:
             self.fail("expected ValueError")
 
         try:
             t.minKey(t.maxKey() + 1)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), "no key satisfies the conditions")
         else:
             self.fail("expected ValueError")
@@ -1037,11 +1047,11 @@ class BTreeTests(MappingBase):
         for dummy in range(20):
             try:
                 del t[k[0]]
-            except RuntimeError, detail:
+            except RuntimeError as detail:
                 self.assertEqual(str(detail), "the bucket being iterated "
                                               "changed size")
                 break
-            except KeyError, v:
+            except KeyError as v:
                 # The Python implementation behaves very differently and
                 # gives a key error in this situation. It can't mess up
                 # memory and can't readily detect changes to underlying buckets
@@ -1141,14 +1151,14 @@ class NormalSetTests(Base):
 
         try:
             t.maxKey(t.minKey() - 1)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), "no key satisfies the conditions")
         else:
             self.fail("expected ValueError")
 
         try:
             t.minKey(t.maxKey() + 1)
-        except ValueError, err:
+        except ValueError as err:
             self.assertEqual(str(err), "no key satisfies the conditions")
         else:
             self.fail("expected ValueError")
@@ -1423,6 +1433,12 @@ class TestLongIntSupport:
 
 class TestLongIntKeys(TestLongIntSupport):
 
+    def _makeLong(self, v):
+        try:
+            return long(v)
+        except NameError: #pragma NO COVER Py3k
+            return int(v)
+
     def testLongIntKeysWork(self):
         from BTrees.IIBTree import using64bits
         if not using64bits:
@@ -1432,10 +1448,11 @@ class TestLongIntKeys(TestLongIntSupport):
         assert o1 != o2
 
         # Test some small key values first:
-        t[0L] = o1
+        zero_long = self._makeLong(0)
+        t[zero_long] = o1
         self.assertEqual(t[0], o1)
         t[0] = o2
-        self.assertEqual(t[0L], o2)
+        self.assertEqual(t[zero_long], o2)
         self.assertEqual(list(t.keys()), [0])
 
         # Test some large key values too:
@@ -1890,7 +1907,7 @@ def _test_merge(o1, o2, o3, expect, message='failed to merge', should_fail=0):
     if should_fail:
         try:
             merged = o1._p_resolveConflict(s1, s2, s3)
-        except BTreesConflictError, err:
+        except BTreesConflictError as err:
             pass
         else:
             assert 0, message

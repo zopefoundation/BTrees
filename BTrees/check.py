@@ -378,30 +378,30 @@ class Printer(Walker): #pragma NO COVER
     def visit_btree(self, obj, path, parent, is_mapping,
                     keys, kids, lo, hi):
         indent = "    " * len(path)
-        print "%s%s %s with %d children" % (
+        print("%s%s %s with %d children" % (
                   indent,
                   ".".join(map(str, path)),
                   type_and_adr(obj),
-                  len(kids))
+                  len(kids)))
         indent += "    "
         n = len(keys)
         for i in range(n):
-            print "%skey %d: %r" % (indent, i, keys[i])
+            print("%skey %d: %r" % (indent, i, keys[i]))
 
     def visit_bucket(self, obj, path, parent, is_mapping,
                      keys, values, lo, hi):
         indent = "    " * len(path)
-        print "%s%s %s with %d keys" % (
+        print("%s%s %s with %d keys" % (
                   indent,
                   ".".join(map(str, path)),
                   type_and_adr(obj),
-                  len(keys))
+                  len(keys)))
         indent += "    "
         n = len(keys)
         for i in range(n):
-            print "%skey %d: %r" % (indent, i, keys[i]),
+            print("%skey %d: %r" % (indent, i, keys[i]),)
             if is_mapping:
-                print "value %r" % (values[i],)
+                print("value %r" % (values[i],))
 
 def check(btree):
     """Check internal value-based invariants in a BTree or TreeSet.

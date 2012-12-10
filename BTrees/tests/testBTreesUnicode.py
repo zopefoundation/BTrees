@@ -13,7 +13,7 @@
 ##############################################################################
 
 import unittest
-from BTrees.OOBTree import OOBTree
+from .common import _skip_under_Py3k
 
 # When an OOBtree contains unicode strings as keys,
 # it is neccessary accessing non-unicode strings are
@@ -26,7 +26,8 @@ class TestBTreesUnicode(unittest.TestCase):
     """ test unicode"""
 
     def setUp(self):
-        """setup an OOBTree with some unicode strings"""
+        #setup an OOBTree with some unicode strings
+        from BTrees.OOBTree import OOBTree
 
         self.s = unicode('dreit\xe4gigen', 'latin1')
 
@@ -45,6 +46,7 @@ class TestBTreesUnicode(unittest.TestCase):
                 k = unicode(k, 'latin1')
             self.tree[k] = v
 
+    @_skip_under_Py3k
     def testAllKeys(self):
         # check every item of the tree
         for k, v in self.data:
@@ -53,6 +55,7 @@ class TestBTreesUnicode(unittest.TestCase):
             self.assert_(self.tree.has_key(k))
             self.assertEqual(self.tree[k], v)
 
+    @_skip_under_Py3k
     def testUnicodeKeys(self):
         # try to access unicode keys in tree
         k, v = self.data[-1]
@@ -60,6 +63,7 @@ class TestBTreesUnicode(unittest.TestCase):
         self.assertEqual(self.tree[k], v)
         self.assertEqual(self.tree[self.s], v)
 
+    @_skip_under_Py3k
     def testAsciiKeys(self):
         # try to access some "plain ASCII" keys in the tree
         for k, v in self.data[0], self.data[2]:

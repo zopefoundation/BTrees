@@ -21,6 +21,9 @@ from struct import error as struct_error
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
+from ._compat import cmp
+from ._compat import int_types
+from ._compat import xrange
 
 
 _marker = object()
@@ -298,7 +301,7 @@ class Bucket(_BucketBase):
 
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
-            index = len(self._keys) / 2
+            index = len(self._keys) // 2
         new_instance = self.__class__()
         new_instance._keys = self._keys[index:]
         new_instance._values = self._values[index:]
@@ -553,7 +556,7 @@ class Set(_BucketBase):
 
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
-            index = len(self._keys) / 2
+            index = len(self._keys) // 2
         new_instance = self.__class__()
         new_instance._keys = self._keys[index:]
         del self._keys[index:]
@@ -760,7 +763,7 @@ class _Tree(_Base):
         if data:
             lo = 0
             hi = len(data)
-            i = hi//2
+            i = hi // 2
             while i > lo:
                 cmp_ = cmp(data[i].key, key)
                 if cmp_ < 0:
@@ -769,7 +772,7 @@ class _Tree(_Base):
                     hi = i
                 else:
                     break
-                i = (lo+hi)//2
+                i = (lo + hi) // 2
             return i
         return -1
 
@@ -882,7 +885,7 @@ class _Tree(_Base):
     def _split(self, index=None):
         data = self._data
         if index is None:
-            index = len(data)//2
+            index = len(data) // 2
 
         next = self.__class__()
         next._data = data[index:]
@@ -1384,7 +1387,6 @@ def multiunion(set_type, seqs):
 def to_ob(self, v):
     return v
 
-int_types = int, long
 def to_int(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
