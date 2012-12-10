@@ -243,7 +243,7 @@ class MappingBase(Base):
         import random
         t = self._makeOne()
         added = {}
-        r = range(1000)
+        r = list(range(1000))
         for x in r:
             k = random.choice(r)
             t[k] = x
@@ -404,7 +404,7 @@ class MappingBase(Base):
     def testClear(self):
         import random
         t = self._makeOne()
-        r = range(100)
+        r = list(range(100))
         for x in r:
             rnd = random.choice(r)
             t[rnd] = 0
@@ -1225,7 +1225,7 @@ class NormalSetTests(Base):
 
             # Test whole-structure slices.
             x = kslice[:]
-            self.assertEqual(list(x), keys[:])
+            self.assertEqual(list(x), list(keys[:]))
 
             for lo in range(-2*n, 2*n+1):
                 # Test one-sided slices.
@@ -1237,12 +1237,12 @@ class NormalSetTests(Base):
                 for hi in range(-2*n, 2*n+1):
                     # Test two-sided slices.
                     x = kslice[lo:hi]
-                    self.assertEqual(list(x), keys[lo:hi])
+                    self.assertEqual(list(x), list(keys[lo:hi]))
 
     def testIterator(self):
         t = self._makeOne()
 
-        for keys in [], [-2], [1, 4], range(-170, 2000, 6):
+        for keys in [], [-2], [1, 4], list(range(-170, 2000, 6)):
             t.clear()
             t.update(keys)
 

@@ -640,7 +640,7 @@ class BucketTests(unittest.TestCase):
         bucket = self._makeOne()
         for i, c in enumerate('abcdef'):
             bucket[c] = i
-        self.assertEqual(bucket.values(), range(6))
+        self.assertEqual(bucket.values(), list(range(6)))
 
     def test_values_filled_w_args(self):
         bucket = self._makeOne()
@@ -657,7 +657,7 @@ class BucketTests(unittest.TestCase):
         bucket = self._makeOne()
         for i, c in enumerate('abcdef'):
             bucket[c] = i
-        self.assertEqual(list(bucket.itervalues()), range(6))
+        self.assertEqual(list(bucket.itervalues()), list(range(6)))
 
     def test_itervalues_filled_w_args(self):
         bucket = self._makeOne()
@@ -2273,7 +2273,7 @@ class TreeTests(unittest.TestCase):
     def test_values_filled_no_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.values()), range(26))
+        self.assertEqual(list(tree.values()), list(range(26)))
 
     def test_values_filled_w_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -2289,7 +2289,7 @@ class TreeTests(unittest.TestCase):
     def test_itervalues_filled_no_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.itervalues()), range(26))
+        self.assertEqual(list(tree.itervalues()), list(range(26)))
 
     def test_itervalues_filled_w_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
