@@ -55,22 +55,30 @@ class LengthTestCase(unittest.TestCase):
 
     def test_change_overflows_to_long(self):
         import sys
-        length = self._makeOne(sys.maxint)
-        self.assertEqual(length(), sys.maxint)
-        self.assert_(type(length()) is int)
-        length.change(+1)
-        self.assertEqual(length(), sys.maxint + 1)
-        self.assert_(type(length()) is long)
+        try:
+            length = self._makeOne(sys.maxint)
+        except AttributeError: #pragma NO COVER Py3k
+            return
+        else: #pragma NO COVER Py2
+            self.assertEqual(length(), sys.maxint)
+            self.assert_(type(length()) is int)
+            length.change(+1)
+            self.assertEqual(length(), sys.maxint + 1)
+            self.assert_(type(length()) is long)
 
     def test_change_underflows_to_long(self):
         import sys
-        minint = (-sys.maxint) - 1
-        length = self._makeOne(minint)
-        self.assertEqual(length(), minint)
-        self.assert_(type(length()) is int)
-        length.change(-1)
-        self.assertEqual(length(), minint - 1)
-        self.assert_(type(length()) is long)
+        try:
+            minint = (-sys.maxint) - 1
+        except AttributeError: #pragma NO COVER Py3k
+            return
+        else: #pragma NO COVER Py2
+            length = self._makeOne(minint)
+            self.assertEqual(length(), minint)
+            self.assert_(type(length()) is int)
+            length.change(-1)
+            self.assertEqual(length(), minint - 1)
+            self.assert_(type(length()) is long)
 
     def test___call___no_args(self):
         length = self._makeOne(42)

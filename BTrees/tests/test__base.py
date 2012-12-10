@@ -2824,7 +2824,10 @@ class Test_helpers(unittest.TestCase):
         import sys
         from BTrees._base import to_int
         faux_self = object()
-        self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
+        try:
+            self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_to_int_w_invalid(self):
         from BTrees._base import to_int
@@ -2863,7 +2866,10 @@ class Test_helpers(unittest.TestCase):
         import sys
         from BTrees._base import to_long
         faux_self = object()
-        self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+        try:
+            self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_to_long_w_invalid(self):
         from BTrees._base import to_long
