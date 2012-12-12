@@ -748,6 +748,7 @@ class _Tree(_Base):
 
     def __nonzero__(self):
         return bool(self._data)
+    __bool__ = __nonzero__ #Py3k rename
 
     def __len__(self):
         l = 0
