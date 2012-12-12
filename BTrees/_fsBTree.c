@@ -40,14 +40,14 @@ typedef unsigned char char6[6];
 #define KEYMACROS_H "$Id$\n"
 #define KEY_TYPE char2
 #undef KEY_TYPE_IS_PYOBJECT
-#define KEY_CHECK(K) (PyString_Check(K) && PyString_GET_SIZE(K)==2)
+#define KEY_CHECK(K) (PyBytes_Check(K) && PyBytes_GET_SIZE(K)==2)
 #define TEST_KEY_SET_OR(V, K, T) if ( ( (V) = ((*(K) < *(T) || (*(K) == *(T) && (K)[1] < (T)[1])) ? -1 : ((*(K) == *(T) && (K)[1] == (T)[1]) ? 0 : 1)) ), 0 )
 #define DECREF_KEY(KEY)
 #define INCREF_KEY(k)
 #define COPY_KEY(KEY, E) (*(KEY)=*(E), (KEY)[1]=(E)[1])
-#define COPY_KEY_TO_OBJECT(O, K) O=PyString_FromStringAndSize((const char*)K,2)
+#define COPY_KEY_TO_OBJECT(O, K) O=PyBytes_FromStringAndSize((const char*)K,2)
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS) \
-  if (KEY_CHECK(ARG)) memcpy(TARGET, PyString_AS_STRING(ARG), 2); else { \
+  if (KEY_CHECK(ARG)) memcpy(TARGET, PyBytes_AS_STRING(ARG), 2); else { \
       PyErr_SetString(PyExc_TypeError, "expected two-character string key"); \
       (STATUS)=0; }
 
@@ -59,10 +59,10 @@ typedef unsigned char char6[6];
 #define DECREF_VALUE(k)
 #define INCREF_VALUE(k)
 #define COPY_VALUE(V, E) (memcpy(V, E, 6))
-#define COPY_VALUE_TO_OBJECT(O, K) O=PyString_FromStringAndSize((const char*)K,6)
+#define COPY_VALUE_TO_OBJECT(O, K) O=PyBytes_FromStringAndSize((const char*)K,6)
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
-  if ((PyString_Check(ARG) && PyString_GET_SIZE(ARG)==6)) \
-      memcpy(TARGET, PyString_AS_STRING(ARG), 6); else { \
+  if ((PyBytes_Check(ARG) && PyBytes_GET_SIZE(ARG)==6)) \
+      memcpy(TARGET, PyBytes_AS_STRING(ARG), 6); else { \
       PyErr_SetString(PyExc_TypeError, "expected six-character string key"); \
       (STATUS)=0; }
 
@@ -93,11 +93,11 @@ bucket_toString(PyObject *oself)
 
   len = self->len;
 
-  items = PyString_FromStringAndSize(NULL, len*8);
+  items = PyBytes_FromStringAndSize(NULL, len*8);
   if (items == NULL)
     goto err;
-  memcpy(PyString_AS_STRING(items),       self->keys,   len*2);
-  memcpy(PyString_AS_STRING(items)+len*2, self->values, len*6);
+  memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
+  memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
   
   PER_UNUSE(self);
   return items;
@@ -116,7 +116,7 @@ bucket_fromString(PyObject *oself, PyObject *state)
   KEY_TYPE *keys;
   VALUE_TYPE *values;
 
-  len = PyString_Size(state);
+  len = PyBytes_Size(state);
   if (len < 0)
     return NULL;
   
@@ -144,8 +144,8 @@ bucket_fromString(PyObject *oself, PyObject *state)
     self->size = len;
   }
 
-  memcpy(self->keys,   PyString_AS_STRING(state),       len*2);
-  memcpy(self->values, PyString_AS_STRING(state)+len*2, len*6);
+  memcpy(self->keys,   PyBytes_AS_STRING(state),       len*2);
+  memcpy(self->values, PyBytes_AS_STRING(state)+len*2, len*6);
 
   self->len = len;
 
