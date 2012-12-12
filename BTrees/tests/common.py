@@ -547,7 +547,7 @@ class MappingBase(Base):
     def testIterators(self):
         t = self._makeOne()
 
-        for keys in [], [-2], [1, 4], range(-170, 2000, 6):
+        for keys in [], [-2], [1, 4], list(range(-170, 2000, 6)):
             t.clear()
             for k in keys:
                 t[k] = -3 * k
@@ -576,7 +576,7 @@ class MappingBase(Base):
     def testRangedIterators(self):
         t = self._makeOne()
 
-        for keys in [], [-2], [1, 4], range(-170, 2000, 13):
+        for keys in [], [-2], [1, 4], list(range(-170, 2000, 13)):
             t.clear()
             values = []
             for k in keys:
@@ -831,7 +831,7 @@ class BTreeTests(MappingBase):
         import random
         t = self._makeOne()
         added = {}
-        r = range(100)
+        r = list(range(100))
         for x in r:
             k = random.choice(r)
             if k not in added:
@@ -846,7 +846,7 @@ class BTreeTests(MappingBase):
         import random
         t = self._makeOne()
         added = {}
-        r = range(100)
+        r = list(range(100))
         for x in r:
             k = random.choice(r)
             t[k] = x
@@ -859,7 +859,7 @@ class BTreeTests(MappingBase):
     def testRandomDeletes(self):
         import random
         t = self._makeOne()
-        r = range(1000)
+        r = list(range(1000))
         added = []
         for x in r:
             k = random.choice(r)
@@ -884,7 +884,7 @@ class BTreeTests(MappingBase):
     def testTargetedDeletes(self):
         import random
         t = self._makeOne()
-        r = range(1000)
+        r = list(range(1000))
         for x in r:
             k = random.choice(r)
             t[k] = x
@@ -898,7 +898,7 @@ class BTreeTests(MappingBase):
 
     def testPathologicalRightBranching(self):
         t = self._makeOne()
-        r = range(1000)
+        r = list(range(1000))
         for x in r:
             t[x] = 1
         self.assertEqual(realseq(t.keys()) , r, realseq(t.keys()))
@@ -909,7 +909,7 @@ class BTreeTests(MappingBase):
 
     def testPathologicalLeftBranching(self):
         t = self._makeOne()
-        r = range(1000)
+        r = list(range(1000))
         revr = list(reversed(r[:]))
         for x in revr:
             t[x] = 1
