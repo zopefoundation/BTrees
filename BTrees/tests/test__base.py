@@ -2634,6 +2634,17 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         rhs = self._makeSet('a', 'b', 'c')
         self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
 
+    def test_lhs_mapping_wo_MERGE_DEFAULT_rhs_set(self):
+        class _MappingWoDefault(dict):
+            def MERGE(self, v1, w1, v2, w2):
+                return (v1 * w1) + (v2 * w2)
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoDefault({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoDefault
+        rhs = self._makeSet('a', 'b', 'c')
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
     def test_lhs_set_wo_MERGE_DEFAULT_rhs_mapping(self):
         lhs = self._makeSet('a', 'd')
         lhs.MERGE = lambda v1, w1, v2, w2: (v1 * w1) + (v2 * w2)
