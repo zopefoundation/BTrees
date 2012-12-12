@@ -203,6 +203,15 @@ class _SetIteration(object):
 
         return self
 
+def _no_default_comparison(key):
+    # Enforce test that key has non-default comparison.
+    lt = getattr(key, '__lt__', None)
+    if lt is not None:
+        if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
+            lt = None
+    if (lt is None and
+        getattr(key, '__cmp__', None) is None):
+        raise TypeError("Can't use default __cmp__")
 
 class Bucket(_BucketBase):
 
@@ -240,10 +249,7 @@ class Bucket(_BucketBase):
             raise TypeError('items must be a sequence of 2-tuples')
 
     def __setitem__(self, key, value):
-        # Enforce test that key has non-default comparison.
-        if ( getattr(key, '__lt__', None) is None and
-            getattr(key, '__cmp__', None) is None):
-            raise TypeError("Can't use default __cmp__")
+        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -730,10 +736,7 @@ class _Tree(_Base):
             set(*i)
 
     def __setitem__(self, key, value):
-        # Enforce test that key has non-default comparison.
-        if ( getattr(key, '__lt__', None) is None and
-            getattr(key, '__cmp__', None) is None):
-            raise TypeError("Can't use default __cmp__")
+        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
