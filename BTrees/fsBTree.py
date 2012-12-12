@@ -46,9 +46,6 @@ class fsBucketPy(Bucket):
     _to_key = _to_key
     _to_value = _to_value
 
-    def MERGE_WEIGHT(self, value, weight):
-        return value
-
     def toString(self):
         return ''.join(self._keys) + ''.join(self._values)
 

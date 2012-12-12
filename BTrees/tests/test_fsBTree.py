@@ -23,10 +23,6 @@ class fsBucketTests(unittest.TestCase):
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
 
-    def test_MERGE_WEIGHT(self):
-        bucket = self._makeOne()
-        self.assertEqual(bucket.MERGE_WEIGHT(42, 17), 42)
-
     def test_toString(self):
         bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
         self.assertEqual(bucket.toString(),
