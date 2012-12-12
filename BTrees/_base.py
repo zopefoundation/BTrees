@@ -1272,6 +1272,18 @@ def intersection(set_type, o1, o2):
             i2.advance()
     return result
 
+def _prepMergeIterators(o1, o2):
+    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
+    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
+    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    if MERGE_DEFAULT is None:
+        if i1.useValues:
+            if (not i2.useValues):
+                raise TypeError("invalid set operation")
+        else:
+            raise TypeError("invalid set operation")
+    return i1, i2
+
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
@@ -1279,9 +1291,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         return w2, o2
     if o2 is None:
         return w1, o1
-    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
-    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
-    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    i1, i2 = _prepMergeIterators(o1, o2)
     MERGE = getattr(o1, 'MERGE', None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
@@ -1289,12 +1299,6 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if (not i1.useValues) and i2.useValues:
         i1, i2 = i2, i1
         w1, w2 = w2, w1
-    if MERGE_DEFAULT is None:
-        if i1.useValues:
-            if (not i2.useValues):
-                raise TypeError("invalid set operation")
-        else:
-            raise TypeError("invalid set operation")
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
@@ -1335,22 +1339,13 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         return w2, o2
     if o2 is None:
         return w1, o1
-    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
-    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
-    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    i1, i2 = _prepMergeIterators(o1, o2)
     MERGE = getattr(o1, 'MERGE', None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
-    MERGE_WEIGHT = getattr(o1, 'MERGE_WEIGHT')
     if (not i1.useValues) and i2.useValues:
         i1, i2 = i2, i1
         w1, w2 = w2, w1
-    if MERGE_DEFAULT is None:
-        if i1.useValues:
-            if (not i2.useValues):
-                raise TypeError("invalid set operation")
-        else:
-            raise TypeError("invalid set operation")
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
