@@ -101,16 +101,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, LLSetPy)
 
 try:
     from _LLBTree import LLBucket
-    from _LLBTree import LLSet
-    from _LLBTree import LLBTree
-    from _LLBTree import LLTreeSet
-    from _LLBTree import difference
-    from _LLBTree import union
-    from _LLBTree import intersection
-    from _LLBTree import multiunion
-    from _LLBTree import weightedUnion
-    from _LLBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+except ImportError: #pragma NO COVER w/ C extensions
     LLBucket = LLBucketPy
     LLSet = LLSetPy
     LLBTree = LLBTreePy
@@ -121,6 +112,16 @@ except ImportError: #pragma NO COVER
     multiunion = multiunionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from _LLBTree import LLSet
+    from _LLBTree import LLBTree
+    from _LLBTree import LLTreeSet
+    from _LLBTree import difference
+    from _LLBTree import union
+    from _LLBTree import intersection
+    from _LLBTree import multiunion
+    from _LLBTree import weightedUnion
+    from _LLBTree import weightedIntersection
 
 Bucket = LLBucket
 Set = LLSet

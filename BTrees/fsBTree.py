@@ -17,7 +17,7 @@
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'fsBucket', 'fsSet', 'fsBTree', 'fsTreeSet',
-           'union', 'intersection', 'difference', 'multiunion',
+           'union', 'intersection', 'difference',
           )
 
 
@@ -30,7 +30,6 @@ from ._base import Tree as BTree
 from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
-from ._base import multiunion as _multiunion
 from ._base import set_operation as _set_operation
 from ._base import to_str as _to_str
 from ._base import union as _union
@@ -104,18 +103,10 @@ fsTreeSetPy._set_type = fsTreeSetPy._bucket_type = fsSetPy
 differencePy = _set_operation(_difference, fsSetPy)
 unionPy = _set_operation(_union, fsSetPy)
 intersectionPy = _set_operation(_intersection, fsSetPy)
-multiunionPy = _set_operation(_multiunion, fsSetPy)
 
 try:
     from _fsBTree import fsBucket
-    from _fsBTree import fsSet
-    from _fsBTree import fsBTree
-    from _fsBTree import fsTreeSet
-    from _fsBTree import difference
-    from _fsBTree import union
-    from _fsBTree import intersection
-    from _fsBTree import multiunion
-except ImportError: #pragma NO COVER
+except ImportError: #pragma NO COVER w/ C extensions
     fsBucket = fsBucketPy
     fsSet = fsSetPy
     fsBTree = fsBTreePy
@@ -123,7 +114,13 @@ except ImportError: #pragma NO COVER
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
-    multiunion = multiunionPy
+else: #pragma NO COVER w/o C extensions
+    from _fsBTree import fsSet
+    from _fsBTree import fsBTree
+    from _fsBTree import fsTreeSet
+    from _fsBTree import difference
+    from _fsBTree import union
+    from _fsBTree import intersection
 
 Bucket = fsBucket
 Set = fsSet

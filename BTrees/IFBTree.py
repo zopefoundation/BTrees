@@ -100,16 +100,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, IFSetPy)
 
 try:
     from _IFBTree import IFBucket
-    from _IFBTree import IFSet
-    from _IFBTree import IFBTree
-    from _IFBTree import IFTreeSet
-    from _IFBTree import difference
-    from _IFBTree import union
-    from _IFBTree import intersection
-    from _IFBTree import multiunion
-    from _OIBTree import weightedUnion
-    from _OIBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+except ImportError: #pragma NO COVER w/ C extensions
     IFBucket = IFBucketPy
     IFSet = IFSetPy
     IFBTree = IFBTreePy
@@ -120,6 +111,16 @@ except ImportError: #pragma NO COVER
     multiunion = multiunionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from _IFBTree import IFSet
+    from _IFBTree import IFBTree
+    from _IFBTree import IFTreeSet
+    from _IFBTree import difference
+    from _IFBTree import union
+    from _IFBTree import intersection
+    from _IFBTree import multiunion
+    from _IFBTree import weightedUnion
+    from _IFBTree import weightedIntersection
 
 Bucket = IFBucket
 Set = IFSet

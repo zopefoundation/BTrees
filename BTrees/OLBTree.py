@@ -99,15 +99,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, OLSetPy)
 
 try:
     from _OLBTree import OLBucket
-    from _OLBTree import OLSet
-    from _OLBTree import OLBTree
-    from _OLBTree import OLTreeSet
-    from _OLBTree import difference
-    from _OLBTree import union
-    from _OLBTree import intersection
-    from _OLBTree import weightedUnion
-    from _OLBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+except ImportError: #pragma NO COVER w/ C extensions
     OLBucket = OLBucketPy
     OLSet = OLSetPy
     OLBTree = OLBTreePy
@@ -117,6 +109,15 @@ except ImportError: #pragma NO COVER
     intersection = intersectionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from _OLBTree import OLSet
+    from _OLBTree import OLBTree
+    from _OLBTree import OLTreeSet
+    from _OLBTree import difference
+    from _OLBTree import union
+    from _OLBTree import intersection
+    from _OLBTree import weightedUnion
+    from _OLBTree import weightedIntersection
 
 Bucket = OLBucket
 Set = OLSet
