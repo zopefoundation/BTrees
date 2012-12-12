@@ -38,7 +38,7 @@ class SubclassTest(unittest.TestCase):
             t[i] = i
 
         state = t.__getstate__()
-        self.assert_(state[0][0].__class__ is B)
+        self.assertTrue(state[0][0].__class__ is B)
 
 def test_suite():
     return unittest.makeSuite(SubclassTest)

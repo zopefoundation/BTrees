@@ -71,10 +71,10 @@ class LengthTestCase(unittest.TestCase):
             return
         else: #pragma NO COVER Py2
             self.assertEqual(length(), sys.maxint)
-            self.assert_(type(length()) is int)
+            self.assertTrue(type(length()) is int)
             length.change(+1)
             self.assertEqual(length(), sys.maxint + 1)
-            self.assert_(type(length()) is long)
+            self.assertTrue(type(length()) is long)
 
     def test_change_underflows_to_long(self):
         import sys
@@ -85,10 +85,10 @@ class LengthTestCase(unittest.TestCase):
         else: #pragma NO COVER Py2
             length = self._makeOne(minint)
             self.assertEqual(length(), minint)
-            self.assert_(type(length()) is int)
+            self.assertTrue(type(length()) is int)
             length.change(-1)
             self.assertEqual(length(), minint - 1)
-            self.assert_(type(length()) is long)
+            self.assertTrue(type(length()) is long)
 
     def test___call___no_args(self):
         length = self._makeOne(42)

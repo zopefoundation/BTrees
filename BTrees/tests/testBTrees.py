@@ -121,7 +121,7 @@ class DegenerateBTree(unittest.TestCase):
         self.assertEqual(t.has_key(7), 5)
         self.assertEqual(t.has_key(11), 5)
         for i in 0, 2, 4, 6, 8, 9, 10, 12:
-            self.assert_(i not in t)
+            self.assertTrue(i not in t)
 
     def _checkRanges(self, tree, keys):
         self.assertEqual(len(tree), len(keys))
@@ -129,7 +129,7 @@ class DegenerateBTree(unittest.TestCase):
         sorted_keys.sort()
         self.assertEqual(list(tree.keys()), sorted_keys)
         for k in keys:
-            self.assert_(k in tree)
+            self.assertTrue(k in tree)
         if keys:
             lokey = sorted_keys[0]
             hikey = sorted_keys[-1]
@@ -430,22 +430,22 @@ class FamilyTest(unittest.TestCase):
         import BTrees
         from BTrees.IOBTree import IOTreeSet
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family32)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family32.IO, BTrees.IOBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family32.OI, BTrees.OIBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family32.II, BTrees.IIBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family32.IF, BTrees.IFBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family32.OO, BTrees.OOBTree)
         s = IOTreeSet()
         s.insert(BTrees.family32.maxint)
-        self.assert_(BTrees.family32.maxint in s)
+        self.assertTrue(BTrees.family32.maxint in s)
         s = IOTreeSet()
         s.insert(BTrees.family32.minint)
-        self.assert_(BTrees.family32.minint in s)
+        self.assertTrue(BTrees.family32.minint in s)
         s = IOTreeSet()
         # this next bit illustrates an, um, "interesting feature".  If
         # the characteristics change to match the 64 bit version, please
@@ -460,22 +460,22 @@ class FamilyTest(unittest.TestCase):
         import BTrees
         from BTrees.LOBTree import LOTreeSet
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family64)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family64.IO, BTrees.LOBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family64.OI, BTrees.OLBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family64.II, BTrees.LLBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family64.IF, BTrees.LFBTree)
-        self.assertEquals(
+        self.assertEqual(
             BTrees.family64.OO, BTrees.OOBTree)
         s = LOTreeSet()
         s.insert(BTrees.family64.maxint)
-        self.assert_(BTrees.family64.maxint in s)
+        self.assertTrue(BTrees.family64.maxint in s)
         s = LOTreeSet()
         s.insert(BTrees.family64.minint)
-        self.assert_(BTrees.family64.minint in s)
+        self.assertTrue(BTrees.family64.minint in s)
         s = LOTreeSet()
         # XXX why oh why do we expect ValueError here, but TypeError in test32?
         self.assertRaises(ValueError, s.insert, BTrees.family64.maxint + 1)

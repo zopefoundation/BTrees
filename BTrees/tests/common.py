@@ -181,17 +181,17 @@ class Base(object):
 
         # Modifying a thing
         remove(100)
-        self.assert_(t in read)
+        self.assertTrue(t in read)
         del read[:]
         add(100)
-        self.assert_(t in read)
+        self.assertTrue(t in read)
         del read[:]
 
         transaction.abort()
         conn.cacheMinimize()
         list(t)
-        self.assert_(100 in t)
-        self.assert_(not read)
+        self.assertTrue(100 in t)
+        self.assertTrue(not read)
 
 
 class MappingBase(Base):
@@ -214,7 +214,7 @@ class MappingBase(Base):
         # But since the test is also run for btrees, skip the length
         # check if the repr starts with '<'
         if not r.startswith('<'):
-            self.assert_(len(r) > 10000)
+            self.assertTrue(len(r) > 10000)
 
     def testGetItemFails(self):
         self.assertRaises(KeyError, self._getitemfail)
@@ -256,10 +256,10 @@ class MappingBase(Base):
         t = self._makeOne()
         t[1] = 1
         if PY2:
-            self.assert_(t.has_key(1))
-        self.assert_(1 in t)
-        self.assert_(0 not in t)
-        self.assert_(2 not in t)
+            self.assertTrue(t.has_key(1))
+        self.assertTrue(1 in t)
+        self.assertTrue(0 not in t)
+        self.assertTrue(2 not in t)
 
     def testValuesWorks(self):
         t = self._makeOne()
@@ -560,7 +560,7 @@ class MappingBase(Base):
             self.assertEqual(x, keys)
 
             it = iter(t)
-            self.assert_(it is iter(it))
+            self.assertTrue(it is iter(it))
             x = []
             try:
                 while 1:
@@ -695,7 +695,7 @@ class MappingBase(Base):
 
         self.assertEqual(t.setdefault(1, 2), 2)
         # That should also have associated 1 with 2 in the tree.
-        self.assert_(1 in t)
+        self.assertTrue(1 in t)
         self.assertEqual(t[1], 2)
         # And trying to change it again should have no effect.
         self.assertEqual(t.setdefault(1, 666), 2)
@@ -869,7 +869,7 @@ class BTreeTests(MappingBase):
         for x in r:
             k = random.choice(r)
             if k in t:
-                self.assert_(k in t)
+                self.assertTrue(k in t)
                 del t[k]
                 deleted.append(k)
                 if k in t:
@@ -998,7 +998,7 @@ class BTreeTests(MappingBase):
         for i in range(200):
             t[i] = i
         items, dummy = t.__getstate__()
-        self.assert_(len(items) > 2)   # at least two buckets and a key
+        self.assertTrue(len(items) > 2)   # at least two buckets and a key
         # All values in the first bucket are < firstkey.  All in the
         # second bucket are >= firstkey, and firstkey is the first key in
         # the second bucket.
@@ -1082,9 +1082,9 @@ class NormalSetTests(Base):
         t = self._makeOne()
         t.insert(1)
         if PY2:
-            self.assert_(t.has_key(1))
-        self.assert_(1 in t)
-        self.assert_(2 not in t)
+            self.assertTrue(t.has_key(1))
+        self.assertTrue(1 in t)
+        self.assertTrue(2 not in t)
 
     def testBigInsert(self):
         from .._compat import PY2
@@ -1095,8 +1095,8 @@ class NormalSetTests(Base):
             t.insert(x)
         for x in r:
             if PY2:
-                self.assert_(t.has_key(x))
-            self.assert_(x in t)
+                self.assertTrue(t.has_key(x))
+            self.assertTrue(x in t)
 
     def testRemoveSucceeds(self):
         from .._compat import xrange
@@ -1115,8 +1115,8 @@ class NormalSetTests(Base):
         from .._compat import PY2
         t = self._makeOne()
         if PY2:
-            self.assert_(not t.has_key(1))
-        self.assert_(1 not in t)
+            self.assertTrue(not t.has_key(1))
+        self.assertTrue(1 not in t)
 
     def testKeys(self):
         from .._compat import xrange
@@ -1153,10 +1153,10 @@ class NormalSetTests(Base):
         self.assertEqual(t.minKey() , 1)
         self.assertEqual(t.minKey(3) , 3)
         self.assertEqual(t.minKey(9) , 10)
-        self.assert_(t.minKey() in t)
-        self.assert_(t.minKey()-1 not in t)
-        self.assert_(t.maxKey() in t)
-        self.assert_(t.maxKey()+1 not in t)
+        self.assertTrue(t.minKey() in t)
+        self.assertTrue(t.minKey()-1 not in t)
+        self.assertTrue(t.maxKey() in t)
+        self.assertTrue(t.maxKey()+1 not in t)
 
         try:
             t.maxKey(t.minKey() - 1)
@@ -1254,7 +1254,7 @@ class NormalSetTests(Base):
             self.assertEqual(x, keys)
 
             it = iter(t)
-            self.assert_(it is iter(it))
+            self.assertTrue(it is iter(it))
             x = []
             try:
                 while 1:
@@ -1320,10 +1320,10 @@ class InternalKeysMappingTest(object):
         key = data[1]
         del tree[key]
         data = tree.__getstate__()[0]
-        self.assert_(data[1] != key)
+        self.assertTrue(data[1] != key)
 
         # The tree should have changed:
-        self.assert_(tree._p_changed)
+        self.assertTrue(tree._p_changed)
 
         # Grow the btree until we have multiple levels
         while 1:
@@ -1338,7 +1338,7 @@ class InternalKeysMappingTest(object):
         key = data[1]
         del tree[key]
         data = tree.__getstate__()[0]
-        self.assert_(data[1] != key)
+        self.assertTrue(data[1] != key)
 
         transaction.abort()
         db.close()
@@ -1360,7 +1360,7 @@ class ModuleTest(object):
         for name in ('Bucket', 'BTree', 'Set', 'TreeSet'):
             klass = getattr(self._getModule(), name)
             self.assertEqual(klass.__module__, self._getModule().__name__)
-            self.assert_(klass is getattr(self._getModule(),
+            self.assertTrue(klass is getattr(self._getModule(),
                                           self.prefix + name))
 
     def testModuleProvides(self):
@@ -1370,12 +1370,12 @@ class ModuleTest(object):
     def testFamily(self):
         import BTrees
         if self.prefix == 'OO':
-            self.assert_(
+            self.assertTrue(
                 getattr(self._getModule(), 'family', self) is self)
         elif 'L' in self.prefix:
-            self.assert_(self._getModule().family is BTrees.family64)
+            self.assertTrue(self._getModule().family is BTrees.family64)
         elif 'I' in self.prefix:
-            self.assert_(self._getModule().family is BTrees.family32)
+            self.assertTrue(self._getModule().family is BTrees.family32)
 
 
 class TypeTest(object):
@@ -1569,39 +1569,39 @@ class SetResult(object):
     def testNone(self):
         for op in self.union, self.intersection, self.difference:
             C = op(None, None)
-            self.assert_(C is None)
+            self.assertTrue(C is None)
 
         for op in self.union, self.intersection, self.difference:
             for A in self.As:
                 C = op(A, None)
-                self.assert_(C is A)
+                self.assertTrue(C is A)
 
                 C = op(None, A)
                 if op == self.difference:
-                    self.assert_(C is None)
+                    self.assertTrue(C is None)
                 else:
-                    self.assert_(C is A)
+                    self.assertTrue(C is A)
 
     def testEmptyUnion(self):
         for A in self.As:
             for E in self.emptys:
                 C = self.union(A, E)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self.Akeys)
 
                 C = self.union(E, A)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self.Akeys)
 
     def testEmptyIntersection(self):
         for A in self.As:
             for E in self.emptys:
                 C = self.intersection(A, E)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), [])
 
                 C = self.intersection(E, A)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), [])
 
     def testEmptyDifference(self):
@@ -1624,7 +1624,7 @@ class SetResult(object):
         for A in inputs:
             for B in inputs:
                 C = self.union(A, B)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self._union(A, B))
 
     def testIntersection(self):
@@ -1632,7 +1632,7 @@ class SetResult(object):
         for A in inputs:
             for B in inputs:
                 C = self.intersection(A, B)
-                self.assert_(not hasattr(C, "values"))
+                self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self._intersection(A, B))
 
     def testDifference(self):
@@ -1698,33 +1698,33 @@ class Weighted(object):
     def testBothNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             w, C = op(None, None)
-            self.assert_(C is None)
+            self.assertTrue(C is None)
             self.assertEqual(w, 0)
 
             w, C = op(None, None, 42, 666)
-            self.assert_(C is None)
+            self.assertTrue(C is None)
             self.assertEqual(w, 0)
 
     def testLeftNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             for A in self.As + self.emptys:
                 w, C = op(None, A)
-                self.assert_(C is A)
+                self.assertTrue(C is A)
                 self.assertEqual(w, 1)
 
                 w, C = op(None, A, 42, 666)
-                self.assert_(C is A)
+                self.assertTrue(C is A)
                 self.assertEqual(w, 666)
 
     def testRightNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             for A in self.As + self.emptys:
                 w, C = op(A, None)
-                self.assert_(C is A)
+                self.assertTrue(C is A)
                 self.assertEqual(w, 1)
 
                 w, C = op(A, None, 42, 666)
-                self.assert_(C is A)
+                self.assertTrue(C is A)
                 self.assertEqual(w, 42)
 
     # If obj is a set, return a bucket with values all 1; else return obj.

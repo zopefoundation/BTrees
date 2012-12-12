@@ -332,11 +332,11 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state1 = bucket.__getstate__()
         state2 = bucket.__getstate__()
         state3 = bucket.__getstate__()
-        self.assert_(state2 is not state1 and
-                     state2 is not state3 and
-                     state3 is not state1)
-        self.assert_(state2 == state1 and
-                     state3 == state1)
+        self.assertTrue(state2 is not state1 and
+                        state2 is not state3 and
+                        state3 is not state1)
+        self.assertTrue(state2 == state1 and
+                        state3 == state1)
         self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
                           state1, state2, state3)
         # When an empty BTree resolves conflicts, it computes the
