@@ -346,10 +346,10 @@ class MappingBase(Base):
             i += 1
 
         items = list(t.items(min=12, max=20))
-        self.assertEqual(items, zip(range(12, 21), range(24, 43, 2)))
+        self.assertEqual(items, list(zip(range(12, 21), range(24, 43, 2))))
 
         items = list(t.iteritems(min=12, max=20))
-        self.assertEqual(items, zip(range(12, 21), range(24, 43, 2)))
+        self.assertEqual(items, list(zip(range(12, 21), range(24, 43, 2))))
 
     def testItemsNegativeIndex(self):
         t = self._makeOne()
@@ -542,7 +542,7 @@ class MappingBase(Base):
             t[i] = 1
         tslice = t.items()[20:80]
         self.assertEqual(len(tslice), 60)
-        self.assertEqual(list(tslice), zip(range(20, 80), [1]*60))
+        self.assertEqual(list(tslice), list(zip(range(20, 80), [1]*60)))
 
     def testIterators(self):
         t = self._makeOne()
@@ -583,7 +583,7 @@ class MappingBase(Base):
                 value = -3 * k
                 t[k] = value
                 values.append(value)
-            items = zip(keys, values)
+            items = list(zip(keys, values))
 
             self.assertEqual(list(t.iterkeys()), keys)
             self.assertEqual(list(t.itervalues()), values)
@@ -604,7 +604,7 @@ class MappingBase(Base):
                     got = t.itervalues(lo)
                     self.assertEqual(goodvalues, list(got))
 
-                    gooditems = zip(goodkeys, goodvalues)
+                    gooditems = list(zip(goodkeys, goodvalues))
                     got = t.iteritems(lo)
                     self.assertEqual(gooditems, list(got))
 
@@ -618,7 +618,7 @@ class MappingBase(Base):
                             got = t.itervalues(lo, max=hi)
                             self.assertEqual(goodvalues, list(got))
 
-                            gooditems = zip(goodkeys, goodvalues)
+                            gooditems = list(zip(goodkeys, goodvalues))
                             got = t.iteritems(max=hi, min=lo)
                             self.assertEqual(gooditems, list(got))
 
