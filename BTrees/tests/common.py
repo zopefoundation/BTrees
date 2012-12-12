@@ -1221,7 +1221,7 @@ class NormalSetTests(Base):
             self.assertEqual(len(t), n)
 
             kslice = t.keys()
-            self.assertEqual(len(kslice), n)
+            self.assertEqual(len(list(kslice)), n)
 
             # Test whole-structure slices.
             x = kslice[:]
@@ -1230,9 +1230,9 @@ class NormalSetTests(Base):
             for lo in range(-2*n, 2*n+1):
                 # Test one-sided slices.
                 x = kslice[:lo]
-                self.assertEqual(list(x), keys[:lo])
+                self.assertEqual(list(x), list(keys[:lo]))
                 x = kslice[lo:]
-                self.assertEqual(list(x), keys[lo:])
+                self.assertEqual(list(x), list(keys[lo:]))
 
                 for hi in range(-2*n, 2*n+1):
                     # Test two-sided slices.
