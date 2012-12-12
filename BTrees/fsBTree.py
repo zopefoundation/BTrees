@@ -73,8 +73,6 @@ class fsBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
-    def MERGE_WEIGHT(self, value, weight):
-        return value
 
 
 class fsTreeSetPy(TreeSet):

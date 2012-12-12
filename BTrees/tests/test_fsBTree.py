@@ -14,11 +14,7 @@
 import unittest
 
 
-class fsBucketTests(unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.fsBTree import fsBucket
-        return fsBucket
+class fsBucketBase(object):
 
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
@@ -43,21 +39,22 @@ class fsBucketTests(unittest.TestCase):
         self.assertRaises(ValueError, bucket.fromString, 'xxx')
 
 
-class fsBTreeTests(unittest.TestCase):
+class fsBucketTests(unittest.TestCase, fsBucketBase):
 
     def _getTargetClass(self):
-        from BTrees.fsBTree import fsBTree
-        return fsBTree
+        from BTrees.fsBTree import fsBucket
+        return fsBucket
 
-    def _makeOne(self, *args, **kw):
-        return self._getTargetClass()(*args, **kw)
 
-    def test_MERGE_WEIGHT(self):
-        bucket = self._makeOne()
-        self.assertEqual(bucket.MERGE_WEIGHT(42, 17), 42)
+class fsBucketPyTests(unittest.TestCase, fsBucketBase):
+
+    def _getTargetClass(self):
+        from BTrees.fsBTree import fsBucketPy
+        return fsBucketPy
 
 
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(fsBucketTests),
+        unittest.makeSuite(fsBucketPyTests),
     ))
