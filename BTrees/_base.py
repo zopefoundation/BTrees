@@ -1278,14 +1278,10 @@ def intersection(set_type, o1, o2):
 
 def _prepMergeIterators(o1, o2):
     MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
+    if MERGE_DEFAULT is None:
+        raise TypeError("invalid set operation")
     i1 = _SetIteration(o1, True, MERGE_DEFAULT)
     i2 = _SetIteration(o2, True, MERGE_DEFAULT)
-    if MERGE_DEFAULT is None:
-        if i1.useValues:
-            if (not i2.useValues):
-                raise TypeError("invalid set operation")
-        else:
-            raise TypeError("invalid set operation")
     return i1, i2
 
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):

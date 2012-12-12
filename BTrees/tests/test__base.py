@@ -2645,6 +2645,17 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         rhs = self._makeSet('a', 'b', 'c')
         self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
 
+    def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
+        class _MappingWoMerge(dict):
+            def MERGE_DEFAULT(self):
+                return 1
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoMerge({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoMerge
+        rhs = self._makeMapping({'a': 1, 'b': 2, 'c': 3})
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
     def test_lhs_set_wo_MERGE_DEFAULT_rhs_mapping(self):
         lhs = self._makeSet('a', 'd')
         lhs.MERGE = lambda v1, w1, v2, w2: (v1 * w1) + (v2 * w2)
@@ -2734,6 +2745,17 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
     def test_both_mappings_but_no_merge(self):
         lhs = {'a': 13, 'b': 12, 'c': 11}
         rhs = {'b': 22, 'd': 14}
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
+    def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
+        class _MappingWoMerge(dict):
+            def MERGE_DEFAULT(self):
+                return 1
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoMerge({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoMerge
+        rhs = self._makeMapping({'a': 1, 'b': 2, 'c': 3})
         self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
 
     def test_lhs_set_wo_MERGE_DEFAULT_rhs_set(self):
