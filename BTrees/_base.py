@@ -21,6 +21,7 @@ from struct import error as struct_error
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
+from ._compat import PY3
 from ._compat import cmp
 from ._compat import int_types
 from ._compat import xrange
@@ -175,8 +176,11 @@ class _SetIteration(object):
             try:
                 itmeth = to_iterate.iteritems
             except AttributeError:
-                itmeth = to_iterate.__iter__
-                useValues = False
+                if PY3 and isinstance(to_iterate, dict): #pragma NO COVER Py3k
+                    itmeth = to_iterate.items().__iter__
+                else:
+                    itmeth = to_iterate.__iter__
+                    useValues = False
             else:
                 self.value = None
         else:
