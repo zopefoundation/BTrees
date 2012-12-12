@@ -53,6 +53,16 @@ class LengthTestCase(unittest.TestCase):
         length = self._makeOne()
         self.assertEqual(length._p_resolveConflict(5, 7, 9), 11)
 
+    def test_change_w_positive_delta(self):
+        length = self._makeOne()
+        length.change(3)
+        self.assertEqual(length.value, 3)
+
+    def test_change_w_negative_delta(self):
+        length = self._makeOne()
+        length.change(-3)
+        self.assertEqual(length.value, -3)
+
     def test_change_overflows_to_long(self):
         import sys
         try:
