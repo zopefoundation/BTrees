@@ -492,8 +492,8 @@ class FamilyTest(unittest.TestCase):
 
         s = pickle.dumps((family, family))
         (f1, f2) = pickle.loads(s)
-        self.failUnless(f1 is family)
-        self.failUnless(f2 is family)
+        self.assertTrue(f1 is family)
+        self.assertTrue(f2 is family)
 
         # Using a single memo across multiple pickles:
         sio = BytesIO()
@@ -503,8 +503,8 @@ class FamilyTest(unittest.TestCase):
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
-        self.failUnless(f1 is family)
-        self.failUnless(f2 is family)
+        self.assertTrue(f1 is family)
+        self.assertTrue(f2 is family)
 
         # Using separate memos for each pickle:
         sio = BytesIO()
@@ -515,8 +515,8 @@ class FamilyTest(unittest.TestCase):
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
-        self.failUnless(f1 is family)
-        self.failUnless(f2 is family)
+        self.assertTrue(f1 is family)
+        self.assertTrue(f2 is family)
 
 
 def test_suite():
