@@ -2,7 +2,7 @@
 #ifndef BTREES__COMPAT_H
 #define BTREES__COMPAT_H
 
-#if PY_MAJOR_VERSION >= 3
+#include "Python.h"
 
 #ifdef INTERN
 #undef INTERN
@@ -15,6 +15,8 @@
 #ifdef INT_CHECK
 #undef INT_CHECK
 #endif
+
+#if PY_MAJOR_VERSION >= 3
 
 #define PY3K
 
@@ -29,6 +31,7 @@
 #define COMPARE(lhs, rhs) \
     PyObject_RichCompareBool((lhs), (rhs), Py_LT) > 0 ? -1 : \
     (PyObject_RichCompareBool((lhs), (rhs), Py_EQ) > 0 ? 0 : 1)
+
 
 #else
 

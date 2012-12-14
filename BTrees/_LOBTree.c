@@ -23,12 +23,19 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "LO"
+
 #define DEFAULT_MAX_BUCKET_SIZE 60
 #define DEFAULT_MAX_BTREE_SIZE 500
-#define INITMODULE init_LOBTree
 
 #define ZODB_64BIT_INTS
 
+#include "_compat.h"
 #include "intkeymacros.h"
 #include "objectvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__LOBTree
+#else
+#define INITMODULE init_LOBTree
+#endif
 #include "BTreeModuleTemplate.c"

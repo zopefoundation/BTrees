@@ -25,10 +25,17 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "II"
-#define INITMODULE init_IIBTree
+
 #define DEFAULT_MAX_BUCKET_SIZE 120
 #define DEFAULT_MAX_BTREE_SIZE 500
 
+#include "_compat.h"
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__IIBTree
+#else
+#define INITMODULE init_IIBTree
+#endif
 #include "BTreeModuleTemplate.c"

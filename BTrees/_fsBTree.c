@@ -31,10 +31,11 @@ typedef unsigned char char6[6];
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "fs"
-#define INITMODULE init_fsBTree
+
 #define DEFAULT_MAX_BUCKET_SIZE 500
 #define DEFAULT_MAX_BTREE_SIZE 500
 
+#include "_compat.h"
 /*#include "intkeymacros.h"*/
 
 #define KEYMACROS_H "$Id$\n"
@@ -80,6 +81,11 @@ static PyObject *bucket_fromString(PyObject *self, PyObject *state);
     {"fromString", (PyCFunction) bucket_fromString,	METH_O, \
      "fromString(s) -- Set the state of the object from a string"}, \
 
+#ifdef PY3K
+#define INITMODULE PyInit__fsBTree
+#else
+#define INITMODULE init_fsBTree
+#endif
 #include "BTreeModuleTemplate.c"
 
 static PyObject *

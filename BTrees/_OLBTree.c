@@ -23,12 +23,19 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "OL"
-#define INITMODULE init_OLBTree
+
 #define DEFAULT_MAX_BUCKET_SIZE 60
 #define DEFAULT_MAX_BTREE_SIZE 250
 
 #define ZODB_64BIT_INTS
 
+#include "_compat.h"
 #include "objectkeymacros.h"
 #include "intvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__OLBTree
+#else
+#define INITMODULE init_OLBTree
+#endif
 #include "BTreeModuleTemplate.c"
