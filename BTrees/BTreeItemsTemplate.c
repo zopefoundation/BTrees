@@ -408,13 +408,60 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
                          lowbucket, lowoffset, highbucket, highoffset);
 }
 
+static PyObject *
+BTreeItems_subscript(BTreeItems *self, PyObject* key)
+{
+    Py_ssize_t len = BTreeItems_length_or_nonzero(self, 0);
+
+    if (PyIndex_Check(key))
+    {
+        Py_ssize_t i = INT_AS_LONG(key);
+        i = PyNumber_AsSsize_t(key, PyExc_IndexError);
+        if (i == -1 && PyErr_Occurred())
+            return NULL;
+        if (i < 0)
+            i += len;
+        return BTreeItems_item(self, i);
+    }
+    if (PySlice_Check(key))
+    {
+        Py_ssize_t start, stop, step, slicelength;
+
+        if (PySlice_GetIndicesEx(key, len,
+                                 &start, &stop, &step, &slicelength) < 0)
+        {
+            return NULL;
+        }
+
+        if (step != 1)
+        {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "slices must have step size of 1");
+            return NULL;
+        }
+        return BTreeItems_slice(self, start, stop);
+    }
+    PyErr_SetString(PyExc_RuntimeError,
+                    "Unknown index type:  must be int or slice");
+    return NULL;
+}
+
+/* Py3K doesn't honor sequence slicing, so implement via mapping */
+static PyMappingMethods BTreeItems_as_mapping = {
+    (lenfunc)BTreeItems_length,             /* mp_length */
+    (binaryfunc)BTreeItems_subscript,       /* mp_subscript */
+};
+
 static PySequenceMethods BTreeItems_as_sequence =
 {
     (lenfunc) BTreeItems_length,            /* sq_length */
     (binaryfunc)0,                          /* sq_concat */
     (ssizeargfunc)0,                        /* sq_repeat */
     (ssizeargfunc) BTreeItems_item,         /* sq_item */
+#ifndef PY3K
+    /* Py3K doesn't honor this slot */
     (ssizessizeargfunc) BTreeItems_slice,   /* sq_slice */
+#endif
 };
 
 /* Number Method items (just for nb_nonzero!) */
@@ -455,7 +502,7 @@ static PyTypeObject BTreeItemsType = {
     0,                                      /* tp_repr */
     &BTreeItems_as_number_for_nonzero,      /* tp_as_number */
     &BTreeItems_as_sequence,                /* tp_as_sequence */
-    0,                                      /* tp_as_mapping */
+    &BTreeItems_as_mapping,                 /* tp_as_mapping */
     (hashfunc)0,                            /* tp_hash */
     (ternaryfunc)0,                         /* tp_call */
     (reprfunc)0,                            /* tp_str */
