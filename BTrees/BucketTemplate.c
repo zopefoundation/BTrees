@@ -1610,7 +1610,7 @@ static struct PyMethodDef Bucket_methods[] = {
     {"__setstate__", (PyCFunction) bucket_setstate, METH_O,
      "__setstate__() -- Set the state of the object"},
 
-    {"keys", (PyCFunction) bucket_keys, METH_KEYWORDS,
+    {"keys", (PyCFunction) bucket_keys, METH_VARARGS | METH_KEYWORDS,
      "keys([min, max]) -- Return the keys"},
 
     {"has_key", (PyCFunction) bucket_has_key, METH_O,
@@ -1630,10 +1630,10 @@ static struct PyMethodDef Bucket_methods[] = {
      "minKey([key]) -- Find the minimum key\n\n"
      "If an argument is given, find the minimum >= the argument"},
 
-    {"values", (PyCFunction) bucket_values, METH_KEYWORDS,
+    {"values", (PyCFunction) bucket_values, METH_VARARGS | METH_KEYWORDS,
      "values([min, max]) -- Return the values"},
 
-    {"items", (PyCFunction) bucket_items, METH_KEYWORDS,
+    {"items", (PyCFunction) bucket_items, METH_VARARGS | METH_KEYWORDS,
      "items([min, max])) -- Return the items"},
 
     {"byValue", (PyCFunction) bucket_byValue, METH_O,
@@ -1654,13 +1654,14 @@ static struct PyMethodDef Bucket_methods[] = {
      "If key is not found, d is returned if given, otherwise KeyError\n"
      "is raised."},
 
-    {"iterkeys", (PyCFunction) Bucket_iterkeys, METH_KEYWORDS,
+    {"iterkeys", (PyCFunction) Bucket_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
  
-    {"itervalues", (PyCFunction) Bucket_itervalues, METH_KEYWORDS,
+    {"itervalues",
+     (PyCFunction) Bucket_itervalues, METH_VARARGS | METH_KEYWORDS,
      "B.itervalues([min[,max]]) -> an iterator over the values of B"},
 
-    {"iteritems", (PyCFunction) Bucket_iteritems, METH_KEYWORDS,
+    {"iteritems", (PyCFunction) Bucket_iteritems, METH_VARARGS | METH_KEYWORDS,
      "B.iteritems([min[,max]]) -> an iterator over the (key, value) "
      "items of B"},
 
@@ -1673,7 +1674,8 @@ static struct PyMethodDef Bucket_methods[] = {
      (PyCFunction) bucket__p_resolveConflict, METH_VARARGS,
      "_p_resolveConflict() -- Reinitialize from a newly created copy"},
 
-    {"_p_deactivate", (PyCFunction) bucket__p_deactivate, METH_KEYWORDS,
+    {"_p_deactivate",
+     (PyCFunction) bucket__p_deactivate, METH_VARARGS | METH_KEYWORDS,
      "_p_deactivate() -- Reinitialize from a newly created copy"},
 #endif
     {NULL, NULL}

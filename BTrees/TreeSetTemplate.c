@@ -133,7 +133,7 @@ static struct PyMethodDef TreeSet_methods[] =
      "has_key(key)\n\n"
      "Return true if the TreeSet contains the given key."},
 
-    {"keys", (PyCFunction) BTree_keys, METH_KEYWORDS,
+    {"keys", (PyCFunction) BTree_keys, METH_VARARGS | METH_KEYWORDS,
      "keys([min, max]) -> list of keys\n\n"
      "Returns the keys of the TreeSet.  If min and max are supplied, only\n"
      "keys greater than min and less than max are returned."},
@@ -171,7 +171,8 @@ static struct PyMethodDef TreeSet_methods[] =
      (PyCFunction) BTree__p_resolveConflict, METH_VARARGS,
      "_p_resolveConflict() -- Reinitialize from a newly created copy"},
 
-    {"_p_deactivate", (PyCFunction) BTree__p_deactivate, METH_KEYWORDS,
+    {"_p_deactivate",
+     (PyCFunction) BTree__p_deactivate, METH_VARARGS | METH_KEYWORDS,
      "_p_deactivate()\n\nReinitialize from a newly created copy."},
 #endif
     {NULL,        NULL}        /* sentinel */

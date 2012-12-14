@@ -2091,18 +2091,18 @@ static struct PyMethodDef BTree_methods[] = {
      "has_key(key)\n\n"
      "Return true if the BTree contains the given key."},
 
-    {"keys", (PyCFunction) BTree_keys, METH_KEYWORDS,
+    {"keys", (PyCFunction) BTree_keys, METH_VARARGS | METH_KEYWORDS,
      "keys([min, max]) -> list of keys\n\n"
      "Returns the keys of the BTree.  If min and max are supplied, only\n"
      "keys greater than min and less than max are returned."},
 
-    {"values", (PyCFunction) BTree_values, METH_KEYWORDS,
+    {"values", (PyCFunction) BTree_values, METH_VARARGS | METH_KEYWORDS,
      "values([min, max]) -> list of values\n\n"
      "Returns the values of the BTree.  If min and max are supplied, only\n"
      "values corresponding to keys greater than min and less than max are\n"
      "returned."},
 
-    {"items", (PyCFunction) BTree_items, METH_KEYWORDS,
+    {"items", (PyCFunction) BTree_items, METH_VARARGS | METH_KEYWORDS,
      "items([min, max]) -> -- list of key, value pairs\n\n"
      "Returns the items of the BTree.  If min and max are supplied, only\n"
      "items with keys greater than min and less than max are returned."},
@@ -2148,13 +2148,13 @@ static struct PyMethodDef BTree_methods[] = {
     {"update", (PyCFunction) Mapping_update, METH_O,
      "update(collection)\n\n Add the items from the given collection."},
 
-    {"iterkeys", (PyCFunction) BTree_iterkeys, METH_KEYWORDS,
+    {"iterkeys", (PyCFunction) BTree_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
 
-    {"itervalues", (PyCFunction) BTree_itervalues, METH_KEYWORDS,
+    {"itervalues", (PyCFunction) BTree_itervalues, METH_VARARGS | METH_KEYWORDS,
      "B.itervalues([min[,max]]) -> an iterator over the values of B"},
 
-    {"iteritems", (PyCFunction) BTree_iteritems, METH_KEYWORDS,
+    {"iteritems", (PyCFunction) BTree_iteritems, METH_VARARGS | METH_KEYWORDS,
      "B.iteritems([min[,max]]) -> an iterator over the (key, value) "
      "items of B"},
 
@@ -2166,7 +2166,8 @@ static struct PyMethodDef BTree_methods[] = {
      (PyCFunction) BTree__p_resolveConflict, METH_VARARGS,
      "_p_resolveConflict() -- Reinitialize from a newly created copy"},
 
-    {"_p_deactivate", (PyCFunction) BTree__p_deactivate, METH_KEYWORDS,
+    {"_p_deactivate",
+     (PyCFunction) BTree__p_deactivate, METH_VARARGS | METH_KEYWORDS,
      "_p_deactivate()\n\nReinitialize from a newly created copy."},
 #endif
     {NULL, NULL}
