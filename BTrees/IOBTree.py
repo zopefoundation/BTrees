@@ -83,7 +83,7 @@ intersectionPy = _set_operation(_intersection, IOSetPy)
 multiunionPy = _set_operation(_multiunion, IOSetPy)
 
 try:
-    from _IOBTree import IOBucket
+    from ._IOBTree import IOBucket
 except ImportError: #pragma NO COVER w/ C extensions
     IOBucket = IOBucketPy
     IOSet = IOSetPy
@@ -94,13 +94,13 @@ except ImportError: #pragma NO COVER w/ C extensions
     intersection = intersectionPy
     multiunion = multiunionPy
 else: #pragma NO COVER w/o C extensions
-    from _IOBTree import IOSet
-    from _IOBTree import IOBTree
-    from _IOBTree import IOTreeSet
-    from _IOBTree import difference
-    from _IOBTree import union
-    from _IOBTree import intersection
-    from _IOBTree import multiunion
+    from ._IOBTree import IOSet
+    from ._IOBTree import IOBTree
+    from ._IOBTree import IOTreeSet
+    from ._IOBTree import difference
+    from ._IOBTree import union
+    from ._IOBTree import intersection
+    from ._IOBTree import multiunion
 
 Bucket = IOBucket
 Set = IOSet

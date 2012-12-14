@@ -78,8 +78,8 @@ unionPy = _set_operation(_union, OOSetPy)
 intersectionPy = _set_operation(_intersection, OOSetPy)
 
 try:
-    from _OOBTree import OOBucket
-except ImportError: #pragma NO COVER w/ C extensions
+    from ._OOBTree import OOBucket
+except ImportError as e: #pragma NO COVER w/ C extensions
     OOBucket = OOBucketPy
     OOSet = OOSetPy
     OOBTree = OOBTreePy
@@ -88,12 +88,12 @@ except ImportError: #pragma NO COVER w/ C extensions
     union = unionPy
     intersection = intersectionPy
 else: #pragma NO COVER w/o C extensions
-    from _OOBTree import OOSet
-    from _OOBTree import OOBTree
-    from _OOBTree import OOTreeSet
-    from _OOBTree import difference
-    from _OOBTree import union
-    from _OOBTree import intersection
+    from ._OOBTree import OOSet
+    from ._OOBTree import OOBTree
+    from ._OOBTree import OOTreeSet
+    from ._OOBTree import difference
+    from ._OOBTree import union
+    from ._OOBTree import intersection
 
 Bucket = OOBucket
 Set = OOSet

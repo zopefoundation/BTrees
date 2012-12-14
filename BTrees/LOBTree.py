@@ -83,7 +83,7 @@ intersectionPy = _set_operation(_intersection, LOSetPy)
 multiunionPy = _set_operation(_multiunion, LOSetPy)
 
 try:
-    from _LOBTree import LOBucket
+    from ._LOBTree import LOBucket
 except ImportError: #pragma NO COVER w/ C extensions
     LOBucket = LOBucketPy
     LOSet = LOSetPy
@@ -94,13 +94,13 @@ except ImportError: #pragma NO COVER w/ C extensions
     intersection = intersectionPy
     multiunion = multiunionPy
 else: #pragma NO COVER w/o C extensions
-    from _LOBTree import LOSet
-    from _LOBTree import LOBTree
-    from _LOBTree import LOTreeSet
-    from _LOBTree import difference
-    from _LOBTree import union
-    from _LOBTree import intersection
-    from _LOBTree import multiunion
+    from ._LOBTree import LOSet
+    from ._LOBTree import LOBTree
+    from ._LOBTree import LOTreeSet
+    from ._LOBTree import difference
+    from ._LOBTree import union
+    from ._LOBTree import intersection
+    from ._LOBTree import multiunion
 
 Bucket = LOBucket
 Set = LOSet

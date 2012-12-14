@@ -100,7 +100,7 @@ unionPy = _set_operation(_union, fsSetPy)
 intersectionPy = _set_operation(_intersection, fsSetPy)
 
 try:
-    from _fsBTree import fsBucket
+    from ._fsBTree import fsBucket
 except ImportError: #pragma NO COVER w/ C extensions
     fsBucket = fsBucketPy
     fsSet = fsSetPy
@@ -110,12 +110,12 @@ except ImportError: #pragma NO COVER w/ C extensions
     union = unionPy
     intersection = intersectionPy
 else: #pragma NO COVER w/o C extensions
-    from _fsBTree import fsSet
-    from _fsBTree import fsBTree
-    from _fsBTree import fsTreeSet
-    from _fsBTree import difference
-    from _fsBTree import union
-    from _fsBTree import intersection
+    from ._fsBTree import fsSet
+    from ._fsBTree import fsBTree
+    from ._fsBTree import fsTreeSet
+    from ._fsBTree import difference
+    from ._fsBTree import union
+    from ._fsBTree import intersection
 
 Bucket = fsBucket
 Set = fsSet
