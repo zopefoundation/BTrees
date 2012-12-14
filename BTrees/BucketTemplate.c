@@ -1808,6 +1808,9 @@ static PyObject *
 bucket_repr(Bucket *self)
 {
     PyObject *i, *r;
+#ifdef PY3K
+    PyObject *rb;
+#endif
     char repr[10000];
     int rv;
 
@@ -1822,20 +1825,34 @@ bucket_repr(Bucket *self)
     {
         return NULL;
     }
+#ifdef PY3K
+    rb = PyUnicode_AsLatin1String(r);
+    rv = PyOS_snprintf(repr, sizeof(repr),
+                       "%s(%s)", Py_TYPE(self)->tp_name,
+                       PyBytes_AsString(rb));
+    Py_DECREF(rb);
+#else
     rv = PyOS_snprintf(repr, sizeof(repr),
                        "%s(%s)", Py_TYPE(self)->tp_name,
                        PyBytes_AS_STRING(r));
+#endif
     if (rv > 0 && rv < sizeof(repr))
     {
         Py_DECREF(r);
-        return PyBytes_FromStringAndSize(repr, strlen(repr));
+#ifdef PY3K
+        return PyUnicode_DecodeLatin1(repr, sizeof(repr), "surrogateescape");
+#else
+        return PyBytes_FromStringAndSize(repr, sizeof(repr));
+#endif
     }
     else
     {
         /* The static buffer wasn't big enough */
         int size;
         PyObject *s;
-
+#ifdef PY3K
+        PyObject *result;
+#endif
         /* 3 for the parens and the null byte */
         size = strlen(Py_TYPE(self)->tp_name) + PyBytes_GET_SIZE(r) + 3;
         s = PyBytes_FromStringAndSize(NULL, size);
@@ -1846,7 +1863,13 @@ bucket_repr(Bucket *self)
         PyOS_snprintf(PyBytes_AS_STRING(s), size,
                     "%s(%s)", Py_TYPE(self)->tp_name, PyBytes_AS_STRING(r));
         Py_DECREF(r);
+#ifdef PY3K
+        result = PyUnicode_FromEncodedObject(s, "latin1", "surrogateescape");
+        Py_DECREF(s);
+        return result;
+#else
         return s;
+#endif
     }
 }
 
