@@ -457,7 +457,7 @@ class MappingBase(Base):
         # For IITreeSets, this one was returning 31 for len(keys), and
         # list(keys) produced a list with 100 elements.
         t.clear()
-        t.update(zip(range(300), range(300)))
+        t.update(list(zip(range(300), range(300))))
         keys = t.keys(200, 50)
         self.assertEqual(len(keys), 0)
         self.assertEqual(list(keys), [])
@@ -1526,7 +1526,7 @@ class TestLongIntValues(TestLongIntSupport):
 # that builds an object of that type given only a list of keys.
 def makeBuilder(mapbuilder):
     def result(keys=[], mapbuilder=mapbuilder):
-        return mapbuilder(zip(keys, keys))
+        return mapbuilder(list(zip(keys, keys)))
     return result
 
 # Subclasses have to set up:
@@ -1730,7 +1730,7 @@ class Weighted(object):
     # If obj is a set, return a bucket with values all 1; else return obj.
     def _normalize(self, obj):
         if isaset(obj):
-            obj = self.mkbucket(zip(obj, [1] * len(obj)))
+            obj = self.mkbucket(list(zip(obj, [1] * len(obj))))
         return obj
 
     # Python simulation of weightedUnion.
