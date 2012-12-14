@@ -409,21 +409,20 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 }
 
 static PyObject *
-BTreeItems_subscript(BTreeItems *self, PyObject* key)
+BTreeItems_subscript(BTreeItems *self, PyObject* subscript)
 {
     Py_ssize_t len = BTreeItems_length_or_nonzero(self, 0);
 
-    if (PyIndex_Check(key))
+    if (PyIndex_Check(subscript))
     {
-        Py_ssize_t i = INT_AS_LONG(key);
-        i = PyNumber_AsSsize_t(key, PyExc_IndexError);
+        Py_ssize_t i = PyNumber_AsSsize_t(subscript, PyExc_IndexError);
         if (i == -1 && PyErr_Occurred())
             return NULL;
         if (i < 0)
             i += len;
         return BTreeItems_item(self, i);
     }
-    if (PySlice_Check(key))
+    if (PySlice_Check(subscript))
     {
         Py_ssize_t start, stop, step, slicelength;
 
@@ -433,7 +432,7 @@ BTreeItems_subscript(BTreeItems *self, PyObject* key)
 #define SLICEOBJ(x) (PySliceObject*)(x)
 #endif
 
-        if (PySlice_GetIndicesEx(SLICEOBJ(key), len,
+        if (PySlice_GetIndicesEx(SLICEOBJ(subscript), len,
                                  &start, &stop, &step, &slicelength) < 0)
         {
             return NULL;
