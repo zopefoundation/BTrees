@@ -486,8 +486,14 @@ update_from_seq(PyObject *map, PyObject *seq)
      * returns true for a PeristentMapping or PersistentDict, and we
      * want to use items() in those cases too.
      */
+#ifdef PY3K
+#define ITERITEMS "items"
+#else
+#define ITERITEMS "iteritems"
+#endif
     if (!PySequence_Check(seq) || /* or it "looks like a dict" */
-        PyObject_HasAttrString(seq, "iteritems"))
+        PyObject_HasAttrString(seq, ITERITEMS))
+#undef ITERITEMS
     {
         PyObject *items;
         items = PyObject_GetAttrString(seq, "items");
