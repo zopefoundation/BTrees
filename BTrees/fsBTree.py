@@ -14,6 +14,7 @@
 
 # fsBTrees are data structures used for ZODB FileStorage.  They are not
 # expected to be "public" excpect to FileStorage.
+# Each item in an fsBTree maps a two-byte key to a six-byte value.
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'fsBucket', 'fsSet', 'fsBTree', 'fsTreeSet',
@@ -31,14 +32,14 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
-from ._base import to_str as _to_str
+from ._base import to_bytes as _to_bytes
 from ._base import union as _union
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
 using64bits = False
-_to_key = _to_str(2)
-_to_value = _to_str(6)
+_to_key = _to_bytes(2)
+_to_value = _to_bytes(6)
 
 
 class fsBucketPy(Bucket):
@@ -47,7 +48,7 @@ class fsBucketPy(Bucket):
     _to_value = _to_value
 
     def toString(self):
-        return ''.join(self._keys) + ''.join(self._values)
+        return b''.join(self._keys) + b''.join(self._values)
 
     def fromString(self, v):
         length = len(v)

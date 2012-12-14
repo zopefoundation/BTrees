@@ -71,15 +71,19 @@ typedef unsigned char char6[6];
 
 #include "Python.h"
 
-static PyObject *bucket_toString(PyObject *self);
+static PyObject *bucket_toBytes(PyObject *self);
 
-static PyObject *bucket_fromString(PyObject *self, PyObject *state);
+static PyObject *bucket_fromBytes(PyObject *self, PyObject *state);
 
 #define EXTRA_BUCKET_METHODS \
-    {"toString", (PyCFunction) bucket_toString,	METH_NOARGS, \
-     "toString() -- Return the state as a string"}, \
-    {"fromString", (PyCFunction) bucket_fromString,	METH_O, \
-     "fromString(s) -- Set the state of the object from a string"}, \
+    {"toBytes", (PyCFunction) bucket_toBytes,	METH_NOARGS, \
+     "toBytes() -- Return the state as a bytes array"}, \
+    {"fromBytes", (PyCFunction) bucket_fromBytes,	METH_O, \
+     "fromSBytes(s) -- Set the state of the object from a bytes array"}, \
+    {"toString", (PyCFunction) bucket_toBytes,	METH_NOARGS, \
+     "toString() -- Deprecated alias for 'toBytes'"}, \
+    {"fromString", (PyCFunction) bucket_fromBytes,	METH_O, \
+     "fromString(s) -- Deprecated alias for 'fromBytes'"}, \
 
 #ifdef PY3K
 #define INITMODULE PyInit__fsBTree
@@ -89,7 +93,7 @@ static PyObject *bucket_fromString(PyObject *self, PyObject *state);
 #include "BTreeModuleTemplate.c"
 
 static PyObject *
-bucket_toString(PyObject *oself)
+bucket_toBytes(PyObject *oself)
 {
   Bucket *self = (Bucket *)oself;
   PyObject *items = NULL;
@@ -115,7 +119,7 @@ bucket_toString(PyObject *oself)
 }
 
 static PyObject *
-bucket_fromString(PyObject *oself, PyObject *state)
+bucket_fromBytes(PyObject *oself, PyObject *state)
 {
   Bucket *self = (Bucket *)oself;
   int len;

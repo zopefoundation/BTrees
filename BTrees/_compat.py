@@ -26,6 +26,8 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
     cmp = cmp
 
     _bytes = str
+    def _ascii(x):
+        return bytes(x)
 
     def _u(s, encoding='unicode_escape'):
         return unicode(s, encoding)
@@ -45,6 +47,8 @@ else: #pragma NO COVER Python3
         return (x > y) - (y > x)
 
     _bytes = bytes
+    def _ascii(x):
+        return bytes(x, 'ascii')
 
     def _u(s, encoding=None):
         if encoding is None:

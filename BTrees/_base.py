@@ -1420,10 +1420,10 @@ def to_long(self, v):
 
     return int(v)
 
-def to_str(l):
+def to_bytes(l):
     def to(self, v):
-        if not (isinstance(v, str) and len(v) == l):
-            raise TypeError("%s-character string expected" % l)
+        if not (isinstance(v, bytes) and len(v) == l):
+            raise TypeError("%s-byte array expected" % l)
         return v
     return to
 

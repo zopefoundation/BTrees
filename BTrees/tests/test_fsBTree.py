@@ -19,24 +19,28 @@ class fsBucketBase(object):
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
 
+    def _makeBytesItems(self):
+        from .._compat import _ascii
+        return[(_ascii(c*2), _ascii(c*6)) for c in 'abcdef']
+
     def test_toString(self):
-        bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        bucket = self._makeOne(self._makeBytesItems())
         self.assertEqual(bucket.toString(),
-                         'aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff')
+                         b'aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff')
 
     def test_fromString(self):
-        before = self._makeOne([(c*2, c*6) for c in 'abcdef'])
+        before = self._makeOne(self._makeBytesItems())
         after = before.fromString(before.toString())
         self.assertEqual(before.__getstate__(), after.__getstate__())
 
     def test_fromString_empty(self):
-        before = self._makeOne([(c*2, c*6) for c in 'abcdef'])
-        after = before.fromString('')
+        before = self._makeOne(self._makeBytesItems())
+        after = before.fromString(b'')
         self.assertEqual(after.__getstate__(), ((),))
 
-    def test_fromString_invalid(self):
-        bucket = self._makeOne([(c*2, c*6) for c in 'abcdef'])
-        self.assertRaises(ValueError, bucket.fromString, 'xxx')
+    def test_fromString_invalid_length(self):
+        bucket = self._makeOne(self._makeBytesItems())
+        self.assertRaises(ValueError, bucket.fromString, b'xxx')
 
 
 class fsBucketTests(unittest.TestCase, fsBucketBase):

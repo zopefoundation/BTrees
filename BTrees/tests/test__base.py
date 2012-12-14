@@ -2909,18 +2909,18 @@ class Test_helpers(unittest.TestCase):
         faux_self = object()
         self.assertRaises(TypeError, to_long, faux_self, ())
 
-    def test_to_str_w_ok(self):
-        from BTrees._base import to_str
+    def test_to_bytes_w_ok(self):
+        from BTrees._base import to_bytes
         faux_self = object()
-        conv = to_str(3)
-        self.assertEqual(conv(faux_self, 'abc'), 'abc')
+        conv = to_bytes(3)
+        self.assertEqual(conv(faux_self, b'abc'), b'abc')
 
-    def test_to_str_w_invalid_length(self):
-        from BTrees._base import to_str
+    def test_to_bytes_w_invalid_length(self):
+        from BTrees._base import to_bytes
         faux_self = object()
-        conv = to_str(3)
-        self.assertRaises(TypeError, conv, faux_self, 'ab')
-        self.assertRaises(TypeError, conv, faux_self, 'abcd')
+        conv = to_bytes(3)
+        self.assertRaises(TypeError, conv, faux_self, b'ab')
+        self.assertRaises(TypeError, conv, faux_self, b'abcd')
 
     def test_MERGE(self):
         from BTrees._base import MERGE
