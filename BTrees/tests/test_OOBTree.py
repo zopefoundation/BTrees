@@ -112,6 +112,7 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         # used in a function that's used in lots of places.
         # Otherwise, there are many permutations that would have to be
         # checked.
+        from .._compat import PY2
         t = self._makeOne()
 
         class C(object):
@@ -119,30 +120,31 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         self.assertRaises(TypeError, lambda : t.__setitem__(C(), 1))
 
-        class C(object):
-            def __cmp__(*args):
-                return 1
+        if PY2: # we only check for __cmp__ on Python2
 
-        c = C()
-        t[c] = 1
+            class With___cmp__(object):
+                def __cmp__(*args):
+                    return 1
+            c = With___cmp__()
+            t[c] = 1
 
-        t.clear()
+            t.clear()
 
-        class C(object):
+        class With___lt__(object):
             def __lt__(*args):
                 return 1
 
-        c = C()
+        c = With___lt__()
         t[c] = 1
 
         t.clear()
 
 
-#class OOBTreePyTest(OOBTreeTest):
+class OOBTreePyTest(OOBTreeTest):
 #
 # Right now, we can't match the C extension's test / prohibition of the
 # default 'object' comparison semantics.
-class OOBTreePyTest(BTreeTests, unittest.TestCase):
+#class OOBTreePyTest(BTreeTests, unittest.TestCase):
 
     def _makeOne(self):
         from BTrees.OOBTree import OOBTreePy

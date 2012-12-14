@@ -5,7 +5,7 @@
 #include "Python.h"
 #include "_compat.h"
 
-static PyObject *object_;
+static PyObject *object_; /* initialized in BTreeModuleTemplate init */
 
 static int
 check_argument_cmp(PyObject *arg)
@@ -16,12 +16,12 @@ check_argument_cmp(PyObject *arg)
     /*        arg->ob_type->tp_compare, */
     /*        ((PyTypeObject *)object_)->ob_type->tp_compare); */
 
+#ifdef PY3K
+    if (Py_TYPE(arg)->tp_richcompare == Py_TYPE(object_)->tp_richcompare)
+#else
     if (Py_TYPE(arg)->tp_richcompare == NULL
-#ifndef PY3K
-        && Py_TYPE(arg)->tp_compare ==
-                ((PyTypeObject *)object_)->ob_type->tp_compare
+        && Py_TYPE(arg)->tp_compare == Py_TYPE(object_)->tp_compare)
 #endif
-    )
     {
         PyErr_SetString(PyExc_TypeError, "Object has default comparison");
         return 0;
