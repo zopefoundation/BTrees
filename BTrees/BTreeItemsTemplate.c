@@ -427,7 +427,13 @@ BTreeItems_subscript(BTreeItems *self, PyObject* key)
     {
         Py_ssize_t start, stop, step, slicelength;
 
-        if (PySlice_GetIndicesEx(key, len,
+#ifdef PY3K
+#define SLICEOBJ(x) (x)
+#else
+#define SLICEOBJ(x) (PySliceObject*)(x)
+#endif
+
+        if (PySlice_GetIndicesEx(SLICEOBJ(key), len,
                                  &start, &stop, &step, &slicelength) < 0)
         {
             return NULL;
