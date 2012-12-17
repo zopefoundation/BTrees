@@ -13,7 +13,7 @@
 ##############################################################################
 
 import unittest
-from BTrees.OOBTree import OOBTree
+from .common import _skip_under_Py3k
 
 # When an OOBtree contains unicode strings as keys,
 # it is neccessary accessing non-unicode strings are
@@ -26,33 +26,40 @@ class TestBTreesUnicode(unittest.TestCase):
     """ test unicode"""
 
     def setUp(self):
-        """setup an OOBTree with some unicode strings"""
+        #setup an OOBTree with some unicode strings
+        from BTrees.OOBTree import OOBTree
+        from BTrees._compat import _bytes
+        from BTrees._compat import _u
 
-        self.s = unicode('dreit\xe4gigen', 'latin1')
+        self.s = _u(b'dreit\xe4gigen', 'latin1')
 
-        self.data = [('alien', 1),
-                     ('k\xf6nnten', 2),
-                     ('fox', 3),
-                     ('future', 4),
-                     ('quick', 5),
-                     ('zerst\xf6rt', 6),
-                     (unicode('dreit\xe4gigen','latin1'), 7),
+        self.data = [(b'alien', 1),
+                     (b'k\xf6nnten', 2),
+                     (b'fox', 3),
+                     (b'future', 4),
+                     (b'quick', 5),
+                     (b'zerst\xf6rt', 6),
+                     (_u(b'dreit\xe4gigen','latin1'), 7),
                     ]
 
         self.tree = OOBTree()
         for k, v in self.data:
-            if isinstance(k, str):
-                k = unicode(k, 'latin1')
+            if isinstance(k, _bytes):
+                k = _u(k, 'latin1')
             self.tree[k] = v
 
+    @_skip_under_Py3k
     def testAllKeys(self):
         # check every item of the tree
+        from BTrees._compat import _u
+        from BTrees._compat import _bytes
         for k, v in self.data:
-            if isinstance(k, str):
-                k = unicode(k, encoding)
-            self.assert_(self.tree.has_key(k))
+            if isinstance(k, _bytes):
+                k = _u(k, encoding)
+            self.assertTrue(k in self.tree)
             self.assertEqual(self.tree[k], v)
 
+    @_skip_under_Py3k
     def testUnicodeKeys(self):
         # try to access unicode keys in tree
         k, v = self.data[-1]
@@ -60,10 +67,11 @@ class TestBTreesUnicode(unittest.TestCase):
         self.assertEqual(self.tree[k], v)
         self.assertEqual(self.tree[self.s], v)
 
+    @_skip_under_Py3k
     def testAsciiKeys(self):
         # try to access some "plain ASCII" keys in the tree
         for k, v in self.data[0], self.data[2]:
-            self.assert_(isinstance(k, str))
+            self.assertTrue(isinstance(k, str))
             self.assertEqual(self.tree[k], v)
 
 def test_suite():

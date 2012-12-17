@@ -23,10 +23,17 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "IO"
+
 #define DEFAULT_MAX_BUCKET_SIZE 60
 #define DEFAULT_MAX_BTREE_SIZE 500
-#define INITMODULE init_IOBTree
                                 
+#include "_compat.h"
 #include "intkeymacros.h"
 #include "objectvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__IOBTree
+#else
+#define INITMODULE init_IOBTree
+#endif
 #include "BTreeModuleTemplate.c"

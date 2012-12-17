@@ -25,12 +25,19 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "LL"
-#define INITMODULE init_LLBTree
+
 #define DEFAULT_MAX_BUCKET_SIZE 120
 #define DEFAULT_MAX_BTREE_SIZE 500
 
 #define ZODB_64BIT_INTS
 
+#include "_compat.h"
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__LLBTree
+#else
+#define INITMODULE init_LLBTree
+#endif
 #include "BTreeModuleTemplate.c"

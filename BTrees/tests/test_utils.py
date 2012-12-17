@@ -22,11 +22,17 @@ class Test_non_negative(unittest.TestCase):
 
     def test_w_big_negative(self):
         import sys
-        self.assertEqual(self._callFUT(-sys.maxint), 1)
+        try:
+            self.assertEqual(self._callFUT(-sys.maxint), 1)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_w_negative(self):
         import sys
-        self.assertEqual(self._callFUT(-1), sys.maxint)
+        try:
+            self.assertEqual(self._callFUT(-1), sys.maxint)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_w_zero(self):
         self.assertEqual(self._callFUT(0), 0)
@@ -36,7 +42,10 @@ class Test_non_negative(unittest.TestCase):
 
     def test_w_big_positive(self):
         import sys
-        self.assertEqual(self._callFUT(sys.maxint), sys.maxint)
+        try:
+            self.assertEqual(self._callFUT(sys.maxint), sys.maxint)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
 
 class Test_oid_repr(unittest.TestCase):
@@ -63,16 +72,16 @@ class Test_oid_repr(unittest.TestCase):
             self.assertEqual(self._callFUT(faux), repr(faux))
 
     def test_w_zero(self):
-        self.assertEqual(self._callFUT('\0\0\0\0\0\0\0\0'), '0x00')
+        self.assertEqual(self._callFUT(b'\0\0\0\0\0\0\0\0'), b'0x00')
 
     def test_w_one(self):
-        self.assertEqual(self._callFUT('\0\0\0\0\0\0\0\1'), '0x01')
+        self.assertEqual(self._callFUT(b'\0\0\0\0\0\0\0\1'), b'0x01')
 
     def test_w_even_length(self):
-        self.assertEqual(self._callFUT('\0\0\0\0\0\0\xAB\xC4'), '0xabc4')
+        self.assertEqual(self._callFUT(b'\0\0\0\0\0\0\xAB\xC4'), b'0xabc4')
 
     def test_w_odd_length(self):
-        self.assertEqual(self._callFUT('\0\0\0\0\0\0\x0D\xEF'), '0x0def')
+        self.assertEqual(self._callFUT(b'\0\0\0\0\0\0\x0D\xEF'), b'0x0def')
 
 
 def test_suite():

@@ -100,17 +100,8 @@ weightedUnionPy = _set_operation(_weightedUnion, IISetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, IISetPy)
 
 try:
-    from _IIBTree import IIBucket
-    from _IIBTree import IISet
-    from _IIBTree import IIBTree
-    from _IIBTree import IITreeSet
-    from _IIBTree import difference
-    from _IIBTree import union
-    from _IIBTree import intersection
-    from _IIBTree import multiunion
-    from _IIBTree import weightedUnion
-    from _IIBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+    from ._IIBTree import IIBucket
+except ImportError: #pragma NO COVER w/ C extensions
     IIBucket = IIBucketPy
     IISet = IISetPy
     IIBTree = IIBTreePy
@@ -121,6 +112,16 @@ except ImportError: #pragma NO COVER
     multiunion = multiunionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from ._IIBTree import IISet
+    from ._IIBTree import IIBTree
+    from ._IIBTree import IITreeSet
+    from ._IIBTree import difference
+    from ._IIBTree import union
+    from ._IIBTree import intersection
+    from ._IIBTree import multiunion
+    from ._IIBTree import weightedUnion
+    from ._IIBTree import weightedIntersection
 
 Bucket = IIBucket
 Set = IISet

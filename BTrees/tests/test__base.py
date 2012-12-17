@@ -640,7 +640,7 @@ class BucketTests(unittest.TestCase):
         bucket = self._makeOne()
         for i, c in enumerate('abcdef'):
             bucket[c] = i
-        self.assertEqual(bucket.values(), range(6))
+        self.assertEqual(bucket.values(), list(range(6)))
 
     def test_values_filled_w_args(self):
         bucket = self._makeOne()
@@ -657,7 +657,7 @@ class BucketTests(unittest.TestCase):
         bucket = self._makeOne()
         for i, c in enumerate('abcdef'):
             bucket[c] = i
-        self.assertEqual(list(bucket.itervalues()), range(6))
+        self.assertEqual(list(bucket.itervalues()), list(range(6)))
 
     def test_itervalues_filled_w_args(self):
         bucket = self._makeOne()
@@ -1783,8 +1783,8 @@ class Test_Tree(unittest.TestCase):
 
     def test__set_calls_readCurrent_on_jar(self):
         tree = self._makeOne()
-        tree._p_oid = 'OID'
-        tree._p_serial = '01234567'
+        tree._p_oid = b'OID'
+        tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._set('a', 'b')
         self.assertTrue(tree in jar._current)
@@ -1839,8 +1839,8 @@ class Test_Tree(unittest.TestCase):
 
     def test__del_calls_readCurrent_on_jar(self):
         tree = self._makeOne({'a': 'b'})
-        tree._p_oid = 'OID'
-        tree._p_serial = '01234567'
+        tree._p_oid = b'OID'
+        tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._del('a')
         self.assertTrue(tree in jar._current)
@@ -1898,7 +1898,7 @@ class Test_Tree(unittest.TestCase):
         bucket = tree._firstbucket
         jar = _Jar()
         bucket._p_jar = jar
-        bucket._p_oid = 'OID'
+        bucket._p_oid = b'OID'
         self.assertEqual(tree.__getstate__(), ((bucket,), bucket))
 
     def test___getstate___multiple_buckets(self):
@@ -2273,7 +2273,7 @@ class TreeTests(unittest.TestCase):
     def test_values_filled_no_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.values()), range(26))
+        self.assertEqual(list(tree.values()), list(range(26)))
 
     def test_values_filled_w_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -2289,7 +2289,7 @@ class TreeTests(unittest.TestCase):
     def test_itervalues_filled_no_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.itervalues()), range(26))
+        self.assertEqual(list(tree.itervalues()), list(range(26)))
 
     def test_itervalues_filled_w_args(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -2634,6 +2634,28 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         rhs = self._makeSet('a', 'b', 'c')
         self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
 
+    def test_lhs_mapping_wo_MERGE_DEFAULT_rhs_set(self):
+        class _MappingWoDefault(dict):
+            def MERGE(self, v1, w1, v2, w2):
+                return (v1 * w1) + (v2 * w2)
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoDefault({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoDefault
+        rhs = self._makeSet('a', 'b', 'c')
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
+    def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
+        class _MappingWoMerge(dict):
+            def MERGE_DEFAULT(self):
+                return 1
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoMerge({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoMerge
+        rhs = self._makeMapping({'a': 1, 'b': 2, 'c': 3})
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
     def test_lhs_set_wo_MERGE_DEFAULT_rhs_mapping(self):
         lhs = self._makeSet('a', 'd')
         lhs.MERGE = lambda v1, w1, v2, w2: (v1 * w1) + (v2 * w2)
@@ -2723,6 +2745,17 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
     def test_both_mappings_but_no_merge(self):
         lhs = {'a': 13, 'b': 12, 'c': 11}
         rhs = {'b': 22, 'd': 14}
+        self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
+
+    def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
+        class _MappingWoMerge(dict):
+            def MERGE_DEFAULT(self):
+                return 1
+            def MERGE_WEIGHT(self, v, w):
+                return v
+        lhs = _MappingWoMerge({'a': 13, 'b': 12, 'c': 11})
+        lhs._mapping_type = _MappingWoMerge
+        rhs = self._makeMapping({'a': 1, 'b': 2, 'c': 3})
         self.assertRaises(TypeError, self._callFUT, lhs.__class__, lhs, rhs)
 
     def test_lhs_set_wo_MERGE_DEFAULT_rhs_set(self):
@@ -2824,7 +2857,10 @@ class Test_helpers(unittest.TestCase):
         import sys
         from BTrees._base import to_int
         faux_self = object()
-        self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
+        try:
+            self.assertRaises(TypeError, to_int, faux_self, sys.maxint + 1)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_to_int_w_invalid(self):
         from BTrees._base import to_int
@@ -2863,25 +2899,28 @@ class Test_helpers(unittest.TestCase):
         import sys
         from BTrees._base import to_long
         faux_self = object()
-        self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+        try:
+            self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+        except AttributeError: #pragma NO COVER Py3k
+            pass
 
     def test_to_long_w_invalid(self):
         from BTrees._base import to_long
         faux_self = object()
         self.assertRaises(TypeError, to_long, faux_self, ())
 
-    def test_to_str_w_ok(self):
-        from BTrees._base import to_str
+    def test_to_bytes_w_ok(self):
+        from BTrees._base import to_bytes
         faux_self = object()
-        conv = to_str(3)
-        self.assertEqual(conv(faux_self, 'abc'), 'abc')
+        conv = to_bytes(3)
+        self.assertEqual(conv(faux_self, b'abc'), b'abc')
 
-    def test_to_str_w_invalid_length(self):
-        from BTrees._base import to_str
+    def test_to_bytes_w_invalid_length(self):
+        from BTrees._base import to_bytes
         faux_self = object()
-        conv = to_str(3)
-        self.assertRaises(TypeError, conv, faux_self, 'ab')
-        self.assertRaises(TypeError, conv, faux_self, 'abcd')
+        conv = to_bytes(3)
+        self.assertRaises(TypeError, conv, faux_self, b'ab')
+        self.assertRaises(TypeError, conv, faux_self, b'abcd')
 
     def test_MERGE(self):
         from BTrees._base import MERGE

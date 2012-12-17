@@ -100,17 +100,8 @@ weightedUnionPy = _set_operation(_weightedUnion, LFSetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, LFSetPy)
 
 try:
-    from _LFBTree import LFBucket
-    from _LFBTree import LFSet
-    from _LFBTree import LFBTree
-    from _LFBTree import LFTreeSet
-    from _LFBTree import difference
-    from _LFBTree import union
-    from _LFBTree import intersection
-    from _LFBTree import multiunion
-    from _OIBTree import weightedUnion
-    from _OIBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+    from ._LFBTree import LFBucket
+except ImportError: #pragma NO COVER w/ C extensions
     LFBucket = LFBucketPy
     LFSet = LFSetPy
     LFBTree = LFBTreePy
@@ -121,6 +112,16 @@ except ImportError: #pragma NO COVER
     multiunion = multiunionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from ._LFBTree import LFSet
+    from ._LFBTree import LFBTree
+    from ._LFBTree import LFTreeSet
+    from ._LFBTree import difference
+    from ._LFBTree import union
+    from ._LFBTree import intersection
+    from ._LFBTree import multiunion
+    from ._LFBTree import weightedUnion
+    from ._LFBTree import weightedIntersection
 
 Bucket = LFBucket
 Set = LFSet

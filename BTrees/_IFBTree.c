@@ -25,10 +25,17 @@
 #define PERSISTENT
 
 #define MOD_NAME_PREFIX "IF"
-#define INITMODULE init_IFBTree
+
 #define DEFAULT_MAX_BUCKET_SIZE 120
 #define DEFAULT_MAX_BTREE_SIZE 500
 
+#include "_compat.h"
 #include "intkeymacros.h"
 #include "floatvaluemacros.h"
+
+#ifdef PY3K
+#define INITMODULE PyInit__IFBTree
+#else
+#define INITMODULE init_IFBTree
+#endif
 #include "BTreeModuleTemplate.c"

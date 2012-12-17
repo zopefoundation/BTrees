@@ -15,6 +15,8 @@
 
 from binascii import hexlify
 
+from ._compat import _bytes
+
 def non_negative(int_val):
     if int_val < 0:
         # Coerce to non-negative.
@@ -28,14 +30,16 @@ def positive_id(obj): #pragma NO COVER
 
 
 def oid_repr(oid):
-    if isinstance(oid, str) and len(oid) == 8:
+    if isinstance(oid, _bytes) and len(oid) == 8:
         # Convert to hex and strip leading zeroes.
-        as_hex = hexlify(oid).lstrip('0')
+        as_hex = hexlify(oid).lstrip(b'0')
         # Ensure two characters per input byte.
+        chunks = [b'0x']
         if len(as_hex) & 1:
-            as_hex = '0' + as_hex
-        elif as_hex == '':
-            as_hex = '00'
-        return '0x' + as_hex
+            chunks.append(b'0')
+        elif as_hex == b'':
+            as_hex = b'00'
+        chunks.append(as_hex)
+        return b''.join(chunks)
     else:
         return repr(oid)

@@ -7,7 +7,7 @@
 #define VALUE_PARSE "L"
 #define COPY_VALUE_TO_OBJECT(O, K) O=longlong_as_object(K)
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
-    if (PyInt_Check(ARG)) TARGET=PyInt_AS_LONG(ARG); else \
+    if (INT_CHECK(ARG)) TARGET=INT_AS_LONG(ARG); else \
         if (longlong_check(ARG)) TARGET=PyLong_AsLongLong(ARG); else \
             if (PyLong_Check(ARG)) { \
                 PyErr_SetString(PyExc_ValueError, "long integer out of range"); \
@@ -18,11 +18,11 @@
 #else
 #define VALUE_TYPE int
 #define VALUE_PARSE "i"
-#define COPY_VALUE_TO_OBJECT(O, K) O=PyInt_FromLong(K)
+#define COPY_VALUE_TO_OBJECT(O, K) O=INT_FROM_LONG(K)
 
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
-  if (PyInt_Check(ARG)) {                                         \
-      long vcopy = PyInt_AS_LONG(ARG);                            \
+  if (INT_CHECK(ARG)) {                                         \
+      long vcopy = INT_AS_LONG(ARG);                            \
       if ((int)vcopy != vcopy) {                                  \
         PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \

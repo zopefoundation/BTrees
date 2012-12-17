@@ -14,10 +14,11 @@
 
 # fsBTrees are data structures used for ZODB FileStorage.  They are not
 # expected to be "public" excpect to FileStorage.
+# Each item in an fsBTree maps a two-byte key to a six-byte value.
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'fsBucket', 'fsSet', 'fsBTree', 'fsTreeSet',
-           'union', 'intersection', 'difference', 'multiunion',
+           'union', 'intersection', 'difference',
           )
 
 
@@ -30,16 +31,15 @@ from ._base import Tree as BTree
 from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
-from ._base import multiunion as _multiunion
 from ._base import set_operation as _set_operation
-from ._base import to_str as _to_str
+from ._base import to_bytes as _to_bytes
 from ._base import union as _union
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
 using64bits = False
-_to_key = _to_str(2)
-_to_value = _to_str(6)
+_to_key = _to_bytes(2)
+_to_value = _to_bytes(6)
 
 
 class fsBucketPy(Bucket):
@@ -47,11 +47,8 @@ class fsBucketPy(Bucket):
     _to_key = _to_key
     _to_value = _to_value
 
-    def MERGE_WEIGHT(self, value, weight):
-        return value
-
     def toString(self):
-        return ''.join(self._keys) + ''.join(self._values)
+        return b''.join(self._keys) + b''.join(self._values)
 
     def fromString(self, v):
         length = len(v)
@@ -77,8 +74,6 @@ class fsBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
-    def MERGE_WEIGHT(self, value, weight):
-        return value
 
 
 class fsTreeSetPy(TreeSet):
@@ -104,18 +99,10 @@ fsTreeSetPy._set_type = fsTreeSetPy._bucket_type = fsSetPy
 differencePy = _set_operation(_difference, fsSetPy)
 unionPy = _set_operation(_union, fsSetPy)
 intersectionPy = _set_operation(_intersection, fsSetPy)
-multiunionPy = _set_operation(_multiunion, fsSetPy)
 
 try:
-    from _fsBTree import fsBucket
-    from _fsBTree import fsSet
-    from _fsBTree import fsBTree
-    from _fsBTree import fsTreeSet
-    from _fsBTree import difference
-    from _fsBTree import union
-    from _fsBTree import intersection
-    from _fsBTree import multiunion
-except ImportError: #pragma NO COVER
+    from ._fsBTree import fsBucket
+except ImportError: #pragma NO COVER w/ C extensions
     fsBucket = fsBucketPy
     fsSet = fsSetPy
     fsBTree = fsBTreePy
@@ -123,7 +110,13 @@ except ImportError: #pragma NO COVER
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
-    multiunion = multiunionPy
+else: #pragma NO COVER w/o C extensions
+    from ._fsBTree import fsSet
+    from ._fsBTree import fsBTree
+    from ._fsBTree import fsTreeSet
+    from ._fsBTree import difference
+    from ._fsBTree import union
+    from ._fsBTree import intersection
 
 Bucket = fsBucket
 Set = fsSet

@@ -5,6 +5,9 @@
 4.0.2 (unreleased)
 ------------------
 
+- Added explicit support for Python 3.2, Python 3.3, and PyPy.
+  Note that the C extensions are not (yet) available on PyPy.
+
 - Python reference implementations now tested separately from the C
   verions on all platforms.
 

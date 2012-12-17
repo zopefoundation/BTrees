@@ -13,7 +13,7 @@
 #define COPY_VALUE_TO_OBJECT(O, K) O=PyFloat_FromDouble(K)
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
   if (PyFloat_Check(ARG)) TARGET = (float)PyFloat_AsDouble(ARG); \
-  else if (PyInt_Check(ARG)) TARGET = (float)PyInt_AsLong(ARG); \
+  else if (INT_CHECK(ARG)) TARGET = (float)INT_AS_LONG(ARG); \
   else { \
       PyErr_SetString(PyExc_TypeError, "expected float or int value"); \
       (STATUS)=0; (TARGET)=0; }

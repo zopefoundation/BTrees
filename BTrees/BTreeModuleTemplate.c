@@ -15,6 +15,7 @@
 #include "Python.h"
 /* include structmember.h for offsetof */
 #include "structmember.h"
+#include "bytesobject.h"
 
 #ifdef PERSISTENT
 #include "persistent/cPersistence.h"
@@ -27,7 +28,7 @@
 #define PER_ACCESSED(O) 1
 #endif
 
-#include "py24compat.h"
+#include "_compat.h"
 
 /* So sue me.  This pair gets used all over the place, so much so that it
  * interferes with understanding non-persistence parts of algorithms.
@@ -65,7 +66,7 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define MAX_BTREE_SIZE(B) DEFAULT_MAX_BTREE_SIZE
 #define MAX_BUCKET_SIZE(B) DEFAULT_MAX_BUCKET_SIZE
 
-#define SameType_Check(O1, O2) ((O1)->ob_type==(O2)->ob_type)
+#define SameType_Check(O1, O2) (Py_TYPE((O1))==Py_TYPE((O2)))
 
 #define ASSERT(C, S, R) if (! (C)) { \
   PyErr_SetString(PyExc_AssertionError, (S)); return (R); }
@@ -81,7 +82,7 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 static int
 longlong_check(PyObject *ob)
 {
-    if (PyInt_Check(ob))
+    if (INT_CHECK(ob))
         return 1;
 
     if (PyLong_Check(ob)) {
@@ -101,10 +102,52 @@ longlong_as_object(PY_LONG_LONG val)
     static PY_LONG_LONG maxint = 0;
 
     if (maxint == 0)
-        maxint = PyInt_GetMax();
+        maxint = INT_GETMAX();
     if ((val > maxint) || (val < (-maxint-1)))
         return PyLong_FromLongLong(val);
-    return PyInt_FromLong((long)val);
+    return INT_FROM_LONG((long)val);
+}
+#endif
+
+
+#ifdef NEED_LONG_LONG_KEYS
+static int
+longlong_convert(PyObject *ob, PY_LONG_LONG *value)
+{
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+        (*value) = (PY_LONG_LONG)PyInt_AS_LONG(ob);
+        return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected integer key");
+        return 0;
+    }
+    else
+    {
+        PY_LONG_LONG val;
+#if PY_VERSION_HEX < 0x02070000
+        /* check magnitude */
+        val = PyLong_AsLongLong(ob);
+
+        if (val == -1 && PyErr_Occurred())
+            goto overflow;
+#else
+        int overflow;
+        val = PyLong_AsLongLongAndOverflow(ob, &overflow);
+        if (overflow)
+            goto overflow;
+#endif
+        (*value) = val;
+        return 1;
+    }
+overflow:
+    PyErr_SetString(PyExc_ValueError, "long integer out of range");
+    return 0;
 }
 #endif
 
@@ -291,7 +334,7 @@ IndexError(int i)
 {
     PyObject *v;
 
-    v = PyInt_FromLong(i);
+    v = INT_FROM_LONG(i);
     if (!v) {
 	v = Py_None;
 	Py_INCREF(v);
@@ -451,7 +494,11 @@ BTREEITEMSTEMPLATE_C
 int
 init_persist_type(PyTypeObject *type)
 {
+#ifdef PY3K
+    ((PyObject*)type)->ob_type = &PyType_Type;
+#else
     type->ob_type = &PyType_Type;
+#endif
     type->tp_base = cPersistenceCAPI->pertype;
 
     if (PyType_Ready(type) < 0)
@@ -460,120 +507,167 @@ init_persist_type(PyTypeObject *type)
     return 1;
 }
 
-void
-INITMODULE (void)
-{
-    PyObject *m, *d, *c;
+#ifdef PY3K
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_" MOD_NAME_PREFIX "BTree",    /* m_name */
+        BTree_module_documentation,     /* m_doc */
+        -1,                             /* m_size */
+        module_methods,                 /* m_methods */
+        NULL,                           /* m_reload */
+        NULL,                           /* m_traverse */
+        NULL,                           /* m_clear */
+        NULL,                           /* m_free */
+    };
 
-#ifdef KEY_TYPE_IS_PYOBJECT
-    object_ = PyTuple_GetItem(Py_None->ob_type->tp_bases, 0);
-    if (object_ == NULL)
-      return;
 #endif
 
-    sort_str = PyString_InternFromString("sort");
+static PyObject*
+module_init(void)
+{
+    PyObject *module, *mod_dict, *interfaces, *conflicterr;
+
+#ifdef KEY_TYPE_IS_PYOBJECT
+    object_ = PyTuple_GetItem(Py_TYPE(Py_None)->tp_bases, 0);
+    if (object_ == NULL)
+      return NULL;
+#endif
+
+    sort_str = INTERN("sort");
     if (!sort_str)
-	return;
-    reverse_str = PyString_InternFromString("reverse");
+        return NULL;
+    reverse_str = INTERN("reverse");
     if (!reverse_str)
-	return;
-    __setstate___str = PyString_InternFromString("__setstate__");
+        return NULL;
+    __setstate___str = INTERN("__setstate__");
     if (!__setstate___str)
-	return;
-    _bucket_type_str = PyString_InternFromString("_bucket_type");
+        return NULL;
+    _bucket_type_str = INTERN("_bucket_type");
     if (!_bucket_type_str)
-	return;
+        return NULL;
 
     /* Grab the ConflictError class */
-    m = PyImport_ImportModule("BTrees.Interfaces");
-    if (m != NULL) {
-  	c = PyObject_GetAttrString(m, "BTreesConflictError");
-  	if (c != NULL)
-	    ConflictError = c;
-	Py_DECREF(m);
+    interfaces = PyImport_ImportModule("BTrees.Interfaces");
+    if (interfaces != NULL)
+    {
+        conflicterr = PyObject_GetAttrString(interfaces, "BTreesConflictError");
+        if (conflicterr != NULL)
+            ConflictError = conflicterr;
+        Py_DECREF(interfaces);
     }
 
-    if (ConflictError == NULL) {
-  	Py_INCREF(PyExc_ValueError);
-	ConflictError=PyExc_ValueError;
+    if (ConflictError == NULL)
+    {
+        Py_INCREF(PyExc_ValueError);
+        ConflictError=PyExc_ValueError;
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    cPersistenceCAPI = PyCObject_Import("persistent.cPersistence", "CAPI");
+#ifdef PY3K
+    cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCapsule_Import(
+                "persistent.cPersistence.CAPI", 0);
+#else
+    cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCObject_Import(
+                "persistent.cPersistence", "CAPI");
+#endif
     if (cPersistenceCAPI == NULL)
-	return;
+        return NULL;
 
-    BTreeItemsType.ob_type = &PyType_Type;
-    BTreeIter_Type.ob_type = &PyType_Type;
+#ifdef PY3K
+#define _SET_TYPE(typ) ((PyObject*)(&typ))->ob_type = &PyType_Type
+#else
+#define _SET_TYPE(typ) (typ).ob_type = &PyType_Type
+#endif
+    _SET_TYPE(BTreeItemsType);
+    _SET_TYPE(BTreeIter_Type);
     BTreeIter_Type.tp_getattro = PyObject_GenericGetAttr;
     BucketType.tp_new = PyType_GenericNew;
     SetType.tp_new = PyType_GenericNew;
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
     if (!init_persist_type(&BucketType))
-	return;
+	    return NULL;
     if (!init_persist_type(&BTreeType))
-	return;
+	    return NULL;
     if (!init_persist_type(&SetType))
-	return;
+	    return NULL;
     if (!init_persist_type(&TreeSetType))
-	return;
+	    return NULL;
 
     if (PyDict_SetItem(BTreeType.tp_dict, _bucket_type_str,
-		       (PyObject *)&BucketType) < 0) {
-	fprintf(stderr, "btree failed\n");
-	return;
+		       (PyObject *)&BucketType) < 0)
+    {
+        fprintf(stderr, "btree failed\n");
+        return NULL;
     }
     if (PyDict_SetItem(TreeSetType.tp_dict, _bucket_type_str,
-		       (PyObject *)&SetType) < 0) {
-	fprintf(stderr, "bucket failed\n");
-	return;
+		       (PyObject *)&SetType) < 0)
+    {
+        fprintf(stderr, "bucket failed\n");
+        return NULL;
     }
 
     /* Create the module and add the functions */
-    m = Py_InitModule4("_" MOD_NAME_PREFIX "BTree",
+#ifdef PY3K
+    module = PyModule_Create(&moduledef);
+#else
+    module = Py_InitModule4("_" MOD_NAME_PREFIX "BTree",
 		       module_methods, BTree_module_documentation,
 		       (PyObject *)NULL, PYTHON_API_VERSION);
+#endif
 
     /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
-    if (PyDict_SetItemString(d, MOD_NAME_PREFIX "Bucket",
+    mod_dict = PyModule_GetDict(module);
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
 			     (PyObject *)&BucketType) < 0)
-	return;
-    if (PyDict_SetItemString(d, MOD_NAME_PREFIX "BTree",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "BTree",
 			     (PyObject *)&BTreeType) < 0)
-	return;
-    if (PyDict_SetItemString(d, MOD_NAME_PREFIX "Set",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Set",
 			     (PyObject *)&SetType) < 0)
-	return;
-    if (PyDict_SetItemString(d, MOD_NAME_PREFIX "TreeSet",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeSet",
 			     (PyObject *)&TreeSetType) < 0)
-	return;
-    if (PyDict_SetItemString(d, MOD_NAME_PREFIX "TreeIterator",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeIterator",
 			     (PyObject *)&BTreeIter_Type) < 0)
-	return;
+        return NULL;
 	/* We also want to be able to access these constants without the prefix
 	 * so that code can more easily exchange modules (particularly the integer
 	 * and long modules, but also others).  The TreeIterator is only internal,
 	 * so we don't bother to expose that.
      */
-    if (PyDict_SetItemString(d, "Bucket",
+    if (PyDict_SetItemString(mod_dict, "Bucket",
 			     (PyObject *)&BucketType) < 0)
-	return;
-    if (PyDict_SetItemString(d, "BTree",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, "BTree",
 			     (PyObject *)&BTreeType) < 0)
-	return;
-    if (PyDict_SetItemString(d, "Set",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, "Set",
 			     (PyObject *)&SetType) < 0)
-	return;
-    if (PyDict_SetItemString(d, "TreeSet",
+        return NULL;
+    if (PyDict_SetItemString(mod_dict, "TreeSet",
 			     (PyObject *)&TreeSetType) < 0)
-	return;
+        return NULL;
 #if defined(ZODB_64BIT_INTS) && defined(NEED_LONG_LONG_SUPPORT)
-    if (PyDict_SetItemString(d, "using64bits", Py_True) < 0)
-        return;
+    if (PyDict_SetItemString(mod_dict, "using64bits", Py_True) < 0)
+        return NULL;
 #else
-    if (PyDict_SetItemString(d, "using64bits", Py_False) < 0)
-        return;
+    if (PyDict_SetItemString(mod_dict, "using64bits", Py_False) < 0)
+        return NULL;
 #endif
+    return module;
 }
+
+#ifdef PY3K
+PyMODINIT_FUNC INITMODULE(void)
+{
+    return module_init();
+}
+#else
+PyMODINIT_FUNC INITMODULE(void)
+{
+    module_init();
+}
+#endif

@@ -4,26 +4,23 @@
 #ifdef ZODB_64BIT_INTS
 /* PY_LONG_LONG as key */
 #define NEED_LONG_LONG_SUPPORT
+#define NEED_LONG_LONG_KEYS
 #define KEY_TYPE PY_LONG_LONG
 #define KEY_CHECK longlong_check
 #define COPY_KEY_TO_OBJECT(O, K) O=longlong_as_object(K)
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS) \
-    if (PyInt_Check(ARG)) TARGET=PyInt_AS_LONG(ARG); else \
-        if (longlong_check(ARG)) TARGET=PyLong_AsLongLong(ARG); else \
-            if (PyLong_Check(ARG)) { \
-                PyErr_SetString(PyExc_ValueError, "long integer out of range"); \
-                (STATUS)=0; (TARGET)=0; } \
-            else { \
-            PyErr_SetString(PyExc_TypeError, "expected integer key");   \
-            (STATUS)=0; (TARGET)=0; }
+    if (!longlong_convert((ARG), &TARGET)) \
+    { \
+        (STATUS)=0; (TARGET)=0; \
+    } 
 #else
 /* C int as key */
 #define KEY_TYPE int
-#define KEY_CHECK PyInt_Check
-#define COPY_KEY_TO_OBJECT(O, K) O=PyInt_FromLong(K)
+#define KEY_CHECK INT_CHECK
+#define COPY_KEY_TO_OBJECT(O, K) O=INT_FROM_LONG(K)
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)                    \
-  if (PyInt_Check(ARG)) {                                         \
-      long vcopy = PyInt_AS_LONG(ARG);                            \
+  if (INT_CHECK(ARG)) {                                         \
+      long vcopy = INT_AS_LONG(ARG);                            \
       if ((int)vcopy != vcopy) {                                  \
         PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \

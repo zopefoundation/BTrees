@@ -97,16 +97,8 @@ weightedUnionPy = _set_operation(_weightedUnion, OISetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, OISetPy)
 
 try:
-    from _OIBTree import OIBucket
-    from _OIBTree import OISet
-    from _OIBTree import OIBTree
-    from _OIBTree import OITreeSet
-    from _OIBTree import difference
-    from _OIBTree import union
-    from _OIBTree import intersection
-    from _OIBTree import weightedUnion
-    from _OIBTree import weightedIntersection
-except ImportError: #pragma NO COVER
+    from ._OIBTree import OIBucket
+except ImportError: #pragma NO COVER w/ C extensions
     OIBucket = OIBucketPy
     OISet = OISetPy
     OIBTree = OIBTreePy
@@ -116,6 +108,15 @@ except ImportError: #pragma NO COVER
     intersection = intersectionPy
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
+else: #pragma NO COVER w/o C extensions
+    from ._OIBTree import OISet
+    from ._OIBTree import OIBTree
+    from ._OIBTree import OITreeSet
+    from ._OIBTree import difference
+    from ._OIBTree import union
+    from ._OIBTree import intersection
+    from ._OIBTree import weightedUnion
+    from ._OIBTree import weightedIntersection
 
 
 Bucket = OIBucket

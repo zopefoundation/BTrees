@@ -21,6 +21,10 @@ from struct import error as struct_error
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
+from ._compat import PY3
+from ._compat import cmp
+from ._compat import int_types
+from ._compat import xrange
 
 
 _marker = object()
@@ -156,7 +160,7 @@ class _SetIteration(object):
 
     __slots__ = ('to_iterate',
                  'useValues',
-                 '_next',
+                 '_iter',
                  'active',
                  'position',
                  'key',
@@ -172,15 +176,18 @@ class _SetIteration(object):
             try:
                 itmeth = to_iterate.iteritems
             except AttributeError:
-                itmeth = to_iterate.__iter__
-                useValues = False
+                if PY3 and isinstance(to_iterate, dict): #pragma NO COVER Py3k
+                    itmeth = to_iterate.items().__iter__
+                else:
+                    itmeth = to_iterate.__iter__
+                    useValues = False
             else:
                 self.value = None
         else:
             itmeth = to_iterate.__iter__
 
         self.useValues = useValues
-        self._next = itmeth().next
+        self._iter = itmeth()
         self.active = True
         self.position = 0
         self.key = _marker
@@ -190,9 +197,9 @@ class _SetIteration(object):
     def advance(self):
         try:
             if self.useValues:
-                self.key, self.value = self._next()
+                self.key, self.value = next(self._iter)
             else:
-                self.key = self._next()
+                self.key = next(self._iter)
             self.position += 1
         except StopIteration:
             self.active = False
@@ -200,6 +207,15 @@ class _SetIteration(object):
 
         return self
 
+def _no_default_comparison(key):
+    # Enforce test that key has non-default comparison.
+    lt = getattr(key, '__lt__', None)
+    if lt is not None:
+        if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
+            lt = None
+    if (lt is None and
+        getattr(key, '__cmp__', None) is None):
+        raise TypeError("Can't use default __cmp__")
 
 class Bucket(_BucketBase):
 
@@ -237,10 +253,7 @@ class Bucket(_BucketBase):
             raise TypeError('items must be a sequence of 2-tuples')
 
     def __setitem__(self, key, value):
-        # Enforce test that key has non-default comparison.
-        if ( getattr(key, '__lt__', None) is None and
-            getattr(key, '__cmp__', None) is None):
-            raise TypeError("Can't use default __cmp__")
+        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -298,7 +311,7 @@ class Bucket(_BucketBase):
 
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
-            index = len(self._keys) / 2
+            index = len(self._keys) // 2
         new_instance = self.__class__()
         new_instance._keys = self._keys[index:]
         new_instance._values = self._values[index:]
@@ -553,7 +566,7 @@ class Set(_BucketBase):
 
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
-            index = len(self._keys) / 2
+            index = len(self._keys) // 2
         new_instance = self.__class__()
         new_instance._keys = self._keys[index:]
         del self._keys[index:]
@@ -727,10 +740,7 @@ class _Tree(_Base):
             set(*i)
 
     def __setitem__(self, key, value):
-        # Enforce test that key has non-default comparison.
-        if ( getattr(key, '__lt__', None) is None and
-            getattr(key, '__cmp__', None) is None):
-            raise TypeError("Can't use default __cmp__")
+        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -742,6 +752,7 @@ class _Tree(_Base):
 
     def __nonzero__(self):
         return bool(self._data)
+    __bool__ = __nonzero__ #Py3k rename
 
     def __len__(self):
         l = 0
@@ -760,7 +771,7 @@ class _Tree(_Base):
         if data:
             lo = 0
             hi = len(data)
-            i = hi//2
+            i = hi // 2
             while i > lo:
                 cmp_ = cmp(data[i].key, key)
                 if cmp_ < 0:
@@ -769,7 +780,7 @@ class _Tree(_Base):
                     hi = i
                 else:
                     break
-                i = (lo+hi)//2
+                i = (lo + hi) // 2
             return i
         return -1
 
@@ -882,7 +893,7 @@ class _Tree(_Base):
     def _split(self, index=None):
         data = self._data
         if index is None:
-            index = len(data)//2
+            index = len(data) // 2
 
         next = self.__class__()
         next._data = data[index:]
@@ -1083,7 +1094,7 @@ class _TreeItems(object):
 
         while i > self.index:
             try:
-                self.v = self.it.next()
+                self.v = next(self.it)
             except StopIteration:
                 raise IndexError(i)
             else:
@@ -1158,7 +1169,6 @@ class TreeSet(_Tree):
 
     __slots__ = ()
 
-    #_next = None
     def add(self, key):
         return self._set(self._to_key(key))[0]
 
@@ -1270,6 +1280,14 @@ def intersection(set_type, o1, o2):
             i2.advance()
     return result
 
+def _prepMergeIterators(o1, o2):
+    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
+    if MERGE_DEFAULT is None:
+        raise TypeError("invalid set operation")
+    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
+    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    return i1, i2
+
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
@@ -1277,9 +1295,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         return w2, o2
     if o2 is None:
         return w1, o1
-    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
-    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
-    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    i1, i2 = _prepMergeIterators(o1, o2)
     MERGE = getattr(o1, 'MERGE', None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
@@ -1287,12 +1303,6 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if (not i1.useValues) and i2.useValues:
         i1, i2 = i2, i1
         w1, w2 = w2, w1
-    if MERGE_DEFAULT is None:
-        if i1.useValues:
-            if (not i2.useValues):
-                raise TypeError("invalid set operation")
-        else:
-            raise TypeError("invalid set operation")
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
@@ -1333,22 +1343,13 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         return w2, o2
     if o2 is None:
         return w1, o1
-    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
-    i1 = _SetIteration(o1, True, MERGE_DEFAULT)
-    i2 = _SetIteration(o2, True, MERGE_DEFAULT)
+    i1, i2 = _prepMergeIterators(o1, o2)
     MERGE = getattr(o1, 'MERGE', None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
-    MERGE_WEIGHT = getattr(o1, 'MERGE_WEIGHT')
     if (not i1.useValues) and i2.useValues:
         i1, i2 = i2, i1
         w1, w2 = w2, w1
-    if MERGE_DEFAULT is None:
-        if i1.useValues:
-            if (not i2.useValues):
-                raise TypeError("invalid set operation")
-        else:
-            raise TypeError("invalid set operation")
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
@@ -1384,7 +1385,6 @@ def multiunion(set_type, seqs):
 def to_ob(self, v):
     return v
 
-int_types = int, long
 def to_int(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
@@ -1420,10 +1420,10 @@ def to_long(self, v):
 
     return int(v)
 
-def to_str(l):
+def to_bytes(l):
     def to(self, v):
-        if not (isinstance(v, str) and len(v) == l):
-            raise TypeError("%s-character string expected" % l)
+        if not (isinstance(v, bytes) and len(v) == l):
+            raise TypeError("%s-byte array expected" % l)
         return v
     return to
 
