@@ -110,6 +110,48 @@ longlong_as_object(PY_LONG_LONG val)
 #endif
 
 
+#ifdef NEED_LONG_LONG_KEYS
+static int
+longlong_convert(PyObject *ob, PY_LONG_LONG *value)
+{
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+        (*value) = (PY_LONG_LONG)PyInt_AS_LONG(ob);
+        return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected integer key");
+        return 0;
+    }
+    else
+    {
+        PY_LONG_LONG val;
+#if PY_VERSION_HEX < 0x02070000
+        /* check magnitude */
+        val = PyLong_AsLongLong(ob);
+
+        if (val == -1 && PyErr_Occurred())
+            goto overflow;
+#else
+        int overflow;
+        val = PyLong_AsLongLongAndOverflow(ob, &overflow);
+        if (overflow)
+            goto overflow;
+#endif
+        (*value) = val;
+        return 1;
+    }
+overflow:
+    PyErr_SetString(PyExc_ValueError, "long integer out of range");
+    return 0;
+}
+#endif
+
+
 /* Various kinds of BTree and Bucket structs are instances of
  * "sized containers", and have a common initial layout:
  *     The stuff needed for all Python objects, or all Persistent objects.
