@@ -5,6 +5,9 @@
 4.0.4 (unreleased)
 ------------------
 
+- Fix test failures on Windows:  no longer rely on overflows from 
+  ``sys.maxint``.
+
 
 4.0.3 (2013-01-04)
 ------------------
