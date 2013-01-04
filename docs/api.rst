@@ -51,10 +51,8 @@ Protocol APIs
      :members:
      :member-order: bysource
 
-Protocol APIs
--------------
-
-.. automodule:: BTrees.Interfaces
+  BTree Family APIs
+  -----------------
 
   .. autointerface:: ISet
      :members:
@@ -72,10 +70,8 @@ Protocol APIs
      :members:
      :member-order: bysource
 
-Module APIs
------------
-
-.. automodule:: BTrees.Interfaces
+  Module APIs
+  -----------
 
   .. autointerface:: IBTreeModule
      :members:
