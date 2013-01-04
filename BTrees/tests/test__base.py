@@ -2900,9 +2900,14 @@ class Test_helpers(unittest.TestCase):
         from BTrees._base import to_long
         faux_self = object()
         try:
-            self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+            #self.assertRaises(ValueError, to_long, faux_self, sys.maxint + 1)
+            to_long(faux_self, sys.maxint + 1)
+        except ValueError:
+            pass
         except AttributeError: #pragma NO COVER Py3k
             pass
+        else:
+            assert 0, "No ValueError:  sys.maxint -> %s" % sys.maxint
 
     def test_to_long_w_invalid(self):
         from BTrees._base import to_long
