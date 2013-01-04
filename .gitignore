@@ -7,3 +7,5 @@ coverage.xml
 *.egg
 docs/_build
 __pycache__
+*.pyc
+*.so
