@@ -5,6 +5,8 @@
 4.0.3 (unreleased)
 ------------------
 
+- Added ``setup_requires==['persistent']``.
+
 
 4.0.2 (2013-01-03)
 ------------------

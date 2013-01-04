@@ -149,6 +149,7 @@ setup(name='BTrees',
       include_package_data=True,
       zip_safe=False,
       ext_modules = ext_modules,
+      setup_requires=['persistent'],
       extras_require = {
         'test': TESTS_REQUIRE,
         'ZODB': ['ZODB3'],
