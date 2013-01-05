@@ -21,18 +21,10 @@ class Test_non_negative(unittest.TestCase):
         return non_negative(int_val)
 
     def test_w_big_negative(self):
-        import sys
-        try:
-            self.assertEqual(self._callFUT(-sys.maxint), 1)
-        except AttributeError: #pragma NO COVER Py3k
-            pass
+        self.assertEqual(self._callFUT(-(2**63 - 1)), 1)
 
     def test_w_negative(self):
-        import sys
-        try:
-            self.assertEqual(self._callFUT(-1), sys.maxint)
-        except AttributeError: #pragma NO COVER Py3k
-            pass
+        self.assertEqual(self._callFUT(-1), 2**63 - 1)
 
     def test_w_zero(self):
         self.assertEqual(self._callFUT(0), 0)
