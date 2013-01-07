@@ -18,7 +18,6 @@ import os
 import platform
 import sys
 
-
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
@@ -46,12 +45,8 @@ class ModuleHeaderDir(object):
     def __str__(self):
         from pkg_resources import require
         from pkg_resources import resource_filename
-        from pkg_resources import DistributionNotFound
-        try:
-            require(self._require_spec)
-            path = resource_filename(self._require_spec, self._where)
-        except DistributionNotFound:
-            path = os.path.join(here, 'include')
+        require(self._require_spec)
+        path = resource_filename(self._require_spec, self._where)
         return os.path.abspath(path)
 
 include = [ModuleHeaderDir('persistent')]
