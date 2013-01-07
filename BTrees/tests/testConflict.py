@@ -486,7 +486,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         We want to guard against a case in which the first key in a
         bucket is removed in one transaction while a key is added
         after that key but before the next key in another transaction
-        with the result that the added key is unreachble
+        with the result that the added key is unreachable.
 
         original:
 
