@@ -5,6 +5,9 @@
 4.0.4 (unreleased)
 ------------------
 
+- Accomodate buildout to the fact that we no longer bundle a copy
+  of 'persistent.h'.
+
 - Fix test failures on Windows:  no longer rely on overflows from 
   ``sys.maxint``.
 
