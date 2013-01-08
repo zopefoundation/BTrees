@@ -13,3 +13,4 @@ __pycache__
 nosetests.xml
 coverage.xml
 *.egg-info
+*.egg
