@@ -25,6 +25,7 @@ from ._base import MERGE_WEIGHT_default
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
@@ -61,6 +62,9 @@ class IOTreeSetPy(TreeSet):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
 
+class IOTreeIteratorPy(_TreeIterator):
+    pass
+
 
 # Can't declare forward refs, so fix up afterwards:
 
@@ -89,6 +93,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     IOSet = IOSetPy
     IOBTree = IOBTreePy
     IOTreeSet = IOTreeSetPy
+    IOTreeIterator = IOTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -97,6 +102,7 @@ else: #pragma NO COVER w/o C extensions
     from ._IOBTree import IOSet
     from ._IOBTree import IOBTree
     from ._IOBTree import IOTreeSet
+    from ._IOBTree import IOTreeIterator
     from ._IOBTree import difference
     from ._IOBTree import union
     from ._IOBTree import intersection

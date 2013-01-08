@@ -1357,11 +1357,16 @@ class ModuleTest(object):
     def _getModule(self):
         pass
     def testNames(self):
-        for name in ('Bucket', 'BTree', 'Set', 'TreeSet'):
+        names = ['Bucket', 'BTree', 'Set', 'TreeSet']
+        for name in names:
             klass = getattr(self._getModule(), name)
             self.assertEqual(klass.__module__, self._getModule().__name__)
             self.assertTrue(klass is getattr(self._getModule(),
                                           self.prefix + name))
+        # BBB for zope.app.security ZCML :(
+        pfx_iter = self.prefix + 'TreeIterator'
+        klass = getattr(self._getModule(), pfx_iter)
+        self.assertEqual(klass.__module__, self._getModule().__name__)
 
     def testModuleProvides(self):
         from zope.interface.verify import verifyObject

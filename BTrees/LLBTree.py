@@ -28,6 +28,7 @@ from ._base import MERGE_DEFAULT_int
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
@@ -77,6 +78,10 @@ class LLTreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
+class LLTreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 LLBucketPy._mapping_type = LLBucketPy._bucket_type = LLBucketPy
@@ -106,6 +111,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     LLSet = LLSetPy
     LLBTree = LLBTreePy
     LLTreeSet = LLTreeSetPy
+    LLTreeIterator = LLTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -116,6 +122,7 @@ else: #pragma NO COVER w/o C extensions
     from ._LLBTree import LLSet
     from ._LLBTree import LLBTree
     from ._LLBTree import LLTreeSet
+    from ._LLBTree import LLTreeIterator
     from ._LLBTree import difference
     from ._LLBTree import union
     from ._LLBTree import intersection

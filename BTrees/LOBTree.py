@@ -25,6 +25,7 @@ from ._base import MERGE_WEIGHT_default
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
@@ -62,6 +63,10 @@ class LOTreeSetPy(TreeSet):
     _to_key = _to_key
 
 
+class LOTreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 LOBucketPy._mapping_type = LOBucketPy._bucket_type = LOBucketPy
@@ -89,6 +94,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     LOSet = LOSetPy
     LOBTree = LOBTreePy
     LOTreeSet = LOTreeSetPy
+    LOTreeIterator = LOTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -97,6 +103,7 @@ else: #pragma NO COVER w/o C extensions
     from ._LOBTree import LOSet
     from ._LOBTree import LOBTree
     from ._LOBTree import LOTreeSet
+    from ._LOBTree import LOTreeIterator
     from ._LOBTree import difference
     from ._LOBTree import union
     from ._LOBTree import intersection

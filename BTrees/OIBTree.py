@@ -28,6 +28,7 @@ from ._base import MERGE_DEFAULT_float
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
@@ -75,6 +76,10 @@ class OITreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_float
 
 
+class OITreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 OIBucketPy._mapping_type = OIBucketPy._bucket_type = OIBucketPy
@@ -103,6 +108,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     OISet = OISetPy
     OIBTree = OIBTreePy
     OITreeSet = OITreeSetPy
+    OITreeIterator = OITreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -112,6 +118,7 @@ else: #pragma NO COVER w/o C extensions
     from ._OIBTree import OISet
     from ._OIBTree import OIBTree
     from ._OIBTree import OITreeSet
+    from ._OIBTree import OITreeIterator
     from ._OIBTree import difference
     from ._OIBTree import union
     from ._OIBTree import intersection
