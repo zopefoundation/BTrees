@@ -1,7 +1,7 @@
 include *.txt
 
+recursive-include docs *
 recursive-include BTrees *
-recursive-include include *
 
 global-exclude *.dll
 global-exclude *.pyc
