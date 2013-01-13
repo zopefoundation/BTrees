@@ -2,7 +2,7 @@
 ====================
 
 
-4.0.4 (unreleased)
+4.0.4 (2013-01-12)
 ------------------
 
 - Emulate the (private) iterators used by the C extension modules from
