@@ -1126,6 +1126,18 @@ class _TreeItems(object):
             done = 1
 
 
+class _TreeIterator(object):
+    """ Faux implementation for BBB only.
+    """
+    def __init__(self, items): #pragma NO COVOER
+        raise TypeError(
+            "TreeIterators are private implementation details "
+            "of the C-based BTrees.\n\n"
+            "Please use 'iter(tree)', rather than instantiating "
+            "one directly."
+        )
+
+
 class Tree(_Tree):
 
     __slots__ = ()

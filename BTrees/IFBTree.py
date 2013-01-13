@@ -28,6 +28,7 @@ from ._base import MERGE_DEFAULT_float
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
@@ -76,6 +77,10 @@ class IFTreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_float
 
 
+class IFTreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 IFBucketPy._mapping_type = IFBucketPy._bucket_type = IFBucketPy
@@ -105,6 +110,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     IFSet = IFSetPy
     IFBTree = IFBTreePy
     IFTreeSet = IFTreeSetPy
+    IFTreeIterator = IFTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -115,6 +121,7 @@ else: #pragma NO COVER w/o C extensions
     from ._IFBTree import IFSet
     from ._IFBTree import IFBTree
     from ._IFBTree import IFTreeSet
+    from ._IFBTree import IFTreeIterator
     from ._IFBTree import difference
     from ._IFBTree import union
     from ._IFBTree import intersection

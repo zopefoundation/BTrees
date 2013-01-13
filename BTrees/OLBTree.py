@@ -28,6 +28,7 @@ from ._base import MERGE_DEFAULT_int
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
@@ -76,6 +77,10 @@ class OLTreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
+class OLTreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 OLBucketPy._mapping_type = OLBucketPy._bucket_type = OLBucketPy
@@ -104,6 +109,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     OLSet = OLSetPy
     OLBTree = OLBTreePy
     OLTreeSet = OLTreeSetPy
+    OLTreeIterator = OLTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -113,6 +119,7 @@ else: #pragma NO COVER w/o C extensions
     from ._OLBTree import OLSet
     from ._OLBTree import OLBTree
     from ._OLBTree import OLTreeSet
+    from ._OLBTree import OLTreeIterator
     from ._OLBTree import difference
     from ._OLBTree import union
     from ._OLBTree import intersection

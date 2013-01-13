@@ -24,6 +24,7 @@ from ._base import Bucket
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
@@ -58,6 +59,10 @@ class OOTreeSetPy(TreeSet):
     _to_key = _to_key
 
 
+class OOTreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 OOBucketPy._mapping_type = OOBucketPy._bucket_type = OOBucketPy
@@ -84,6 +89,7 @@ except ImportError as e: #pragma NO COVER w/ C extensions
     OOSet = OOSetPy
     OOBTree = OOBTreePy
     OOTreeSet = OOTreeSetPy
+    OOTreeIterator = OOTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -91,6 +97,7 @@ else: #pragma NO COVER w/o C extensions
     from ._OOBTree import OOSet
     from ._OOBTree import OOBTree
     from ._OOBTree import OOTreeSet
+    from ._OOBTree import OOTreeIterator
     from ._OOBTree import difference
     from ._OOBTree import union
     from ._OOBTree import intersection

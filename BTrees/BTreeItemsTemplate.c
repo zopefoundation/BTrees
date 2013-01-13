@@ -753,38 +753,38 @@ BTreeIter_getiter(PyObject *it)
 
 static PyTypeObject BTreeIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MOD_NAME_PREFIX "-iterator",        /* tp_name */
-    sizeof(BTreeIter),                  /* tp_basicsize */
-    0,                                  /* tp_itemsize */
+    MODULE_NAME MOD_NAME_PREFIX "TreeIterator", /* tp_name */
+    sizeof(BTreeIter),                          /* tp_basicsize */
+    0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)BTreeIter_dealloc,      /* tp_dealloc */
-    0,                                  /* tp_print */
-    0,                                  /* tp_getattr */
-    0,                                  /* tp_setattr */
-    0,                                  /* tp_compare */
-    0,                                  /* tp_repr */
-    0,                                  /* tp_as_number */
-    0,                                  /* tp_as_sequence */
-    0,                                  /* tp_as_mapping */
-    0,                                  /* tp_hash */
-    0,                                  /* tp_call */
-    0,                                  /* tp_str */
-    0, /*PyObject_GenericGetAttr,*/     /* tp_getattro */
-    0,                                  /* tp_setattro */
-    0,                                  /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    0,                                  /* tp_doc */
-    0,                                  /* tp_traverse */
-    0,                                  /* tp_clear */
-    0,                                  /* tp_richcompare */
-    0,                                  /* tp_weaklistoffset */
-    (getiterfunc)BTreeIter_getiter,     /* tp_iter */
-    (iternextfunc)BTreeIter_next,       /* tp_iternext */
-    0,                                  /* tp_methods */
-    0,                                  /* tp_members */
-    0,                                  /* tp_getset */
-    0,                                  /* tp_base */
-    0,                                  /* tp_dict */
-    0,                                  /* tp_descr_get */
-    0,                                  /* tp_descr_set */
+    (destructor)BTreeIter_dealloc,              /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    0,                                          /* tp_compare */
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0, /*PyObject_GenericGetAttr,*/             /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    (getiterfunc)BTreeIter_getiter,             /* tp_iter */
+    (iternextfunc)BTreeIter_next,               /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
 };

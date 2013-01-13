@@ -28,6 +28,7 @@ from ._base import MERGE_DEFAULT_int
 from ._base import Set
 from ._base import Tree as BTree
 from ._base import TreeSet
+from ._base import _TreeIterator
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import multiunion as _multiunion
@@ -77,6 +78,10 @@ class IITreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
+class IITreeIteratorPy(_TreeIterator):
+    pass
+
+
 # Can't declare forward refs, so fix up afterwards:
 
 IIBucketPy._mapping_type = IIBucketPy._bucket_type = IIBucketPy
@@ -106,6 +111,7 @@ except ImportError: #pragma NO COVER w/ C extensions
     IISet = IISetPy
     IIBTree = IIBTreePy
     IITreeSet = IITreeSetPy
+    IITreeIterator = IITreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -116,6 +122,7 @@ else: #pragma NO COVER w/o C extensions
     from ._IIBTree import IISet
     from ._IIBTree import IIBTree
     from ._IIBTree import IITreeSet
+    from ._IIBTree import IITreeIterator
     from ._IIBTree import difference
     from ._IIBTree import union
     from ._IIBTree import intersection
