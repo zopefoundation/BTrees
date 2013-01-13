@@ -5,6 +5,12 @@
 4.0.4 (unreleased)
 ------------------
 
+- Emulate the (private) iterators used by the C extension modules from
+  pure Python.  This change is "cosmetic" only:  it prevents the ZCML
+  ``zope.app.security:permission.zcml`` from failing.  The emulated
+  classes are **not** functional, and should be considered implementation
+  details.
+
 - Accomodate buildout to the fact that we no longer bundle a copy
   of 'persistent.h'.
 
