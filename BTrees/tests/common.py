@@ -202,6 +202,18 @@ class MappingBase(Base):
         for i in range(l):
             t[i]=i
 
+    def testShortRepr(self):
+        # test the repr because buckets have a complex repr implementation
+        # internally the cutoff from a stack allocated buffer to a heap
+        # allocated buffer is 10000.
+        t = self._makeOne()
+        for i in range(5):
+            t[i] = i
+        r = repr(t)
+        # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
+        # (the buffer must be terminated when copied).
+        self.assertTrue(len(r) < 10000)
+
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
         # internally the cutoff from a stack allocated buffer to a heap

@@ -1840,9 +1840,9 @@ bucket_repr(Bucket *self)
     {
         Py_DECREF(r);
 #ifdef PY3K
-        return PyUnicode_DecodeLatin1(repr, sizeof(repr), "surrogateescape");
+        return PyUnicode_DecodeLatin1(repr, strlen(repr), "surrogateescape");
 #else
-        return PyBytes_FromStringAndSize(repr, sizeof(repr));
+        return PyBytes_FromStringAndSize(repr, strlen(repr));
 #endif
     }
     else

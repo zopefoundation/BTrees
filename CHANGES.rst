@@ -5,7 +5,8 @@
 4.0.5 (unreleased)
 ------------------
 
-- TBD
+- Fit the ``repr`` of bucket objects, which could contain garbage
+  characters.
 
 
 4.0.4 (2013-01-12)
