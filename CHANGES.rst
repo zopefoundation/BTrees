@@ -2,7 +2,7 @@
 ====================
 
 
-4.0.5 (unreleased)
+4.0.5 (2013-01-15)
 ------------------
 
 - Fit the ``repr`` of bucket objects, which could contain garbage
