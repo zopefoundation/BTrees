@@ -1,4 +1,9 @@
 include *.txt
+include *.rst
+include *.py
+include buildout.cfg
+include tox.ini
+include .travis.yml
 
 recursive-include docs *
 recursive-include BTrees *
