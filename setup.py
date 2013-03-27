@@ -101,7 +101,7 @@ else:
 
     ext_modules = [BTreeExtension(family) for family in FAMILIES]
 
-if sys.version_info[0] > 3:
+if sys.version_info[0] >= 3:
     REQUIRES = [
         'persistent>=4.0.4',
         'zope.interface',
