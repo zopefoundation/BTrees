@@ -10,6 +10,8 @@
   the metapackage could pull in stale versions of **this** package and
   ``persistent``.
 
+- Fixed Python version check in ``setup.py``.
+
 
 4.0.5 (2013-01-15)
 ------------------
