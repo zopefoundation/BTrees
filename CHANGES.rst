@@ -5,7 +5,10 @@
 4.0.6 (unreleased)
 ------------------
 
--TBD
+- Changed the ``ZODB`` extra to require only the real ``ZODB`` package,
+  rather than the ``ZODB3`` metapackage:  depending on the version used,
+  the metapackage could pull in stale versions of **this** package and
+  ``persistent``.
 
 
 4.0.5 (2013-01-15)

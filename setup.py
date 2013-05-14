@@ -147,7 +147,7 @@ setup(name='BTrees',
       setup_requires=['persistent'],
       extras_require = {
         'test': TESTS_REQUIRE,
-        'ZODB': ['ZODB3'],
+        'ZODB': ['ZODB'],
         'testing': TESTS_REQUIRE + ['nose', 'coverage'],
         'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
       },
