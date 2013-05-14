@@ -2,7 +2,7 @@
 ====================
 
 
-4.0.6 (unreleased)
+4.0.6 (2013-05-14)
 ------------------
 
 - Changed the ``ZODB`` extra to require only the real ``ZODB`` package,
