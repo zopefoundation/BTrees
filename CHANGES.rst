@@ -1,6 +1,12 @@
 ``BTrees`` Changelog
 ====================
 
+4.0.7 (unreleased)
+------------------
+
+- Test ``PURE_PYTHON`` environment variable support:  if set, the C
+  extensions will not be built, imported, or tested.
+
 
 4.0.6 (2013-05-14)
 ------------------
@@ -32,7 +38,7 @@
 - Accomodate buildout to the fact that we no longer bundle a copy
   of 'persistent.h'.
 
-- Fix test failures on Windows:  no longer rely on overflows from 
+- Fix test failures on Windows:  no longer rely on overflows from
   ``sys.maxint``.
 
 
