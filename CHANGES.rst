@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.0.7 (unreleased)
+4.0.7 (2013-05-22)
 ------------------
 
 - Issue #2:  compilation error on 32-bit mode of OS/X.
