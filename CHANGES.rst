@@ -4,6 +4,8 @@
 4.0.7 (unreleased)
 ------------------
 
+- Issue #2:  compilation error on 32-bit mode of OS/X.
+
 - Test ``PURE_PYTHON`` environment variable support:  if set, the C
   extensions will not be built, imported, or tested.
 

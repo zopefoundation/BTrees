@@ -24,7 +24,6 @@
 #define INT_FROM_LONG(x) PyLong_FromLong(x)
 #define INT_CHECK(x) PyLong_Check(x)
 #define INT_AS_LONG(x) PyLong_AS_LONG(x)
-#define INT_GETMAX(x) 2<<31
 #define TEXT_FROM_STRING PyUnicode_FromString
 #define TEXT_FORMAT PyUnicode_Format
 
@@ -39,7 +38,6 @@
 #define INT_FROM_LONG(x) PyInt_FromLong(x)
 #define INT_CHECK(x) PyInt_Check(x)
 #define INT_AS_LONG(x) PyInt_AS_LONG(x)
-#define INT_GETMAX(x) PyInt_GetMax(x)
 #define TEXT_FROM_STRING PyString_FromString
 #define TEXT_FORMAT PyString_Format
 

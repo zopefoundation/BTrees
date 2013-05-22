@@ -99,11 +99,7 @@ longlong_check(PyObject *ob)
 static PyObject *
 longlong_as_object(PY_LONG_LONG val)
 {
-    static PY_LONG_LONG maxint = 0;
-
-    if (maxint == 0)
-        maxint = INT_GETMAX();
-    if ((val > maxint) || (val < (-maxint-1)))
+    if ((val > LONG_MAX) || (val < LONG_MIN))
         return PyLong_FromLongLong(val);
     return INT_FROM_LONG((long)val);
 }
