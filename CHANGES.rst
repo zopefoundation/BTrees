@@ -4,6 +4,9 @@
 Unreleased
 ----------
 
+- Fix value-based comparison for objects under Py3k:  addresses invalid
+  merges of ``[OLI]OBTrees/OBuckets``.
+
 - Ensure that pure-Python implementation of ``OOBTree.byValue`` matches
   semantics (reversed-sort) of C implementation.
 
