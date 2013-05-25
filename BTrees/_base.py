@@ -1171,7 +1171,8 @@ class Tree(_Tree):
         return iter(self.items(min, max, excludemin, excludemax))
 
     def byValue(self, min):
-        return sorted((v, k) for (k, v) in self.iteritems() if v >= min)
+        return reversed(
+                sorted((v, k) for (k, v) in self.iteritems() if v >= min))
 
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])

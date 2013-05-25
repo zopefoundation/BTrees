@@ -2334,7 +2334,7 @@ class TreeTests(unittest.TestCase):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
         self.assertEqual(list(tree.byValue(min=22)),
-                         [(y, x) for x, y in ITEMS[22:]])
+                         [(y, x) for x, y in reversed(ITEMS[22:])])
 
     def test_insert_new_key(self):
         tree = self._makeOne()

@@ -99,9 +99,15 @@ class OOSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class OOBTreeTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args):
         from BTrees.OOBTree import OOBTree
-        return OOBTree()
+        return OOBTree(*args)
+
+    def test_byValue(self):
+        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        tree = self._makeOne(ITEMS)
+        self.assertEqual(list(tree.byValue(22)),
+                         [(y, x) for x, y in reversed(ITEMS[22:])])
 
     def testRejectDefaultComparison(self):
         # Check that passing int keys w default comparison fails.
@@ -146,9 +152,9 @@ class OOBTreePyTest(OOBTreeTest):
 # default 'object' comparison semantics.
 #class OOBTreePyTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args):
         from BTrees.OOBTree import OOBTreePy
-        return OOBTreePy()
+        return OOBTreePy(*args)
 
 
 

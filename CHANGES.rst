@@ -1,6 +1,12 @@
 ``BTrees`` Changelog
 ====================
 
+Unreleased
+----------
+
+- Ensure that pure-Python implementation of ``OOBTree.byValue`` matches
+  semantics (reversed-sort) of C implementation.
+
 4.0.7 (2013-05-22)
 ------------------
 
