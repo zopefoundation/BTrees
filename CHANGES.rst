@@ -1,8 +1,8 @@
 ``BTrees`` Changelog
 ====================
 
-Unreleased
-----------
+4.0.8 (2013-05-25)
+------------------
 
 - Fix value-based comparison for objects under Py3k:  addresses invalid
   merges of ``[OLI]OBTrees/OBuckets``.
