@@ -1,6 +1,15 @@
 ``BTrees`` Changelog
 ====================
 
+4.0.9 (unreleased)
+------------------
+
+- Update pure-Python and C trees / sets to accept explicit None to indicate 
+  max / min value for ``minKey``, ``maxKey``.  (PR #3)
+
+- Update pure-Python trees / sets to accept explicit None to indicate 
+  open ranges for ``keys``, ``values``, ``items``.  (PR #3)
+
 4.0.8 (2013-05-25)
 ------------------
 
