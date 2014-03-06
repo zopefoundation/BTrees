@@ -1,6 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
+
 4.0.9 (unreleased)
 ------------------
 
@@ -10,6 +11,7 @@
 - Update pure-Python trees / sets to accept explicit None to indicate 
   open ranges for ``keys``, ``values``, ``items``.  (PR #3)
 
+
 4.0.8 (2013-05-25)
 ------------------
 
@@ -18,6 +20,7 @@
 
 - Ensure that pure-Python implementation of ``OOBTree.byValue`` matches
   semantics (reversed-sort) of C implementation.
+
 
 4.0.7 (2013-05-22)
 ------------------
