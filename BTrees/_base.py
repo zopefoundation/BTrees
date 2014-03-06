@@ -82,7 +82,7 @@ class _BucketBase(_Base):
         return -1 - low
 
     def minKey(self, key=_marker):
-        if key is _marker:
+        if key is _marker or key is None:
             return self._keys[0]
         key = self._to_key(key)
         index = self._search(key)
@@ -95,7 +95,7 @@ class _BucketBase(_Base):
             raise ValueError("no key satisfies the conditions")
 
     def maxKey(self, key=_marker):
-        if key is _marker:
+        if key is _marker or key is None:
             return self._keys[-1]
         key = self._to_key(key)
         index = self._search(key)
@@ -110,7 +110,7 @@ class _BucketBase(_Base):
 
     def _range(self, min=_marker, max=_marker,
                excludemin=False, excludemax=False):
-        if min is _marker:
+        if min is _marker or min is None:
             start = 0
             if excludemin:
                 start = 1
@@ -122,7 +122,7 @@ class _BucketBase(_Base):
                     start += 1
             else:
                 start = -start - 1
-        if max is _marker:
+        if max is _marker or max is None:
             end = len(self._keys)
             if excludemax:
                 end -= 1
@@ -808,7 +808,7 @@ class _Tree(_Base):
         if not self._data:
             return ()
 
-        if min != _marker:
+        if min is not _marker and min is not None:
             min = self._to_key(min)
             bucket = self._findbucket(min)
         else:
@@ -826,7 +826,7 @@ class _Tree(_Base):
         return iter(self.keys())
 
     def minKey(self, min=_marker):
-        if min is _marker:
+        if min is _marker or min is None:
             bucket = self._firstbucket
         else:
             min = self._to_key(min)
@@ -839,7 +839,7 @@ class _Tree(_Base):
         data = self._data
         if not data:
             raise ValueError('empty tree')
-        if max is _marker:
+        if max is _marker or max is None:
             return data[-1].child.maxKey()
 
         max = self._to_key(max)

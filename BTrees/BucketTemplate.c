@@ -741,7 +741,7 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
         goto empty;
 
     /* Find the low range */
-    if (key)
+    if (key && key != Py_None)
     {
         if ((rc = Bucket_findRangeEnd(self, key, min, 0, &offset)) <= 0)
         {
@@ -1662,7 +1662,7 @@ static struct PyMethodDef Bucket_methods[] = {
 
     {"iterkeys", (PyCFunction) Bucket_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
- 
+
     {"itervalues",
      (PyCFunction) Bucket_itervalues, METH_VARARGS | METH_KEYWORDS,
      "B.itervalues([min[,max]]) -> an iterator over the values of B"},

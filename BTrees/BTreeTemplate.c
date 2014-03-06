@@ -1506,7 +1506,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
 
     /* Find the  range */
 
-    if (key)
+    if (key && key != Py_None)
     {
         if ((rc = BTree_findRangeEnd(self, key, min, 0, &bucket, &offset)) <= 0)
         {
