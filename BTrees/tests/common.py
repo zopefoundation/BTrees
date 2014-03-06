@@ -34,7 +34,7 @@ def _skip_under_Py3k(test_method): #pragma NO COVER
 
 
 class Base(object):
-    # Tests common to all types: sets, buckets, and BTrees 
+    # Tests common to all types: sets, buckets, and BTrees
 
     db = None
 
@@ -195,7 +195,7 @@ class Base(object):
 
 
 class MappingBase(Base):
-    # Tests common to mappings (buckets, btrees) 
+    # Tests common to mappings (buckets, btrees)
 
     def _populate(self, t, l):
         # Make some data
@@ -393,9 +393,11 @@ class MappingBase(Base):
         t[4] = 150
         del t[7]
         self.assertEqual(t.maxKey(), 10)
+        self.assertEqual(t.maxKey(None), 10)
         self.assertEqual(t.maxKey(6), 6)
         self.assertEqual(t.maxKey(9), 8)
         self.assertEqual(t.minKey(), 1)
+        self.assertEqual(t.minKey(None), 1)
         self.assertEqual(t.minKey(3), 3)
         self.assertEqual(t.minKey(9), 10)
 
@@ -758,7 +760,7 @@ class MappingBase(Base):
 
 
 class BTreeTests(MappingBase):
-    # Tests common to all BTrees 
+    # Tests common to all BTrees
 
     def _checkIt(self, t):
         from BTrees.check import check
@@ -989,6 +991,15 @@ class BTreeTests(MappingBase):
             t[x] = 0
         diff = lsubtract(list(t.keys(0, 100)), r)
         self.assertEqual(diff , [], diff)
+        # The same thing with no bounds
+        diff = lsubtract(list(t.keys(None, None)), r)
+        self.assertEqual(diff , [], diff)
+        # The same thing with each bound set and the other
+        # explicitly None
+        diff = lsubtract(list(t.keys(0, None)), r)
+        self.assertEqual(diff , [], diff)
+        diff = lsubtract(list(t.keys(None,100)), r)
+        self.assertEqual(diff , [], diff)
         self._checkIt(t)
 
     def testRangeSearchAfterRandomInsert(self):
@@ -1072,7 +1083,7 @@ class BTreeTests(MappingBase):
 
 
 class NormalSetTests(Base):
-    # Test common to all set types 
+    # Test common to all set types
 
     def _populate(self, t, l):
         # Make some data
@@ -1138,6 +1149,8 @@ class NormalSetTests(Base):
             t.insert(x)
         diff = lsubtract(t.keys(), r)
         self.assertEqual(diff, [])
+        diff = lsubtract(t.keys(None,None), r)
+        self.assertEqual(diff, [])
 
 
     def testClear(self):
@@ -1160,9 +1173,11 @@ class NormalSetTests(Base):
         t.insert(6)
         t.insert(4)
         self.assertEqual(t.maxKey() , 10)
+        self.assertEqual(t.maxKey(None) , 10)
         self.assertEqual(t.maxKey(6) , 6)
         self.assertEqual(t.maxKey(9) , 8)
         self.assertEqual(t.minKey() , 1)
+        self.assertEqual(t.minKey(None) , 1)
         self.assertEqual(t.minKey(3) , 3)
         self.assertEqual(t.minKey(9) , 10)
         self.assertTrue(t.minKey() in t)
@@ -1481,6 +1496,7 @@ class TestLongIntKeys(TestLongIntSupport):
         t[0] = o2
         self.assertEqual(t[zero_long], o2)
         self.assertEqual(list(t.keys()), [0])
+        self.assertEqual(list(t.keys(None,None)), [0])
 
         # Test some large key values too:
         k1 = SMALLEST_POSITIVE_33_BITS
@@ -1493,6 +1509,8 @@ class TestLongIntKeys(TestLongIntSupport):
         self.assertEqual(t[k2], o2)
         self.assertEqual(t[k3], o1)
         self.assertEqual(list(t.keys()), [k3, 0, k1, k2])
+        self.assertEqual(list(t.keys(k3,None)), [k3, 0, k1, k2])
+        self.assertEqual(list(t.keys(None,k2)), [k3, 0, k1, k2])
 
     def testLongIntKeysOutOfRange(self):
         from BTrees.IIBTree import using64bits
@@ -1526,6 +1544,7 @@ class TestLongIntValues(TestLongIntSupport):
         self.assertEqual(t[k1], v1)
         self.assertEqual(t[k2], v2)
         self.assertEqual(list(t.values()), [v1, v2])
+        self.assertEqual(list(t.values(None,None)), [v1, v2])
 
     def testLongIntValuesOutOfRange(self):
         from BTrees.IIBTree import using64bits
