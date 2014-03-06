@@ -1149,6 +1149,8 @@ class NormalSetTests(Base):
             t.insert(x)
         diff = lsubtract(t.keys(), r)
         self.assertEqual(diff, [])
+        diff = lsubtract(t.keys(None,None), r)
+        self.assertEqual(diff, [])
 
 
     def testClear(self):
