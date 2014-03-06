@@ -992,7 +992,7 @@ class BTreeTests(MappingBase):
         diff = lsubtract(list(t.keys(0, 100)), r)
         self.assertEqual(diff , [], diff)
         # The same thing with no bounds
-        diff = lsubtract(list(t.keys(0, 100)), r)
+        diff = lsubtract(list(t.keys(None, None)), r)
         self.assertEqual(diff , [], diff)
         # The same thing with each bound set and the other
         # explicitly None
