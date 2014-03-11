@@ -105,6 +105,12 @@ class IFBTreeTest(BTreeTests, unittest.TestCase):
         from BTrees.IFBTree import IFBTree
         return IFBTree()
 
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
 
 class IFBTreePyTest(BTreeTests, unittest.TestCase):
 

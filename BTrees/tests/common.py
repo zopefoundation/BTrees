@@ -38,8 +38,8 @@ class Base(object):
 
     db = None
 
-    def _makeOne(self):
-        return self._getTargetClass()()
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
 
 
     def tearDown(self):

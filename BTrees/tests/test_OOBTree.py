@@ -103,6 +103,12 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         from BTrees.OOBTree import OOBTree
         return OOBTree(*args)
 
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 250)
+        self.assertEqual(t._max_bucket_size, 30)
+
     def test_byValue(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)

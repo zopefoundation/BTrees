@@ -45,7 +45,6 @@ using64bits = True
 
 
 class LLBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -54,7 +53,6 @@ class LLBucketPy(Bucket):
 
 
 class LLSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
@@ -62,7 +60,8 @@ class LLSetPy(Set):
 
 
 class LLBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    _TREE_SIZE = _TREE_SIZE
+    _BUCKET_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -71,7 +70,8 @@ class LLBTreePy(BTree):
 
 
 class LLTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    _TREE_SIZE = _TREE_SIZE
+    _BUCKET_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
