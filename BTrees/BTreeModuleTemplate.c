@@ -63,8 +63,8 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define OBJECT(O) ((PyObject*)(O))
 
 #define MIN_BUCKET_ALLOC 16
-#define MAX_BTREE_SIZE(B) DEFAULT_MAX_BTREE_SIZE
-#define MAX_BUCKET_SIZE(B) DEFAULT_MAX_BUCKET_SIZE
+#define MAX_BTREE_SIZE(T, B) T->max_btree_size
+#define MAX_BUCKET_SIZE(T, B) T->max_bucket_size
 
 #define SameType_Check(O1, O2) (Py_TYPE((O1))==Py_TYPE((O2)))
 
@@ -223,6 +223,8 @@ typedef struct BTree_s {
    * data[len].key is positive infinity.
    */
   BTreeItem *data;
+  unsigned long max_btree_size;
+  unsigned long max_bucket_size;
 } BTree;
 
 static PyTypeObject BTreeType;
@@ -428,6 +430,12 @@ BTree_Realloc(void *p, size_t sz)
 static char *search_keywords[] = {"min", "max",
 				  "excludemin", "excludemax",
 				  0};
+
+/* Shared keyword-argument list for BTree/TreeSet
+ * init
+ */
+static char *tree_init_keywords[] = {
+        "items", "max_btree_size", "max_bucket_size", 0};
 
 #include "BTreeItemsTemplate.c"
 #include "BucketTemplate.c"

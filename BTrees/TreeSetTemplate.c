@@ -199,9 +199,20 @@ static int
 TreeSet_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *v = NULL;
+    unsigned long max_btree_size = DEFAULT_MAX_BTREE_SIZE;
+    unsigned long max_bucket_size = DEFAULT_MAX_BUCKET_SIZE;
+    BTree *treeself = (BTree*)self;
 
-    if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "TreeSet", &v))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds,
+                                      "|Okk:" MOD_NAME_PREFIX "TreeSet",
+                                      tree_init_keywords,
+                                      &v,
+                                      &max_btree_size,
+                                      &max_bucket_size))
         return -1;
+
+    treeself->max_btree_size = max_btree_size;
+    treeself->max_bucket_size = max_bucket_size;
 
     if (v)
         return _TreeSet_update((BTree *)self, v);

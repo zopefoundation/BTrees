@@ -459,7 +459,7 @@ BTree_grow(BTree *self, int index, int noval)
         d->child = e;
         self->len++;
 
-        if (self->len >= MAX_BTREE_SIZE(self) * 2)    /* the root is huge */
+        if (self->len >= MAX_BTREE_SIZE(self, self) * 2) /* the root is huge */
             return BTree_split_root(self, noval);
     }
     else
@@ -728,9 +728,9 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
 
         assert(status == 1);    /* can be 2 only on deletes */
         if (SameType_Check(self, d->child))
-            toobig = childlength > MAX_BTREE_SIZE(d->child);
+            toobig = childlength > MAX_BTREE_SIZE(self, d->child);
         else
-            toobig = childlength > MAX_BUCKET_SIZE(d->child);
+            toobig = childlength > MAX_BUCKET_SIZE(self, d->child);
 
         if (toobig) {
             if (BTree_grow(self, min, noval) < 0)
@@ -2075,6 +2075,8 @@ BTree_iteritems(BTree *self, PyObject *args, PyObject *kw)
 
 static struct PyMemberDef BTree_members[] = {
     {"_firstbucket", T_OBJECT, offsetof(BTree, firstbucket), READONLY},
+    {"_max_btree_size", T_ULONG, offsetof(BTree, max_btree_size), READONLY},
+    {"_max_bucket_size", T_ULONG, offsetof(BTree, max_bucket_size), READONLY},
     {NULL}
 };
 
@@ -2177,10 +2179,20 @@ static int
 BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *v = NULL;
+    unsigned long max_btree_size = DEFAULT_MAX_BTREE_SIZE;
+    unsigned long max_bucket_size = DEFAULT_MAX_BUCKET_SIZE;
+    BTree *treeself = (BTree*)self;
 
-    if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "BTree", &v))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds,
+                                      "|Okk:" MOD_NAME_PREFIX "BTree",
+                                      tree_init_keywords,
+                                      &v,
+                                      &max_btree_size,
+                                      &max_bucket_size))
         return -1;
 
+    treeself->max_btree_size = max_btree_size;
+    treeself->max_bucket_size = max_bucket_size;
     if (v)
         return update_from_seq(self, v);
     else
