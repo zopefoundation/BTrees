@@ -99,15 +99,22 @@ class OOSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class OOBTreeTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self, *args):
+    def _makeOne(self, *args, **kw):
         from BTrees.OOBTree import OOBTree
-        return OOBTree(*args)
+        return OOBTree(*args, **kw)
 
     def test_ctor_defaults(self):
         t = self._makeOne()
         self.assertEqual(len(t), 0)
         self.assertEqual(t._max_btree_size, 250)
         self.assertEqual(t._max_bucket_size, 30)
+
+    def test_ctor_explicit(self):
+        ITEMS = [('a', 'A'), ('b', 'B')]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
     def test_byValue(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -158,9 +165,9 @@ class OOBTreePyTest(OOBTreeTest):
 # default 'object' comparison semantics.
 #class OOBTreePyTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self, *args):
+    def _makeOne(self, *args, **kw):
         from BTrees.OOBTree import OOBTreePy
-        return OOBTreePy(*args)
+        return OOBTreePy(*args, **kw)
 
 
 

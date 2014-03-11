@@ -720,9 +720,9 @@ class _Tree(_Base):
                  '_max_bucket_size',
                 )
 
-    def __init__(self, items=None, max_tree_size=None, max_bucket_size=None):
-        self._max_btree_size = max_tree_size or self._TREE_SIZE
-        self._max_bucket_size = max_tree_size or self._BUCKET_SIZE
+    def __init__(self, items=None, max_btree_size=None, max_bucket_size=None):
+        self._max_btree_size = max_btree_size or self._TREE_SIZE
+        self._max_bucket_size = max_bucket_size or self._BUCKET_SIZE
         super(_Tree, self).__init__(items)
 
     def setdefault(self, key, value):

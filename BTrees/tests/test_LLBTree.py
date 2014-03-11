@@ -105,21 +105,49 @@ class LLSetTestPy(ExtendedSetTests, unittest.TestCase):
 class LLBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
                   unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LLBTree import LLBTree
-        return LLBTree()
+        return LLBTree(*args, **kw)
+
     def getTwoValues(self):
         return 1, 2
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 3), (2, 4)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class LLBTreeTestPy(BTreeTests, TestLongIntKeys, TestLongIntValues,
                   unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LLBTree import LLBTreePy
-        return LLBTreePy()
+        return LLBTreePy(*args, **kw)
+
     def getTwoValues(self):
         return 1, 2
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 3), (2, 4)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class TestLLSets(I_SetsBase, unittest.TestCase):

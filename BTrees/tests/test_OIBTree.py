@@ -103,30 +103,82 @@ class OISetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class OIBTreeTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.OIBTree import OIBTree
-        return OIBTree()
+        return OIBTree(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 250)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [('a', 1), ('b', 2)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class OIBTreePyTest(BTreeTests, unittest.TestCase):
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.OIBTree import OIBTreePy
-        return OIBTreePy()
+        return OIBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 250)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [('a', 1), ('b', 2)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 if using64bits:
 
     class OIBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.OIBTree import OIBTree
-            return OIBTree()
+            return OIBTree(*args, **kw)
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 250)
+            self.assertEqual(t._max_bucket_size, 60)
+
+        def test_ctor_explicit(self):
+            ITEMS = [('a', 1), ('b', 2)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
         def getTwoKeys(self):
             return object(), object()
 
     class OIBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.OIBTree import OIBTreePy
-            return OIBTreePy()
+            return OIBTreePy(*args, **kw)
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 250)
+            self.assertEqual(t._max_bucket_size, 60)
+
+        def test_ctor_explicit(self):
+            ITEMS = [('a', 1), ('b', 2)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
         def getTwoKeys(self):
             return object(), object()
 

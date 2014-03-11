@@ -100,22 +100,48 @@ class LFSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class LFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LFBTree import LFBTree
-        return LFBTree()
+        return LFBTree(*args, **kw)
 
     def getTwoValues(self):
         return 0.5, 1.5
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 1.0), (2, 2.0)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class LFBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LFBTree import LFBTreePy
-        return LFBTreePy()
+        return LFBTreePy(*args, **kw)
 
     def getTwoValues(self):
         return 0.5, 1.5
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 1.0), (2, 2.0)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class TestLFMultiUnion(MultiUnion, unittest.TestCase):

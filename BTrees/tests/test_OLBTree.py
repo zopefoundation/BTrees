@@ -101,9 +101,22 @@ class OLSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.OLBTree import OLBTree
-        return OLBTree()
+        return OLBTree(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 250)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [('a', 1), ('b', 2)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
     def getTwoKeys(self):
         return object(), object()
@@ -111,9 +124,22 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 
 class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.OLBTree import OLBTreePy
-        return OLBTreePy()
+        return OLBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 250)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [('a', 1), ('b', 2)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
     def getTwoKeys(self):
         return object(), object()

@@ -101,9 +101,9 @@ class IFSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class IFBTreeTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IFBTree import IFBTree
-        return IFBTree()
+        return IFBTree(*args, **kw)
 
     def test_ctor_defaults(self):
         t = self._makeOne()
@@ -111,29 +111,77 @@ class IFBTreeTest(BTreeTests, unittest.TestCase):
         self.assertEqual(t._max_btree_size, 500)
         self.assertEqual(t._max_bucket_size, 120)
 
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 1.0), (2, 2.0)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
+
 
 class IFBTreePyTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IFBTree import IFBTreePy
-        return IFBTreePy()
+        return IFBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 1.0), (2, 2.0)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 if using64bits:
 
     class IFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IFBTree import IFBTree
-            return IFBTree()
+            return IFBTree(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 1.0), (2, 2.0)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
         def getTwoValues(self):
             return 0.5, 1.5
 
     class IFBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IFBTree import IFBTreePy
-            return IFBTreePy()
+            return IFBTreePy(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 1.0), (2, 2.0)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
         def getTwoValues(self):
             return 0.5, 1.5

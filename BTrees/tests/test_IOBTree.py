@@ -103,16 +103,42 @@ class IOSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class IOBTreeTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IOBTree import IOBTree
-        return IOBTree()
+        return IOBTree(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 'a'), (2, 'b')]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class IOBTreePyTest(BTreeTests, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IOBTree import IOBTreePy
-        return IOBTreePy()
+        return IOBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 'a'), (2, 'b')]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 if using64bits:
@@ -120,16 +146,44 @@ if using64bits:
 
     class IOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IOBTree import IOBTree
-            return IOBTree()
+            return IOBTree(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 'a'), (2, 'b')]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
 
     class IOBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IOBTree import IOBTreePy
-            return IOBTreePy()
+            return IOBTreePy(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 'a'), (2, 'b')]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
 
 class _TestIOBTreesBase(TypeTest):

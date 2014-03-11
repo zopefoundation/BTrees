@@ -130,16 +130,42 @@ class _IIBTreeTestBase(BTreeTests):
 
 class IIBTreeTest(_IIBTreeTestBase, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IIBTree import IIBTree
-        return IIBTree()
+        return IIBTree(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 3), (2, 4)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class IIBTreeTestPy(_IIBTreeTestBase, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.IIBTree import IIBTreePy
-        return IIBTreePy()
+        return IIBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 120)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 3), (2, 4)]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 if using64bits:
@@ -147,9 +173,23 @@ if using64bits:
     class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
                       unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IIBTree import IIBTree
-            return IIBTree()
+            return IIBTree(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 3), (2, 4)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
         def getTwoValues(self):
             return 1, 2
@@ -157,9 +197,23 @@ if using64bits:
     class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
                       unittest.TestCase):
 
-        def _makeOne(self):
+        def _makeOne(self, *args, **kw):
             from BTrees.IIBTree import IIBTreePy
-            return IIBTreePy()
+            return IIBTreePy(*args, **kw)
+
+        def test_ctor_defaults(self):
+            t = self._makeOne()
+            self.assertEqual(len(t), 0)
+            self.assertEqual(t._max_btree_size, 500)
+            self.assertEqual(t._max_bucket_size, 120)
+
+        def test_ctor_explicit(self):
+            ITEMS = [(1, 3), (2, 4)]
+            t = self._makeOne(items=ITEMS, max_btree_size=100,
+                              max_bucket_size=200)
+            self.assertEqual(len(t), 2)
+            self.assertEqual(t._max_btree_size, 100)
+            self.assertEqual(t._max_bucket_size, 200)
 
         def getTwoValues(self):
             return 1, 2

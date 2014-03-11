@@ -101,16 +101,42 @@ class LOSetPyTest(ExtendedSetTests, unittest.TestCase):
 
 class LOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LOBTree import LOBTree
-        return LOBTree()
+        return LOBTree(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 'a'), (2, 'b')]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class LOBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
 
-    def _makeOne(self):
+    def _makeOne(self, *args, **kw):
         from BTrees.LOBTree import LOBTreePy
-        return LOBTreePy()
+        return LOBTreePy(*args, **kw)
+
+    def test_ctor_defaults(self):
+        t = self._makeOne()
+        self.assertEqual(len(t), 0)
+        self.assertEqual(t._max_btree_size, 500)
+        self.assertEqual(t._max_bucket_size, 60)
+
+    def test_ctor_explicit(self):
+        ITEMS = [(1, 'a'), (2, 'b')]
+        t = self._makeOne(items=ITEMS, max_btree_size=100, max_bucket_size=200)
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t._max_btree_size, 100)
+        self.assertEqual(t._max_bucket_size, 200)
 
 
 class TestLOSets(I_SetsBase, unittest.TestCase):
