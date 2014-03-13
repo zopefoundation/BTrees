@@ -967,45 +967,42 @@ class _Tree(_Base):
     def __getstate__(self):
         data = self._data
 
+        if not data:
+            return None
+
+        if (len(data) == 1 and
+            data[0].child.__class__ is not self.__class__ and
+            data[0].child._p_oid is None
+            ):
+            return ((data[0].child.__getstate__(), ), )
+
         sdata = []
         for item in data:
             if sdata:
                 sdata.append(item.key)
-            sdata.append(item.child)
+                sdata.append(item.child)
+            else:
+                sdata.append(item.child)
 
-        return (tuple(sdata),
-                self._firstbucket,
-                self._max_btree_size,
-                self._max_bucket_size,
-               )
+        return tuple(sdata), self._firstbucket
 
     def __setstate__(self, state):
         if state and not isinstance(state[0], tuple):
             raise TypeError('tuple required for first state element')
 
         self.clear()
-        if state is None: # BBB
+        if state is None:
             return
 
-        if len(state) == 4:
-            (data,
-            self._firstbucket,
-            self._max_btree_size,
-            self._max_bucket_size) = state
-
-        elif len(state) == 1: # BBB
-            bucket = self._firstbucket = self._bucket_type()
+        if len(state) == 1:
+            bucket = self._bucket_type()
             bucket.__setstate__(state[0][0])
-            data = [bucket]
+            state = [bucket], bucket
 
-        elif len(state) == 2: # BBB
-            data, self._firstbucket = state
-
+        data, self._firstbucket = state
         data = list(reversed(data))
 
-        if data:
-            self._data.append(_TreeItem(None, data.pop()))
-
+        self._data.append(_TreeItem(None, data.pop()))
         while data:
             key = data.pop()
             child = data.pop()

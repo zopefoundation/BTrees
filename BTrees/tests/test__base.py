@@ -1889,13 +1889,11 @@ class Test_Tree(unittest.TestCase):
 
     def test___getstate___empty(self):
         tree = self._makeOne()
-        self.assertEqual(tree.__getstate__(), ((), None, 15, 10))
+        self.assertEqual(tree.__getstate__(), None)
 
     def test___getstate___single_bucket_wo_oid(self):
         tree = self._makeOne({'a': 'b'})
-        bucket = tree._firstbucket
-        self.assertEqual(tree.__getstate__(), ((bucket,), bucket, 15, 10)
-                        )
+        self.assertEqual(tree.__getstate__(), (((('a', 'b'),),),))
 
     def test___getstate___single_bucket_w_oid(self):
         tree = self._makeOne({'a': 'b'})
@@ -1903,7 +1901,7 @@ class Test_Tree(unittest.TestCase):
         jar = _Jar()
         bucket._p_jar = jar
         bucket._p_oid = b'OID'
-        self.assertEqual(tree.__getstate__(), ((bucket,), bucket, 15, 10))
+        self.assertEqual(tree.__getstate__(), ((bucket,), bucket))
 
     def test___getstate___multiple_buckets(self):
         tree = self._makeOne()
@@ -1915,25 +1913,18 @@ class Test_Tree(unittest.TestCase):
         EXPECTED = (tree._data[0].child,)
         for item in tree._data[1:]:
             EXPECTED += (item.key, item.child)
-        self.assertEqual(tree.__getstate__(), (EXPECTED, bucket, 15, 10))
+        self.assertEqual(tree.__getstate__(), (EXPECTED, bucket))
 
     def test___setstate___invalid(self):
         tree = self._makeOne()
         self.assertRaises(TypeError, tree.__setstate__, ('a', 'b'))
 
-    def test___setstate___to_empty_BBB(self):
+    def test___setstate___to_empty(self):
         tree = self._makeOne({'a': 'b'})
         tree.__setstate__(None)
         self.assertEqual(len(tree), 0)
 
-    def test___setstate___to_empty(self):
-        tree = self._makeOne({'a': 'b'})
-        tree.__setstate__(((), None, 20, 15))
-        self.assertEqual(len(tree), 0)
-        self.assertEqual(tree._max_btree_size, 20)
-        self.assertEqual(tree._max_bucket_size, 15)
-
-    def test___setstate___to_single_bucket_wo_oid_BBB(self):
+    def test___setstate___to_single_bucket_wo_oid(self):
         tree = self._makeOne()
         tree.__setstate__((((('a', 'b'),),),))
         self.assertEqual(list(tree.keys()), ['a'])
@@ -1941,33 +1932,6 @@ class Test_Tree(unittest.TestCase):
         self.assertTrue(len(tree._data), 1)
         self.assertTrue(tree._data[0].child is tree._firstbucket)
         self.assertTrue(tree._firstbucket._p_oid is None)
-
-    def test___setstate___to_single_bucket_wo_oid(self):
-        tree = self._makeOne()
-        bucket = tree._bucket_type({'a': 0, 'b': 1})
-        tree.__setstate__(((bucket,), bucket, 33, 16))
-        self.assertEqual(list(tree.keys()), ['a', 'b'])
-        self.assertEqual(tree._findbucket('a')['a'], 0)
-        self.assertTrue(len(tree._data), 2)
-        self.assertTrue(tree._data[0].child is tree._firstbucket)
-        self.assertTrue(tree._firstbucket._p_oid is None)
-        self.assertTrue(tree._firstbucket._next is None)
-        self.assertEqual(tree._max_btree_size, 33)
-        self.assertEqual(tree._max_bucket_size, 16)
-
-    def test___setstate___to_multiple_buckets_BBB(self):
-        tree = self._makeOne()
-        b1 = tree._bucket_type({'a': 0, 'b': 1})
-        b2 = tree._bucket_type({'c': 2, 'd': 3})
-        b1._next = b2
-        tree.__setstate__(((b1, 'c', b2), b1))
-        self.assertEqual(list(tree.keys()), ['a', 'b', 'c', 'd'])
-        self.assertTrue(len(tree._data), 2)
-        self.assertEqual(tree._data[0].key, None)
-        self.assertEqual(tree._data[0].child, b1)
-        self.assertEqual(tree._data[1].key, 'c')
-        self.assertEqual(tree._data[1].child, b2)
-        self.assertTrue(tree._firstbucket is b1)
 
     def test___setstate___to_multiple_buckets(self):
         from .._base import Bucket
@@ -1978,7 +1942,7 @@ class Test_Tree(unittest.TestCase):
         b1 = _Bucket({'a': 0, 'b': 1})
         b2 = _Bucket({'c': 2, 'd': 3})
         b1._next = b2
-        tree.__setstate__(((b1, 'c', b2), b1, 44, 17))
+        tree.__setstate__(((b1, 'c', b2), b1))
         self.assertEqual(list(tree.keys()), ['a', 'b', 'c', 'd'])
         self.assertTrue(len(tree._data), 2)
         self.assertEqual(tree._data[0].key, None)
@@ -1986,8 +1950,6 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(tree._data[1].key, 'c')
         self.assertEqual(tree._data[1].child, b2)
         self.assertTrue(tree._firstbucket is b1)
-        self.assertEqual(tree._max_btree_size, 44)
-        self.assertEqual(tree._max_bucket_size, 17)
 
     def test__check_empty_wo_firstbucket(self):
         tree = self._makeOne()
