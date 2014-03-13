@@ -910,8 +910,9 @@ class _Tree(_Base):
         if index is None:
             index = len(data) // 2
 
-        next = self.__class__()
-        next._data = data[index:]
+        next = self.__class__(max_btree_size=self._max_btree_size,
+                              max_bucket_size=self._max_bucket_size)
+        next._data[:] = data[index:]
         first = data[index]
         del data[index:]
         if len(data) == 0:

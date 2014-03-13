@@ -425,9 +425,15 @@ BTree_grow(BTree *self, int index, int noval)
 
         /* Now split between the original (v) and the new (e) at the midpoint*/
         if (SameType_Check(self, v))
+        {
+            ((BTree *)e)->max_btree_size = ((BTree *)v)->max_btree_size;
+            ((BTree *)e)->max_bucket_size = ((BTree *)v)->max_bucket_size;
             i = BTree_split((BTree *)v, -1, (BTree *)e);
+        }
         else
+        {
             i = bucket_split((Bucket *)v, -1, (Bucket *)e);
+        }
         PER_ALLOW_DEACTIVATION(v);
 
         if (i < 0)
