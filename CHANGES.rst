@@ -5,6 +5,8 @@
 4.0.9 (unreleased)
 ------------------
 
+- Added support for Python 3.4.
+
 - Update pure-Python and C trees / sets to accept explicit None to indicate 
   max / min value for ``minKey``, ``maxKey``.  (PR #3)
 
