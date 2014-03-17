@@ -1821,7 +1821,7 @@ class Test_Tree(unittest.TestCase):
         self.assertRaises(IndexError, tree._split)
 
     def test__split_filled_empties_original(self):
-        tree = self._makeOne()
+        tree = self._makeOne(max_btree_size=33, max_bucket_size=22)
         next_t = tree._next = self._makeOne()
         for i, c in enumerate('abcdef'):
             tree[c] = i
@@ -1830,11 +1830,14 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(list(tree), [])
         self.assertTrue(tree._firstbucket is None)
         self.assertEqual(list(new_t), ['a', 'b', 'c', 'd', 'e', 'f'])
+        self.assertEqual(new_t._max_btree_size, 33)
+        self.assertEqual(new_t._max_bucket_size, 22)
         self.assertTrue(new_t._firstbucket is fb)
 
     def test__split_filled_divides_original(self):
-        tree = self._makeOne()
-        next_t = tree._next = self._makeOne()
+        tree = self._makeOne(max_btree_size=14, max_bucket_size=9)
+        next_t = tree._next = self._makeOne(max_btree_size=14,
+                                            max_bucket_size=9)
         LETTERS = 'abcdefghijklmnopqrstuvwxyz'
         for i, c in enumerate(LETTERS):
             tree[c] = i
@@ -1843,12 +1846,16 @@ class Test_Tree(unittest.TestCase):
         # Note that original tree still links to split buckets
         self.assertEqual(''.join(list(tree)), LETTERS)
         self.assertTrue(tree._firstbucket is fb)
-        self.assertEqual(''.join(list(new_t)), LETTERS[10:])
+        # Orig bucket lengths:  5, 5, 5, 5, 6
+        self.assertEqual(''.join(list(new_t)), LETTERS[10:])# last three buckets
+        self.assertEqual(new_t._max_btree_size, 14)
+        self.assertEqual(new_t._max_bucket_size, 9)
         self.assertFalse(new_t._firstbucket is fb)
 
     def test__split_filled_divides_deeper(self):
-        tree = self._makeOne()
-        next_t = tree._next = self._makeOne()
+        tree = self._makeOne(max_btree_size=14, max_bucket_size=9)
+        next_t = tree._next = self._makeOne(max_btree_size=14,
+                                            max_bucket_size=9)
         KEYS = []
         FMT = '%05d'
         for i in range(1000):
@@ -1863,6 +1870,8 @@ class Test_Tree(unittest.TestCase):
         new_min = new_t.minKey()
         self.assertEqual(list(new_t), KEYS[int(new_min):])
         self.assertFalse(new_t._firstbucket is fb)
+        self.assertEqual(new_t._max_btree_size, 14)
+        self.assertEqual(new_t._max_bucket_size, 9)
 
     def test__del_calls_readCurrent_on_jar(self):
         tree = self._makeOne({'a': 'b'})
