@@ -898,8 +898,12 @@ class _Tree(_Base):
         if len(self._data) > max_size * 2:
             self._split_root()
 
+    def _new_tree(self):
+        return self.__class__(max_btree_size=self._max_btree_size,
+                              max_bucket_size=self._max_bucket_size)
+
     def _split_root(self):
-        child = self.__class__()
+        child = self._new_tree()
         child._data = self._data
         child._firstbucket = self._firstbucket
         self._data = [_TreeItem(None, child)]
@@ -910,8 +914,7 @@ class _Tree(_Base):
         if index is None:
             index = len(data) // 2
 
-        next = self.__class__(max_btree_size=self._max_btree_size,
-                              max_bucket_size=self._max_bucket_size)
+        next = self._new_tree()
         next._data[:] = data[index:]
         first = data[index]
         del data[index:]
