@@ -1395,7 +1395,7 @@ class Test_Tree(unittest.TestCase):
         from .._base import _Tree
         return _Tree
 
-    def _makeOne(self, items=None):
+    def _makeOne(self, items=None, *args, **kw):
         from .._base import Bucket
         class _Bucket(Bucket):
             def _to_key(self, k):
@@ -1405,7 +1405,32 @@ class Test_Tree(unittest.TestCase):
             _bucket_type = _Bucket
             _TREE_SIZE = 15
             _BUCKET_SIZE = 10
-        return _Test(items)
+        return _Test(items, *args, **kw)
+
+    def test___init___default_sizes(self):
+        tree = self._makeOne()
+        self.assertEqual(tree._max_btree_size, 15)
+        self.assertEqual(tree._max_bucket_size, 10)
+
+    def test___init___explicit_sizes_positional_one(self):
+        tree = self._makeOne(None, 20)
+        self.assertEqual(tree._max_btree_size, 20)
+        self.assertEqual(tree._max_bucket_size, 10)
+
+    def test___init___explicit_sizes_positional_both(self):
+        tree = self._makeOne(None, 20, 17)
+        self.assertEqual(tree._max_btree_size, 20)
+        self.assertEqual(tree._max_bucket_size, 17)
+
+    def test___init___explicit_sizes_keyword_btree(self):
+        tree = self._makeOne(None, max_btree_size=20)
+        self.assertEqual(tree._max_btree_size, 20)
+        self.assertEqual(tree._max_bucket_size, 10)
+
+    def test___init___explicit_sizes_keyword_bucket(self):
+        tree = self._makeOne(None, max_bucket_size=17)
+        self.assertEqual(tree._max_btree_size, 15)
+        self.assertEqual(tree._max_bucket_size, 17)
 
     def test_setdefault_miss(self):
         tree = self._makeOne()
