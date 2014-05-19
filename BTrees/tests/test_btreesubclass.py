@@ -17,14 +17,12 @@ class B(OOBucket):
     pass
 
 class T(OOBTree):
-    __slots__ = ()
     _bucket_type = B
     max_bucket_size = 2
     max_btree_size = 3
 
 class S(T):
-    __slots__ = ()
-
+    pass
 
 import unittest
 
