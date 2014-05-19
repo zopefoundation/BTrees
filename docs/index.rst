@@ -375,6 +375,37 @@ of the keys.  Example
    []
    >>>
 
+BTree node sizes
+----------------
+
+BTrees (and TreeSets) are made up of a tree of Buckets (and Sets) and
+internal nodes.  There are maximum sizes of these notes configured for
+the various key and value types:
+
+======== ========== ========================== =============================
+Key Type Value Type Maximum Bucket or Set Size Maximum BTree or TreeSet Size
+======== ========== ========================== =============================
+Integer  Float      120                        500
+Integer  Integer    120                        500
+Integer  Object     60                         500
+Long     Float      120                        500
+Long     Long       120                        500
+Long     Object     60                         500
+Object   Integer    60                         250
+Object   Long       60                         250
+Object   Object     30                         250
+======== ========== ========================== =============================
+
+For your application, especially when using object keys or values, you
+may want to override the default sizes.  You can do this by
+subclassing any of the BTree (or TreeSet) classes and specifying new
+values for ``max_bucket_size`` or ``max_btree_size`` in your subclass::
+
+     import BTrees.OOBTree
+
+     class MyBTree(BTrees.OOBTree.BTree):
+         max_bucket_size = 500
+         max_btree_size = 1000
 
 BTree Diagnostic Tools
 ----------------------
