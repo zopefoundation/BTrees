@@ -1,6 +1,8 @@
 ``BTrees`` Changelog
 ====================
 
+- BTree subclasses can define max_bucket_size or max_btree_size to
+  control maximum sizes for bucket and tree nodes.
 
 4.0.9 (unreleased)
 ------------------

@@ -53,8 +53,8 @@
  */
 #define MODULE_NAME "BTrees." MOD_NAME_PREFIX "BTree."
 
-static PyObject *sort_str, *reverse_str, *__setstate___str,
-    *_bucket_type_str;
+static PyObject *sort_str, *reverse_str, *__setstate___str;
+static PyObject *_bucket_type_str, *max_btree_size_str, *max_bucket_size_str;
 static PyObject *ConflictError = NULL;
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
@@ -63,8 +63,6 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define OBJECT(O) ((PyObject*)(O))
 
 #define MIN_BUCKET_ALLOC 16
-#define MAX_BTREE_SIZE(B) DEFAULT_MAX_BTREE_SIZE
-#define MAX_BUCKET_SIZE(B) DEFAULT_MAX_BUCKET_SIZE
 
 #define SameType_Check(O1, O2) (Py_TYPE((O1))==Py_TYPE((O2)))
 
@@ -223,6 +221,8 @@ typedef struct BTree_s {
    * data[len].key is positive infinity.
    */
   BTreeItem *data;
+  long max_btree_size;
+  long max_bucket_size;
 } BTree;
 
 static PyTypeObject BTreeType;
@@ -540,6 +540,13 @@ module_init(void)
         return NULL;
     _bucket_type_str = INTERN("_bucket_type");
     if (!_bucket_type_str)
+        return NULL;
+
+    max_btree_size_str = INTERN("max_btree_size");
+    if (! max_btree_size_str)
+        return NULL;
+    max_bucket_size_str = INTERN("max_bucket_size");
+    if (! max_bucket_size_str)
         return NULL;
 
     /* Grab the ConflictError class */
