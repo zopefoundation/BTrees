@@ -21,12 +21,17 @@ _get_max_size(BTree *self, PyObject *name, long default_max)
   PyObject *size;
   long isize;
 
-  size = PyObject_GetAttr(OBJECT(self->ob_type), name);
+  size = PyObject_GetAttr(OBJECT(OBJECT(self)->ob_type), name);
   if (size == NULL) {
     PyErr_Clear();
     return default_max;
   }
+#ifdef PY3K
+  isize = PyLong_AsLong(size);
+#else
   isize = PyInt_AsLong(size);
+#endif
+
   Py_DECREF(size);
   if (isize <= 0 && ! PyErr_Occurred()) {
     PyErr_SetString(PyExc_ValueError,
