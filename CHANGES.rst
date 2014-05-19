@@ -1,6 +1,8 @@
 ``BTrees`` Changelog
 ====================
 
+- Fixed: integer overflow on 32-bit machines wasn't detected correctly
+  under Python 3.
 
 4.0.9 (unreleased)
 ------------------

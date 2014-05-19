@@ -113,6 +113,8 @@ class _IIBTreeTestBase(BTreeTests):
             i = int(i)
             try:
                 b[i] = 0
+            except OverflowError:
+                self.assertRaises(OverflowError, b.__setitem__, 0, i)
             except TypeError:
                 self.assertRaises(TypeError, b.__setitem__, 0, i)
             else:

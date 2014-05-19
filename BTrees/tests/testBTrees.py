@@ -11,7 +11,10 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import sys
 import unittest
+
+python3 = sys.version_info >= (3, )
 
 from BTrees.tests.common import permutations
 
@@ -451,8 +454,12 @@ class FamilyTest(unittest.TestCase):
         # the characteristics change to match the 64 bit version, please
         # feel free to change.
         big = BTrees.family32.maxint + 1
-        self.assertRaises(TypeError, s.insert, big)
-        self.assertRaises(TypeError, s.insert, BTrees.family32.minint - 1)
+        if python3:
+            expected_exception = OverflowError
+        else:
+            expected_exception = TypeError
+        self.assertRaises(expected_exception, s.insert,
+                          BTrees.family32.minint - 1)
         self.check_pickling(BTrees.family32)
 
     def test64(self):
