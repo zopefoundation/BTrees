@@ -43,7 +43,6 @@ _to_value = _to_bytes(6)
 
 
 class fsBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
@@ -66,18 +65,19 @@ class fsBucketPy(Bucket):
 
 
 class fsSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class fsBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
 
 class fsTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
 
 

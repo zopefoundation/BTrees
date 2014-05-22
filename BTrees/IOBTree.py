@@ -40,26 +40,26 @@ using64bits = False
 
 
 class IOBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class IOBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
 
 class IOTreeIteratorPy(_TreeIterator):

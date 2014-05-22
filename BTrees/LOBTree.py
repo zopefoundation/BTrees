@@ -40,26 +40,26 @@ using64bits = True
 
 
 class LOBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class LOSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class LOBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class LOTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_bucket_size = _BUCKET_SIZE
+    max_btree_size = _TREE_SIZE
     _to_key = _to_key
 
 
