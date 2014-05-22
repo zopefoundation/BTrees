@@ -4,9 +4,6 @@
 - BTree subclasses can define max_bucket_size or max_btree_size to
   control maximum sizes for bucket and tree nodes.
 
-4.0.9 (unreleased)
-------------------
-
 - Added support for Python 3.4.
 
 - Update pure-Python and C trees / sets to accept explicit None to indicate 
