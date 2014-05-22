@@ -30,6 +30,8 @@ class Test_Base(unittest.TestCase):
 
     def _makeOne(self, items=None):
         class _Test(self._getTargetClass()):
+            max_bucket_size = 10
+            max_btree_size = 15
             def clear(self):
                 self._data = {}
             def update(self, d):
