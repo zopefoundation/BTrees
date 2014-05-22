@@ -1396,13 +1396,13 @@ class Test_Tree(unittest.TestCase):
     def _makeOne(self, items=None):
         from .._base import Bucket
         class _Bucket(Bucket):
-            MAX_SIZE = 10
             def _to_key(self, k):
                 return k
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            MAX_SIZE = 15
+            max_bucket_size = 10
+            max_btree_size = 15
         return _Test(items)
 
     def test_setdefault_miss(self):
@@ -2135,7 +2135,6 @@ class Test_TreeItems(unittest.TestCase):
     def _makeBucket(self, items=None):
         from .._base import Bucket
         class _Bucket(Bucket):
-            MAX_SIZE = 10
             def _to_key(self, k):
                 return k
         return _Bucket(items)
@@ -2214,13 +2213,13 @@ class TreeTests(unittest.TestCase):
     def _makeOne(self, items=None):
         from .._base import Bucket
         class _Bucket(Bucket):
-            MAX_SIZE = 10
             def _to_key(self, k):
                 return k
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            MAX_SIZE = 15
+            max_btree_size = 10
+            max_btree_size = 15
         return _Test(items)
 
     def test_get_empty_miss(self):
@@ -2359,13 +2358,13 @@ class TreeSetTests(unittest.TestCase):
     def _makeOne(self, items=None):
         from .._base import Bucket
         class _Bucket(Bucket):
-            MAX_SIZE = 10
             def _to_key(self, k):
                 return k
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            MAX_SIZE = 15
+            max_bucket_size = 10
+            max_btree_size = 15
         return _Test(items)
 
     def test_add_new_key(self):
