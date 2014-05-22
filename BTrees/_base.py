@@ -866,12 +866,13 @@ class _Tree(_Base):
 
         result = child._set(key, value, ifunset)
         grew = result[0]
-        if child.__class__ is self.__class__:
-            max_size = self.max_btree_size
-        else:
-            max_size = self.max_bucket_size
-        if grew and child.size > max_size:
-            self._grow(child, index)
+        if grew:
+            if child.__class__ is self.__class__:
+                max_size = self.max_btree_size
+            else:
+                max_size = self.max_bucket_size
+            if child.size > max_size:
+                self._grow(child, index)
         elif (grew is not None and
               child.__class__ is self._bucket_type and
               len(data) == 1 and
