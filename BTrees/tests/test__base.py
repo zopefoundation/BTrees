@@ -2220,7 +2220,7 @@ class TreeTests(unittest.TestCase):
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            max_btree_size = 10
+            max_bucket_size = 10
             max_btree_size = 15
         return _Test(items)
 
