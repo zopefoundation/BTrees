@@ -885,7 +885,7 @@ class _Tree(_Base):
         self._p_changed = True
         new_child = child._split()
         self._data.insert(index+1, _TreeItem(new_child.minKey(), new_child))
-        if len(self._data) > self.max_btree_size * 2:
+        if len(self._data) >= self.max_btree_size * 2:
             self._split_root()
 
     def _split_root(self):
