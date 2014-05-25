@@ -58,8 +58,8 @@ class OISetPy(Set):
 
 
 class OIBTreePy(BTree):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -68,8 +68,8 @@ class OIBTreePy(BTree):
 
 
 class OITreeSetPy(TreeSet):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric

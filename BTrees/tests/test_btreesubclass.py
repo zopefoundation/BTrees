@@ -18,8 +18,8 @@ class B(OOBucket):
 
 class T(OOBTree):
     _bucket_type = B
-    max_bucket_size = 2
-    max_btree_size = 3
+    max_leaf_size = 2
+    max_internal_size = 3
 
 class S(T):
     pass

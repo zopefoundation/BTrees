@@ -50,16 +50,16 @@ class IOSetPy(Set):
 
 
 class IOBTreePy(BTree):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOTreeSetPy(TreeSet):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
 class IOTreeIteratorPy(_TreeIterator):

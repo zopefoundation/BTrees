@@ -43,24 +43,24 @@ _get_max_size(BTree *self, PyObject *name, long default_max)
 }
 
 static int
-_max_btree_size(BTree *self)
+_max_internal_size(BTree *self)
 {
   long isize;
 
-  if (self->max_btree_size > 0) return self->max_btree_size;
-  isize = _get_max_size(self, max_btree_size_str, DEFAULT_MAX_BTREE_SIZE);
-  self->max_btree_size = isize;
+  if (self->max_internal_size > 0) return self->max_internal_size;
+  isize = _get_max_size(self, max_internal_size_str, DEFAULT_MAX_BTREE_SIZE);
+  self->max_internal_size = isize;
   return isize;
 }
 
 static int
-_max_bucket_size(BTree *self)
+_max_leaf_size(BTree *self)
 {
   long isize;
 
-  if (self->max_bucket_size > 0) return self->max_bucket_size;
-  isize = _get_max_size(self, max_bucket_size_str, DEFAULT_MAX_BUCKET_SIZE);
-  self->max_bucket_size = isize;
+  if (self->max_leaf_size > 0) return self->max_leaf_size;
+  isize = _get_max_size(self, max_leaf_size_str, DEFAULT_MAX_BUCKET_SIZE);
+  self->max_leaf_size = isize;
   return isize;
 }
 
@@ -459,7 +459,7 @@ BTree_grow(BTree *self, int index, int noval)
 
     if (self->len)
     {
-        long max_size = _max_btree_size(self);
+        long max_size = _max_internal_size(self);
         if (max_size < 0) return -1;
 
         d = self->data + index;
@@ -780,12 +780,12 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
 
         assert(status == 1);    /* can be 2 only on deletes */
         if (SameType_Check(self, d->child)) {
-            long max_size = _max_btree_size(self);
+            long max_size = _max_internal_size(self);
             if (max_size < 0) return -1;
             toobig = childlength > max_size;
         }
         else {
-            long max_size = _max_bucket_size(self);
+            long max_size = _max_leaf_size(self);
             if (max_size < 0) return -1;
             toobig = childlength > max_size;
         }
@@ -2235,8 +2235,8 @@ BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *v = NULL;
 
-    BTREE(self)->max_bucket_size = 0;
-    BTREE(self)->max_btree_size = 0;
+    BTREE(self)->max_leaf_size = 0;
+    BTREE(self)->max_internal_size = 0;
 
     if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "BTree", &v))
         return -1;

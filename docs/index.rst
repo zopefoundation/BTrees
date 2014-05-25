@@ -399,13 +399,17 @@ Object   Object     30                         250
 For your application, especially when using object keys or values, you
 may want to override the default sizes.  You can do this by
 subclassing any of the BTree (or TreeSet) classes and specifying new
-values for ``max_bucket_size`` or ``max_btree_size`` in your subclass::
+values for ``max_leaf_size`` or ``max_internal_size`` in your subclass::
 
      import BTrees.OOBTree
 
      class MyBTree(BTrees.OOBTree.BTree):
-         max_bucket_size = 500
-         max_btree_size = 1000
+         max_leaf_size = 500
+         max_internal_size = 1000
+
+``max_leaf_size`` is used for leaf nodes in a BTree, either Buckets or
+Sets.  ``max_internal_size`` is used for internal nodes, either BTrees
+or TreeSets.
 
 BTree Diagnostic Tools
 ----------------------

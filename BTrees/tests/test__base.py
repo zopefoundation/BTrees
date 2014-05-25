@@ -30,8 +30,8 @@ class Test_Base(unittest.TestCase):
 
     def _makeOne(self, items=None):
         class _Test(self._getTargetClass()):
-            max_bucket_size = 10
-            max_btree_size = 15
+            max_leaf_size = 10
+            max_internal_size = 15
             def clear(self):
                 self._data = {}
             def update(self, d):
@@ -1403,8 +1403,8 @@ class Test_Tree(unittest.TestCase):
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            max_bucket_size = 10
-            max_btree_size = 15
+            max_leaf_size = 10
+            max_internal_size = 15
         return _Test(items)
 
     def test_setdefault_miss(self):
@@ -2220,8 +2220,8 @@ class TreeTests(unittest.TestCase):
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            max_bucket_size = 10
-            max_btree_size = 15
+            max_leaf_size = 10
+            max_internal_size = 15
         return _Test(items)
 
     def test_get_empty_miss(self):
@@ -2365,8 +2365,8 @@ class TreeSetTests(unittest.TestCase):
         class _Test(self._getTargetClass()):
             _to_key = _to_value = lambda self, x: x
             _bucket_type = _Bucket
-            max_bucket_size = 10
-            max_btree_size = 15
+            max_leaf_size = 10
+            max_internal_size = 15
         return _Test(items)
 
     def test_add_new_key(self):

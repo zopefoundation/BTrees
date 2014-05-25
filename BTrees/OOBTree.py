@@ -47,15 +47,15 @@ class OOSetPy(Set):
 
 
 class OOBTreePy(BTree):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
 
 class OOTreeSetPy(TreeSet):
-    max_bucket_size = _BUCKET_SIZE
-    max_btree_size = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
 
