@@ -34,6 +34,7 @@ class _Base(Persistent):
 
     __slots__ = ()
     _key_type = list
+    compare_keys = cmp
 
     def __init__(self, items=None):
         self.clear()
@@ -70,12 +71,14 @@ class _BucketBase(_Base):
         low = 0
         keys = self._keys
         high = len(keys)
+        compare_keys = self.compare_keys
         while low < high:
             i = (low + high) // 2
             k = keys[i]
-            if k == key:
+            compared = compare_keys(k, key)
+            if compared == 0:
                 return i
-            if k < key:
+            if compared < 0:
                 low = i + 1
             else:
                 high = i
@@ -772,11 +775,12 @@ class _Tree(_Base):
             lo = 0
             hi = len(data)
             i = hi // 2
+            compare_keys = self.compare_keys
             while i > lo:
-                cmp_ = cmp(data[i].key, key)
-                if cmp_ < 0:
+                compared = compare_keys(data[i].key, key)
+                if compared < 0:
                     lo = i
-                elif cmp_ > 0:
+                elif compared > 0:
                     hi = i
                 else:
                     break
@@ -1226,12 +1230,13 @@ def difference(set_type, o1, o2):
         result = o1._set_type()
         def copy(i):
             result._keys.append(i.key)
+    compare_keys = result.compare_keys
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
-        if cmp_ < 0:
+        compared = compare_keys(i1.key, i2.key)
+        if compared < 0:
             copy(i1)
             i1.advance()
-        elif cmp_ == 0:
+        elif compared == 0:
             i1.advance()
             i2.advance()
         else:
@@ -1251,12 +1256,13 @@ def union(set_type, o1, o2):
     result = o1._set_type()
     def copy(i):
         result._keys.append(i.key)
+    compare_keys = result.compare_keys
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
-        if cmp_ < 0:
+        compared = compare_keys(i1.key, i2.key)
+        if compared < 0:
             copy(i1)
             i1.advance()
-        elif cmp_ == 0:
+        elif compared == 0:
             copy(i1)
             i1.advance()
             i2.advance()
@@ -1281,11 +1287,12 @@ def intersection(set_type, o1, o2):
     result = o1._set_type()
     def copy(i):
         result._keys.append(i.key)
+    compare_keys = result.compare_keys
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
-        if cmp_ < 0:
+        compared = compare_keys(i1.key, i2.key)
+        if compared < 0:
             i1.advance()
-        elif cmp_ == 0:
+        elif compared == 0:
             copy(i1)
             i1.advance()
             i2.advance()
@@ -1327,12 +1334,13 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         def copy(i, w):
             result._keys.append(i.key)
 
+    compare_keys = result.compare_keys
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
-        if cmp_ < 0:
+        compared = compare_keys(i1.key, i2.key)
+        if compared < 0:
             copy(i1, w1)
             i1.advance()
-        elif cmp_ == 0:
+        elif compared == 0:
             result._keys.append(i1.key)
             if _merging:
                 result._values.append(MERGE(i1.value, w1, i2.value, w2))
@@ -1368,11 +1376,12 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         result = o1._mapping_type()
     else:
         result = o1._set_type()
+    compare_keys = result.compare_keys
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
-        if cmp_ < 0:
+        compared = compare_keys(i1.key, i2.key)
+        if compared < 0:
             i1.advance()
-        elif cmp_ == 0:
+        elif compared == 0:
             result._keys.append(i1.key)
             if _merging:
                 result._values.append(MERGE(i1.value, w1, i2.value, w2))

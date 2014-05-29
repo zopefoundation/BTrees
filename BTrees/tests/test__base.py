@@ -1029,6 +1029,7 @@ class SetTests(unittest.TestCase):
 
     def _makeOne(self):
         class _Set(self._getTargetClass()):
+            compare_keys = cmp
             def _to_key(self, x):
                 return x
         return _Set()
@@ -2636,6 +2637,7 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
 
     def test_lhs_mapping_wo_MERGE_DEFAULT_rhs_set(self):
         class _MappingWoDefault(dict):
+            compare_keys = cmp
             def MERGE(self, v1, w1, v2, w2):
                 return (v1 * w1) + (v2 * w2)
             def MERGE_WEIGHT(self, v, w):
@@ -2647,6 +2649,7 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
 
     def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
         class _MappingWoMerge(dict):
+            compare_keys = cmp
             def MERGE_DEFAULT(self):
                 return 1
             def MERGE_WEIGHT(self, v, w):
@@ -2749,6 +2752,7 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
 
     def test_lhs_mapping_wo_MERGE_rhs_mapping(self):
         class _MappingWoMerge(dict):
+            compare_keys = cmp
             def MERGE_DEFAULT(self):
                 return 1
             def MERGE_WEIGHT(self, v, w):
@@ -2951,6 +2955,7 @@ class _Jar(object):
 
 
 class _Set(object):
+    compare_keys = cmp
     def __init__(self, *args, **kw):
         if len(args) == 1 and isinstance(args[0], tuple):
             keys = args[0]
@@ -2967,6 +2972,7 @@ _Set._set_type = _Set
 
 
 class _Mapping(dict):
+    compare_keys = cmp
     def __init__(self, source=None):
         if source is None:
             source = {}
