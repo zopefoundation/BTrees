@@ -23,7 +23,6 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
 
     int_types = int, long
     xrange = xrange
-    cmp = cmp
 
     _bytes = str
     def _ascii(x):
@@ -42,9 +41,6 @@ else: #pragma NO COVER Python3
 
     int_types = int,
     xrange = range
-
-    def cmp(x, y):
-        return (x > y) - (y > x)
 
     _bytes = bytes
     def _ascii(x):

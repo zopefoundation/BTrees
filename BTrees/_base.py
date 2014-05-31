@@ -22,19 +22,24 @@ from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
 from ._compat import PY3
-from ._compat import cmp
 from ._compat import int_types
 from ._compat import xrange
 
 
 _marker = object()
 
+class _BaseCompare(object):
 
-class _Base(Persistent):
+    try:
+        compare_keys = cmp
+    except NameError: # Python 3
+        def compare_keys(self, x, y):
+            return (x > y) - (y > x)
+
+class _Base(Persistent, _BaseCompare):
 
     __slots__ = ()
     _key_type = list
-    compare_keys = cmp
 
     def __init__(self, items=None):
         self.clear()
@@ -407,8 +412,8 @@ class Bucket(_BucketBase):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmpOC = cmp(i_old.key, i_com.key)
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpOC = self.compare_keys(i_old.key, i_com.key)
+            cmpON = self.compare_keys(i_old.key, i_new.key)
             if cmpOC == 0:
                 if cmpON == 0:
                     if i_com.value == i_old.value:
@@ -446,7 +451,7 @@ class Bucket(_BucketBase):
                 else:
                     raise merge_error(3)
             else: # both keys changed
-                cmpCN = cmp(i_com.key, i_new.key)
+                cmpCN = self.compare_keys(i_com.key, i_new.key)
                 if cmpCN == 0: # dueling insert
                     raise merge_error(4)
                 if cmpOC > 0: # insert committed
@@ -460,7 +465,7 @@ class Bucket(_BucketBase):
                     raise merge_error(5) # both deleted same key
 
         while i_com.active and i_new.active: # new inserts
-            cmpCN = cmp(i_com.key, i_new.key)
+            cmpCN = self.compare_keys(i_com.key, i_new.key)
             if cmpCN == 0:
                 raise merge_error(6) # dueling insert
             if cmpCN > 0: # insert new
@@ -469,7 +474,7 @@ class Bucket(_BucketBase):
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmpOC = cmp(i_old.key, i_com.key)
+            cmpOC = self.compare_keys(i_old.key, i_com.key)
             if cmpOC > 0: # insert committed
                 merge_output(i_com)
             elif cmpOC == 0 and (i_old.value == i_com.value): # del in new
@@ -480,7 +485,7 @@ class Bucket(_BucketBase):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpON = self.compare_keys(i_old.key, i_new.key)
             if cmpON > 0: # insert new
                 merge_output(i_new)
             elif cmpON == 0 and (i_old.value == i_new.value):
@@ -611,8 +616,8 @@ class Set(_BucketBase):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmpOC = cmp(i_old.key, i_com.key)
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpOC = self.compare_keys(i_old.key, i_com.key)
+            cmpON = self.compare_keys(i_old.key, i_new.key)
             if cmpOC == 0:
                 if cmpON == 0: # all match
                     merge_output(i_old)
@@ -640,7 +645,7 @@ class Set(_BucketBase):
                     i_old.advance()
                     i_new.advance()
             else: # both com and new keys changed
-                cmpCN = cmp(i_com.key, i_new.key)
+                cmpCN = self.compare_keys(i_com.key, i_new.key)
                 if cmpCN == 0: # both inserted same key
                     raise merge_error(4)
                 if cmpOC > 0: # insert committed
@@ -654,7 +659,7 @@ class Set(_BucketBase):
                     raise merge_error(5)
 
         while i_com.active and i_new.active: # new inserts
-            cmpCN = cmp(i_com.key, i_new.key)
+            cmpCN = self.compare_keys(i_com.key, i_new.key)
             if cmpCN == 0: # dueling insert
                 raise merge_error(6)
             if cmpCN > 0: # insert new
@@ -663,7 +668,7 @@ class Set(_BucketBase):
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmpOC = cmp(i_old.key, i_com.key)
+            cmpOC = self.compare_keys(i_old.key, i_com.key)
             if cmpOC > 0: # insert committed
                 merge_output(i_com)
             elif cmpOC == 0: # del in new
@@ -674,7 +679,7 @@ class Set(_BucketBase):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpON = self.compare_keys(i_old.key, i_new.key)
             if cmpON > 0: # insert new
                 merge_output(i_new)
             elif cmpON == 0: # deleted in committed
