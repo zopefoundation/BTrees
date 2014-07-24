@@ -64,9 +64,9 @@ base_btrees_depends = [
     "BTrees/sorters.c",
     ]
 
-FLAVORS = {"O": "object", "I": "int", "F": "float", 'L': 'int'}
+FLAVORS = {"O": "object", "I": "int", "F": "float", 'L': 'int', 'B': 'byte'}
 #XXX should 'fs' be in ZODB instead?
-FAMILIES = ("OO", "IO", "OI", "II", "IF", "fs", "LO", "OL", "LL", "LF")
+FAMILIES = ("OO", "IO", "OI", "II", "IB", "IF", "fs", "LO", "OL", "LL", "LF")
 
 KEY_H = "BTrees/%skeymacros.h"
 VALUE_H = "BTrees/%svaluemacros.h"
