@@ -13,14 +13,14 @@
 ##############################################################################
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
-           'IIBucket', 'IISet', 'IIBTree', 'IITreeSet',
-           'union', 'intersection', 'difference',
+           'BBBucket', 'BBSet', 'BBBTree', 'BBTreeSet',
+           'union', 'intersection', 'difference',  
            'weightedUnion', 'weightedIntersection', 'multiunion',
           )
 
 from zope.interface import moduleProvides
 
-from .Interfaces import IIntegerIntegerBTreeModule
+from .Interfaces import IByteByteBTreeModule
 from ._base import Bucket
 from ._base import MERGE
 from ._base import MERGE_WEIGHT_numeric
@@ -44,7 +44,7 @@ _TREE_SIZE = 500
 using64bits = False
 
 
-class IIBucketPy(Bucket):
+class BBBucketPy(Bucket):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
@@ -53,7 +53,7 @@ class IIBucketPy(Bucket):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
-class IISetPy(Set):
+class BBSetPy(Set):
     MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     MERGE = MERGE
@@ -61,7 +61,7 @@ class IISetPy(Set):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
-class IIBTreePy(BTree):
+class BBBTreePy(BTree):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
@@ -70,7 +70,7 @@ class IIBTreePy(BTree):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
-class IITreeSetPy(TreeSet):
+class BBTreeSetPy(TreeSet):
     MAX_SIZE = _TREE_SIZE
     _to_key = _to_key
     MERGE = MERGE
@@ -78,40 +78,40 @@ class IITreeSetPy(TreeSet):
     MERGE_DEFAULT = MERGE_DEFAULT_int
 
 
-class IITreeIteratorPy(_TreeIterator):
+class BBTreeIteratorPy(_TreeIterator):
     pass
 
 
 # Can't declare forward refs, so fix up afterwards:
 
-IIBucketPy._mapping_type = IIBucketPy._bucket_type = IIBucketPy
-IIBucketPy._set_type = IISetPy
+BBBucketPy._mapping_type = BBBucketPy._bucket_type = BBBucketPy
+BBBucketPy._set_type = BBSetPy
 
-IISetPy._mapping_type = IIBucketPy
-IISetPy._set_type = IISetPy._bucket_type = IISetPy
+BBSetPy._mapping_type = BBBucketPy
+BBSetPy._set_type = BBSetPy._bucket_type = BBSetPy
 
-IIBTreePy._mapping_type = IIBTreePy._bucket_type = IIBucketPy
-IIBTreePy._set_type = IISetPy
+BBBTreePy._mapping_type = BBBTreePy._bucket_type = BBBucketPy
+BBBTreePy._set_type = BBSetPy
 
-IITreeSetPy._mapping_type = IIBucketPy
-IITreeSetPy._set_type = IITreeSetPy._bucket_type = IISetPy
+BBTreeSetPy._mapping_type = BBBucketPy
+BBTreeSetPy._set_type = BBTreeSetPy._bucket_type = BBSetPy
 
 
-differencePy = _set_operation(_difference, IISetPy)
-unionPy = _set_operation(_union, IISetPy)
-intersectionPy = _set_operation(_intersection, IISetPy)
-multiunionPy = _set_operation(_multiunion, IISetPy)
-weightedUnionPy = _set_operation(_weightedUnion, IISetPy)
-weightedIntersectionPy = _set_operation(_weightedIntersection, IISetPy)
+differencePy = _set_operation(_difference, BBSetPy)
+unionPy = _set_operation(_union, BBSetPy)
+intersectionPy = _set_operation(_intersection, BBSetPy)
+multiunionPy = _set_operation(_multiunion, BBSetPy)
+weightedUnionPy = _set_operation(_weightedUnion, BBSetPy)
+weightedIntersectionPy = _set_operation(_weightedIntersection, BBSetPy)
 
 try:
-    from ._IIBTree import IIBucket
+    from ._BBBTree import BBBucket
 except ImportError: #pragma NO COVER w/ C extensions
-    IIBucket = IIBucketPy
-    IISet = IISetPy
-    IIBTree = IIBTreePy
-    IITreeSet = IITreeSetPy
-    IITreeIterator = IITreeIteratorPy
+    BBBucket = BBBucketPy
+    BBSet = BBSetPy
+    BBBTree = BBBTreePy
+    BBTreeSet = BBTreeSetPy
+    BBTreeIterator = BBTreeIteratorPy
     difference = differencePy
     union = unionPy
     intersection = intersectionPy
@@ -119,20 +119,20 @@ except ImportError: #pragma NO COVER w/ C extensions
     weightedUnion = weightedUnionPy
     weightedIntersection = weightedIntersectionPy
 else: #pragma NO COVER w/o C extensions
-    from ._IIBTree import IISet
-    from ._IIBTree import IIBTree
-    from ._IIBTree import IITreeSet
-    from ._IIBTree import IITreeIterator
-    from ._IIBTree import difference
-    from ._IIBTree import union
-    from ._IIBTree import intersection
-    from ._IIBTree import multiunion
-    from ._IIBTree import weightedUnion
-    from ._IIBTree import weightedIntersection
+    from ._BBBTree import BBSet
+    from ._BBBTree import BBBTree
+    from ._BBBTree import BBTreeSet
+    from ._BBBTree import BBTreeIterator
+    from ._BBBTree import difference
+    from ._BBBTree import union
+    from ._BBBTree import intersection
+    from ._BBBTree import multiunion
+    from ._BBBTree import weightedUnion
+    from ._BBBTree import weightedIntersection
 
-Bucket = IIBucket
-Set = IISet
-BTree = IIBTree
-TreeSet = IITreeSet
+Bucket = BBBucket
+Set = BBSet
+BTree = BBBTree
+TreeSet = BBTreeSet
 
-moduleProvides(IIntegerIntegerBTreeModule)
+moduleProvides(IByteByteBTreeModule)

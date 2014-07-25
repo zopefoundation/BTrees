@@ -487,10 +487,26 @@ class IIntegerIntegerBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
     family = Attribute('The IBTreeFamily of this module')
 
 
-class IIntegerByteBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
-    """keys, or set values, are integers; values are also integers.
+class IByteByteBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
+    """keys, or set values, are bytes; values are bytes.
 
-    describes IIBTree and LLBTree"""
+    describes BBBTree"""
+
+    family = Attribute('The IBTreeFamily of this module')
+
+
+class IIntegerByteBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
+    """keys, or set values, are integers; values are bytes.
+
+    describes IBBTree"""
+
+    family = Attribute('The IBTreeFamily of this module')
+
+
+class IByteIntegerBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
+    """keys, or set values, are bytes; values are integers.
+
+    describes BIBTree"""
 
     family = Attribute('The IBTreeFamily of this module')
 
