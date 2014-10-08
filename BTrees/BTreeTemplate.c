@@ -15,6 +15,55 @@
 
 #define BTREETEMPLATE_C "$Id$\n"
 
+static long
+_get_max_size(BTree *self, PyObject *name, long default_max)
+{
+  PyObject *size;
+  long isize;
+
+  size = PyObject_GetAttr(OBJECT(OBJECT(self)->ob_type), name);
+  if (size == NULL) {
+    PyErr_Clear();
+    return default_max;
+  }
+#ifdef PY3K
+  isize = PyLong_AsLong(size);
+#else
+  isize = PyInt_AsLong(size);
+#endif
+
+  Py_DECREF(size);
+  if (isize <= 0 && ! PyErr_Occurred()) {
+    PyErr_SetString(PyExc_ValueError,
+                    "non-positive max size in BTree subclass");
+    return -1;
+  }
+
+  return isize;
+}
+
+static int
+_max_internal_size(BTree *self)
+{
+  long isize;
+
+  if (self->max_internal_size > 0) return self->max_internal_size;
+  isize = _get_max_size(self, max_internal_size_str, DEFAULT_MAX_BTREE_SIZE);
+  self->max_internal_size = isize;
+  return isize;
+}
+
+static int
+_max_leaf_size(BTree *self)
+{
+  long isize;
+
+  if (self->max_leaf_size > 0) return self->max_leaf_size;
+  isize = _get_max_size(self, max_leaf_size_str, DEFAULT_MAX_BUCKET_SIZE);
+  self->max_leaf_size = isize;
+  return isize;
+}
+
 /* Sanity-check a BTree.  This is a private helper for BTree_check.  Return:
  *      -1         Error.  If it's an internal inconsistency in the BTree,
  *                 AssertionError is set.
@@ -410,6 +459,9 @@ BTree_grow(BTree *self, int index, int noval)
 
     if (self->len)
     {
+        long max_size = _max_internal_size(self);
+        if (max_size < 0) return -1;
+
         d = self->data + index;
         v = d->child;
         /* Create a new object of the same type as the target value */
@@ -459,7 +511,7 @@ BTree_grow(BTree *self, int index, int noval)
         d->child = e;
         self->len++;
 
-        if (self->len >= MAX_BTREE_SIZE(self) * 2)    /* the root is huge */
+        if (self->len >= max_size * 2)    /* the root is huge */
             return BTree_split_root(self, noval);
     }
     else
@@ -727,11 +779,16 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
         int toobig;
 
         assert(status == 1);    /* can be 2 only on deletes */
-        if (SameType_Check(self, d->child))
-            toobig = childlength > MAX_BTREE_SIZE(d->child);
-        else
-            toobig = childlength > MAX_BUCKET_SIZE(d->child);
-
+        if (SameType_Check(self, d->child)) {
+            long max_size = _max_internal_size(self);
+            if (max_size < 0) return -1;
+            toobig = childlength > max_size;
+        }
+        else {
+            long max_size = _max_leaf_size(self);
+            if (max_size < 0) return -1;
+            toobig = childlength > max_size;
+        }
         if (toobig) {
             if (BTree_grow(self, min, noval) < 0)
                 goto Error;
@@ -2177,6 +2234,9 @@ static int
 BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *v = NULL;
+
+    BTREE(self)->max_leaf_size = 0;
+    BTREE(self)->max_internal_size = 0;
 
     if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "BTree", &v))
         return -1;

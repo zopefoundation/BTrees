@@ -866,8 +866,13 @@ class _Tree(_Base):
 
         result = child._set(key, value, ifunset)
         grew = result[0]
-        if grew and child.size > child.MAX_SIZE:
-            self._grow(child, index)
+        if grew:
+            if child.__class__ is self.__class__:
+                max_size = self.max_internal_size
+            else:
+                max_size = self.max_leaf_size
+            if child.size > max_size:
+                self._grow(child, index)
         elif (grew is not None and
               child.__class__ is self._bucket_type and
               len(data) == 1 and
@@ -880,7 +885,7 @@ class _Tree(_Base):
         self._p_changed = True
         new_child = child._split()
         self._data.insert(index+1, _TreeItem(new_child.minKey(), new_child))
-        if len(self._data) > self.MAX_SIZE * 2:
+        if len(self._data) >= self.max_internal_size * 2:
             self._split_root()
 
     def _split_root(self):

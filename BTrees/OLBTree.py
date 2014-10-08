@@ -44,7 +44,6 @@ using64bits = True
 
 
 class OLBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -53,7 +52,6 @@ class OLBucketPy(Bucket):
 
 
 class OLSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
@@ -61,7 +59,8 @@ class OLSetPy(Set):
 
 
 class OLBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -70,7 +69,8 @@ class OLBTreePy(BTree):
 
 
 class OLTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
