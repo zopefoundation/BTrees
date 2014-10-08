@@ -36,7 +36,7 @@ class SubclassTest(unittest.TestCase):
         self.assertTrue(t._firstbucket.__class__ is B)
 
     def testCustomNodeSizes(self):
-        # We overrise btree and bucket split sizes in BTree subclasses.
+        # We override btree and bucket split sizes in BTree subclasses.
         t = S()
         for i in range(8):
             t[i] = i
