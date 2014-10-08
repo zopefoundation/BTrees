@@ -4,6 +4,13 @@
 - BTree subclasses can define max_leaf_size or max_internal_size to
   control maximum sizes for Bucket/Set and BTree/TreeSet nodes.
 
+- Fixed: integer overflow on 32-bit machines wasn't detected correctly
+  under Python 3.
+
+
+4.0.9 (unreleased)
+------------------
+
 - Added support for Python 3.4.
 
 - Update pure-Python and C trees / sets to accept explicit None to indicate
