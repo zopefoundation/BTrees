@@ -69,8 +69,7 @@ for kv in ('OO',
         ):
         _type2kind[globals()[kv+name]] = kind
         py = kv + name + 'Py'
-        if py in globals():
-            _type2kind[globals()[py]] = kind
+        _type2kind[globals()[py]] = kind
 
 # Return pair
 #
@@ -127,12 +126,10 @@ for kv in ('OO',
            ):
     _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
     py = kv + 'BTreePy'
-    if py in globals():
-        _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
+    _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
     _btree2bucket[globals()[kv+'TreeSet']] = globals()[kv+'Set']
     py = kv + 'TreeSetPy'
-    if py in globals():
-        _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
+    _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
 
 
 def crack_btree(t, is_mapping):
