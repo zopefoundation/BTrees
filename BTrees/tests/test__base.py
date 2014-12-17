@@ -597,6 +597,19 @@ class BucketTests(unittest.TestCase):
         self.assertTrue(bucket._next is new_b)
         self.assertTrue(new_b._next is next_b)
 
+    def test__split_filled_explicit_index(self):
+        bucket = self._makeOne()
+        next_b = bucket._next = self._makeOne()
+        for i, c in enumerate('abcdef'):
+            bucket[c] = i
+        new_b = bucket._split(2)
+        self.assertEqual(list(bucket._keys), ['a', 'b'])
+        self.assertEqual(list(bucket._values), [0, 1])
+        self.assertEqual(list(new_b._keys), ['c', 'd', 'e', 'f'])
+        self.assertEqual(list(new_b._values), [2, 3, 4, 5])
+        self.assertTrue(bucket._next is new_b)
+        self.assertTrue(new_b._next is next_b)
+
     def test_keys_empty_no_args(self):
         bucket = self._makeOne()
         self.assertEqual(bucket.keys(), [])
@@ -764,6 +777,17 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(bucket.items(), EXPECTED)
         self.assertTrue(bucket._next is next_b)
 
+    def test__p_resolveConflict_x_on_com_next_old_new_None(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._makeOne()
+        N_NEW = object()
+        s_old = None
+        s_com = ((), N_NEW)
+        s_new = None
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
     def test__p_resolveConflict_x_on_com_next(self):
         from ..Interfaces import BTreesConflictError
         bucket = self._makeOne()
@@ -771,6 +795,17 @@ class BucketTests(unittest.TestCase):
         s_old = ((), None)
         s_com = ((), N_NEW)
         s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              bucket._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_new_next_old_com_None(self):
+        from ..Interfaces import BTreesConflictError
+        bucket = self._makeOne()
+        N_NEW = object()
+        s_old = None
+        s_com = None
+        s_new = ((), N_NEW)
         e = self.assertRaises(BTreesConflictError,
                               bucket._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 0)
@@ -1151,6 +1186,28 @@ class SetTests(unittest.TestCase):
         self.assertTrue(_set._next is new_b)
         self.assertTrue(new_b._next is next_b)
 
+    def test__split_filled_explicit_index(self):
+        _set = self._makeOne()
+        next_b = _set._next = self._makeOne()
+        for c in 'abcdef':
+            _set.add(c)
+        new_b = _set._split(2)
+        self.assertEqual(list(_set._keys), ['a', 'b'])
+        self.assertEqual(list(new_b._keys), ['c', 'd', 'e', 'f'])
+        self.assertTrue(_set._next is new_b)
+        self.assertTrue(new_b._next is next_b)
+
+    def test__p_resolveConflict_x_on_com_next_old_new_None(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = None
+        s_com = ((), N_NEW)
+        s_new = None
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
     def test__p_resolveConflict_x_on_com_next(self):
         from ..Interfaces import BTreesConflictError
         _set = self._makeOne()
@@ -1158,6 +1215,17 @@ class SetTests(unittest.TestCase):
         s_old = ((), None)
         s_com = ((), N_NEW)
         s_new = ((), None)
+        e = self.assertRaises(BTreesConflictError,
+                              _set._p_resolveConflict, s_old, s_com, s_new)
+        self.assertEqual(e.reason, 0)
+
+    def test__p_resolveConflict_x_on_new_next_old_com_None(self):
+        from ..Interfaces import BTreesConflictError
+        _set = self._makeOne()
+        N_NEW = object()
+        s_old = None
+        s_com = None
+        s_new = ((), N_NEW)
         e = self.assertRaises(BTreesConflictError,
                               _set._p_resolveConflict, s_old, s_com, s_new)
         self.assertEqual(e.reason, 0)
@@ -1831,7 +1899,7 @@ class Test_Tree(unittest.TestCase):
             tree[key] = i
             KEYS.append(key)
         fb = tree._firstbucket
-        new_t = tree._split()
+        new_t = tree._split(tree.max_internal_size - 2)
         # Note that original tree still links to split buckets
         self.assertEqual(list(tree), KEYS)
         self.assertTrue(tree._firstbucket is fb)
