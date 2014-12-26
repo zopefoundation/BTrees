@@ -209,6 +209,10 @@ class _SetIteration(object):
 
 def _no_default_comparison(key):
     # Enforce test that key has non-default comparison.
+    if key is None:
+        raise TypeError("Can't use None as a key")
+    if type(key) is object:
+        raise TypeError("Can't use object() as keys")
     lt = getattr(key, '__lt__', None)
     if lt is not None:
         if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
