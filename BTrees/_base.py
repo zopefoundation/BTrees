@@ -215,7 +215,11 @@ def _no_default_comparison(key):
         raise TypeError("Can't use object() as keys")
     lt = getattr(key, '__lt__', None)
     if lt is not None:
+        # CPython 3.x follows PEP 252, defining '__objclass__'
         if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
+            lt = None
+        # PyPy3 doesn't follow PEP 252, but defines '__func__'
+        elif getattr(lt, '__func__', None) is object.__lt__: # pragma NO COVER
             lt = None
     if (lt is None and
         getattr(key, '__cmp__', None) is None):
