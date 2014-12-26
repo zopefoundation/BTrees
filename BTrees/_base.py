@@ -218,11 +218,11 @@ def _no_default_comparison(key):
     lt = getattr(key, '__lt__', None)
     if lt is not None:
         # CPython 3.x follows PEP 252, defining '__objclass__'
-        if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
-            lt = None
+        if getattr(lt, '__objclass__', None) is object:
+            lt = None  # pragma: no cover Py3k
         # PyPy3 doesn't follow PEP 252, but defines '__func__'
-        elif getattr(lt, '__func__', None) is _object_lt: # pragma NO COVER
-            lt = None
+        elif getattr(lt, '__func__', None) is _object_lt:
+            lt = None  # pragma: no cover PyPy3
     if (lt is None and
         getattr(key, '__cmp__', None) is None):
         raise TypeError("Can't use default __cmp__")
