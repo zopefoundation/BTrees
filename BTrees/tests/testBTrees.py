@@ -313,9 +313,11 @@ class BugFixes(unittest.TestCase):
                 t[id] = (id, ToBeDeleted(id), _u('somename'))
             else:
                 #del
-                id = trandom.choice(list(ids.keys()))
-                del t[id]
-                del ids[id]
+                keys = list(ids.keys())
+                if keys:
+                    id = trandom.choice(keys)
+                    del t[id]
+                    del ids[id]
 
         ids = ids.keys()
         trandom.shuffle(list(ids))
