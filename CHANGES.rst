@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.0.9 (unreleased)
+4.1.0 (unreleased)
 ------------------
 
 - Add support for PyPy and PyPy3.
