@@ -207,6 +207,8 @@ class _SetIteration(object):
 
         return self
 
+_object_lt = getattr(object, '__lt__', _marker)
+
 def _no_default_comparison(key):
     # Enforce test that key has non-default comparison.
     if key is None:
@@ -219,7 +221,7 @@ def _no_default_comparison(key):
         if getattr(lt, '__objclass__', None) is object: #pragma NO COVER Py3k
             lt = None
         # PyPy3 doesn't follow PEP 252, but defines '__func__'
-        elif getattr(lt, '__func__', None) is object.__lt__: # pragma NO COVER
+        elif getattr(lt, '__func__', None) is _object_lt: # pragma NO COVER
             lt = None
     if (lt is None and
         getattr(key, '__cmp__', None) is None):
