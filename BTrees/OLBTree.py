@@ -33,7 +33,7 @@ from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
 from ._base import to_ob as _to_key
-from ._base import to_int as _to_value
+from ._base import to_long as _to_value
 from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion

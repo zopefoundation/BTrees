@@ -4,7 +4,7 @@
 4.1.1 (unreleased)
 ------------------
 
-- TBD
+- Accomodate long values in pure-Python OLBTrees.
 
 
 4.1.0 (2014-12-26)
