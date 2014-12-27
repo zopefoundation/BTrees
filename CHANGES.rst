@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.1.1 (unreleased)
+4.1.1 (2014-12-27)
 ------------------
 
 - Accomodate long values in pure-Python OLBTrees.
