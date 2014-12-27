@@ -106,7 +106,7 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return OLBTree()
 
     def getTwoKeys(self):
-        return object(), object()
+        return "abc", "def"
 
 
 class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
@@ -116,7 +116,7 @@ class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return OLBTreePy()
 
     def getTwoKeys(self):
-        return object(), object()
+        return "abc", "def"
 
 
 class PureOL(SetResult, unittest.TestCase):
