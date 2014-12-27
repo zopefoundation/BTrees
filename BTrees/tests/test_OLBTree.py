@@ -108,6 +108,20 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
     def getTwoKeys(self):
         return "abc", "def"
 
+    def test_extremes(self):
+        from BTrees.tests.common import SMALLEST_64_BITS
+        from BTrees.tests.common import SMALLEST_POSITIVE_65_BITS
+        from BTrees.tests.common import LARGEST_64_BITS
+        from BTrees.tests.common import LARGEST_NEGATIVE_65_BITS
+        btree = self._makeOne()
+        btree['ZERO'] = 0
+        btree['SMALLEST_64_BITS'] = SMALLEST_64_BITS
+        btree['LARGEST_64_BITS'] = LARGEST_64_BITS
+        self.assertRaises((ValueError, OverflowError), btree.__setitem__,
+            'SMALLEST_POSITIVE_65_BITS', SMALLEST_POSITIVE_65_BITS)
+        self.assertRaises((ValueError, OverflowError), btree.__setitem__,
+            'LARGEST_NEGATIVE_65_BITS', LARGEST_NEGATIVE_65_BITS)
+
 
 class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 
