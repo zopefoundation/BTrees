@@ -4,7 +4,8 @@
 4.1.2 (unreleased)
 ------------------
 
-- TBD
+- Suppress testing 64-bit values in OLBTrees on 32 bit machines.
+  See:  https://github.com/zopefoundation/BTrees/issues/9
 
 
 4.1.1 (2014-12-27)

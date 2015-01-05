@@ -27,6 +27,7 @@ from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
+from .common import _skip_on_32_bits
 
 
 class OLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -108,6 +109,7 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
     def getTwoKeys(self):
         return "abc", "def"
 
+    @_skip_on_32_bits
     def test_extremes(self):
         from BTrees.tests.common import SMALLEST_64_BITS
         from BTrees.tests.common import SMALLEST_POSITIVE_65_BITS

@@ -12,6 +12,9 @@
 #
 ##############################################################################
 
+import platform
+
+
 def _skip_wo_ZODB(test_method): #pragma NO COVER
     try:
         import ZODB
@@ -31,6 +34,13 @@ def _skip_under_Py3k(test_method): #pragma NO COVER
         return _dummy
     else:
         return test_method
+
+def _skip_on_32_bits(test_method): #pragma NO COVER
+    if platform.architecture()[0] == '32bit':
+        def _dummy(*args):
+            pass
+        return _dummy
+    return test_method
 
 
 class Base(object):
