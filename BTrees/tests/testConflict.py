@@ -24,6 +24,32 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         from BTrees.OOBTree import OOBTree
         return OOBTree
 
+    def openDB(self):
+        # The conflict tests tend to open two or more connections
+        # and then try to commit them. A standard FileStorage
+        # is not MVCC aware, and so each connection would have the same
+        # instance of the storage, leading to the error
+        # "Duplicate tpc_begin calls for same transaction" on commit;
+        # thus we use a MVCCMappingStorage for these tests, ensuring each
+        # connection has its own storage.
+        # Unfortunately, it wants to acquire the identically same
+        # non-recursive lock in each of its *its* tpc_* methods, which deadlocks.
+        # The solution is to give each instance its own lock, and trust in the
+        # serialization (ordering) of the datamanager, and the fact that these tests are
+        # single-threaded.
+        import threading
+        from ZODB.tests.MVCCMappingStorage  import MVCCMappingStorage
+        class _MVCCMappingStorage(MVCCMappingStorage):
+            def new_instance(self):
+                inst = MVCCMappingStorage.new_instance(self)
+                inst._commit_lock = threading.Lock()
+                return inst
+        from ZODB.DB import DB
+        self.storage = _MVCCMappingStorage()
+        self.db = DB(self.storage)
+        return self.db
+
+
     @_skip_wo_ZODB
     def testSimpleConflict(self):
         # Invoke conflict resolution by committing a transaction and
@@ -478,37 +504,35 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
     @_skip_wo_ZODB
     def testConflictOfInsertAndDeleteOfFirstBucketItem(self):
-        """
-        Recently, BTrees became careful about removing internal keys
-        (keys in internal aka BTree nodes) when they were deleted from
-        buckets. This poses a problem for conflict resolution.
+        # Recently, BTrees became careful about removing internal keys
+        # (keys in internal aka BTree nodes) when they were deleted from
+        # buckets. This poses a problem for conflict resolution.
 
-        We want to guard against a case in which the first key in a
-        bucket is removed in one transaction while a key is added
-        after that key but before the next key in another transaction
-        with the result that the added key is unreachable.
+        # We want to guard against a case in which the first key in a
+        # bucket is removed in one transaction while a key is added
+        # after that key but before the next key in another transaction
+        # with the result that the added key is unreachable.
 
-        original:
+        # original:
 
-          Bucket(...), k1, Bucket((k1, v1), (k3, v3), ...)
+        #   Bucket(...), k1, Bucket((k1, v1), (k3, v3), ...)
 
-        tran1
+        # tran1
 
-          Bucket(...), k3, Bucket(k3, v3), ...)
+        #   Bucket(...), k3, Bucket(k3, v3), ...)
 
-        tran2
+        # tran2
 
-          Bucket(...), k1, Bucket((k1, v1), (k2, v2), (k3, v3), ...)
+        #   Bucket(...), k1, Bucket((k1, v1), (k2, v2), (k3, v3), ...)
 
-          where k1 < k2 < k3
+        #   where k1 < k2 < k3
 
-        We don't want:
+        # We don't want:
 
-          Bucket(...), k3, Bucket((k2, v2), (k3, v3), ...)
+        #   Bucket(...), k3, Bucket((k2, v2), (k3, v3), ...)
 
-          as k2 would be unfindable, so we want a conflict.
+        #   as k2 would be unfindable, so we want a conflict.
 
-        """
         import transaction
         from ZODB.POSException import ConflictError
         mytype = self._getTargetClass()

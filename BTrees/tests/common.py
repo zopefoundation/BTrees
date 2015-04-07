@@ -70,6 +70,11 @@ class Base(object):
         return self.db.open().root()
 
     def _closeRoot(self, root):
+        import transaction
+        # If we don't commit/abort the transaction, then
+        # closing the Connection tends to fail with
+        # "Cannot close connection joined to transaction"
+        transaction.abort()
         root._p_jar.close()
 
     @_skip_wo_ZODB
