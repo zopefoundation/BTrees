@@ -8,7 +8,7 @@
   See:  https://github.com/zopefoundation/BTrees/issues/9
 
 - Fix _p_changed for small pure-Python BTrees.
-  See   https://github.com/zopefoundation/BTrees/issues/10
+  See   https://github.com/zopefoundation/BTrees/issues/11
 
 
 4.1.1 (2014-12-27)
