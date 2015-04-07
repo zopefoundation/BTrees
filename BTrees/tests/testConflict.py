@@ -504,37 +504,35 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
     @_skip_wo_ZODB
     def testConflictOfInsertAndDeleteOfFirstBucketItem(self):
-        """ testConflictOfInsertAndDeleteOfFirstBucketItem
-        Recently, BTrees became careful about removing internal keys
-        (keys in internal aka BTree nodes) when they were deleted from
-        buckets. This poses a problem for conflict resolution.
+        # Recently, BTrees became careful about removing internal keys
+        # (keys in internal aka BTree nodes) when they were deleted from
+        # buckets. This poses a problem for conflict resolution.
 
-        We want to guard against a case in which the first key in a
-        bucket is removed in one transaction while a key is added
-        after that key but before the next key in another transaction
-        with the result that the added key is unreachable.
+        # We want to guard against a case in which the first key in a
+        # bucket is removed in one transaction while a key is added
+        # after that key but before the next key in another transaction
+        # with the result that the added key is unreachable.
 
-        original:
+        # original:
 
-          Bucket(...), k1, Bucket((k1, v1), (k3, v3), ...)
+        #   Bucket(...), k1, Bucket((k1, v1), (k3, v3), ...)
 
-        tran1
+        # tran1
 
-          Bucket(...), k3, Bucket(k3, v3), ...)
+        #   Bucket(...), k3, Bucket(k3, v3), ...)
 
-        tran2
+        # tran2
 
-          Bucket(...), k1, Bucket((k1, v1), (k2, v2), (k3, v3), ...)
+        #   Bucket(...), k1, Bucket((k1, v1), (k2, v2), (k3, v3), ...)
 
-          where k1 < k2 < k3
+        #   where k1 < k2 < k3
 
-        We don't want:
+        # We don't want:
 
-          Bucket(...), k3, Bucket((k2, v2), (k3, v3), ...)
+        #   Bucket(...), k3, Bucket((k2, v2), (k3, v3), ...)
 
-          as k2 would be unfindable, so we want a conflict.
+        #   as k2 would be unfindable, so we want a conflict.
 
-        """
         import transaction
         from ZODB.POSException import ConflictError
         mytype = self._getTargetClass()
