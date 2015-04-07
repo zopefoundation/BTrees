@@ -768,7 +768,6 @@ class MappingBase(Base):
         # Too many arguments.
         self.assertRaises(TypeError, t.pop, 1, 2, 3)
 
-
 class BTreeTests(MappingBase):
     # Tests common to all BTrees
 
@@ -1091,6 +1090,56 @@ class BTreeTests(MappingBase):
                 self.assertEqual(str(v), str(k[0]))
         self._checkIt(t)
 
+    def testAddTwoSetsChanged(self):
+        # A bug in the BTree Python implementation once
+        # caused adding a second item to a tree to fail
+        # to set _p_changed (adding the first item sets it because
+        # the _firstbucket gets set, but the second item only grew the
+        # existing bucket)
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t[1] = 3
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+        t[2] = 4
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Setting the same key to a different value also triggers a change
+        t._p_changed = False
+        t._p_jar.registered = None
+        t[2] = 5
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Likewise with only a single value
+        t = self._makeOne()
+        t._p_oid = b'\0\0\0\0\0'
+        t._p_jar = Jar()
+        t[1] = 3
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+
+        t[1] = 6
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
 
 class NormalSetTests(Base):
     # Test common to all set types
