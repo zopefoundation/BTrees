@@ -1114,9 +1114,30 @@ class BTreeTests(MappingBase):
 
         t._p_jar = Jar()
         t[1] = 3
+        # reset these, setting _firstbucket triggered a change
         t._p_changed = False
         t._p_jar.registered = None
         t[2] = 4
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Setting the same key to a different value also triggers a change
+        t._p_changed = False
+        t._p_jar.registered = None
+        t[2] = 5
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Likewise with only a single value
+        t = self._makeOne()
+        t._p_oid = b'\0\0\0\0\0'
+        t._p_jar = Jar()
+        t[1] = 3
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+
+        t[1] = 6
         self.assertTrue(t._p_changed)
         self.assertEqual(t, t._p_jar.registered)
 
