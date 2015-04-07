@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.1.2 (unreleased)
+4.1.2 (2015-04-07)
 ------------------
 
 - Suppress testing 64-bit values in OLBTrees on 32 bit machines.
