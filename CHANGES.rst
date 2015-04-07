@@ -7,6 +7,9 @@
 - Suppress testing 64-bit values in OLBTrees on 32 bit machines.
   See:  https://github.com/zopefoundation/BTrees/issues/9
 
+- Fix _p_changed for small pure-Python BTrees.
+  See   https://github.com/zopefoundation/BTrees/issues/10
+
 
 4.1.1 (2014-12-27)
 ------------------

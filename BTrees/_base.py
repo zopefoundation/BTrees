@@ -883,11 +883,16 @@ class _Tree(_Base):
                 max_size = self.max_leaf_size
             if child.size > max_size:
                 self._grow(child, index)
-        elif (grew is not None and
-              child.__class__ is self._bucket_type and
-              len(data) == 1 and
-              child._p_oid is None
-              ):
+
+        # If a BTree contains only a single bucket, BTree.__getstate__()
+        # includes the bucket's entire state, and the bucket doesn't get
+        # an oid of its own.  So if we have a single oid-less bucket that
+        # changed, it's *our* oid that should be marked as changed -- the
+        # bucket doesn't have one.
+        if (grew is not None and
+            child.__class__ is self._bucket_type and
+            len(data) == 1 and
+            child._p_oid is None):
             self._p_changed = 1
         return result
 
