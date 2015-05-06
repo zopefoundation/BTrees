@@ -1148,7 +1148,9 @@ class BTreeTests(MappingBase):
 
     def testRemoveInSmallMapSetsChanged(self):
         # A bug in the BTree Python implementation once caused
-        # deleting from a small btree to set _p_changed
+        # deleting from a small btree to set _p_changed.
+        # There must be at least two objects so that _firstbucket doesn't
+        # get set
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
@@ -1167,12 +1169,13 @@ class BTreeTests(MappingBase):
 
         t._p_jar = Jar()
         t[0] = 1
+        t[1] = 2
         # reset these, setting _firstbucket triggered a change
         t._p_changed = False
         t._p_jar.registered = None
 
         # now remove the second value
-        del t[0]
+        del t[1]
         self.assertTrue(t._p_changed)
         self.assertEqual(t, t._p_jar.registered)
 
@@ -1387,7 +1390,9 @@ class NormalSetTests(Base):
 
     def testRemoveInSmallSetSetsChanged(self):
         # A bug in the BTree TreeSet Python implementation once caused
-        # deleting an item in a small set to fail to set _p_changed
+        # deleting an item in a small set to fail to set _p_changed.
+        # There must be at least two objects so that _firstbucket doesn't
+        # get set
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
@@ -1406,12 +1411,13 @@ class NormalSetTests(Base):
 
         t._p_jar = Jar()
         t.add(0)
+        t.add(1)
         # reset these, setting _firstbucket triggered a change
         t._p_changed = False
         t._p_jar.registered = None
 
         # now remove the second value
-        t.remove(0)
+        t.remove(1)
         self.assertTrue(t._p_changed)
         self.assertEqual(t, t._p_jar.registered)
 
