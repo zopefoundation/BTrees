@@ -4,7 +4,9 @@
 4.1.3 (unreleased)
 ------------------
 
-- TBD
+- Fix _p_changed when removing items from small pure-Python
+  BTrees/TreeSets. See:
+  https://github.com/zopefoundation/BTrees/issues/13
 
 
 4.1.2 (2015-04-07)
@@ -13,8 +15,9 @@
 - Suppress testing 64-bit values in OLBTrees on 32 bit machines.
   See:  https://github.com/zopefoundation/BTrees/issues/9
 
-- Fix _p_changed for small pure-Python BTrees.
-  See   https://github.com/zopefoundation/BTrees/issues/11
+- Fix _p_changed when adding items to small pure-Python
+  BTrees/TreeSets. See:
+  https://github.com/zopefoundation/BTrees/issues/11
 
 
 4.1.1 (2014-12-27)
