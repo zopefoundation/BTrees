@@ -559,6 +559,7 @@ class Set(_BucketBase):
         index = self._search(key)
         if index < 0:
             index = -index - 1
+            self._p_changed = True
             self._keys.insert(index, key)
             return True, None
         return False, None

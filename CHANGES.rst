@@ -5,7 +5,7 @@
 ------------------
 
 - Fix _p_changed when removing items from small pure-Python
-  BTrees/TreeSets. See:
+  BTrees/TreeSets and when adding to Sets. See:
   https://github.com/zopefoundation/BTrees/issues/13
 
 

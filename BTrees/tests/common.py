@@ -1421,6 +1421,32 @@ class NormalSetTests(Base):
         self.assertTrue(t._p_changed)
         self.assertEqual(t, t._p_jar.registered)
 
+    def testAddingOneSetsChanged(self):
+        # A bug in the BTree Set Python implementation once caused
+        # adding an object not to set _p_changed
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t.add(0)
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Whether or not doing `t.add(0)` again would result in
+        # _p_changed being set depends on whether this is a TreeSet or a plain Set
 
 class ExtendedSetTests(NormalSetTests):
 
