@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.1.3 (unreleased)
+4.1.3 (2015-05-19)
 ------------------
 
 - Fix ``_p_changed`` when removing items from small pure-Python
