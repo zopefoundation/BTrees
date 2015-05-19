@@ -559,6 +559,7 @@ class Set(_BucketBase):
         index = self._search(key)
         if index < 0:
             index = -index - 1
+            self._p_changed = True
             self._keys.insert(index, key)
             return True, None
         return False, None
@@ -941,6 +942,12 @@ class _Tree(_Base):
         child = data[index].child
 
         removed_first_bucket, value = child._del(key)
+
+        # See comment in _set about small trees
+        if (len(data) == 1 and
+            child.__class__ is self._bucket_type and
+            child._p_oid is None):
+            self._p_changed = True
 
         # fix up the node key, but not for the 0'th one.
         if index > 0 and child.size and key == data[index].key:
