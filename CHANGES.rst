@@ -4,7 +4,8 @@
 4.1.4 (unreleased)
 ------------------
 
-- TBD
+- Pure-Python Bucket and Set objects have a human readable
+  ``__repr__`` like the C versions.
 
 4.1.3 (2015-05-19)
 ------------------
