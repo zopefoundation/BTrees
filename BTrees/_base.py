@@ -155,6 +155,12 @@ class _BucketBase(_Base):
 
     has_key = __contains__
 
+    def _repr_helper(self, items):
+        type_self = type(self)
+        mod = type_self.__module__
+        name = type_self.__name__
+        name = name[:-2] if name.endswith("Py") else name
+        return "%s.%s(%r)" % (mod, name, items)
 
 class _SetIteration(object):
 
@@ -517,6 +523,8 @@ class Bucket(_BucketBase):
         result._next = b_old._next
         return result.__getstate__()
 
+    def __repr__(self):
+        return self._repr_helper(self.items())
 
 class Set(_BucketBase):
 
@@ -711,6 +719,8 @@ class Set(_BucketBase):
         result._next = b_old._next
         return result.__getstate__()
 
+    def __repr__(self):
+        return self._repr_helper(self._keys)
 
 class _TreeItem(object):
 
@@ -1066,6 +1076,10 @@ class _Tree(_Base):
         return ((
             self._bucket_type()._p_resolveConflict(s_old, s_com, s_new), ), )
 
+    def __repr__(self):
+        r = super(_Tree, self).__repr__()
+        r = r.replace('Py', '')
+        return r
 
 def _get_simple_btree_bucket_state(state):
     if state is None:

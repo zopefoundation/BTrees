@@ -228,6 +228,14 @@ class MappingBase(Base):
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
         self.assertTrue(len(r) < 10000)
+        # Make sure the repr is human readable if it's a bucket
+        if 'Bucket' in r:
+            self.assertTrue(r.startswith("BTrees"))
+            self.assertTrue(r.endswith(repr(t.items()) + ')'), r)
+        else:
+            self.assertEqual(r[:8], '<BTrees.')
+        # Make sure it's the same between Python and C
+        self.assertTrue('Py' not in r)
 
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -1186,6 +1194,23 @@ class NormalSetTests(Base):
     def _populate(self, t, l):
         # Make some data
         t.update(range(l))
+
+    def testShortRepr(self):
+        t = self._makeOne()
+        for i in range(5):
+            t.add(i)
+        r = repr(t)
+        # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
+        # (the buffer must be terminated when copied).
+        self.assertTrue(len(r) < 10000)
+        # Make sure the repr is human readable, unless it's a tree
+        if 'TreeSet' not in r:
+            self.assertTrue(r.endswith("Set(%r)" % t.keys()))
+        else:
+            self.assertEqual(r[:7], '<BTrees', r)
+        # Make sure it's the same between Python and C
+        self.assertTrue('Py' not in r)
+
 
     def testInsertReturnsValue(self):
         t = self._makeOne()
