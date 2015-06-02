@@ -270,7 +270,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -305,7 +305,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -342,7 +342,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -376,7 +376,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
