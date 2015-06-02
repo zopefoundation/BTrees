@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.1.4 (unreleased)
+4.1.4 (2015-06-02)
 ------------------
 
 - Ensure that pure-Python Bucket and Set objects have a human readable
