@@ -93,7 +93,7 @@ radixsort_int(element_type *in, element_type *work, size_t n)
 	int offset, offsetinc;
 
 	/* Which byte position are we working on now?  0=LSB, 1, 2, ... */
-	int bytenum;
+	size_t bytenum;
 
 #ifdef ZODB_64BIT_INTS
 	assert(sizeof(element_type) == 8);

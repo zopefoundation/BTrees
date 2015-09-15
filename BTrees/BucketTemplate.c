@@ -1836,7 +1836,7 @@ bucket_repr(Bucket *self)
                        "%s(%s)", Py_TYPE(self)->tp_name,
                        PyBytes_AS_STRING(r));
 #endif
-    if (rv > 0 && rv < sizeof(repr))
+    if (rv > 0 && (size_t)rv < sizeof(repr))
     {
         Py_DECREF(r);
 #ifdef PY3K
