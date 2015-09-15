@@ -27,9 +27,25 @@
 #define TEXT_FROM_STRING PyUnicode_FromString
 #define TEXT_FORMAT PyUnicode_Format
 
-#define COMPARE(lhs, rhs) \
-    PyObject_RichCompareBool((lhs), (rhs), Py_LT) > 0 ? -1 : \
-    (PyObject_RichCompareBool((lhs), (rhs), Py_EQ) > 0 ? 0 : 1)
+/* Emulate Python2's __cmp__,  wrapping PyObject_RichCompareBool(),
+ * Return -2/-3 for errors, -1 for lhs<rhs, 0 for lhs==rhs, 1 for lhs>rhs.
+ */
+static inline
+int __compare(PyObject *lhs, PyObject *rhs) {
+    int less, equal;
+
+    less = PyObject_RichCompareBool(lhs, rhs, Py_LT);
+    if ( less == -1 ) {
+        return -2;
+    }
+    equal = PyObject_RichCompareBool(lhs, rhs, Py_EQ);
+    if ( equal == -1 ) {
+        return -3;
+    }
+    return less ? -1 : (equal ? 0 : 1);
+}
+
+#define COMPARE(lhs, rhs) __compare((lhs), (rhs))
 
 
 #else
