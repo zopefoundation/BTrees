@@ -38,11 +38,14 @@ int __compare(PyObject *lhs, PyObject *rhs) {
     if ( less == -1 ) {
         return -2;
     }
+    if (less) {
+        return -1;
+    }
     equal = PyObject_RichCompareBool(lhs, rhs, Py_EQ);
     if ( equal == -1 ) {
         return -3;
     }
-    return less ? -1 : (equal ? 0 : 1);
+    return equal ? 0 : 1;
 }
 
 #define COMPARE(lhs, rhs) __compare((lhs), (rhs))
