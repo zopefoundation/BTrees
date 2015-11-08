@@ -1,10 +1,10 @@
 ``BTrees`` Changelog
 ====================
 
-4.1.5 (unreleased)
+4.2.0 (unreleased)
 ------------------
 
-- TBD
+- Python 3.5 support.
 
 4.1.4 (2015-06-02)
 ------------------
