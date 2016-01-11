@@ -40,6 +40,45 @@ class _Base(Persistent):
         if items:
             self.update(items)
 
+    try:
+        # Detect the presence of the C extensions.
+        # If they're NOT around, we don't need to do any of the
+        # special pickle support to make Python versions look like
+        # C---we just rename the classes. By not defining these methods,
+        # we can (theoretically) regain a bit of speed.
+        # If the C extensions are around, we do need these methods, but
+        # these classes are unlikely to be used in production anyway.
+        __import__('BTrees._OOBTree')
+    except ImportError:
+        pass
+    else:
+        def __reduce__(self):
+            # Swap out the type constructor for the C version, if present.
+            type_self = type(self)
+            func, typ_gna, state = Persistent.__reduce__(self)
+            # We ignore the returned type altogether in favor of
+            # our calculated class (which allows subclasses but replaces our exact
+            # type with the C equivalent)
+            typ = self.__class__
+            gna = typ_gna[1:]
+            return (func, (typ,) + gna, state)
+
+        @property
+        def __class__(self):
+            type_self = type(self)
+            return type_self._BTree_reduce_as if type_self._BTree_reduce_up_bound is type_self else type_self
+
+        @property
+        def _BTree_reduce_as(self):
+            # Return the pickle replacement class for this object.
+            # If the C extensions are available, this will be the
+            # C type (setup by _fix_pickle), otherwise it will be the real
+            # type of this object.
+            # This implementation is replaced by _fix_pickle and exists for
+            # testing purposes.
+            return type(self)
+
+        _BTree_reduce_up_bound = _BTree_reduce_as
 
 class _BucketBase(_Base):
 
@@ -328,7 +367,7 @@ class Bucket(_BucketBase):
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
             index = len(self._keys) // 2
-        new_instance = self.__class__()
+        new_instance = type(self)()
         new_instance._keys = self._keys[index:]
         new_instance._values = self._values[index:]
         del self._keys[index:]
@@ -388,13 +427,13 @@ class Bucket(_BucketBase):
             values.append(state[i+1])
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
-        b_old = self.__class__()
+        b_old = type(self)()
         if s_old is not None:
             b_old.__setstate__(s_old)
-        b_com = self.__class__()
+        b_com = type(self)()
         if s_com is not None:
             b_com.__setstate__(s_com)
-        b_new = self.__class__()
+        b_new = type(self)()
         if s_new is not None:
             b_new.__setstate__(s_new)
         if (b_com._next != b_old._next or
@@ -412,7 +451,7 @@ class Bucket(_BucketBase):
             return BTreesConflictError(
                 i_old.position, i_com.position, i_new.position, reason)
 
-        result = self.__class__()
+        result = type(self)()
 
         def merge_output(it):
             result._keys.append(it.key)
@@ -586,7 +625,7 @@ class Set(_BucketBase):
     def _split(self, index=-1):
         if index < 0 or index >= len(self._keys):
             index = len(self._keys) // 2
-        new_instance = self.__class__()
+        new_instance = type(self)()
         new_instance._keys = self._keys[index:]
         del self._keys[index:]
         new_instance._next = self._next
@@ -595,13 +634,13 @@ class Set(_BucketBase):
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
 
-        b_old = self.__class__()
+        b_old = type(self)()
         if s_old is not None:
             b_old.__setstate__(s_old)
-        b_com = self.__class__()
+        b_com = type(self)()
         if s_com is not None:
             b_com.__setstate__(s_com)
-        b_new = self.__class__()
+        b_new = type(self)()
         if s_new is not None:
             b_new.__setstate__(s_new)
 
@@ -620,7 +659,7 @@ class Set(_BucketBase):
             return BTreesConflictError(
                 i_old.position, i_com.position, i_new.position, reason)
 
-        result = self.__class__()
+        result = type(self)()
 
         def merge_output(it):
             result._keys.append(it.key)
@@ -739,6 +778,15 @@ class _Tree(_Base):
                  '_firstbucket',
                 )
 
+    def __new__(cls, *args):
+        value = _Base.__new__(cls, *args)
+        # Empty trees don't get their __setstate__ called upon
+        # unpickling (or __init__, obviously), so clear() is never called
+        # and _data and _firstbucket are never defined, unless we do it here.
+        value._data = []
+        value._firstbucket = None
+        return value
+
     def setdefault(self, key, value):
         return self._set(self._to_key(key), self._to_value(value), True)[1]
 
@@ -768,7 +816,9 @@ class _Tree(_Base):
         self._del(self._to_key(key))
 
     def clear(self):
-        self._data = []
+        if self._data:
+            # In the case of __init__, this was already set by __new__
+            self._data = []
         self._firstbucket = None
 
     def __nonzero__(self):
@@ -888,7 +938,7 @@ class _Tree(_Base):
         result = child._set(key, value, ifunset)
         grew = result[0]
         if grew:
-            if child.__class__ is self.__class__:
+            if type(child) is type(self):
                 max_size = self.max_internal_size
             else:
                 max_size = self.max_leaf_size
@@ -901,7 +951,7 @@ class _Tree(_Base):
         # changed, it's *our* oid that should be marked as changed -- the
         # bucket doesn't have one.
         if (grew is not None and
-            child.__class__ is self._bucket_type and
+            type(child) is self._bucket_type and
             len(data) == 1 and
             child._p_oid is None):
             self._p_changed = 1
@@ -915,7 +965,7 @@ class _Tree(_Base):
             self._split_root()
 
     def _split_root(self):
-        child = self.__class__()
+        child = type(self)()
         child._data = self._data
         child._firstbucket = self._firstbucket
         self._data = [_TreeItem(None, child)]
@@ -926,13 +976,13 @@ class _Tree(_Base):
         if index is None:
             index = len(data) // 2
 
-        next = self.__class__()
+        next = type(self)()
         next._data = data[index:]
         first = data[index]
         del data[index:]
         if len(data) == 0:
             self._firstbucket = None # lost our bucket, can't buy no beer
-        if isinstance(first.child, self.__class__):
+        if isinstance(first.child, type(self)):
             next._firstbucket = first.child._firstbucket
         else:
             next._firstbucket = first.child;
@@ -955,7 +1005,7 @@ class _Tree(_Base):
 
         # See comment in _set about small trees
         if (len(data) == 1 and
-            child.__class__ is self._bucket_type and
+            type(child) is self._bucket_type and
             child._p_oid is None):
             self._p_changed = True
 
@@ -972,7 +1022,7 @@ class _Tree(_Base):
                 self._firstbucket = child._firstbucket
 
         if not child.size:
-            if child.__class__ is self._bucket_type:
+            if type(child) is self._bucket_type:
                 if index:
                     data[index-1].child._deleteNextBucket()
                 else:
@@ -989,10 +1039,12 @@ class _Tree(_Base):
         data = self._data
 
         if not data:
+            # Note: returning None here causes our __setstate__
+            # to not be called on unpickling
             return None
 
         if (len(data) == 1 and
-            data[0].child.__class__ is not self.__class__ and
+            type(data[0].child) is not type(self) and
             data[0].child._p_oid is None
             ):
             return ((data[0].child.__getstate__(), ), )
@@ -1043,14 +1095,14 @@ class _Tree(_Base):
         assert_(self._firstbucket is not None,
                 "Non-empty BTree has NULL firstbucket")
 
-        child_class = data[0].child.__class__
+        child_class = type(data[0].child)
         for i in data:
             assert_(i.child is not None, "BTree has NULL child")
-            assert_(i.child.__class__ is child_class,
+            assert_(type(i.child) is child_class,
                     "BTree children have different types")
             assert_(i.child.size, "Bucket length < 1")
 
-        if child_class is self.__class__:
+        if child_class is type(self):
             assert_(self._firstbucket is data[0].child._firstbucket,
                     "BTree has firstbucket different than "
                     "its first child's firstbucket")
@@ -1494,3 +1546,44 @@ def MERGE_WEIGHT_default(self, value, weight):
 
 def MERGE_WEIGHT_numeric(self, value, weight):
     return value * weight
+
+def _fix_pickle(mod_dict, mod_name):
+    # Make the pure-Python objects pickle with the same
+    # class names and types as the C extensions by setting the appropriate
+    # _BTree_reduce_as attribute.
+    # If the C extensions are not available, we also change the
+    # __name__ attribute of the type to match the C name (otherwise
+    # we wind up with *Py in the pickles)
+    # Each module must call this as `_fix_pickle(globals(), __name__)`
+    # at the bottom.
+
+    mod_prefix = mod_name.split('.')[-1][:2] # BTrees.OOBTree -> 'OO'
+    bucket_name = mod_prefix + 'Bucket'
+    py_bucket_name = bucket_name + 'Py'
+
+    have_c_extensions = mod_dict[bucket_name] is not mod_dict[py_bucket_name]
+
+    for name in 'Bucket', 'Set', 'BTree', 'TreeSet', 'TreeIterator':
+        raw_name = mod_prefix + name
+        py_name = raw_name + 'Py'
+        try:
+            py_type = mod_dict[py_name]
+        except KeyError:
+            if name == 'TreeIterator':
+                # Optional
+                break
+            raise
+        raw_type = mod_dict[raw_name] # Could be C or Python
+
+        py_type._BTree_reduce_as = raw_type
+        py_type._BTree_reduce_up_bound = py_type
+
+        if not have_c_extensions:
+            # Set FooPy to have the __name__ of simply Foo.
+            # We can't do this if the C extension is available,
+            # because then mod_dict[FooPy.__name__] is not FooPy
+            # and pickle refuses to save something like that.
+            # On the other hand (no C extension) this makes our
+            # Python pickle match the C version by default
+            py_type.__name__ = raw_name
+            py_type.__qualname__ = raw_name # Py 3.3+

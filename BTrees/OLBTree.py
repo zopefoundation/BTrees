@@ -14,7 +14,7 @@
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'OLBucket', 'OLSet', 'OLBTree', 'OLTreeSet',
-           'union', 'intersection', 'difference',  
+           'union', 'intersection', 'difference',
            'weightedUnion', 'weightedIntersection',
           )
 
@@ -37,6 +37,7 @@ from ._base import to_long as _to_value
 from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 250
@@ -130,5 +131,7 @@ Bucket = OLBucket
 Set = OLSet
 BTree = OLBTree
 TreeSet = OLTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IObjectIntegerBTreeModule)

@@ -1,6 +1,23 @@
 ``BTrees`` Changelog
 ====================
 
+4.3.0 (TBD)
+-----------
+
+- The pure-Python implementation, used on PyPy and when a C compiler
+  isn't available for CPython, now pickles identically to the C
+  version. Unpickling will choose the best available implementation.
+  This prevents interoperability problems and database corruption if
+  both implementations are in use. While it is no longer possible to
+  pickle a Python implementation and have it unpickle to the Python
+  implementation if the C implementation is available, existing Python
+  pickles will still unpickle to the Python implementation (until
+  pickled again). See:
+  https://github.com/zopefoundation/BTrees/issues/19
+
+- Unpickling empty BTrees in a pure-Python environment no longer
+  creates invalid objects that faile with ``AttributeError``.
+
 4.2.0 (2015-11-13)
 ------------------
 

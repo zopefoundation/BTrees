@@ -215,15 +215,28 @@ class Base(object):
         # Issue #2
         # Nothing we pickle should include the 'Py' suffix of
         # implementation classes, and unpickling should give us
-        # back the same type we started with
+        # back the best available type
         import pickle
-        t = self._makeOne()
+        made_one = self._makeOne()
 
-        s = pickle.dumps(t)
-        self.assertTrue(b'Py' not in s, repr(s))
+        for proto in range(1, pickle.HIGHEST_PROTOCOL + 1):
+            dumped_str = pickle.dumps(made_one, proto)
+            self.assertTrue(b'Py' not in dumped_str, repr(dumped_str))
 
-        t2 = pickle.loads(s)
-        self.assertTrue(type(t2) is type(t) is self._getTargetClass())
+            loaded_one = pickle.loads(dumped_str)
+
+            # If we're testing the pure-Python version, but we have the
+            # C extension available, then the loaded type will be the C
+            # extension but the made type will be the Python version.
+            # Otherwise, they match. (Note that if we don't have C extensions
+            # available, the __name__ will be altered to not have Py in it. See _fix_pickle)
+            if 'Py' in type(made_one).__name__:
+                self.assertTrue(type(loaded_one) is not type(made_one))
+            else:
+                self.assertTrue(type(loaded_one) is type(made_one) is self._getTargetClass(), (type(loaded_one), type(made_one), self._getTargetClass(), repr(dumped_str)))
+
+            dumped_str2 = pickle.dumps(loaded_one, proto)
+            self.assertEqual(dumped_str, dumped_str2)
 
     def test_pickle_empty(self):
         # Issue #2
@@ -239,8 +252,54 @@ class Base(object):
         s2 = pickle.dumps(t2)
         self.assertEqual(s, s2)
 
+        if hasattr(t2, '__len__'):
+            # checks for _firstbucket
+            self.assertEqual(0, len(t2))
+
         # This doesn't hold for things like Bucket and Set, sadly
         # self.assertEqual(t, t2)
+
+    def test_pickle_subclass(self):
+        # Issue #2: Make sure our class swizzling doesn't break
+        # pickling subclasses
+
+        global PickleSubclass # XXX: Has to be global to pickle, but this prevents running tests in parallel
+        class PickleSubclass(type(self._makeOne())):
+            pass
+
+        import pickle
+        loaded = pickle.loads(pickle.dumps(PickleSubclass()))
+        self.assertTrue(type(loaded) is PickleSubclass, type(loaded))
+        self.assertTrue(PickleSubclass().__class__ is PickleSubclass)
+
+    def test_isinstance_subclass(self):
+        # Issue #2:
+        # In some cases we define a __class__ attribute that gets
+        # invoked for isinstance and *lies*. Check that isinstance still
+        # works (almost) as expected.
+
+        t = self._makeOne()
+        # It's a little bit weird, but in the fibbing case,
+        # we're an instance of two unrelated classes
+        self.assertTrue(isinstance(t, type(t)), (t, type(t)))
+        self.assertTrue(isinstance(t, t.__class__))
+
+        class Sub(type(t)):
+            pass
+
+        self.assertTrue(issubclass(Sub, type(t)))
+
+        if type(t) is not t.__class__:
+            # We're fibbing; this breaks issubclass of itself,
+            # contrary to the usual mechanism
+            self.assertFalse(issubclass(t.__class__, type(t)))
+
+
+        class NonSub(object):
+            pass
+
+        self.assertFalse(issubclass(NonSub, type(t)))
+        self.assertFalse(isinstance(NonSub(), type(t)))
 
 class MappingBase(Base):
     # Tests common to mappings (buckets, btrees)
@@ -1241,25 +1300,28 @@ class BTreeTests(MappingBase):
     def test_legacy_py_pickle(self):
         # Issue #2
         # If we have a pickle that includes the 'Py' suffix,
-        # it should unpickle to the type that we're working with
+        # it (unfortunately) unpickles to the python type. But
+        # new pickles never produce that.
         import pickle
-        t = self._makeOne()
+        made_one = self._makeOne()
 
-        s = pickle.dumps(t)
-        # It's not legacy
-        assert b'TreePy\n' not in s, repr(s)
-        assert b'Tree\np' in s, repr(s)
+        for proto in (1, 2):
+            s = pickle.dumps(made_one, proto)
+            # It's not legacy
+            assert b'TreePy\n' not in s, repr(s)
+            # \np for protocol 1, \nq for proto 2,
+            assert b'Tree\np' in s or b'Tree\nq' in s, repr(s)
 
-        # Now make it legacy
-        legacys = s.replace(b'Tree\np', b'TreePy\np')
+            # Now make it pseudo-legacy
+            legacys = s.replace(b'Tree\np', b'TreePy\np').replace(b'Tree\nq', b'TreePy\nq')
 
-        # It loads up as the current class
-        t2 = pickle.loads(legacys)
-        self.assertTrue(type(t2) is type(t) is self._getTargetClass(), (repr(legacys), type(t2), type(t), self._getTargetClass()))
+            # It loads up as the specified class
+            loaded_one = pickle.loads(legacys)
 
-        # It still functions and can be dumped again
-        s2 = pickle.dumps(t2)
-        self.assertEqual(s2, s2)
+            # It still functions and can be dumped again, as the original class
+            s2 = pickle.dumps(loaded_one, proto)
+            self.assertTrue(b'Py' not in s2)
+            self.assertEqual(s2, s)
 
 
 class NormalSetTests(Base):
@@ -2238,9 +2300,9 @@ class MappingConflictTestBase(ConflictTestBase):
 
         base = self._makeOne()
         base.update([(i, i*i) for i in l[:20]])
-        b1=base.__class__(base)
-        b2=base.__class__(base)
-        bm=base.__class__(base)
+        b1 = type(base)(base)
+        b2 = type(base)(base)
+        bm = type(base)(base)
 
         items=base.items()
 

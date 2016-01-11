@@ -14,7 +14,7 @@
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'IFBucket', 'IFSet', 'IFBTree', 'IFTreeSet',
-           'union', 'intersection', 'difference',  
+           'union', 'intersection', 'difference',
            'weightedUnion', 'weightedIntersection', 'multiunion',
           )
 
@@ -38,6 +38,7 @@ from ._base import to_float as _to_value
 from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 120
 _TREE_SIZE = 500
@@ -133,5 +134,7 @@ Bucket = IFBucket
 Set = IFSet
 BTree = IFBTree
 TreeSet = IFTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerFloatBTreeModule)
