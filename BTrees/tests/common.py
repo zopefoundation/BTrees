@@ -48,6 +48,9 @@ class Base(object):
 
     db = None
 
+    def _getTargetClass(self):
+        raise NotImplementedError("subclass should return the target type")
+
     def _makeOne(self):
         return self._getTargetClass()()
 
@@ -208,6 +211,36 @@ class Base(object):
         self.assertTrue(100 in t)
         self.assertTrue(not read)
 
+    def test_impl_pickle(self):
+        # Issue #2
+        # Nothing we pickle should include the 'Py' suffix of
+        # implementation classes, and unpickling should give us
+        # back the same type we started with
+        import pickle
+        t = self._makeOne()
+
+        s = pickle.dumps(t)
+        self.assertTrue(b'Py' not in s, repr(s))
+
+        t2 = pickle.loads(s)
+        self.assertTrue(type(t2) is type(t) is self._getTargetClass())
+
+    def test_pickle_empty(self):
+        # Issue #2
+        # Pickling an empty object and unpickling it should result
+        # in an object that can be pickled, yielding an identical
+        # pickle (and not an AttributeError)
+        import pickle
+        t = self._makeOne()
+
+        s = pickle.dumps(t)
+        t2 = pickle.loads(s)
+
+        s2 = pickle.dumps(t2)
+        self.assertEqual(s, s2)
+
+        # This doesn't hold for things like Bucket and Set, sadly
+        # self.assertEqual(t, t2)
 
 class MappingBase(Base):
     # Tests common to mappings (buckets, btrees)
@@ -784,6 +817,24 @@ class MappingBase(Base):
 class BTreeTests(MappingBase):
     # Tests common to all BTrees
 
+    def _getTargetClass(self):
+        # Most of the subclasses override _makeOne and not
+        # _getTargetClass, so we can get the type that way.
+        if type(self)._makeOne is not BTreeTests._makeOne:
+            return type(self._makeOne())
+
+        # Derive the class from the test case name, if not
+        # overridden
+        name = self.__class__.__name__
+        type_name = name[:-4]
+        mod_name = 'BTrees.%s' % (type_name if not type_name.endswith("Py") else type_name[:-2])
+
+        mod = __import__(mod_name, fromlist=['ignored'])
+        return getattr(mod, type_name)
+
+    def _makeOne(self, *args):
+        return self._getTargetClass()(*args)
+
     def _checkIt(self, t):
         from BTrees.check import check
         t._check()
@@ -1186,6 +1237,29 @@ class BTreeTests(MappingBase):
         del t[1]
         self.assertTrue(t._p_changed)
         self.assertEqual(t, t._p_jar.registered)
+
+    def test_legacy_py_pickle(self):
+        # Issue #2
+        # If we have a pickle that includes the 'Py' suffix,
+        # it should unpickle to the type that we're working with
+        import pickle
+        t = self._makeOne()
+
+        s = pickle.dumps(t)
+        # It's not legacy
+        assert b'TreePy\n' not in s, repr(s)
+        assert b'Tree\np' in s, repr(s)
+
+        # Now make it legacy
+        legacys = s.replace(b'Tree\np', b'TreePy\np')
+
+        # It loads up as the current class
+        t2 = pickle.loads(legacys)
+        self.assertTrue(type(t2) is type(t) is self._getTargetClass(), (repr(legacys), type(t2), type(t), self._getTargetClass()))
+
+        # It still functions and can be dumped again
+        s2 = pickle.dumps(t2)
+        self.assertEqual(s2, s2)
 
 
 class NormalSetTests(Base):
