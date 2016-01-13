@@ -263,9 +263,12 @@ class Base(object):
         # Issue #2: Make sure our class swizzling doesn't break
         # pickling subclasses
 
-        global PickleSubclass # XXX: Has to be global to pickle, but this prevents running tests in parallel
-        class PickleSubclass(type(self._makeOne())):
-            pass
+        # We need a globally named subclass for pickle, but it needs
+        # to be unique in case tests run in parallel
+        base_class = type(self._makeOne())
+        class_name = 'PickleSubclassOf' + base_class.__name__
+        PickleSubclass = type(class_name, (base_class,), {})
+        globals()[class_name] = PickleSubclass
 
         import pickle
         loaded = pickle.loads(pickle.dumps(PickleSubclass()))
@@ -879,17 +882,12 @@ class BTreeTests(MappingBase):
     def _getTargetClass(self):
         # Most of the subclasses override _makeOne and not
         # _getTargetClass, so we can get the type that way.
+        # TODO: This could change for less repetition in the subclasses,
+        # using the name of the class to import the module and find
+        # the type.
         if type(self)._makeOne is not BTreeTests._makeOne:
             return type(self._makeOne())
-
-        # Derive the class from the test case name, if not
-        # overridden
-        name = self.__class__.__name__
-        type_name = name[:-4]
-        mod_name = 'BTrees.%s' % (type_name if not type_name.endswith("Py") else type_name[:-2])
-
-        mod = __import__(mod_name, fromlist=['ignored'])
-        return getattr(mod, type_name)
+        raise NotImplementedError()
 
     def _makeOne(self, *args):
         return self._getTargetClass()(*args)

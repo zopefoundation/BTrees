@@ -16,7 +16,7 @@
   https://github.com/zopefoundation/BTrees/issues/19
 
 - Unpickling empty BTrees in a pure-Python environment no longer
-  creates invalid objects that faile with ``AttributeError``.
+  creates invalid objects that fail with ``AttributeError``.
 
 4.2.0 (2015-11-13)
 ------------------

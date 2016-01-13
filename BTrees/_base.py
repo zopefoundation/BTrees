@@ -45,7 +45,7 @@ class _Base(Persistent):
         # If they're NOT around, we don't need to do any of the
         # special pickle support to make Python versions look like
         # C---we just rename the classes. By not defining these methods,
-        # we can (theoretically) regain a bit of speed.
+        # we can (theoretically) avoid a bit of a slowdown.
         # If the C extensions are around, we do need these methods, but
         # these classes are unlikely to be used in production anyway.
         __import__('BTrees._OOBTree')
@@ -54,7 +54,6 @@ class _Base(Persistent):
     else:
         def __reduce__(self):
             # Swap out the type constructor for the C version, if present.
-            type_self = type(self)
             func, typ_gna, state = Persistent.__reduce__(self)
             # We ignore the returned type altogether in favor of
             # our calculated class (which allows subclasses but replaces our exact
@@ -1571,7 +1570,7 @@ def _fix_pickle(mod_dict, mod_name):
         except KeyError:
             if name == 'TreeIterator':
                 # Optional
-                break
+                continue
             raise
         raw_type = mod_dict[raw_name] # Could be C or Python
 
