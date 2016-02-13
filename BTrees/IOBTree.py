@@ -33,6 +33,7 @@ from ._base import set_operation as _set_operation
 from ._base import to_int as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 500
@@ -112,5 +113,7 @@ Bucket = IOBucket
 Set = IOSet
 BTree = IOBTree
 TreeSet = IOTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerObjectBTreeModule)

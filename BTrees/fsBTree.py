@@ -34,6 +34,7 @@ from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
 from ._base import to_bytes as _to_bytes
 from ._base import union as _union
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
@@ -122,5 +123,7 @@ Bucket = fsBucket
 Set = fsSet
 BTree = fsBTree
 TreeSet = fsTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerObjectBTreeModule)
