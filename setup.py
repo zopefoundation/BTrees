@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '4.0.9dev'
+__version__ = '4.3.0.dev0'
 
 import os
 import platform
@@ -129,6 +129,7 @@ setup(name='BTrees',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Framework :: ZODB",

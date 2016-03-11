@@ -1,16 +1,75 @@
 ``BTrees`` Changelog
 ====================
 
+4.3.0 (TBD)
+-----------
 
-4.0.9 (unreleased)
+- The pure-Python implementation, used on PyPy and when a C compiler
+  isn't available for CPython, now pickles identically to the C
+  version. Unpickling will choose the best available implementation.
+  This prevents interoperability problems and database corruption if
+  both implementations are in use. While it is no longer possible to
+  pickle a Python implementation and have it unpickle to the Python
+  implementation if the C implementation is available, existing Python
+  pickles will still unpickle to the Python implementation (until
+  pickled again). See:
+  https://github.com/zopefoundation/BTrees/issues/19
+
+- Unpickling empty BTrees in a pure-Python environment no longer
+  creates invalid objects that fail with ``AttributeError``.
+
+4.2.0 (2015-11-13)
 ------------------
 
-- Added support for Python 3.4.
+- Python 3.5 support.
 
-- Update pure-Python and C trees / sets to accept explicit None to indicate 
+4.1.4 (2015-06-02)
+------------------
+
+- Ensure that pure-Python Bucket and Set objects have a human readable
+  ``__repr__`` like the C versions.
+
+4.1.3 (2015-05-19)
+------------------
+
+- Fix ``_p_changed`` when removing items from small pure-Python
+  BTrees/TreeSets and when adding items to small pure-Python Sets. See:
+  https://github.com/zopefoundation/BTrees/issues/13
+
+
+4.1.2 (2015-04-07)
+------------------
+
+- Suppress testing 64-bit values in OLBTrees on 32 bit machines.
+  See:  https://github.com/zopefoundation/BTrees/issues/9
+
+- Fix ``_p_changed`` when adding items to small pure-Python
+  BTrees/TreeSets. See:
+  https://github.com/zopefoundation/BTrees/issues/11
+
+
+4.1.1 (2014-12-27)
+------------------
+
+- Accomodate long values in pure-Python OLBTrees.
+
+
+4.1.0 (2014-12-26)
+------------------
+
+- Add support for PyPy and PyPy3.
+
+- Add support for Python 3.4.
+
+- BTree subclasses can define ``max_leaf_size`` or ``max_internal_size``
+  to control maximum sizes for Bucket/Set and BTree/TreeSet nodes.
+
+- Detect integer overflow on 32-bit machines correctly under Python 3.
+
+- Update pure-Python and C trees / sets to accept explicit None to indicate
   max / min value for ``minKey``, ``maxKey``.  (PR #3)
 
-- Update pure-Python trees / sets to accept explicit None to indicate 
+- Update pure-Python trees / sets to accept explicit None to indicate
   open ranges for ``keys``, ``values``, ``items``.  (PR #3)
 
 

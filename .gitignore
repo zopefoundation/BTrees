@@ -15,3 +15,5 @@ coverage.xml
 *.egg-info
 *.egg
 dist
+.eggs/
+.dir-locals.el

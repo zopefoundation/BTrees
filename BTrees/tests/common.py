@@ -12,6 +12,9 @@
 #
 ##############################################################################
 
+import platform
+
+
 def _skip_wo_ZODB(test_method): #pragma NO COVER
     try:
         import ZODB
@@ -32,11 +35,21 @@ def _skip_under_Py3k(test_method): #pragma NO COVER
     else:
         return test_method
 
+def _skip_on_32_bits(test_method): #pragma NO COVER
+    if platform.architecture()[0] == '32bit':
+        def _dummy(*args):
+            pass
+        return _dummy
+    return test_method
+
 
 class Base(object):
     # Tests common to all types: sets, buckets, and BTrees
 
     db = None
+
+    def _getTargetClass(self):
+        raise NotImplementedError("subclass should return the target type")
 
     def _makeOne(self):
         return self._getTargetClass()()
@@ -60,6 +73,11 @@ class Base(object):
         return self.db.open().root()
 
     def _closeRoot(self, root):
+        import transaction
+        # If we don't commit/abort the transaction, then
+        # closing the Connection tends to fail with
+        # "Cannot close connection joined to transaction"
+        transaction.abort()
         root._p_jar.close()
 
     @_skip_wo_ZODB
@@ -193,6 +211,98 @@ class Base(object):
         self.assertTrue(100 in t)
         self.assertTrue(not read)
 
+    def test_impl_pickle(self):
+        # Issue #2
+        # Nothing we pickle should include the 'Py' suffix of
+        # implementation classes, and unpickling should give us
+        # back the best available type
+        import pickle
+        made_one = self._makeOne()
+
+        for proto in range(1, pickle.HIGHEST_PROTOCOL + 1):
+            dumped_str = pickle.dumps(made_one, proto)
+            self.assertTrue(b'Py' not in dumped_str, repr(dumped_str))
+
+            loaded_one = pickle.loads(dumped_str)
+
+            # If we're testing the pure-Python version, but we have the
+            # C extension available, then the loaded type will be the C
+            # extension but the made type will be the Python version.
+            # Otherwise, they match. (Note that if we don't have C extensions
+            # available, the __name__ will be altered to not have Py in it. See _fix_pickle)
+            if 'Py' in type(made_one).__name__:
+                self.assertTrue(type(loaded_one) is not type(made_one))
+            else:
+                self.assertTrue(type(loaded_one) is type(made_one) is self._getTargetClass(), (type(loaded_one), type(made_one), self._getTargetClass(), repr(dumped_str)))
+
+            dumped_str2 = pickle.dumps(loaded_one, proto)
+            self.assertEqual(dumped_str, dumped_str2)
+
+    def test_pickle_empty(self):
+        # Issue #2
+        # Pickling an empty object and unpickling it should result
+        # in an object that can be pickled, yielding an identical
+        # pickle (and not an AttributeError)
+        import pickle
+        t = self._makeOne()
+
+        s = pickle.dumps(t)
+        t2 = pickle.loads(s)
+
+        s2 = pickle.dumps(t2)
+        self.assertEqual(s, s2)
+
+        if hasattr(t2, '__len__'):
+            # checks for _firstbucket
+            self.assertEqual(0, len(t2))
+
+        # This doesn't hold for things like Bucket and Set, sadly
+        # self.assertEqual(t, t2)
+
+    def test_pickle_subclass(self):
+        # Issue #2: Make sure our class swizzling doesn't break
+        # pickling subclasses
+
+        # We need a globally named subclass for pickle, but it needs
+        # to be unique in case tests run in parallel
+        base_class = type(self._makeOne())
+        class_name = 'PickleSubclassOf' + base_class.__name__
+        PickleSubclass = type(class_name, (base_class,), {})
+        globals()[class_name] = PickleSubclass
+
+        import pickle
+        loaded = pickle.loads(pickle.dumps(PickleSubclass()))
+        self.assertTrue(type(loaded) is PickleSubclass, type(loaded))
+        self.assertTrue(PickleSubclass().__class__ is PickleSubclass)
+
+    def test_isinstance_subclass(self):
+        # Issue #2:
+        # In some cases we define a __class__ attribute that gets
+        # invoked for isinstance and *lies*. Check that isinstance still
+        # works (almost) as expected.
+
+        t = self._makeOne()
+        # It's a little bit weird, but in the fibbing case,
+        # we're an instance of two unrelated classes
+        self.assertTrue(isinstance(t, type(t)), (t, type(t)))
+        self.assertTrue(isinstance(t, t.__class__))
+
+        class Sub(type(t)):
+            pass
+
+        self.assertTrue(issubclass(Sub, type(t)))
+
+        if type(t) is not t.__class__:
+            # We're fibbing; this breaks issubclass of itself,
+            # contrary to the usual mechanism
+            self.assertFalse(issubclass(t.__class__, type(t)))
+
+
+        class NonSub(object):
+            pass
+
+        self.assertFalse(issubclass(NonSub, type(t)))
+        self.assertFalse(isinstance(NonSub(), type(t)))
 
 class MappingBase(Base):
     # Tests common to mappings (buckets, btrees)
@@ -213,6 +323,14 @@ class MappingBase(Base):
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
         self.assertTrue(len(r) < 10000)
+        # Make sure the repr is human readable if it's a bucket
+        if 'Bucket' in r:
+            self.assertTrue(r.startswith("BTrees"))
+            self.assertTrue(r.endswith(repr(t.items()) + ')'), r)
+        else:
+            self.assertEqual(r[:8], '<BTrees.')
+        # Make sure it's the same between Python and C
+        self.assertTrue('Py' not in r)
 
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -758,9 +876,21 @@ class MappingBase(Base):
         # Too many arguments.
         self.assertRaises(TypeError, t.pop, 1, 2, 3)
 
-
 class BTreeTests(MappingBase):
     # Tests common to all BTrees
+
+    def _getTargetClass(self):
+        # Most of the subclasses override _makeOne and not
+        # _getTargetClass, so we can get the type that way.
+        # TODO: This could change for less repetition in the subclasses,
+        # using the name of the class to import the module and find
+        # the type.
+        if type(self)._makeOne is not BTreeTests._makeOne:
+            return type(self._makeOne())
+        raise NotImplementedError()
+
+    def _makeOne(self, *args):
+        return self._getTargetClass()(*args)
 
     def _checkIt(self, t):
         from BTrees.check import check
@@ -1081,6 +1211,116 @@ class BTreeTests(MappingBase):
                 self.assertEqual(str(v), str(k[0]))
         self._checkIt(t)
 
+    def testAddTwoSetsChanged(self):
+        # A bug in the BTree Python implementation once
+        # caused adding a second item to a tree to fail
+        # to set _p_changed (adding the first item sets it because
+        # the _firstbucket gets set, but the second item only grew the
+        # existing bucket)
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t[1] = 3
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+        t[2] = 4
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Setting the same key to a different value also triggers a change
+        t._p_changed = False
+        t._p_jar.registered = None
+        t[2] = 5
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Likewise with only a single value
+        t = self._makeOne()
+        t._p_oid = b'\0\0\0\0\0'
+        t._p_jar = Jar()
+        t[1] = 3
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+
+        t[1] = 6
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+    def testRemoveInSmallMapSetsChanged(self):
+        # A bug in the BTree Python implementation once caused
+        # deleting from a small btree to set _p_changed.
+        # There must be at least two objects so that _firstbucket doesn't
+        # get set
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t[0] = 1
+        t[1] = 2
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+
+        # now remove the second value
+        del t[1]
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+    def test_legacy_py_pickle(self):
+        # Issue #2
+        # If we have a pickle that includes the 'Py' suffix,
+        # it (unfortunately) unpickles to the python type. But
+        # new pickles never produce that.
+        import pickle
+        made_one = self._makeOne()
+
+        for proto in (1, 2):
+            s = pickle.dumps(made_one, proto)
+            # It's not legacy
+            assert b'TreePy\n' not in s, repr(s)
+            # \np for protocol 1, \nq for proto 2,
+            assert b'Tree\np' in s or b'Tree\nq' in s, repr(s)
+
+            # Now make it pseudo-legacy
+            legacys = s.replace(b'Tree\np', b'TreePy\np').replace(b'Tree\nq', b'TreePy\nq')
+
+            # It loads up as the specified class
+            loaded_one = pickle.loads(legacys)
+
+            # It still functions and can be dumped again, as the original class
+            s2 = pickle.dumps(loaded_one, proto)
+            self.assertTrue(b'Py' not in s2)
+            self.assertEqual(s2, s)
+
 
 class NormalSetTests(Base):
     # Test common to all set types
@@ -1088,6 +1328,23 @@ class NormalSetTests(Base):
     def _populate(self, t, l):
         # Make some data
         t.update(range(l))
+
+    def testShortRepr(self):
+        t = self._makeOne()
+        for i in range(5):
+            t.add(i)
+        r = repr(t)
+        # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
+        # (the buffer must be terminated when copied).
+        self.assertTrue(len(r) < 10000)
+        # Make sure the repr is human readable, unless it's a tree
+        if 'TreeSet' not in r:
+            self.assertTrue(r.endswith("Set(%r)" % t.keys()))
+        else:
+            self.assertEqual(r[:7], '<BTrees', r)
+        # Make sure it's the same between Python and C
+        self.assertTrue('Py' not in r)
+
 
     def testInsertReturnsValue(self):
         t = self._makeOne()
@@ -1289,6 +1546,66 @@ class NormalSetTests(Base):
             except StopIteration:
                 pass
             self.assertEqual(x, keys)
+
+    def testRemoveInSmallSetSetsChanged(self):
+        # A bug in the BTree TreeSet Python implementation once caused
+        # deleting an item in a small set to fail to set _p_changed.
+        # There must be at least two objects so that _firstbucket doesn't
+        # get set
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t.add(0)
+        t.add(1)
+        # reset these, setting _firstbucket triggered a change
+        t._p_changed = False
+        t._p_jar.registered = None
+
+        # now remove the second value
+        t.remove(1)
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+    def testAddingOneSetsChanged(self):
+        # A bug in the BTree Set Python implementation once caused
+        # adding an object not to set _p_changed
+        t = self._makeOne()
+        # Note that for the property to actually hold, we have to fake a
+        # _p_jar and _p_oid
+        t._p_oid = b'\0\0\0\0\0'
+        class Jar(object):
+            def __init__(self):
+                self._cache = self
+                self.registered = None
+
+            def mru(self, arg):
+                pass
+            def readCurrent(self, arg):
+                pass
+            def register(self, arg):
+                self.registered = arg
+
+        t._p_jar = Jar()
+        t.add(0)
+        self.assertTrue(t._p_changed)
+        self.assertEqual(t, t._p_jar.registered)
+
+        # Whether or not doing `t.add(0)` again would result in
+        # _p_changed being set depends on whether this is a TreeSet or a plain Set
 
 class ExtendedSetTests(NormalSetTests):
 
@@ -1981,9 +2298,9 @@ class MappingConflictTestBase(ConflictTestBase):
 
         base = self._makeOne()
         base.update([(i, i*i) for i in l[:20]])
-        b1=base.__class__(base)
-        b2=base.__class__(base)
-        bm=base.__class__(base)
+        b1 = type(base)(base)
+        b2 = type(base)(base)
+        bm = type(base)(base)
 
         items=base.items()
 

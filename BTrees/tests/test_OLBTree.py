@@ -27,6 +27,7 @@ from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
+from .common import _skip_on_32_bits
 
 
 class OLBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -106,7 +107,22 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return OLBTree()
 
     def getTwoKeys(self):
-        return object(), object()
+        return "abc", "def"
+
+    @_skip_on_32_bits
+    def test_extremes(self):
+        from BTrees.tests.common import SMALLEST_64_BITS
+        from BTrees.tests.common import SMALLEST_POSITIVE_65_BITS
+        from BTrees.tests.common import LARGEST_64_BITS
+        from BTrees.tests.common import LARGEST_NEGATIVE_65_BITS
+        btree = self._makeOne()
+        btree['ZERO'] = 0
+        btree['SMALLEST_64_BITS'] = SMALLEST_64_BITS
+        btree['LARGEST_64_BITS'] = LARGEST_64_BITS
+        self.assertRaises((ValueError, OverflowError), btree.__setitem__,
+            'SMALLEST_POSITIVE_65_BITS', SMALLEST_POSITIVE_65_BITS)
+        self.assertRaises((ValueError, OverflowError), btree.__setitem__,
+            'LARGEST_NEGATIVE_65_BITS', LARGEST_NEGATIVE_65_BITS)
 
 
 class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
@@ -116,7 +132,7 @@ class OLBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
         return OLBTreePy()
 
     def getTwoKeys(self):
-        return object(), object()
+        return "abc", "def"
 
 
 class PureOL(SetResult, unittest.TestCase):

@@ -11,7 +11,10 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import sys
 import unittest
+
+python3 = sys.version_info >= (3, )
 
 from BTrees.tests.common import permutations
 
@@ -267,7 +270,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -277,9 +280,11 @@ class BugFixes(unittest.TestCase):
                 t[id] = ToBeDeleted(id)
             else:
                 #del
-                id = trandom.choice(list(ids.keys()))
-                del t[id]
-                del ids[id]
+                keys = list(ids.keys())
+                if keys:
+                    id = trandom.choice(list(ids.keys()))
+                    del t[id]
+                    del ids[id]
 
         ids = ids.keys()
         trandom.shuffle(list(ids))
@@ -300,7 +305,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -310,9 +315,11 @@ class BugFixes(unittest.TestCase):
                 t[id] = (id, ToBeDeleted(id), _u('somename'))
             else:
                 #del
-                id = trandom.choice(list(ids.keys()))
-                del t[id]
-                del ids[id]
+                keys = list(ids.keys())
+                if keys:
+                    id = trandom.choice(keys)
+                    del t[id]
+                    del ids[id]
 
         ids = ids.keys()
         trandom.shuffle(list(ids))
@@ -335,7 +342,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -369,7 +376,7 @@ class BugFixes(unittest.TestCase):
         LP294788_ids = {}
         ids = {}
         for i in xrange(1024):
-            if trandom.random() > 0.1:
+            if trandom.random() > 0.1 or len(ids) == 0:
                 #add
                 id = None
                 while id is None or id in ids:
@@ -450,9 +457,13 @@ class FamilyTest(unittest.TestCase):
         # this next bit illustrates an, um, "interesting feature".  If
         # the characteristics change to match the 64 bit version, please
         # feel free to change.
-        big = BTrees.family32.maxint + 1
-        self.assertRaises(TypeError, s.insert, big)
-        self.assertRaises(TypeError, s.insert, BTrees.family32.minint - 1)
+        try: s.insert(BTrees.family32.maxint + 1)
+        except (TypeError, OverflowError): pass
+        else: self.assert_(False)
+
+        try: s.insert(BTrees.family32.minint - 1)
+        except (TypeError, OverflowError): pass
+        else: self.assert_(False)
         self.check_pickling(BTrees.family32)
 
     def test64(self):

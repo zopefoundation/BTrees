@@ -38,6 +38,7 @@ from ._base import to_int as _to_value
 from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 120
 _TREE_SIZE = 500
@@ -45,7 +46,6 @@ using64bits = False
 
 
 class IIBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -54,7 +54,6 @@ class IIBucketPy(Bucket):
 
 
 class IISetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
@@ -62,7 +61,8 @@ class IISetPy(Set):
 
 
 class IIBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE = MERGE
@@ -71,7 +71,8 @@ class IIBTreePy(BTree):
 
 
 class IITreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     MERGE = MERGE
     MERGE_WEIGHT = MERGE_WEIGHT_numeric
@@ -134,5 +135,7 @@ Bucket = IIBucket
 Set = IISet
 BTree = IIBTree
 TreeSet = IITreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerIntegerBTreeModule)

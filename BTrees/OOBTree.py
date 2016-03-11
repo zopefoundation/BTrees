@@ -14,7 +14,7 @@
 
 __all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
            'OOBucket', 'OOSet', 'OOBTree', 'OOTreeSet',
-           'union', 'intersection','difference',  
+           'union', 'intersection','difference',
           )
 
 from zope.interface import moduleProvides
@@ -31,6 +31,7 @@ from ._base import set_operation as _set_operation
 from ._base import to_ob as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 30
 _TREE_SIZE = 250
@@ -38,24 +39,24 @@ using64bits = False
 
 
 class OOBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
 
 class OOSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class OOBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
 
 class OOTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
 
@@ -102,9 +103,13 @@ else: #pragma NO COVER w/o C extensions
     from ._OOBTree import union
     from ._OOBTree import intersection
 
+
+
 Bucket = OOBucket
 Set = OOSet
 BTree = OOBTree
 TreeSet = OOTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IObjectObjectBTreeModule)

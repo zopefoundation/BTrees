@@ -33,6 +33,7 @@ from ._base import set_operation as _set_operation
 from ._base import to_int as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 500
@@ -40,26 +41,26 @@ using64bits = False
 
 
 class IOBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class IOBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
     MERGE_WEIGHT = MERGE_WEIGHT_default
 
 
 class IOTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
 class IOTreeIteratorPy(_TreeIterator):
@@ -112,5 +113,7 @@ Bucket = IOBucket
 Set = IOSet
 BTree = IOBTree
 TreeSet = IOTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerObjectBTreeModule)

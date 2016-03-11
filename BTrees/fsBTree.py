@@ -34,6 +34,7 @@ from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
 from ._base import to_bytes as _to_bytes
 from ._base import union as _union
+from ._base import _fix_pickle
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
@@ -43,7 +44,6 @@ _to_value = _to_bytes(6)
 
 
 class fsBucketPy(Bucket):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
@@ -66,18 +66,19 @@ class fsBucketPy(Bucket):
 
 
 class fsSetPy(Set):
-    MAX_SIZE = _BUCKET_SIZE
     _to_key = _to_key
 
 
 class fsBTreePy(BTree):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
     _to_value = _to_value
 
 
 class fsTreeSetPy(TreeSet):
-    MAX_SIZE = _TREE_SIZE
+    max_leaf_size = _BUCKET_SIZE
+    max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
 
@@ -122,5 +123,7 @@ Bucket = fsBucket
 Set = fsSet
 BTree = fsBTree
 TreeSet = fsTreeSet
+
+_fix_pickle(globals(), __name__)
 
 moduleProvides(IIntegerObjectBTreeModule)

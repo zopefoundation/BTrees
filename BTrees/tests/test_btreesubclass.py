@@ -18,6 +18,11 @@ class B(OOBucket):
 
 class T(OOBTree):
     _bucket_type = B
+    max_leaf_size = 2
+    max_internal_size = 3
+
+class S(T):
+    pass
 
 import unittest
 
@@ -27,18 +32,23 @@ class SubclassTest(unittest.TestCase):
         # test that a subclass that defines _bucket_type gets buckets
         # of that type
         t = T()
+        t[0] = 0
+        self.assertTrue(t._firstbucket.__class__ is B)
 
-        # There's no good way to get a bucket at the moment.
-        # __getstate__() is as good as it gets, but the default
-        # getstate explicitly includes the pickle of the bucket
-        # for small trees, so we have to be clever :-(
-
-        # make sure there is more than one bucket in the tree
-        for i in range(1000):
+    def testCustomNodeSizes(self):
+        # We override btree and bucket split sizes in BTree subclasses.
+        t = S()
+        for i in range(8):
             t[i] = i
-
-        state = t.__getstate__()
-        self.assertTrue(state[0][0].__class__ is B)
+        state = t.__getstate__()[0]
+        self.assertEqual(len(state), 5)
+        sub = state[0]
+        self.assertEqual(sub.__class__, S)
+        sub = sub.__getstate__()[0]
+        self.assertEqual(len(sub), 5)
+        sub = sub[0]
+        self.assertEqual(sub.__class__, B)
+        self.assertEqual(len(sub), 1)
 
 def test_suite():
     return unittest.makeSuite(SubclassTest)

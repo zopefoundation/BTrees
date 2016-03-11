@@ -23,7 +23,8 @@
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
   if (INT_CHECK(ARG)) {                                         \
       long vcopy = INT_AS_LONG(ARG);                            \
-      if ((int)vcopy != vcopy) {                                  \
+      if (PyErr_Occurred()) { (STATUS)=0; (TARGET)=0; }           \
+      else if ((int)vcopy != vcopy) {                                  \
         PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
