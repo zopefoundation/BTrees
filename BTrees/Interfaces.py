@@ -456,6 +456,9 @@ class IBTreeFamily(Interface):
     II = Attribute('The IIntegerIntegerBTreeModule for this family')
     IF = Attribute('The IIntegerFloatBTreeModule for this family')
     OO = Attribute('The IObjectObjectBTreeModule for this family')
+    IB = Attribute('The IIntegerByteBTreeModule for this family')
+    BI = Attribute('The IByteIntegerBTreeModule for this family')
+    BB = Attribute('The IByteByteBTreeModule for this family')
     maxint = Attribute('The maximum integer storable in this family')
     minint = Attribute('The minimum integer storable in this family')
 
