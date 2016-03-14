@@ -27,8 +27,6 @@ class _Family32(_Family):
     from BTrees import IOBTree as IO
     from BTrees import IFBTree as IF
     from BTrees import IBBTree as IB
-    from BTrees import IBBTree as BI
-    from BTrees import IBBTree as BB
 
     maxint = int(2**31-1)
     minint = -maxint - 1
@@ -42,8 +40,6 @@ class _Family64(_Family):
     from BTrees import LOBTree as IO
     from BTrees import LFBTree as IF
     from BTrees import IBBTree as IB
-    from BTrees import IBBTree as BI
-    from BTrees import IBBTree as BB
 
     maxint = 2**63-1
     minint = -maxint - 1
@@ -69,15 +65,11 @@ BTrees.family64.OI.family = family64
 BTrees.family64.IF.family = family64
 BTrees.family64.II.family = family64
 BTrees.family64.IB.family = family64
-BTrees.family64.BI.family = family64
-BTrees.family64.BB.family = family64
 
 BTrees.family32.IO.family = family32
 BTrees.family32.OI.family = family32
 BTrees.family32.IF.family = family32
 BTrees.family32.II.family = family32
 BTrees.family32.IB.family = family32
-BTrees.family32.BI.family = family32
-BTrees.family32.BB.family = family32
 
 

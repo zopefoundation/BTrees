@@ -457,8 +457,6 @@ class IBTreeFamily(Interface):
     IF = Attribute('The IIntegerFloatBTreeModule for this family')
     OO = Attribute('The IObjectObjectBTreeModule for this family')
     IB = Attribute('The IIntegerByteBTreeModule for this family')
-    BI = Attribute('The IByteIntegerBTreeModule for this family')
-    BB = Attribute('The IByteByteBTreeModule for this family')
     maxint = Attribute('The maximum integer storable in this family')
     minint = Attribute('The minimum integer storable in this family')
 
@@ -490,26 +488,10 @@ class IIntegerIntegerBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
     family = Attribute('The IBTreeFamily of this module')
 
 
-class IByteByteBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
-    """keys, or set values, are bytes; values are bytes.
-
-    describes BBBTree"""
-
-    family = Attribute('The IBTreeFamily of this module')
-
-
 class IIntegerByteBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
     """keys, or set values, are integers; values are bytes.
 
     describes IBBTree"""
-
-    family = Attribute('The IBTreeFamily of this module')
-
-
-class IByteIntegerBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
-    """keys, or set values, are bytes; values are integers.
-
-    describes BIBTree"""
 
     family = Attribute('The IBTreeFamily of this module')
 

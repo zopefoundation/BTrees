@@ -52,10 +52,6 @@ from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
 from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
 from BTrees.IBBTree import IBBTree, IBBucket, IBSet, IBTreeSet
 from BTrees.IBBTree import IBBTreePy, IBBucketPy, IBSetPy, IBTreeSetPy
-from BTrees.BIBTree import BIBTree, BIBucket, BISet, BITreeSet
-from BTrees.BIBTree import BIBTreePy, BIBucketPy, BISetPy, BITreeSetPy
-from BTrees.BBBTree import BBBTree, BBBucket, BBSet, BBTreeSet
-from BTrees.BBBTree import BBBTreePy, BBBucketPy, BBSetPy, BBTreeSetPy
 
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr
@@ -66,7 +62,7 @@ _type2kind = {}
 for kv in ('OO',
            'II', 'IO', 'OI', 'IF',
            'LL', 'LO', 'OL', 'LF',
-           'IB', 'BI', 'BB',
+           'IB',
            ):
     for name, kind in (
         ('BTree', (TYPE_BTREE, True)),
@@ -130,7 +126,7 @@ _btree2bucket = {}
 for kv in ('OO',
            'II', 'IO', 'OI', 'IF',
            'LL', 'LO', 'OL', 'LF',
-           'IB', 'BI', 'BB',
+           'IB',
            ):
     _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
     py = kv + 'BTreePy'
