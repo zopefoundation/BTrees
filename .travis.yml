@@ -38,7 +38,7 @@ after_success:
     - echo index-servers = pypi                        >> ~/.pypirc
     - echo [pypi]                                      >> ~/.pypirc
     - echo repository=https://pypi.python.org/pypi     >> ~/.pypirc
-    - echo username=USER                               >> ~/.pypirc
+    - echo username=zope.wheelbuilder                  >> ~/.pypirc
     - echo password=$PYPIPASSWORD                      >> ~/.pypirc
     - if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then pip install twine; fi
     - if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then python setup.py bdist_wheel; fi
@@ -46,4 +46,5 @@ after_success:
 
 env:
     global:
-        - secure: encrypted_PYPIPASSWORD
+        secure: J8y6Yv7w8z1pch0RzXquJwNG5ln78/rqo21TfnwEtymQnLO10jLw+YafwQozBlI8SWpU+k/C7UQCwtMAFEvBfgnToh+3fR70kX7qDvte9DKsbo2qUBAg/Pw/mVYHcpWVFW7wj9YVYxoe4Hk1vmmLuDxYu81/c75nxJljH5xdo+0=
+
