@@ -4,6 +4,8 @@
 4.3.0 (TBD)
 -----------
 
+- Drop support for Python 2.6 and 3.2.
+
 - The pure-Python implementation, used on PyPy and when a C compiler
   isn't available for CPython, now pickles identically to the C
   version. Unpickling will choose the best available implementation.
