@@ -1,6 +1,5 @@
 language: python
 sudo: false
-<<<<<<< HEAD
 matrix:
     include:
         - os: linux
