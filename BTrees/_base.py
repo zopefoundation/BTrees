@@ -49,7 +49,7 @@ class _Base(Persistent):
         # If the C extensions are around, we do need these methods, but
         # these classes are unlikely to be used in production anyway.
         __import__('BTrees._OOBTree')
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
     else:
         def __reduce__(self):
@@ -75,7 +75,7 @@ class _Base(Persistent):
             # type of this object.
             # This implementation is replaced by _fix_pickle and exists for
             # testing purposes.
-            return type(self)
+            return type(self)  # pragma: no cover
 
         _BTree_reduce_up_bound = _BTree_reduce_as
 
@@ -220,7 +220,7 @@ class _SetIteration(object):
             try:
                 itmeth = to_iterate.iteritems
             except AttributeError:
-                if PY3 and isinstance(to_iterate, dict): #pragma NO COVER Py3k
+                if PY3 and isinstance(to_iterate, dict): #pragma no cover Py3k
                     itmeth = to_iterate.items().__iter__
                 else:
                     itmeth = to_iterate.__iter__
@@ -550,7 +550,7 @@ class Bucket(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma NO COVER
+        if len(result._keys) == 0: #pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -746,7 +746,7 @@ class Set(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma NO COVER
+        if len(result._keys) == 0: #pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -915,7 +915,7 @@ class _Tree(_Base):
         max = self._to_key(max)
         index = self._search(max)
         if index and data[index].child.minKey() > max:
-            index -= 1 #pragma NO COVER  no idea how to provoke this
+            index -= 1 #pragma: no cover  no idea how to provoke this
         return data[index].child.maxKey(max)
 
 
@@ -1221,7 +1221,7 @@ class _TreeItems(object):
 class _TreeIterator(object):
     """ Faux implementation for BBB only.
     """
-    def __init__(self, items): #pragma NO COVER
+    def __init__(self, items): #pragma: no cover
         raise TypeError(
             "TreeIterators are private implementation details "
             "of the C-based BTrees.\n\n"
@@ -1493,7 +1493,7 @@ def to_ob(self, v):
 def to_int(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not unpack("i", pack("i", v))[0] == v: #pragma NO COVER
+        if not unpack("i", pack("i", v))[0] == v: #pragma: no cover
             raise TypeError('32-bit integer expected')
     except (struct_error,
             OverflowError, #PyPy
@@ -1512,7 +1512,7 @@ def to_float(self, v):
 def to_long(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not unpack("q", pack("q", v))[0] == v: #pragma NO COVER
+        if not unpack("q", pack("q", v))[0] == v: #pragma: no cover
             if isinstance(v, int_types):
                 raise ValueError("Value out of range", v)
             raise TypeError('64-bit integer expected')
@@ -1571,13 +1571,13 @@ def _fix_pickle(mod_dict, mod_name):
             if name == 'TreeIterator':
                 # Optional
                 continue
-            raise
+            raise  # pragma: no cover
         raw_type = mod_dict[raw_name] # Could be C or Python
 
         py_type._BTree_reduce_as = raw_type
         py_type._BTree_reduce_up_bound = py_type
 
-        if not have_c_extensions:
+        if not have_c_extensions:  # pragma: no cover
             # Set FooPy to have the __name__ of simply Foo.
             # We can't do this if the C extension is available,
             # because then mod_dict[FooPy.__name__] is not FooPy
