@@ -36,7 +36,7 @@ def _skip_under_Py3k(test_method): #pragma NO COVER
         return test_method
 
 def _skip_on_32_bits(test_method): #pragma NO COVER
-    if platform.architecture()[0] == '32bit':
+    if sys.maxsize == 2**31-1:
         def _dummy(*args):
             pass
         return _dummy
