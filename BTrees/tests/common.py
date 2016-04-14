@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-import sys
+import platform
 
 
 def _skip_wo_ZODB(test_method): #pragma NO COVER
