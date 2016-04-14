@@ -4,6 +4,10 @@
 4.3.0 (TBD)
 -----------
 
+- Fix unexpected ``OverflowError`` when passing 64bit values to long
+  keys / values on Win64.  See:
+  https://github.com/zopefoundation/BTrees/issues/32
+
 - When testing ``PURE_PYTHON`` environments under ``tox``, avoid poisoning
   the user's global wheel cache.
 
