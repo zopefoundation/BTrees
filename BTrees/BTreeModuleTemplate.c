@@ -84,13 +84,23 @@ longlong_check(PyObject *ob)
         return 1;
 
     if (PyLong_Check(ob)) {
+#if PY_VERSION_HEX < 0x02070000
         /* check magnitude */
         PY_LONG_LONG val = PyLong_AsLongLong(ob);
 
         if (val == -1 && PyErr_Occurred())
-            return 0;
+            goto overflow;
+#else
+        int overflow;
+        (void)PyLong_AsLongLongAndOverflow(ob, &overflow);
+        if (overflow)
+            goto overflow;
+#endif
         return 1;
     }
+    return 0;
+overflow:
+    PyErr_SetString(PyExc_ValueError, "long integer out of range");
     return 0;
 }
 
