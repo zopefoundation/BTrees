@@ -111,6 +111,8 @@ class OLBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
 
     @_skip_on_32_bits
     def test_extremes(self):
+        import sys
+        print(sys.maxsize)
         from BTrees.tests.common import SMALLEST_64_BITS
         from BTrees.tests.common import SMALLEST_POSITIVE_65_BITS
         from BTrees.tests.common import LARGEST_64_BITS
