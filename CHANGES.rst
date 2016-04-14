@@ -4,6 +4,9 @@
 4.3.0 (TBD)
 -----------
 
+- When testing ``PURE_PYTHON`` environments under ``tox``, avoid poisoning
+  the user's global wheel cache.
+
 - Drop support for Python 2.6 and 3.2.
 
 - The pure-Python implementation, used on PyPy and when a C compiler
@@ -23,7 +26,7 @@
 4.2.0 (2015-11-13)
 ------------------
 
-- Python 3.5 support.
+- Add support for Python 3.5.
 
 4.1.4 (2015-06-02)
 ------------------
