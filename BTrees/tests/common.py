@@ -13,33 +13,30 @@
 ##############################################################################
 
 import platform
+from unittest import skip
 
 
-def _skip_wo_ZODB(test_method): #pragma NO COVER
+def _skip_wo_ZODB(test_method):  # pragma: no COVER
     try:
-        import ZODB
-    except ImportError: # skip this test if ZODB is not available
-        def _dummy(*args):
-            pass
-        return _dummy
+        import ZODB  # noqa
+    except ImportError:  # skip this test if ZODB is not available
+        return skip("ZODB not available")(test_method)
     else:
         return test_method
 
-def _skip_under_Py3k(test_method): #pragma NO COVER
+
+def _skip_under_Py3k(test_method):  # pragma: no COVER
     try:
         unicode
-    except NameError: # skip this test
-        def _dummy(*args):
-            pass
-        return _dummy
+    except NameError:  # skip this test
+        return skip("Python 3")(test_method)
     else:
         return test_method
 
-def _skip_on_32_bits(test_method): #pragma NO COVER
+
+def _skip_on_32_bits(test_method):  # pragma: no COVER
     if platform.architecture()[0] == '32bit':
-        def _dummy(*args):
-            pass
-        return _dummy
+        return skip("32-bit platform")(test_method)
     return test_method
 
 
