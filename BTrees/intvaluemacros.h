@@ -7,14 +7,10 @@
 #define VALUE_PARSE "L"
 #define COPY_VALUE_TO_OBJECT(O, K) O=longlong_as_object(K)
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
-    if (INT_CHECK(ARG)) TARGET=INT_AS_LONG(ARG); else \
-        if (longlong_check(ARG)) TARGET=PyLong_AsLongLong(ARG); else \
-            if (PyLong_Check(ARG)) { \
-                PyErr_SetString(PyExc_ValueError, "long integer out of range"); \
-                (STATUS)=0; (TARGET)=0; } \
-            else { \
-            PyErr_SetString(PyExc_TypeError, "expected integer value");   \
-            (STATUS)=0; (TARGET)=0; }
+    if (!longlong_convert((ARG), &TARGET)) \
+    { \
+        (STATUS)=0; (TARGET)=0; \
+    } 
 #else
 #define VALUE_TYPE int
 #define VALUE_PARSE "i"

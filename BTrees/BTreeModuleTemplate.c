@@ -77,6 +77,7 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #error "PY_LONG_LONG required but not defined"
 #endif
 
+#ifdef NEED_LONG_LONG_KEYS
 static int
 longlong_check(PyObject *ob)
 {
@@ -84,15 +85,19 @@ longlong_check(PyObject *ob)
         return 1;
 
     if (PyLong_Check(ob)) {
-        /* check magnitude */
-        PY_LONG_LONG val = PyLong_AsLongLong(ob);
-
-        if (val == -1 && PyErr_Occurred())
-            return 0;
+        int overflow;
+        (void)PyLong_AsLongLongAndOverflow(ob, &overflow);
+        if (overflow)
+            goto overflow;
         return 1;
     }
     return 0;
+overflow:
+    PyErr_SetString(PyExc_ValueError,
+                    "longlong_check: long integer out of range");
+    return 0;
 }
+#endif
 
 static PyObject *
 longlong_as_object(PY_LONG_LONG val)
@@ -101,10 +106,8 @@ longlong_as_object(PY_LONG_LONG val)
         return PyLong_FromLongLong(val);
     return INT_FROM_LONG((long)val);
 }
-#endif
 
 
-#ifdef NEED_LONG_LONG_KEYS
 static int
 longlong_convert(PyObject *ob, PY_LONG_LONG *value)
 {
@@ -124,18 +127,10 @@ longlong_convert(PyObject *ob, PY_LONG_LONG *value)
     else
     {
         PY_LONG_LONG val;
-#if PY_VERSION_HEX < 0x02070000
-        /* check magnitude */
-        val = PyLong_AsLongLong(ob);
-
-        if (val == -1 && PyErr_Occurred())
-            goto overflow;
-#else
         int overflow;
         val = PyLong_AsLongLongAndOverflow(ob, &overflow);
         if (overflow)
             goto overflow;
-#endif
         (*value) = val;
         return 1;
     }
@@ -143,7 +138,7 @@ overflow:
     PyErr_SetString(PyExc_ValueError, "long integer out of range");
     return 0;
 }
-#endif
+#endif  /* NEED_LONG_LONG_SUPPORT */
 
 
 /* Various kinds of BTree and Bucket structs are instances of
