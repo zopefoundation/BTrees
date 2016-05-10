@@ -1,8 +1,8 @@
 ``BTrees`` Changelog
 ====================
 
-4.3.0 (TBD)
------------
+4.3.0 (2016-05-10)
+------------------
 
 - Fix unexpected ``OverflowError`` when passing 64bit values to long
   keys / values on Win64.  See:
