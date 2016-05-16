@@ -1,10 +1,10 @@
 ``BTrees`` Changelog
 ====================
 
-4.3.1 (unreleased)
+4.3.1 (2016-05-16)
 ------------------
 
-- TBD
+- Packaging:  fix password used to automate wheel creation on Travis.
 
 4.3.0 (2016-05-10)
 ------------------
