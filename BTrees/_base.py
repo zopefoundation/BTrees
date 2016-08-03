@@ -269,7 +269,7 @@ def _no_default_comparison(key):
             lt = None  # pragma: no cover PyPy3
     if (lt is None and
         getattr(key, '__cmp__', None) is None):
-        raise TypeError("Can't use default __cmp__")
+        raise TypeError("Object has default comparison")
 
 class Bucket(_BucketBase):
 
@@ -863,7 +863,12 @@ class _Tree(_Base):
             return child._findbucket(key)
 
     def __contains__(self, key):
-        return key in (self._findbucket(self._to_key(key)) or ())
+        try:
+            tree_key = self._to_key(key)
+        except TypeError:
+            # Can't convert the key, so can't possibly be in the tree
+            return False
+        return key in (self._findbucket(tree_key) or ())
 
     def has_key(self, key):
         index = self._search(key)

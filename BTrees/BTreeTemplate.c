@@ -219,6 +219,8 @@ BTree_check(BTree *self)
     return result;
 }
 
+#define _GET_KEY_ERROR 1
+#define _GET_ALL_ERROR 0
 /*
 ** _BTree_get
 **
@@ -229,6 +231,9 @@ BTree_check(BTree *self)
 **      keyarg      the key to search for, as a Python object
 **      has_key     true/false; when false, try to return the associated
 **                  value; when true, return a boolean
+**      ignore_key_err    true/false: When true, ignore the TypeError from
+**                         a key conversion issue, and return NULL with
+**                         a KeyError set.
 ** Return
 **      When has_key false:
 **          If key exists, its associated value.
@@ -239,14 +244,22 @@ BTree_check(BTree *self)
 **          If key doesn't exist, 0.
 */
 static PyObject *
-_BTree_get(BTree *self, PyObject *keyarg, int has_key)
+_BTree_get(BTree *self, PyObject *keyarg, int has_key, int ignore_key_err)
 {
     KEY_TYPE key;
     PyObject *result = NULL;    /* guilty until proved innocent */
     int copied = 1;
 
     COPY_KEY_FROM_ARG(key, keyarg, copied);
-    UNLESS (copied) return NULL;
+    UNLESS (copied)
+    {
+        if (ignore_key_err && PyErr_ExceptionMatches(PyExc_TypeError))
+        {
+            PyErr_Clear();
+            PyErr_SetObject(PyExc_KeyError, keyarg);
+        }
+        return NULL;
+    }
 
     PER_USE_OR_RETURN(self, NULL);
     if (self->len == 0)
@@ -289,7 +302,7 @@ Done:
 static PyObject *
 BTree_get(BTree *self, PyObject *key)
 {
-    return _BTree_get(self, key, 0);
+    return _BTree_get(self, key, 0, _GET_KEY_ERROR);
 }
 
 /* Create a new bucket for the BTree or TreeSet using the class attribute
@@ -1940,7 +1953,7 @@ BTree_getm(BTree *self, PyObject *args)
 
     UNLESS (PyArg_ParseTuple(args, "O|O", &key, &d))
         return NULL;
-    if ((r=_BTree_get(self, key, 0)))
+    if ((r=_BTree_get(self, key, 0, _GET_KEY_ERROR)))
         return r;
     UNLESS (PyErr_ExceptionMatches(PyExc_KeyError))
         return NULL;
@@ -1952,7 +1965,7 @@ BTree_getm(BTree *self, PyObject *args)
 static PyObject *
 BTree_has_key(BTree *self, PyObject *key)
 {
-    return _BTree_get(self, key, 1);
+    return _BTree_get(self, key, 1, _GET_KEY_ERROR);
 }
 
 static PyObject *
@@ -1965,7 +1978,7 @@ BTree_setdefault(BTree *self, PyObject *args)
     if (! PyArg_UnpackTuple(args, "setdefault", 2, 2, &key, &failobj))
         return NULL;
 
-    value = _BTree_get(self, key, 0);
+    value = _BTree_get(self, key, 0, _GET_ALL_ERROR);
     if (value != NULL)
         return value;
 
@@ -1998,7 +2011,7 @@ BTree_pop(BTree *self, PyObject *args)
     if (! PyArg_UnpackTuple(args, "pop", 1, 2, &key, &failobj))
         return NULL;
 
-    value = _BTree_get(self, key, 0);
+    value = _BTree_get(self, key, 0, _GET_ALL_ERROR);
     if (value != NULL)
     {
         /* Delete key and associated value. */
@@ -2043,13 +2056,18 @@ BTree_pop(BTree *self, PyObject *args)
 static int
 BTree_contains(BTree *self, PyObject *key)
 {
-    PyObject *asobj = _BTree_get(self, key, 1);
+    PyObject *asobj = _BTree_get(self, key, 1, _GET_KEY_ERROR);
     int result = -1;
 
     if (asobj != NULL)
     {
         result = INT_AS_LONG(asobj) ? 1 : 0;
         Py_DECREF(asobj);
+    }
+    else if (PyErr_ExceptionMatches(PyExc_KeyError))
+    {
+        PyErr_Clear();
+        result = 0;
     }
     return result;
 }
