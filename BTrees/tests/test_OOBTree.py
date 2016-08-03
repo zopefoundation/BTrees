@@ -126,11 +126,10 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         self.assertRaises(TypeError, lambda : t.__setitem__(C(), 1))
 
-        try:
+        with self.assertRaises(TypeError) as raising:
             t[C()] = 1
-            self.fail("Should raise TypeError")
-        except TypeError as e:
-            self.assertEqual(e.args[0], "Object has default comparison")
+
+        self.assertEqual(raising.exception.args[0], "Object has default comparison")
 
         if PY2: # we only check for __cmp__ on Python2
 
