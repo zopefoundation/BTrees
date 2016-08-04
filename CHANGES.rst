@@ -4,7 +4,19 @@
 4.3.2 (unreleased)
 ------------------
 
-- TBD
+- Make the CPython implementation consistent with the pure-Python
+  implementation and no longer raise ``TypeError`` for an object key
+  (in object-keyed trees) with default comparison on ``__getitem__``,
+  ``get`` or ``in`` operations. Instead, the results will be a
+  ``KeyError``, the default value, and ``False``, respectively.
+  Previously, CPython raised a ``TypeError`` in those cases, while the
+  Python implementation behaved as specified.
+
+  Likewise, non-integer keys in integer-keyed trees
+  will raise ``KeyError``, return the default and return ``False``,
+  respectively, in both implementations. Previously, pure-Python
+  raised a ``KeyError``, returned the default, and raised a
+  ``TypeError``, while CPython raised ``TypeError`` in all three cases.
 
 4.3.1 (2016-05-16)
 ------------------
@@ -21,7 +33,7 @@
 - When testing ``PURE_PYTHON`` environments under ``tox``, avoid poisoning
   the user's global wheel cache.
 
-- Ensure that he pure-Python implementation, used on PyPy and when a C
+- Ensure that the pure-Python implementation, used on PyPy and when a C
   compiler isn't available for CPython, pickles identically to the C
   version. Unpickling will choose the best available implementation.
   This change prevents interoperability problems and database corruption if

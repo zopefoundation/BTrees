@@ -143,6 +143,14 @@ class _TestIOBTreesBase(TypeTest):
     def _noneraises(self):
         self._makeOne()[None] = 1
 
+    def testStringAllowedInContains(self):
+        self.assertFalse('key' in self._makeOne())
+
+    def testStringKeyRaisesKeyErrorWhenMissing(self):
+        self.assertRaises(KeyError, self._makeOne().__getitem__, 'key')
+
+    def testStringKeyReturnsDefaultFromGetWhenMissing(self):
+        self.assertEqual(self._makeOne().get('key', 42), 42)
 
 class TestIOBTrees(_TestIOBTreesBase, unittest.TestCase):
 

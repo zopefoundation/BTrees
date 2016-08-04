@@ -109,7 +109,7 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertEqual(list(tree.byValue(22)),
                          [(y, x) for x, y in reversed(ITEMS[22:])])
 
-    def testRejectDefaultComparison(self):
+    def testRejectDefaultComparisonOnSet(self):
         # Check that passing int keys w default comparison fails.
         # Only applies to new-style class instances. Old-style
         # instances are too hard to introspect.
@@ -125,6 +125,11 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
             pass
 
         self.assertRaises(TypeError, lambda : t.__setitem__(C(), 1))
+
+        with self.assertRaises(TypeError) as raising:
+            t[C()] = 1
+
+        self.assertEqual(raising.exception.args[0], "Object has default comparison")
 
         if PY2: # we only check for __cmp__ on Python2
 
@@ -145,6 +150,15 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         t.clear()
 
+    def testAcceptDefaultComparisonOnGet(self):
+        # Issue #42
+        t = self._makeOne()
+        class C(object):
+            pass
+
+        self.assertEqual(t.get(C(), 42), 42)
+        self.assertRaises(KeyError, t.__getitem__, C())
+        self.assertFalse(C() in t)
 
 class OOBTreePyTest(OOBTreeTest):
 #
