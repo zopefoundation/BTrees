@@ -12,5 +12,5 @@ a modified BTree data structure.  The trees are optimized for use inside
 ZODB's "optimistic concurrency" paradigm, and include explicit resolution
 of conflicts detected by that mechannism.
 
-Please see the Sphinx documentation (``docs/index.rst``) for further
+Please see `the Sphinx documentation <http://btrees.readthedocs.io/>`_ for further
 information.
