@@ -815,9 +815,7 @@ class _Tree(_Base):
         self._del(self._to_key(key))
 
     def clear(self):
-        if self._data:
-            # In the case of __init__, this was already set by __new__
-            self._data = []
+        self._data = []
         self._firstbucket = None
 
     def __nonzero__(self):
