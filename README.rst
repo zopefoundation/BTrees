@@ -10,7 +10,7 @@
 This package contains a set of persistent object containers built around
 a modified BTree data structure.  The trees are optimized for use inside
 ZODB's "optimistic concurrency" paradigm, and include explicit resolution
-of conflicts detected by that mechannism.
+of conflicts detected by that mechanism.
 
 Please see `the Sphinx documentation <http://btrees.readthedocs.io/>`_ for further
 information.
