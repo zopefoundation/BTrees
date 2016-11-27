@@ -726,6 +726,10 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     COPY_KEY_FROM_ARG(key, keyarg, copied);
     if (!copied)
         return -1;
+#ifdef KEY_CHECK_ON_SET
+    if (value && !KEY_CHECK_ON_SET(keyarg))
+        return -1;
+#endif
 
     PER_USE_OR_RETURN(self, -1);
 

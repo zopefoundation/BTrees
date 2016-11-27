@@ -58,6 +58,10 @@ Macros for Keys
     non-zero for true).  When it returns false, its caller should probably set
     a ``TypeError`` exception.
 
+``KEY_CHECK_ON_SET(K)``
+
+    Like ``KEY_CHECK``, but only checked during ``__setitem__``.
+
 ``TEST_KEY_SET_OR(V, K, T)``
 
     Like Python's ``cmp()``.  Compares K(ey) to T(arget), where ``K``

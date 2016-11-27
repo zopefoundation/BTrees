@@ -323,6 +323,10 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
     COPY_KEY_FROM_ARG(key, keyarg, copied);
     UNLESS(copied)
         return -1;
+#ifdef KEY_CHECK_ON_SET
+    if (v && !KEY_CHECK_ON_SET(keyarg))
+        return -1;
+#endif
 
     /* Copy the value early (if needed), so that in case of error a
      * pile of bucket mutations don't need to be undone.
@@ -451,7 +455,7 @@ Done:
 /*
 ** bucket_setitem
 **
-** wrapper for _bucket_setitem (eliminates +1 return code)
+** wrapper for _bucket_set (eliminates +1 return code)
 **
 ** Arguments:    self    The bucket
 **        key    The key to insert under

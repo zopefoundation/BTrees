@@ -160,6 +160,16 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
 
+    def testDeleteExistingKeyWithDefaultComparison(self):
+        t = self._makeOne()
+        bucket_state = ((None, 42),)
+        tree_state = ((bucket_state,),)
+        t.__setstate__(tree_state)
+
+        self.assertEqual(t[None], 42)
+        del t[None]
+
+
 class OOBTreePyTest(OOBTreeTest):
 #
 # Right now, we can't match the C extension's test / prohibition of the
