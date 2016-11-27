@@ -13,6 +13,7 @@
 ##############################################################################
 import unittest
 
+from .common import _skip_under_Py3k
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
@@ -160,7 +161,12 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
 
-    def testDeleteExistingKeyWithDefaultComparison(self):
+    # Check that a None key can be deleted in Python 2.
+    # This doesn't work on Python 3 because None is unorderable,
+    # so the tree can't be searched. But None also can't be inserted,
+    # and we don't support migrating Python 2 databases to Python 3.
+    @_skip_under_Py3k
+    def testDeleteNoneKey(self):
         t = self._makeOne()
         bucket_state = ((None, 42),)
         tree_state = ((bucket_state,),)
