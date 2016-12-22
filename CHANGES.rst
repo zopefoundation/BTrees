@@ -6,10 +6,18 @@
 
 - Make the CPython implementation consistent with the pure-Python
   implementation and only check object keys for default comparison
-  when setting keys. In Python 2 this makes it possible to remove
-  keys that were added using a less restrictive version of BTrees.
-  (In Python 3 keys that are unorderable still cannot be removed.)
-  See: https://github.com/zopefoundation/BTrees/issues/53
+  when setting keys. In Python 2 this makes it possible to remove keys
+  that were added using a less restrictive version of BTrees. (In
+  Python 3 keys that are unorderable still cannot be removed.)
+  Likewise, all versions can unpickle trees that already had such
+  keys. See: https://github.com/zopefoundation/BTrees/issues/53 and
+  https://github.com/zopefoundation/BTrees/issues/51
+
+- Make the Python implementation consistent with the CPython
+  implementation and check object key identity before checking
+  equality and performing comparisons. This can allow fixing trees
+  that have keys that now have broken comparison functions. See
+  https://github.com/zopefoundation/BTrees/issues/50
 
 - Make the CPython implementation consistent with the pure-Python
   implementation and no longer raise ``TypeError`` for an object key

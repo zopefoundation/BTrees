@@ -111,7 +111,7 @@ class _BucketBase(_Base):
         while low < high:
             i = (low + high) // 2
             k = keys[i]
-            if k == key:
+            if k is key or k == key:
                 return i
             if k < key:
                 low = i + 1
