@@ -161,12 +161,12 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
 
-    # Check that a None key can be deleted in Python 2.
-    # This doesn't work on Python 3 because None is unorderable,
-    # so the tree can't be searched. But None also can't be inserted,
-    # and we don't support migrating Python 2 databases to Python 3.
     @_skip_under_Py3k
     def testDeleteNoneKey(self):
+        # Check that a None key can be deleted in Python 2.
+        # This doesn't work on Python 3 because None is unorderable,
+        # so the tree can't be searched. But None also can't be inserted,
+        # and we don't support migrating Python 2 databases to Python 3.
         t = self._makeOne()
         bucket_state = ((None, 42),)
         tree_state = ((bucket_state,),)
@@ -174,6 +174,45 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         self.assertEqual(t[None], 42)
         del t[None]
+
+    def testUnpickleNoneKey(self):
+        # All versions (py2 and py3, C and Python) can unpickle
+        # data that looks like this: {None: 42}, even though None
+        # is unorderable..
+        # This pickle was captured in BTree/ZODB3 3.10.7
+        data = b'ccopy_reg\n__newobj__\np0\n(cBTrees.OOBTree\nOOBTree\np1\ntp2\nRp3\n((((NI42\ntp4\ntp5\ntp6\ntp7\nb.'
+
+        import pickle
+        t = pickle.loads(data)
+        keys = list(t)
+        self.assertEqual([None], keys)
+
+    def testIdentityTrumpsBrokenComparison(self):
+        # Identical keys always match, even if their comparison is
+        # broken. See https://github.com/zopefoundation/BTrees/issues/50
+        from functools import total_ordering
+
+        @total_ordering
+        class Bad(object):
+            def __eq__(self, other):
+                return False
+
+            def __cmp__(self, other):
+                return 1
+
+            def __lt__(self, other):
+                return False
+
+        t = self._makeOne()
+        bad_key = Bad()
+        t[bad_key] = 42
+
+        self.assertIn(bad_key, t)
+        self.assertEqual(list(t), [bad_key])
+
+        del t[bad_key]
+        self.assertNotIn(bad_key, t)
+        self.assertEqual(list(t), [])
 
 
 class OOBTreePyTest(OOBTreeTest):
