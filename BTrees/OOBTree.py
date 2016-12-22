@@ -85,7 +85,7 @@ intersectionPy = _set_operation(_intersection, OOSetPy)
 
 try:
     from ._OOBTree import OOBucket
-except ImportError as e: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     OOBucket = OOBucketPy
     OOSet = OOSetPy
     OOBTree = OOBTreePy

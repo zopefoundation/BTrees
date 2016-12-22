@@ -104,7 +104,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, OISetPy)
 
 try:
     from ._OIBTree import OIBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     OIBucket = OIBucketPy
     OISet = OISetPy
     OIBTree = OIBTreePy

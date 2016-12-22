@@ -103,7 +103,7 @@ intersectionPy = _set_operation(_intersection, fsSetPy)
 
 try:
     from ._fsBTree import fsBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     fsBucket = fsBucketPy
     fsSet = fsSetPy
     fsBTree = fsBTreePy

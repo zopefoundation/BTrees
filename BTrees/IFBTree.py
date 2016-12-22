@@ -106,7 +106,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, IFSetPy)
 
 try:
     from ._IFBTree import IFBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     IFBucket = IFBucketPy
     IFSet = IFSetPy
     IFBTree = IFBTreePy

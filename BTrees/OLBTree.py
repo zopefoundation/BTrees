@@ -105,7 +105,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, OLSetPy)
 
 try:
     from ._OLBTree import OLBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     OLBucket = OLBucketPy
     OLSet = OLSetPy
     OLBTree = OLBTreePy

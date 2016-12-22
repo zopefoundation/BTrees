@@ -107,7 +107,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, LFSetPy)
 
 try:
     from ._LFBTree import LFBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     LFBucket = LFBucketPy
     LFSet = LFSetPy
     LFBTree = LFBTreePy

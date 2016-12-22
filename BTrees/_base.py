@@ -49,7 +49,7 @@ class _Base(Persistent):
         # If the C extensions are around, we do need these methods, but
         # these classes are unlikely to be used in production anyway.
         __import__('BTrees._OOBTree')
-    except ImportError:  # pragma: no cover
+    except (ImportError, AttributeError):  # pragma: no cover
         pass
     else:
         def __reduce__(self):

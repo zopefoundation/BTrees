@@ -89,7 +89,7 @@ multiunionPy = _set_operation(_multiunion, IOSetPy)
 
 try:
     from ._IOBTree import IOBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     IOBucket = IOBucketPy
     IOSet = IOSetPy
     IOBTree = IOBTreePy
