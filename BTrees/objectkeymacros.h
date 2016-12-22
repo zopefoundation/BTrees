@@ -37,4 +37,5 @@ if ( ( (V) = COMPARE((KEY),(TARGET)) ), PyErr_Occurred() )
 #define COPY_KEY_TO_OBJECT(O, K) O=(K); Py_INCREF(O)
 #define COPY_KEY_FROM_ARG(TARGET, ARG, S) \
     TARGET=(ARG); \
-    (S) = check_argument_cmp(ARG); 
+    (S) = 1;
+#define KEY_CHECK_ON_SET check_argument_cmp

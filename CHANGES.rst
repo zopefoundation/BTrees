@@ -5,6 +5,13 @@
 ------------------
 
 - Make the CPython implementation consistent with the pure-Python
+  implementation and only check object keys for default comparison
+  when setting keys. In Python 2 this makes it possible to remove
+  keys that were added using a less restrictive version of BTrees.
+  (In Python 3 keys that are unorderable still cannot be removed.)
+  See: https://github.com/zopefoundation/BTrees/issues/53
+
+- Make the CPython implementation consistent with the pure-Python
   implementation and no longer raise ``TypeError`` for an object key
   (in object-keyed trees) with default comparison on ``__getitem__``,
   ``get`` or ``in`` operations. Instead, the results will be a
