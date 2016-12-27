@@ -558,8 +558,15 @@ module_init(void)
     cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCObject_Import(
                 "persistent.cPersistence", "CAPI");
 #endif
-    if (cPersistenceCAPI == NULL)
+    if (cPersistenceCAPI == NULL) {
+       /* At least some versions of Python 3.5 raise an AttribteError
+        * an ImportError here:  re-map as an ImportError for compatibility.
+        */
+       if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_ImportError)) {
+           PyErr_SetString(PyExc_ImportError, "<No CPersistence>");
+       }
         return NULL;
+   }
 
 #ifdef PY3K
 #define _SET_TYPE(typ) ((PyObject*)(&typ))->ob_type = &PyType_Type
