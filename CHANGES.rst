@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.3.2 (unreleased)
+4.3.2 (2017-01-05)
 ------------------
 
 - Make the CPython implementation consistent with the pure-Python
