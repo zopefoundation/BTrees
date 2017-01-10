@@ -161,6 +161,32 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
 
+    def test_None_is_smallest(self):
+        t = self._makeOne()
+        for i in range(999): # Make sure we multiple buckets
+            t[i] = i*i
+        t[None] = -1
+        for i in range(-99,0): # Make sure we multiple buckets
+            t[i] = i*i
+        self.assertEqual(list(t), [None] + list(range(-99, 999)))
+        self.assertEqual(list(t.values()),
+                         [-1] + [i*i for i in range(-99, 999)])
+        self.assertEqual(t[2], 4)
+        self.assertEqual(t[-2], 4)
+        self.assertEqual(t[None], -1)
+        t[None] = -2
+        self.assertEqual(t[None], -2)
+        t2 = t.__class__(t)
+        del t[None]
+        self.assertEqual(list(t), list(range(-99, 999)))
+
+        if 'Py' in self.__class__.__name__:
+            return
+        from BTrees.OOBTree import difference, union, intersection
+        self.assertEqual(list(difference(t2, t).items()), [(None, -2)])
+        self.assertEqual(list(union(t, t2)), list(t2))
+        self.assertEqual(list(intersection(t, t2)), list(t))
+
     @_skip_under_Py3k
     def testDeleteNoneKey(self):
         # Check that a None key can be deleted in Python 2.

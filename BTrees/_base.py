@@ -113,7 +113,7 @@ class _BucketBase(_Base):
             k = keys[i]
             if k is key or k == key:
                 return i
-            if k < key:
+            if k is None or (key is not None and k < key):
                 low = i + 1
             else:
                 high = i
@@ -256,7 +256,7 @@ _object_lt = getattr(object, '__lt__', _marker)
 def _no_default_comparison(key):
     # Enforce test that key has non-default comparison.
     if key is None:
-        raise TypeError("Can't use None as a key")
+        return
     if type(key) is object:
         raise TypeError("Can't use object() as keys")
     lt = getattr(key, '__lt__', None)
@@ -919,7 +919,7 @@ class _Tree(_Base):
 
         max = self._to_key(max)
         index = self._search(max)
-        if index and data[index].child.minKey() > max:
+        if index and cmp(data[index].child.minKey(), max) > 0:
             index -= 1 #pragma: no cover  no idea how to provoke this
         return data[index].child.maxKey(max)
 
@@ -1014,7 +1014,7 @@ class _Tree(_Base):
             self._p_changed = True
 
         # fix up the node key, but not for the 0'th one.
-        if index > 0 and child.size and key == data[index].key:
+        if index > 0 and child.size and cmp(key, data[index].key) == 0:
             self._p_changed = True
             data[index].key = child.minKey()
 
@@ -1269,7 +1269,7 @@ class Tree(_Tree):
 
     def byValue(self, min):
         return reversed(
-                sorted((v, k) for (k, v) in self.iteritems() if v >= min))
+                sorted(((v, k) for (k, v) in self.iteritems() if v >= min)))
 
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])

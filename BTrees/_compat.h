@@ -33,8 +33,9 @@
   -1 -> There was an error, which the caller will detect with PyError_Occurred.
  */
 #define COMPARE(lhs, rhs) \
-  PyObject_RichCompareBool((lhs), (rhs), Py_LT) != 0 ? -1 : \
-    (PyObject_RichCompareBool((lhs), (rhs), Py_EQ) > 0 ? 0 : 1)
+  (lhs == Py_None ? (rhs == Py_None ? 0 : -1) : (rhs == Py_None ? 1 : \
+     (PyObject_RichCompareBool((lhs), (rhs), Py_LT) != 0 ? -1 : \
+      (PyObject_RichCompareBool((lhs), (rhs), Py_EQ) > 0 ? 0 : 1))))
 
 #else
 
@@ -45,7 +46,9 @@
 #define TEXT_FROM_STRING PyString_FromString
 #define TEXT_FORMAT PyString_Format
 
-#define COMPARE(lhs, rhs) PyObject_Compare((lhs), (rhs))
+#define COMPARE(lhs, rhs) \
+  (lhs == Py_None ? (rhs == Py_None ? 0 : -1) : (rhs == Py_None ? 1 : \
+     PyObject_Compare((lhs), (rhs))))
 
 #endif
 
