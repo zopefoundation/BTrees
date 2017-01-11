@@ -13,7 +13,6 @@
 ##############################################################################
 import sys
 
-None_ = None
 if sys.version_info[0] < 3: #pragma NO COVER Python2
 
     PY2 = True
@@ -24,17 +23,16 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
 
     int_types = int, long
     xrange = xrange
-    cmp_ = cmp
-    def cmp(x, y):
-        if x is None_:
-            if y is None_:
+    def compare(x, y):
+        if x is None:
+            if y is None:
                 return 0
             else:
                 return -1
-        elif y is None_:
+        elif y is None:
             return 1
         else:
-            return cmp_(x, y)
+            return cmp(x, y)
 
     _bytes = str
     def _ascii(x):
@@ -54,13 +52,13 @@ else: #pragma NO COVER Python3
     int_types = int,
     xrange = range
 
-    def cmp(x, y):
-        if x is None_:
-            if y is None_:
+    def compare(x, y):
+        if x is None:
+            if y is None:
                 return 0
             else:
                 return -1
-        elif y is None_:
+        elif y is None:
             return 1
         else:
             return (x > y) - (y > x)
