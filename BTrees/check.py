@@ -348,6 +348,8 @@ class Checker(Walker):
     def check_sorted(self, obj, path, keys, lo, hi):
         i, n = 0, len(keys)
         for x in keys:
+            # lo or hi are ommitted by supplying None. Thus the not
+            # None checkes below.
             if lo is not None and not compare(lo, x) <= 0:
                 s = "key %r < lower bound %r at index %d" % (x, lo, i)
                 self.complain(s, obj, path)
