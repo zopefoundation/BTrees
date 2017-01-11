@@ -1,7 +1,14 @@
 ``BTrees`` Changelog
 ====================
 
+4.4.0 (2017-01-11)
+------------------
+
 - Allow None as a special key (sorted smaller than all others).
+
+  This is a bit of a return to BTrees 3 behavior in that Nones are
+  allowed as keys again.  Other objects with default ordering are
+  still not allowed as keys.
 
 4.3.2 (2017-01-05)
 ------------------
