@@ -1270,7 +1270,7 @@ class Tree(_Tree):
 
     def byValue(self, min):
         return reversed(
-                sorted(((v, k) for (k, v) in self.iteritems() if v >= min)))
+                sorted((v, k) for (k, v) in self.iteritems() if v >= min))
 
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
