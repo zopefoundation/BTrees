@@ -113,7 +113,8 @@ class _BucketBase(_Base):
             k = keys[i]
             if k is key or k == key:
                 return i
-            if k is None or (key is not None and k < key):
+
+            if compare(k, key) < 0:
                 low = i + 1
             else:
                 high = i
