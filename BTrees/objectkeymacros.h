@@ -15,6 +15,9 @@ check_argument_cmp(PyObject *arg)
     /*        ((PyTypeObject *)object_)->ob_type->tp_richcompare, */
     /*        arg->ob_type->tp_compare, */
     /*        ((PyTypeObject *)object_)->ob_type->tp_compare); */
+    if (arg == Py_None) {
+      return 1;
+    }
 
 #ifdef PY3K
     if (Py_TYPE(arg)->tp_richcompare == Py_TYPE(object_)->tp_richcompare)

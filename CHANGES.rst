@@ -1,6 +1,8 @@
 ``BTrees`` Changelog
 ====================
 
+- Allow None as a special key (sorted smaller than all others).
+
 4.3.2 (2017-01-05)
 ------------------
 

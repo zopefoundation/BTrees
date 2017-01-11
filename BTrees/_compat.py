@@ -23,7 +23,16 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
 
     int_types = int, long
     xrange = xrange
-    cmp = cmp
+    def compare(x, y):
+        if x is None:
+            if y is None:
+                return 0
+            else:
+                return -1
+        elif y is None:
+            return 1
+        else:
+            return cmp(x, y)
 
     _bytes = str
     def _ascii(x):
@@ -43,8 +52,16 @@ else: #pragma NO COVER Python3
     int_types = int,
     xrange = range
 
-    def cmp(x, y):
-        return (x > y) - (y > x)
+    def compare(x, y):
+        if x is None:
+            if y is None:
+                return 0
+            else:
+                return -1
+        elif y is None:
+            return 1
+        else:
+            return (x > y) - (y > x)
 
     _bytes = bytes
     def _ascii(x):

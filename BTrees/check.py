@@ -56,6 +56,8 @@ from BTrees.utils import oid_repr
 
 TYPE_UNKNOWN, TYPE_BTREE, TYPE_BUCKET = range(3)
 
+from ._compat import compare
+
 _type2kind = {}
 for kv in ('OO',
            'II', 'IO', 'OI', 'IF',
@@ -346,13 +348,15 @@ class Checker(Walker):
     def check_sorted(self, obj, path, keys, lo, hi):
         i, n = 0, len(keys)
         for x in keys:
-            if lo is not None and not lo <= x:
+            # lo or hi are ommitted by supplying None. Thus the not
+            # None checkes below.
+            if lo is not None and not compare(lo, x) <= 0:
                 s = "key %r < lower bound %r at index %d" % (x, lo, i)
                 self.complain(s, obj, path)
-            if hi is not None and not x < hi:
+            if hi is not None and not compare(x, hi) < 0:
                 s = "key %r >= upper bound %r at index %d" % (x, hi, i)
                 self.complain(s, obj, path)
-            if i < n-1 and not x < keys[i+1]:
+            if i < n-1 and not compare(x, keys[i+1]) < 0:
                 s = "key %r at index %d >= key %r at index %d" % (
                     x, i, keys[i+1], i+1)
                 self.complain(s, obj, path)

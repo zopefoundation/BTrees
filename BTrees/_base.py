@@ -22,7 +22,7 @@ from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
 from ._compat import PY3
-from ._compat import cmp
+from ._compat import compare
 from ._compat import int_types
 from ._compat import xrange
 
@@ -113,7 +113,8 @@ class _BucketBase(_Base):
             k = keys[i]
             if k is key or k == key:
                 return i
-            if k < key:
+
+            if compare(k, key) < 0:
                 low = i + 1
             else:
                 high = i
@@ -256,7 +257,7 @@ _object_lt = getattr(object, '__lt__', _marker)
 def _no_default_comparison(key):
     # Enforce test that key has non-default comparison.
     if key is None:
-        raise TypeError("Can't use None as a key")
+        return
     if type(key) is object:
         raise TypeError("Can't use object() as keys")
     lt = getattr(key, '__lt__', None)
@@ -458,8 +459,8 @@ class Bucket(_BucketBase):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmpOC = cmp(i_old.key, i_com.key)
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpOC = compare(i_old.key, i_com.key)
+            cmpON = compare(i_old.key, i_new.key)
             if cmpOC == 0:
                 if cmpON == 0:
                     if i_com.value == i_old.value:
@@ -497,7 +498,7 @@ class Bucket(_BucketBase):
                 else:
                     raise merge_error(3)
             else: # both keys changed
-                cmpCN = cmp(i_com.key, i_new.key)
+                cmpCN = compare(i_com.key, i_new.key)
                 if cmpCN == 0: # dueling insert
                     raise merge_error(4)
                 if cmpOC > 0: # insert committed
@@ -511,7 +512,7 @@ class Bucket(_BucketBase):
                     raise merge_error(5) # both deleted same key
 
         while i_com.active and i_new.active: # new inserts
-            cmpCN = cmp(i_com.key, i_new.key)
+            cmpCN = compare(i_com.key, i_new.key)
             if cmpCN == 0:
                 raise merge_error(6) # dueling insert
             if cmpCN > 0: # insert new
@@ -520,7 +521,7 @@ class Bucket(_BucketBase):
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmpOC = cmp(i_old.key, i_com.key)
+            cmpOC = compare(i_old.key, i_com.key)
             if cmpOC > 0: # insert committed
                 merge_output(i_com)
             elif cmpOC == 0 and (i_old.value == i_com.value): # del in new
@@ -531,7 +532,7 @@ class Bucket(_BucketBase):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpON = compare(i_old.key, i_new.key)
             if cmpON > 0: # insert new
                 merge_output(i_new)
             elif cmpON == 0 and (i_old.value == i_new.value):
@@ -665,8 +666,8 @@ class Set(_BucketBase):
             it.advance()
 
         while i_old.active and i_com.active and i_new.active:
-            cmpOC = cmp(i_old.key, i_com.key)
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpOC = compare(i_old.key, i_com.key)
+            cmpON = compare(i_old.key, i_new.key)
             if cmpOC == 0:
                 if cmpON == 0: # all match
                     merge_output(i_old)
@@ -694,7 +695,7 @@ class Set(_BucketBase):
                     i_old.advance()
                     i_new.advance()
             else: # both com and new keys changed
-                cmpCN = cmp(i_com.key, i_new.key)
+                cmpCN = compare(i_com.key, i_new.key)
                 if cmpCN == 0: # both inserted same key
                     raise merge_error(4)
                 if cmpOC > 0: # insert committed
@@ -708,7 +709,7 @@ class Set(_BucketBase):
                     raise merge_error(5)
 
         while i_com.active and i_new.active: # new inserts
-            cmpCN = cmp(i_com.key, i_new.key)
+            cmpCN = compare(i_com.key, i_new.key)
             if cmpCN == 0: # dueling insert
                 raise merge_error(6)
             if cmpCN > 0: # insert new
@@ -717,7 +718,7 @@ class Set(_BucketBase):
                 merge_output(i_com)
 
         while i_old.active and i_com.active: # new deletes rest of original
-            cmpOC = cmp(i_old.key, i_com.key)
+            cmpOC = compare(i_old.key, i_com.key)
             if cmpOC > 0: # insert committed
                 merge_output(i_com)
             elif cmpOC == 0: # del in new
@@ -728,7 +729,7 @@ class Set(_BucketBase):
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
-            cmpON = cmp(i_old.key, i_new.key)
+            cmpON = compare(i_old.key, i_new.key)
             if cmpON > 0: # insert new
                 merge_output(i_new)
             elif cmpON == 0: # deleted in committed
@@ -843,7 +844,7 @@ class _Tree(_Base):
             hi = len(data)
             i = hi // 2
             while i > lo:
-                cmp_ = cmp(data[i].key, key)
+                cmp_ = compare(data[i].key, key)
                 if cmp_ < 0:
                     lo = i
                 elif cmp_ > 0:
@@ -919,7 +920,7 @@ class _Tree(_Base):
 
         max = self._to_key(max)
         index = self._search(max)
-        if index and data[index].child.minKey() > max:
+        if index and compare(data[index].child.minKey(), max) > 0:
             index -= 1 #pragma: no cover  no idea how to provoke this
         return data[index].child.maxKey(max)
 
@@ -1014,7 +1015,7 @@ class _Tree(_Base):
             self._p_changed = True
 
         # fix up the node key, but not for the 0'th one.
-        if index > 0 and child.size and key == data[index].key:
+        if index > 0 and child.size and compare(key, data[index].key) == 0:
             self._p_changed = True
             data[index].key = child.minKey()
 
@@ -1324,7 +1325,7 @@ def difference(set_type, o1, o2):
         def copy(i):
             result._keys.append(i.key)
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
+        cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
             copy(i1)
             i1.advance()
@@ -1349,7 +1350,7 @@ def union(set_type, o1, o2):
     def copy(i):
         result._keys.append(i.key)
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
+        cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
             copy(i1)
             i1.advance()
@@ -1379,7 +1380,7 @@ def intersection(set_type, o1, o2):
     def copy(i):
         result._keys.append(i.key)
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
+        cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
             i1.advance()
         elif cmp_ == 0:
@@ -1425,7 +1426,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
             result._keys.append(i.key)
 
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
+        cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
             copy(i1, w1)
             i1.advance()
@@ -1466,7 +1467,7 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     else:
         result = o1._set_type()
     while i1.active and i2.active:
-        cmp_ = cmp(i1.key, i2.key)
+        cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
             i1.advance()
         elif cmp_ == 0:
