@@ -12,8 +12,6 @@
 #
 ##############################################################################
 
-__version__ = '4.4.0'
-
 import os
 import platform
 import sys
@@ -21,6 +19,8 @@ import sys
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
+
+__version__ = '4.4.1.dev0'
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = (open(os.path.join(here, 'README.rst')).read()
@@ -65,7 +65,7 @@ base_btrees_depends = [
     ]
 
 FLAVORS = {"O": "object", "I": "int", "F": "float", 'L': 'int'}
-#XXX should 'fs' be in ZODB instead?
+# XXX should 'fs' be in ZODB instead?
 FAMILIES = ("OO", "IO", "OI", "II", "IF", "fs", "LO", "OL", "LL", "LF")
 
 KEY_H = "BTrees/%skeymacros.h"
@@ -127,6 +127,7 @@ setup(name='BTrees',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Framework :: ZODB",
@@ -143,9 +144,9 @@ setup(name='BTrees',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      ext_modules = ext_modules,
+      ext_modules=ext_modules,
       setup_requires=['persistent'],
-      extras_require = {
+      extras_require={
         'test': TESTS_REQUIRE,
         'ZODB': ['ZODB'],
         'testing': TESTS_REQUIRE + ['nose', 'coverage'],
@@ -154,6 +155,6 @@ setup(name='BTrees',
       test_suite="BTrees.tests",
       tests_require=TESTS_REQUIRE,
       install_requires=REQUIRES,
-      entry_points = """\
+      entry_points="""\
       """
-     )
+      )
