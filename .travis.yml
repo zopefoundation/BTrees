@@ -37,6 +37,13 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then get_python_environment $TERRYFY_PYTHON venv; fi
     - if [[ "$TERRYFY_PYTHON" == "homebrew 3" ]]; then alias pip=`which pip3` ; fi
 install:
+    - pip install -U pip setuptools
+    # persistent is a setup_requires, which gets downloaded by
+    # setuptools, not pip. But macpython 3.6.0 setuptools has trouble with SSL on
+    # Travis CI
+    # (https://travis-ci.org/zopefoundation/BTrees/jobs/192340692) so
+    # we install with pip manually.
+    - pip install -U persistent
     - pip install -e .[ZODB]
 script:
     - python setup.py -q test -q
