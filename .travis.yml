@@ -15,7 +15,7 @@ matrix:
         - os: linux
           python: pypy
         - os: linux
-          python: pypy3
+          python: pypy3.3-5.2-alpha1
         # It's important to use 'macpython' builds to get the least
         # restrictive wheel tag. It's also important to avoid
         # 'homebrew 3' because it floats instead of being a specific version.
@@ -63,3 +63,5 @@ after_success:
 env:
     global:
         secure: "Oh5gRJ+Fo8ZNmCkdrffpx201EPyTr9iUXmv6VqJMTebrzQpFdSWUVcANRmAzyfdyk3Wo0IjifVfWsKc+hvtbFmXZiLRFyEgoCUmzeWVumjebg2xxm0PbFHcRQgl4daBXxB0iqWkP8wXZ3daytuL74sYcbHizMYyhc7AxFbANsZc="
+
+cache: pip
