@@ -5,6 +5,10 @@
 ------------------
 
 - Add support for Python 3.6.
+- Raise an ``ImportError`` consistently on Python 3 if the C extension for
+  BTrees is used but the ``persistent`` C extension is not available.
+  Previously this could result in an odd ``AttributeError``. See
+  https://github.com/zopefoundation/BTrees/pull/55
 
 4.4.0 (2017-01-11)
 ------------------

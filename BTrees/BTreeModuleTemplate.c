@@ -559,11 +559,14 @@ module_init(void)
                 "persistent.cPersistence", "CAPI");
 #endif
     if (cPersistenceCAPI == NULL) {
-       /* At least some versions of Python 3.5 raise an AttribteError
-        * an ImportError here:  re-map as an ImportError for compatibility.
+       /* The Capsule API attempts to import 'persistent' and then
+        * walk down to the specified attribute using getattr. If the C
+        * extensions aren't available, this can result in an
+        * AttributeError being raised. Let that percolate up as an
+        * ImportError so it can be caught in the expected way.
         */
        if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_ImportError)) {
-           PyErr_SetString(PyExc_ImportError, "<No CPersistence>");
+           PyErr_SetString(PyExc_ImportError, "persistent C extension unavailable");
        }
         return NULL;
    }
