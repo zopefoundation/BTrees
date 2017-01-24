@@ -558,8 +558,18 @@ module_init(void)
     cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCObject_Import(
                 "persistent.cPersistence", "CAPI");
 #endif
-    if (cPersistenceCAPI == NULL)
+    if (cPersistenceCAPI == NULL) {
+       /* The Capsule API attempts to import 'persistent' and then
+        * walk down to the specified attribute using getattr. If the C
+        * extensions aren't available, this can result in an
+        * AttributeError being raised. Let that percolate up as an
+        * ImportError so it can be caught in the expected way.
+        */
+       if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_ImportError)) {
+           PyErr_SetString(PyExc_ImportError, "persistent C extension unavailable");
+       }
         return NULL;
+   }
 
 #ifdef PY3K
 #define _SET_TYPE(typ) ((PyObject*)(&typ))->ob_type = &PyType_Type
