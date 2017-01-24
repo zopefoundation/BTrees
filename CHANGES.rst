@@ -1,6 +1,12 @@
 ``BTrees`` Changelog
 ====================
 
+4.4.1 (2017-01-24)
+------------------
+
+Fixed a packaging bug that caused extra files to be included (some of
+which caused problems in some platforms).
+
 4.4.0 (2017-01-11)
 ------------------
 
