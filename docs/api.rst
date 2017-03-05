@@ -96,3 +96,13 @@ Protocol APIs
   .. autointerface:: IIntegerFloatBTreeModule
      :members:
      :member-order: bysource
+
+Utilities
+-------------
+
+.. automodule:: BTrees.Length
+
+  .. autoclass:: Length
+     :members:
+
+     .. automethod:: __call__

@@ -43,13 +43,16 @@ class Length(persistent.Persistent):
         self.value = v
 
     def set(self, v):
+        "Set the length value to v."
         self.value = v
 
     def _p_resolveConflict(self, old, s1, s2):
         return s1 + s2 - old
 
     def change(self, delta):
+        "Add delta to the length value."
         self.value += delta
 
     def __call__(self, *args):
+        "Return the current length value."
         return self.value
