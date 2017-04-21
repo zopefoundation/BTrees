@@ -107,7 +107,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, IISetPy)
 
 try:
     from ._IIBTree import IIBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     IIBucket = IIBucketPy
     IISet = IISetPy
     IIBTree = IIBTreePy

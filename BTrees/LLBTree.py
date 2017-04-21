@@ -107,7 +107,7 @@ weightedIntersectionPy = _set_operation(_weightedIntersection, LLSetPy)
 
 try:
     from ._LLBTree import LLBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     LLBucket = LLBucketPy
     LLSet = LLSetPy
     LLBTree = LLBTreePy

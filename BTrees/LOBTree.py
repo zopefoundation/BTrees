@@ -90,7 +90,7 @@ multiunionPy = _set_operation(_multiunion, LOSetPy)
 
 try:
     from ._LOBTree import LOBucket
-except ImportError: #pragma NO COVER w/ C extensions
+except (ImportError, AttributeError): #pragma NO COVER w/ C extensions
     LOBucket = LOBucketPy
     LOSet = LOSetPy
     LOBTree = LOBTreePy
