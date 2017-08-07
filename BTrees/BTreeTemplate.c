@@ -2277,8 +2277,10 @@ BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 static void
 BTree_dealloc(BTree *self)
 {
-    if (self->state != cPersistent_GHOST_STATE)
+    PyObject_GC_UnTrack((PyObject *)self);
+    if (self->state != cPersistent_GHOST_STATE) {
         _BTree_clear(self);
+    }
     cPersistenceCAPI->pertype->tp_dealloc((PyObject *)self);
 }
 

@@ -9,6 +9,9 @@
   BTrees is used but the ``persistent`` C extension is not available.
   Previously this could result in an odd ``AttributeError``. See
   https://github.com/zopefoundation/BTrees/pull/55
+- Fix the possibility of a rare crash in the C extension when
+  deallocating items. See https://github.com/zopefoundation/BTrees/issues/75
+
 
 4.4.1 (2017-01-24)
 ------------------
