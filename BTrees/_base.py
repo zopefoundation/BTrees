@@ -14,8 +14,7 @@
 """Python BTree implementation
 """
 
-from struct import pack
-from struct import unpack
+from struct import Struct
 from struct import error as struct_error
 
 from persistent import Persistent
@@ -1496,10 +1495,16 @@ def multiunion(set_type, seqs):
 def to_ob(self, v):
     return v
 
+def _packer_unpacker(struct_format):
+    s = Struct(struct_format)
+    return s.pack, s.unpack
+
+int_pack, int_unpack = _packer_unpacker('i')
+
 def to_int(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not unpack("i", pack("i", v))[0] == v: #pragma: no cover
+        if not int_unpack(int_pack(v))[0] == v: #pragma: no cover
             raise TypeError('32-bit integer expected')
     except (struct_error,
             OverflowError, #PyPy
@@ -1508,17 +1513,22 @@ def to_int(self, v):
 
     return int(v)
 
+float_pack = _packer_unpacker('f')[0]
+
 def to_float(self, v):
     try:
-        pack("f", v)
+        float_pack(v)
     except struct_error:
         raise TypeError('float expected')
     return float(v)
 
+
+long_pack, long_unpack = _packer_unpacker('q')
+
 def to_long(self, v):
     try:
         # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not unpack("q", pack("q", v))[0] == v: #pragma: no cover
+        if not long_unpack(long_pack(v))[0] == v: #pragma: no cover
             if isinstance(v, int_types):
                 raise ValueError("Value out of range", v)
             raise TypeError('64-bit integer expected')
