@@ -35,6 +35,8 @@ from ._base import set_operation as _set_operation
 from ._base import to_bytes as _to_bytes
 from ._base import union as _union
 from ._base import _fix_pickle
+from ._compat import import_c_extension
+
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
@@ -101,28 +103,7 @@ differencePy = _set_operation(_difference, fsSetPy)
 unionPy = _set_operation(_union, fsSetPy)
 intersectionPy = _set_operation(_intersection, fsSetPy)
 
-try:
-    from ._fsBTree import fsBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    fsBucket = fsBucketPy
-    fsSet = fsSetPy
-    fsBTree = fsBTreePy
-    fsTreeSet = fsTreeSetPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._fsBTree import fsSet
-    from ._fsBTree import fsBTree
-    from ._fsBTree import fsTreeSet
-    from ._fsBTree import difference
-    from ._fsBTree import union
-    from ._fsBTree import intersection
-
-Bucket = fsBucket
-Set = fsSet
-BTree = fsBTree
-TreeSet = fsTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

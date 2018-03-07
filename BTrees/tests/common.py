@@ -11,34 +11,48 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+from __future__ import division
 
+import unittest
 import platform
 from unittest import skip
 
 
-def _skip_wo_ZODB(test_method):  # pragma: no COVER
-    try:
-        import ZODB  # noqa
-    except ImportError:  # skip this test if ZODB is not available
-        return skip("ZODB not available")(test_method)
-    else:
-        return test_method
+from BTrees._compat import PY3
+from BTrees._compat import PURE_PYTHON
+from BTrees._compat import PYPY
 
-
-def _skip_under_Py3k(test_method):  # pragma: no COVER
-    try:
-        unicode
-    except NameError:  # skip this test
-        return skip("Python 3")(test_method)
-    else:
-        return test_method
-
-
-def _skip_on_32_bits(test_method):  # pragma: no COVER
-    if platform.architecture()[0] == '32bit':
-        return skip("32-bit platform")(test_method)
+def _no_op(test_method):
     return test_method
 
+try:
+    __import__('ZODB')
+except ImportError:
+    _skip_wo_ZODB = skip('ZODB not available')
+else:
+    _skip_wo_ZODB = _no_op
+
+if PY3:
+    _skip_under_Py3k = skip("Not on Python 3")
+else:
+    _skip_under_Py3k = _no_op
+
+if platform.architecture()[0] == '32bit':
+    _skip_on_32_bits = skip("32-bit platform")
+else:
+    _skip_on_32_bits = _no_op
+
+if PURE_PYTHON:
+    skipOnPurePython = skip("Not on Pure Python")
+else:
+    skipOnPurePython = _no_op
+
+def _skip_if_pure_py_and_py_test(self):
+    if PURE_PYTHON and 'Py' in type(self).__name__:
+        # No need to run this again. The "C" tests will catch it.
+        # This relies on the fact that we always define tests in pairs,
+        # one normal/C and one with Py in the name for the Py test.
+        raise unittest.SkipTest("Redundant with the C test")
 
 class Base(object):
     # Tests common to all types: sets, buckets, and BTrees
@@ -51,6 +65,9 @@ class Base(object):
     def _makeOne(self):
         return self._getTargetClass()()
 
+    def setUp(self):
+        super(Base, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
 
     def tearDown(self):
         if self.db is not None:
@@ -76,6 +93,38 @@ class Base(object):
         # "Cannot close connection joined to transaction"
         transaction.abort()
         root._p_jar.close()
+
+    def testPersistentSubclass(self):
+        # Can we subclass this and Persistent?
+        # https://github.com/zopefoundation/BTrees/issues/78
+        import persistent
+
+        class PersistentSubclass(persistent.Persistent):
+            pass
+
+        __traceback_info__ = self._getTargetClass(), persistent.Persistent
+        type('Subclass', (self._getTargetClass(), PersistentSubclass), {})
+
+    def testPurePython(self):
+        import importlib
+        kind = self._getTargetClass()
+        class_name = kind.__name__
+        module_name = kind.__module__
+        module = importlib.import_module(module_name)
+
+        # If we're in pure python mode, our target class module
+        # should not have an '_' in it (fix_pickle changes the name
+        # to remove the 'Py')
+
+        # If we're in the C extension mode, our target class
+        # module still doesn't have the _ in it, but we should be able to find
+        # a Py class that's different
+
+        self.assertNotIn('_', module_name)
+        self.assertIs(getattr(module, class_name), kind)
+
+        if not PURE_PYTHON and 'Py' not in type(self).__name__:
+            self.assertIsNot(getattr(module, class_name + 'Py'), kind)
 
     @_skip_wo_ZODB
     def testLoadAndStore(self):
@@ -1735,6 +1784,10 @@ class TypeTest(object):
 
 class I_SetsBase(object):
 
+    def setUp(self):
+        super(I_SetsBase, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
+
     def testBadBadKeyAfterFirst(self):
         t = self._makeOne()
         self.assertRaises(TypeError, t.__class__, [1, ''])
@@ -1768,7 +1821,7 @@ SMALLEST_POSITIVE_65_BITS = LARGEST_64_BITS + 1
 LARGEST_NEGATIVE_65_BITS = SMALLEST_64_BITS - 1
 
 
-class TestLongIntSupport:
+class TestLongIntSupport(object):
 
     def getTwoValues(self):
         # Return two distinct values; these must compare as un-equal.
@@ -1885,6 +1938,9 @@ def makeBuilder(mapbuilder):
 #     intersection, union, difference - set to the type-correct versions
 class SetResult(object):
     def setUp(self):
+        super(SetResult, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
+
         self.Akeys = [1,    3,    5, 6   ]
         self.Bkeys = [   2, 3, 4,    6, 7]
         self.As = [makeset(self.Akeys) for makeset in self.builders()]
@@ -2167,6 +2223,10 @@ def isaset(thing):
 #     mkbucket, mkbtree
 class MultiUnion(object):
 
+    def setUp(self):
+        super(MultiUnion, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
+
     def testEmpty(self):
         self.assertEqual(len(self.multiunion([])), 0)
 
@@ -2193,6 +2253,10 @@ class MultiUnion(object):
 
     def testBigInput(self):
         N = 100000
+        if (PURE_PYTHON or 'Py' in type(self).__name__) and not PYPY:
+            # This is extremely slow in CPython implemented in Python,
+            # taking 20s or more on a 2015-era laptop
+            N = N // 10
         input = self.mkset(list(range(N)))
         output = self.multiunion([input] * 10)
         self.assertEqual(len(output), N)
@@ -2233,6 +2297,11 @@ class ConflictTestBase(object):
     # Tests common to all types: sets, buckets, and BTrees
 
     storage = None
+
+    def setUp(self):
+        super(ConflictTestBase, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
+
 
     def tearDown(self):
         import transaction

@@ -39,6 +39,7 @@ from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 120
 _TREE_SIZE = 500
@@ -105,36 +106,7 @@ multiunionPy = _set_operation(_multiunion, LLSetPy)
 weightedUnionPy = _set_operation(_weightedUnion, LLSetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, LLSetPy)
 
-try:
-    from ._LLBTree import LLBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    LLBucket = LLBucketPy
-    LLSet = LLSetPy
-    LLBTree = LLBTreePy
-    LLTreeSet = LLTreeSetPy
-    LLTreeIterator = LLTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    multiunion = multiunionPy
-    weightedUnion = weightedUnionPy
-    weightedIntersection = weightedIntersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._LLBTree import LLSet
-    from ._LLBTree import LLBTree
-    from ._LLBTree import LLTreeSet
-    from ._LLBTree import LLTreeIterator
-    from ._LLBTree import difference
-    from ._LLBTree import union
-    from ._LLBTree import intersection
-    from ._LLBTree import multiunion
-    from ._LLBTree import weightedUnion
-    from ._LLBTree import weightedIntersection
-
-Bucket = LLBucket
-Set = LLSet
-BTree = LLBTree
-TreeSet = LLTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

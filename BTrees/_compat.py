@@ -11,15 +11,20 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import os
 import sys
+
+PYPY = hasattr(sys, 'pypy_version_info')
+# We can and do build the C extensions on PyPy, but
+# as of Persistent 4.2.5 the persistent C extension is not
+# built on PyPy, so importing our C extension will fail anyway.
+PURE_PYTHON = os.environ.get('PURE_PYTHON', PYPY)
+
 
 if sys.version_info[0] < 3: #pragma NO COVER Python2
 
     PY2 = True
     PY3 = False
-
-    from StringIO import StringIO
-    BytesIO = StringIO
 
     int_types = int, long
     xrange = xrange
@@ -38,16 +43,10 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
     def _ascii(x):
         return bytes(x)
 
-    def _u(s, encoding='unicode_escape'):
-        return unicode(s, encoding)
-
 else: #pragma NO COVER Python3
 
     PY2 = False
     PY3 = True
-
-    from io import StringIO
-    from io import BytesIO
 
     int_types = int,
     xrange = range
@@ -67,7 +66,34 @@ else: #pragma NO COVER Python3
     def _ascii(x):
         return bytes(x, 'ascii')
 
-    def _u(s, encoding=None):
-        if encoding is None:
-            return s
-        return str(s, encoding)
+
+def import_c_extension(mod_globals):
+    import importlib
+    c_module = None
+    module_name = mod_globals['__name__']
+    assert module_name.startswith('BTrees.')
+    module_name = module_name.split('.')[1]
+    if not PURE_PYTHON:
+        try:
+            c_module = importlib.import_module('BTrees._' + module_name)
+        except ImportError:
+            pass
+    if c_module is not None:
+        new_values = dict(c_module.__dict__)
+        new_values.pop("__name__", None)
+        new_values.pop('__file__', None)
+        new_values.pop('__doc__', None)
+        mod_globals.update(new_values)
+    else:
+        # No C extension,
+        # make the Py versions available without that extension
+        for py in [k for k in mod_globals.keys() if k.endswith('Py')]:
+            mod_globals[py[:-2]] = mod_globals[py]
+
+    # Assign the global aliases
+    prefix = module_name[:2]
+    for name in ('Bucket', 'Set', 'BTree', 'TreeSet'):
+        mod_globals[name] = mod_globals[prefix + name]
+
+    # Cleanup
+    del mod_globals['import_c_extension']

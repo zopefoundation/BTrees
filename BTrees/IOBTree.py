@@ -34,6 +34,7 @@ from ._base import to_int as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 500
@@ -87,32 +88,7 @@ unionPy = _set_operation(_union, IOSetPy)
 intersectionPy = _set_operation(_intersection, IOSetPy)
 multiunionPy = _set_operation(_multiunion, IOSetPy)
 
-try:
-    from ._IOBTree import IOBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    IOBucket = IOBucketPy
-    IOSet = IOSetPy
-    IOBTree = IOBTreePy
-    IOTreeSet = IOTreeSetPy
-    IOTreeIterator = IOTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    multiunion = multiunionPy
-else: #pragma NO COVER w/o C extensions
-    from ._IOBTree import IOSet
-    from ._IOBTree import IOBTree
-    from ._IOBTree import IOTreeSet
-    from ._IOBTree import IOTreeIterator
-    from ._IOBTree import difference
-    from ._IOBTree import union
-    from ._IOBTree import intersection
-    from ._IOBTree import multiunion
-
-Bucket = IOBucket
-Set = IOSet
-BTree = IOBTree
-TreeSet = IOTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

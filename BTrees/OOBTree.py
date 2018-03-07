@@ -29,9 +29,10 @@ from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
 from ._base import to_ob as _to_key
-from ._base import to_ob as _to_value
+_to_value = _to_key
 from ._base import union as _union
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 30
 _TREE_SIZE = 250
@@ -83,32 +84,7 @@ differencePy = _set_operation(_difference, OOSetPy)
 unionPy = _set_operation(_union, OOSetPy)
 intersectionPy = _set_operation(_intersection, OOSetPy)
 
-try:
-    from ._OOBTree import OOBucket
-except ImportError as e: #pragma NO COVER w/ C extensions
-    OOBucket = OOBucketPy
-    OOSet = OOSetPy
-    OOBTree = OOBTreePy
-    OOTreeSet = OOTreeSetPy
-    OOTreeIterator = OOTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._OOBTree import OOSet
-    from ._OOBTree import OOBTree
-    from ._OOBTree import OOTreeSet
-    from ._OOBTree import OOTreeIterator
-    from ._OOBTree import difference
-    from ._OOBTree import union
-    from ._OOBTree import intersection
-
-
-
-Bucket = OOBucket
-Set = OOSet
-BTree = OOBTree
-TreeSet = OOTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

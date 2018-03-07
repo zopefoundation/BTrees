@@ -5,6 +5,9 @@ matrix:
         - os: linux
           python: 2.7
         - os: linux
+          python: 2.7
+          env: PURE_PYTHON=1
+        - os: linux
           python: 3.3
         - os: linux
           python: 3.4
@@ -13,9 +16,12 @@ matrix:
         - os: linux
           python: 3.6
         - os: linux
+          python: 3.6
+          env: PURE_PYTHON=1
+        - os: linux
           python: pypy
         - os: linux
-          python: pypy3.3-5.2-alpha1
+          python: pypy3
         # It's important to use 'macpython' builds to get the least
         # restrictive wheel tag. It's also important to avoid
         # 'homebrew 3' because it floats instead of being a specific version.
@@ -45,7 +51,7 @@ matrix:
           before_install:
             - if [[ $TRAVIS_TAG ]]; then bash .manylinux.sh; fi
             - exit 0
-  
+
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/MacPython/terryfy; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source terryfy/travis_tools.sh; fi
@@ -58,9 +64,9 @@ install:
     # (https://travis-ci.org/zopefoundation/BTrees/jobs/192340692) so
     # we install with pip manually.
     - pip install -U persistent
-    - pip install -e .[ZODB]
+    - pip install -e .[test,ZODB]
 script:
-    - python setup.py -q test -q
+    - zope-testrunner --test-path=. --auto-color --auto-progress
 notifications:
     email: false
 after_success:

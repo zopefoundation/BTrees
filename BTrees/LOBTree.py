@@ -34,6 +34,7 @@ from ._base import to_long as _to_key
 from ._base import to_ob as _to_value
 from ._base import union as _union
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 500
@@ -88,32 +89,7 @@ unionPy = _set_operation(_union, LOSetPy)
 intersectionPy = _set_operation(_intersection, LOSetPy)
 multiunionPy = _set_operation(_multiunion, LOSetPy)
 
-try:
-    from ._LOBTree import LOBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    LOBucket = LOBucketPy
-    LOSet = LOSetPy
-    LOBTree = LOBTreePy
-    LOTreeSet = LOTreeSetPy
-    LOTreeIterator = LOTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    multiunion = multiunionPy
-else: #pragma NO COVER w/o C extensions
-    from ._LOBTree import LOSet
-    from ._LOBTree import LOBTree
-    from ._LOBTree import LOTreeSet
-    from ._LOBTree import LOTreeIterator
-    from ._LOBTree import difference
-    from ._LOBTree import union
-    from ._LOBTree import intersection
-    from ._LOBTree import multiunion
-
-Bucket = LOBucket
-Set = LOSet
-BTree = LOBTree
-TreeSet = LOTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 
