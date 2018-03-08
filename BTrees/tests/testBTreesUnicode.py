@@ -38,7 +38,7 @@ class TestBTreesUnicode(unittest.TestCase):
                      (b'future', 4),
                      (b'quick', 5),
                      (b'zerst\xf6rt', 6),
-                     (b'dreit\xe4gigen'.decode('latin1'), 7),
+                     (u'dreit\xe4gigen', 7),
                     ]
 
         self.tree = OOBTree()

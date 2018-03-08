@@ -85,9 +85,10 @@ def import_c_extension(mod_globals):
         new_values.pop('__doc__', None)
         mod_globals.update(new_values)
     else:
-        # No C extension,
-        # make the Py versions available without that extension
-        for py in [k for k in mod_globals.keys() if k.endswith('Py')]:
+        # No C extension, make the Py versions available without that
+        # extension. The list comprehension both filters and prevents
+        # concurrent modification errors.
+        for py in [k for k in mod_globals if k.endswith('Py')]:
             mod_globals[py[:-2]] = mod_globals[py]
 
     # Assign the global aliases

@@ -2302,7 +2302,6 @@ class ConflictTestBase(object):
         super(ConflictTestBase, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
-
     def tearDown(self):
         import transaction
         transaction.abort()

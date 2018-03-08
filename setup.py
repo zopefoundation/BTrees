@@ -11,10 +11,11 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-
+from __future__ import print_function
 __version__ = '4.4.1'
 
 import os
+import sys
 
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsExecError
@@ -59,6 +60,11 @@ class optional_build_ext(build_ext):
         print()
         print(e)
         print('*' * 80)
+        if 'bdist_wheel' in sys.argv and not os.environ.get("PURE_PYTHON"):
+            # pip uses bdist_wheel by default, and hides the error output.
+            # Let this error percolate up so the user can see it.
+            # pip will then go ahead and run 'setup.py install' directly.
+            raise
 
 # Include directories for C extensions
 # Sniff the location of the headers in 'persistent' or fall back
