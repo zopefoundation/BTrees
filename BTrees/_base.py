@@ -16,6 +16,7 @@
 
 from struct import Struct
 from struct import error as struct_error
+from operator import index
 
 from persistent import Persistent
 
@@ -1503,12 +1504,8 @@ int_pack, int_unpack = _packer_unpacker('i')
 
 def to_int(self, v):
     try:
-        # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not int_unpack(int_pack(v))[0] == v: #pragma: no cover
-            raise TypeError('32-bit integer expected')
-    except (struct_error,
-            OverflowError, #PyPy
-           ):
+        int_pack(index(v))
+    except (struct_error, TypeError):
         raise TypeError('32-bit integer expected')
 
     return int(v)
@@ -1527,14 +1524,8 @@ long_pack, long_unpack = _packer_unpacker('q')
 
 def to_long(self, v):
     try:
-        # XXX Python 2.6 doesn't truncate, it spews a warning.
-        if not long_unpack(long_pack(v))[0] == v: #pragma: no cover
-            if isinstance(v, int_types):
-                raise ValueError("Value out of range", v)
-            raise TypeError('64-bit integer expected')
-    except (struct_error,
-            OverflowError, #PyPy
-           ):
+        long_pack(index(v))
+    except (struct_error, TypeError):
         if isinstance(v, int_types):
             raise ValueError("Value out of range", v)
         raise TypeError('64-bit integer expected')

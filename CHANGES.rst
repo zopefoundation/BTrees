@@ -14,7 +14,10 @@
 - Respect the ``PURE_PYTHON`` environment variable at runtime even if
   the C extensions are available. See
   https://github.com/zopefoundation/BTrees/issues/78
-- Always attempt to build the C extensions, but make their success optional.
+- Always attempt to build the C extensions, but make their success
+  optional.
+- Fix a ``DeprecationWarning`` that could come from I and L objects in
+  Python 2 in pure-Python mode. See https://github.com/zopefoundation/BTrees/issues/79
 
 4.4.1 (2017-01-24)
 ------------------
