@@ -38,6 +38,7 @@ from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 250
@@ -102,35 +103,7 @@ intersectionPy = _set_operation(_intersection, OISetPy)
 weightedUnionPy = _set_operation(_weightedUnion, OISetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, OISetPy)
 
-try:
-    from ._OIBTree import OIBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    OIBucket = OIBucketPy
-    OISet = OISetPy
-    OIBTree = OIBTreePy
-    OITreeSet = OITreeSetPy
-    OITreeIterator = OITreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    weightedUnion = weightedUnionPy
-    weightedIntersection = weightedIntersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._OIBTree import OISet
-    from ._OIBTree import OIBTree
-    from ._OIBTree import OITreeSet
-    from ._OIBTree import OITreeIterator
-    from ._OIBTree import difference
-    from ._OIBTree import union
-    from ._OIBTree import intersection
-    from ._OIBTree import weightedUnion
-    from ._OIBTree import weightedIntersection
-
-
-Bucket = OIBucket
-Set = OISet
-BTree = OIBTree
-TreeSet = OITreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

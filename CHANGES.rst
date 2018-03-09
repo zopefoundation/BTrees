@@ -11,7 +11,10 @@
   https://github.com/zopefoundation/BTrees/pull/55
 - Fix the possibility of a rare crash in the C extension when
   deallocating items. See https://github.com/zopefoundation/BTrees/issues/75
-
+- Respect the ``PURE_PYTHON`` environment variable at runtime even if
+  the C extensions are available. See
+  https://github.com/zopefoundation/BTrees/issues/78
+- Always attempt to build the C extensions, but make their success optional.
 
 4.4.1 (2017-01-24)
 ------------------

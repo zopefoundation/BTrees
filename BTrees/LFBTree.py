@@ -39,6 +39,7 @@ from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 120
 _TREE_SIZE = 500
@@ -105,36 +106,7 @@ multiunionPy = _set_operation(_multiunion, LFSetPy)
 weightedUnionPy = _set_operation(_weightedUnion, LFSetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, LFSetPy)
 
-try:
-    from ._LFBTree import LFBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    LFBucket = LFBucketPy
-    LFSet = LFSetPy
-    LFBTree = LFBTreePy
-    LFTreeSet = LFTreeSetPy
-    LFTreeIterator = LFTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    multiunion = multiunionPy
-    weightedUnion = weightedUnionPy
-    weightedIntersection = weightedIntersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._LFBTree import LFSet
-    from ._LFBTree import LFBTree
-    from ._LFBTree import LFTreeSet
-    from ._LFBTree import LFTreeIterator
-    from ._LFBTree import difference
-    from ._LFBTree import union
-    from ._LFBTree import intersection
-    from ._LFBTree import multiunion
-    from ._LFBTree import weightedUnion
-    from ._LFBTree import weightedIntersection
-
-Bucket = LFBucket
-Set = LFSet
-BTree = LFBTree
-TreeSet = LFTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 

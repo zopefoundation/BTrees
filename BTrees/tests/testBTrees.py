@@ -11,10 +11,7 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import sys
 import unittest
-
-python3 = sys.version_info >= (3, )
 
 from BTrees.tests.common import permutations
 
@@ -171,6 +168,8 @@ class DegenerateBTree(unittest.TestCase):
         #      RuntimeWarning: tp_compare didn't return -1 or -2 for exception
         #    warnings, possibly due to memory corruption after a BTree
         #    goes insane.
+        # On CPython in PURE_PYTHON mode, this is a *slow* test, taking 15+s
+        # on a 2015 laptop.
         from BTrees.check import check
         t, keys = self._build_degenerate_tree()
         for oneperm in permutations(keys):
@@ -196,7 +195,7 @@ LP294788_ids = {}
 
 class ToBeDeleted(object):
     def __init__(self, id):
-        assert type(id) is int #we don't want to store any object ref here
+        assert isinstance(id, int) #we don't want to store any object ref here
         self.id = id
 
         global LP294788_ids
@@ -257,8 +256,6 @@ class BugFixes(unittest.TestCase):
         import gc
         import random
         from BTrees.OOBTree import OOBTree
-        from .._compat import _u
-        from .._compat import xrange
 
         t = OOBTree()
 
@@ -269,12 +266,12 @@ class BugFixes(unittest.TestCase):
         # /// BTree keys are integers, value is an object
         LP294788_ids = {}
         ids = {}
-        for i in xrange(1024):
-            if trandom.random() > 0.1 or len(ids) == 0:
+        for i in range(1024):
+            if trandom.random() > 0.1 or not ids:
                 #add
                 id = None
                 while id is None or id in ids:
-                    id = trandom.randint(0,1000000)
+                    id = trandom.randint(0, 1000000)
 
                 ids[id] = 1
                 t[id] = ToBeDeleted(id)
@@ -304,15 +301,15 @@ class BugFixes(unittest.TestCase):
         # /// BTree keys are integers, value is a tuple having an object
         LP294788_ids = {}
         ids = {}
-        for i in xrange(1024):
-            if trandom.random() > 0.1 or len(ids) == 0:
+        for i in range(1024):
+            if trandom.random() > 0.1 or not ids:
                 #add
                 id = None
                 while id is None or id in ids:
-                    id = trandom.randint(0,1000000)
+                    id = trandom.randint(0, 1000000)
 
                 ids[id] = 1
-                t[id] = (id, ToBeDeleted(id), _u('somename'))
+                t[id] = (id, ToBeDeleted(id), u'somename')
             else:
                 #del
                 keys = list(ids.keys())
@@ -341,12 +338,12 @@ class BugFixes(unittest.TestCase):
         t = OOBTree()
         LP294788_ids = {}
         ids = {}
-        for i in xrange(1024):
-            if trandom.random() > 0.1 or len(ids) == 0:
+        for i in range(1024):
+            if trandom.random() > 0.1 or not ids:
                 #add
                 id = None
                 while id is None or id in ids:
-                    id = ToBeDeleted(trandom.randint(0,1000000))
+                    id = ToBeDeleted(trandom.randint(0, 1000000))
 
                 ids[id] = 1
                 t[id] = 1
@@ -361,7 +358,7 @@ class BugFixes(unittest.TestCase):
         for id in ids:
             del t[id]
         #release all refs
-        ids = obj = id = None
+        ids = id = None
 
         #to be on the safe side run a full GC
         gc.collect()
@@ -375,13 +372,13 @@ class BugFixes(unittest.TestCase):
         t = OOBTree()
         LP294788_ids = {}
         ids = {}
-        for i in xrange(1024):
-            if trandom.random() > 0.1 or len(ids) == 0:
+        for i in range(1024):
+            if trandom.random() > 0.1 or not ids:
                 #add
                 id = None
                 while id is None or id in ids:
-                    id = trandom.randint(0,1000000)
-                    id = (id, ToBeDeleted(id), _u('somename'))
+                    id = trandom.randint(0, 1000000)
+                    id = (id, ToBeDeleted(id), u'somename')
 
                 ids[id] = 1
                 t[id] = 1
@@ -396,7 +393,7 @@ class BugFixes(unittest.TestCase):
         for id in ids:
             del t[id]
         #release all refs
-        ids = id = obj = key = None
+        ids = id = key = None
 
         #to be on the safe side run a full GC
         gc.collect()
@@ -412,7 +409,7 @@ class BugFixes(unittest.TestCase):
 
 class DoesntLikeBeingCompared:
 
-    def __cmp__(self,other):
+    def __cmp__(self, other):
         raise ValueError('incomparable')
     __lt__ = __le__ = __eq__ = __ne__ = __ge__ = __gt__ = __cmp__
 
@@ -457,13 +454,11 @@ class FamilyTest(unittest.TestCase):
         # this next bit illustrates an, um, "interesting feature".  If
         # the characteristics change to match the 64 bit version, please
         # feel free to change.
-        try: s.insert(BTrees.family32.maxint + 1)
-        except (TypeError, OverflowError): pass
-        else: self.assert_(False)
+        with self.assertRaises((TypeError, OverflowError)):
+            s.insert(BTrees.family32.maxint + 1)
 
-        try: s.insert(BTrees.family32.minint - 1)
-        except (TypeError, OverflowError): pass
-        else: self.assert_(False)
+        with self.assertRaises((TypeError, OverflowError)):
+            s.insert(BTrees.family32.minint - 1)
         self.check_pickling(BTrees.family32)
 
     def test64(self):
@@ -499,12 +494,12 @@ class FamilyTest(unittest.TestCase):
         # unpickling, whether from the same unpickler or different
         # unpicklers.
         import pickle
-        from .._compat import BytesIO
+        from io import BytesIO
 
         s = pickle.dumps((family, family))
         (f1, f2) = pickle.loads(s)
-        self.assertTrue(f1 is family)
-        self.assertTrue(f2 is family)
+        self.assertIs(f1, family)
+        self.assertIs(f2, family)
 
         # Using a single memo across multiple pickles:
         sio = BytesIO()

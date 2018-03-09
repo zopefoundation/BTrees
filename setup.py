@@ -11,21 +11,60 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-
+from __future__ import print_function
 __version__ = '4.4.1'
 
 import os
-import platform
 import sys
+
+from distutils.errors import CCompilerError
+from distutils.errors import DistutilsExecError
+from distutils.errors import DistutilsPlatformError
 
 from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
+from setuptools.command.build_ext import build_ext
 
-here = os.path.abspath(os.path.dirname(__file__))
-README = (open(os.path.join(here, 'README.rst')).read()
-          + '\n\n' +
-          open(os.path.join(here, 'CHANGES.rst')).read())
+
+def _read(fname):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, fname)) as f:
+        return f.read()
+
+
+README = _read("README.rst") + '\n\n' + _read('CHANGES.rst')
+
+
+class optional_build_ext(build_ext):
+    """This class subclasses build_ext and allows
+       the building of C extensions to fail.
+    """
+    def run(self):
+        try:
+            build_ext.run(self)
+        except DistutilsPlatformError as e:
+            self._unavailable(e)
+
+    def build_extension(self, ext):
+        try:
+            build_ext.build_extension(self, ext)
+        except (CCompilerError, DistutilsExecError, OSError) as e:
+            self._unavailable(e)
+
+    def _unavailable(self, e):
+        print('*' * 80)
+        print("""WARNING:
+        An optional code optimization (C extension) could not be compiled.
+        Optimizations for this package will not be available!""")
+        print()
+        print(e)
+        print('*' * 80)
+        if 'bdist_wheel' in sys.argv and not os.environ.get("PURE_PYTHON"):
+            # pip uses bdist_wheel by default, and hides the error output.
+            # Let this error percolate up so the user can see it.
+            # pip will then go ahead and run 'setup.py install' directly.
+            raise
 
 # Include directories for C extensions
 # Sniff the location of the headers in 'persistent' or fall back
@@ -48,6 +87,7 @@ class ModuleHeaderDir(object):
         require(self._require_spec)
         path = resource_filename(self._require_spec, self._where)
         return os.path.abspath(path)
+
 
 include = [ModuleHeaderDir('persistent')]
 
@@ -87,58 +127,47 @@ def BTreeExtension(family):
         kwargs["define_macros"] = [('EXCLUDE_INTSET_SUPPORT', None)]
     return Extension(name, sources, **kwargs)
 
-py_impl = getattr(platform, 'python_implementation', lambda: None)
-pure_python = os.environ.get('PURE_PYTHON', False)
-is_pypy = py_impl() == 'PyPy'
-is_jython = 'java' in sys.platform
 
-# Jython cannot build the C optimizations, while on PyPy they are
-# anti-optimizations (the C extension compatibility layer is known-slow,
-# and defeats JIT opportunities).
-if pure_python or is_pypy or is_jython:
-    ext_modules = []
-else:
+ext_modules = [BTreeExtension(family) for family in FAMILIES]
 
-    ext_modules = [BTreeExtension(family) for family in FAMILIES]
+REQUIRES = [
+    # 4.1.0 is the first version that PURE_PYTHON can run
+    # ZODB tests
+    'persistent >= 4.1.0',
+    'zope.interface',
+]
 
-if sys.version_info[0] >= 3:
-    REQUIRES = [
-        'persistent>=4.0.4',
-        'zope.interface',
-    ]
-else:
-    REQUIRES = [
-        'persistent',
-        'zope.interface',
-    ]
-TESTS_REQUIRE = REQUIRES + ['transaction']
+TESTS_REQUIRE = [
+    'transaction',
+    'zope.testrunner',
+]
 
 setup(name='BTrees',
       version=__version__,
       description='Scalable persistent object containers',
       long_description=README,
       classifiers=[
-        "Development Status :: 6 - Mature",
-        "License :: OSI Approved :: Zope Public License",
-        "Programming Language :: Python",
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Framework :: ZODB",
-        "Topic :: Database",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: Unix",
-        ],
+          "Development Status :: 6 - Mature",
+          "License :: OSI Approved :: Zope Public License",
+          "Programming Language :: Python",
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4',
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
+          "Programming Language :: Python :: Implementation :: CPython",
+          "Programming Language :: Python :: Implementation :: PyPy",
+          "Framework :: ZODB",
+          "Topic :: Database",
+          "Topic :: Software Development :: Libraries :: Python Modules",
+          "Operating System :: Microsoft :: Windows",
+          "Operating System :: Unix",
+      ],
       author="Zope Foundation",
       author_email="zodb-dev@zope.org",
-      url="http://packages.python.org/BTrees",
+      url="https://github.com/zopefoundation/BTrees",
       license="ZPL 2.1",
       platforms=["any"],
       packages=find_packages(),
@@ -147,14 +176,21 @@ setup(name='BTrees',
       ext_modules=ext_modules,
       setup_requires=['persistent'],
       extras_require={
-        'test': TESTS_REQUIRE,
-        'ZODB': ['ZODB'],
-        'testing': TESTS_REQUIRE + ['nose', 'coverage'],
-        'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
+          'test': TESTS_REQUIRE,
+          'ZODB': [
+              'ZODB',
+          ],
+          'docs': [
+              'Sphinx',
+              'repoze.sphinx.autointerface',
+          ],
       },
       test_suite="BTrees.tests",
       tests_require=TESTS_REQUIRE,
       install_requires=REQUIRES,
+      cmdclass={
+          'build_ext': optional_build_ext,
+      },
       entry_points="""\
       """
-      )
+)

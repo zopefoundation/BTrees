@@ -29,9 +29,8 @@ class TestBTreesUnicode(unittest.TestCase):
         #setup an OOBTree with some unicode strings
         from BTrees.OOBTree import OOBTree
         from BTrees._compat import _bytes
-        from BTrees._compat import _u
 
-        self.s = _u(b'dreit\xe4gigen', 'latin1')
+        self.s = b'dreit\xe4gigen'.decode('latin1')
 
         self.data = [(b'alien', 1),
                      (b'k\xf6nnten', 2),
@@ -39,23 +38,22 @@ class TestBTreesUnicode(unittest.TestCase):
                      (b'future', 4),
                      (b'quick', 5),
                      (b'zerst\xf6rt', 6),
-                     (_u(b'dreit\xe4gigen','latin1'), 7),
+                     (u'dreit\xe4gigen', 7),
                     ]
 
         self.tree = OOBTree()
         for k, v in self.data:
             if isinstance(k, _bytes):
-                k = _u(k, 'latin1')
+                k = k.decode('latin1')
             self.tree[k] = v
 
     @_skip_under_Py3k
     def testAllKeys(self):
         # check every item of the tree
-        from BTrees._compat import _u
         from BTrees._compat import _bytes
         for k, v in self.data:
             if isinstance(k, _bytes):
-                k = _u(k, encoding)
+                k = k.decode(encoding)
             self.assertTrue(k in self.tree)
             self.assertEqual(self.tree[k], v)
 

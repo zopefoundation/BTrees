@@ -38,6 +38,7 @@ from ._base import union as _union
 from ._base import weightedIntersection as _weightedIntersection
 from ._base import weightedUnion as _weightedUnion
 from ._base import _fix_pickle
+from ._compat import import_c_extension
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 250
@@ -103,34 +104,7 @@ intersectionPy = _set_operation(_intersection, OLSetPy)
 weightedUnionPy = _set_operation(_weightedUnion, OLSetPy)
 weightedIntersectionPy = _set_operation(_weightedIntersection, OLSetPy)
 
-try:
-    from ._OLBTree import OLBucket
-except ImportError: #pragma NO COVER w/ C extensions
-    OLBucket = OLBucketPy
-    OLSet = OLSetPy
-    OLBTree = OLBTreePy
-    OLTreeSet = OLTreeSetPy
-    OLTreeIterator = OLTreeIteratorPy
-    difference = differencePy
-    union = unionPy
-    intersection = intersectionPy
-    weightedUnion = weightedUnionPy
-    weightedIntersection = weightedIntersectionPy
-else: #pragma NO COVER w/o C extensions
-    from ._OLBTree import OLSet
-    from ._OLBTree import OLBTree
-    from ._OLBTree import OLTreeSet
-    from ._OLBTree import OLTreeIterator
-    from ._OLBTree import difference
-    from ._OLBTree import union
-    from ._OLBTree import intersection
-    from ._OLBTree import weightedUnion
-    from ._OLBTree import weightedIntersection
-
-Bucket = OLBucket
-Set = OLSet
-BTree = OLBTree
-TreeSet = OLTreeSet
+import_c_extension(globals())
 
 _fix_pickle(globals(), __name__)
 
