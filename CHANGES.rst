@@ -1,10 +1,11 @@
 ``BTrees`` Changelog
 ====================
 
-4.4.2 (unreleased)
+4.5.0 (unreleased)
 ------------------
 
-- Add support for Python 3.6.
+- Add support for Python 3.6 and 3.7.
+- Drop support for Python 3.3.
 - Raise an ``ImportError`` consistently on Python 3 if the C extension for
   BTrees is used but the ``persistent`` C extension is not available.
   Previously this could result in an odd ``AttributeError``. See
