@@ -13,11 +13,14 @@ matrix:
           python: 3.5
         - os: linux
           python: 3.6
-        - os: linux
-          python: 3.7-dev
+          env: WITH_COVERAGE=1
         - os: linux
           python: 3.6
-          env: PURE_PYTHON=1
+          env:
+            - PURE_PYTHON=1
+            - WITH_COVERAGE=1
+        - os: linux
+          python: 3.7-dev
         - os: linux
           python: pypy
         - os: linux
@@ -64,14 +67,14 @@ install:
     # (https://travis-ci.org/zopefoundation/BTrees/jobs/192340692) so
     # we install with pip manually.
     - pip install -U persistent
-    - pip install coveralls coverage
+    - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
     - pip install -e .[test,ZODB]
 script:
-    - coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress
+    - if [[ "$WITH_COVERAGE" == "1" ]]; coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose; else zope-testrunner --test-path=. --auto-color --auto-progress; fi
 notifications:
     email: false
 after_success:
-    - coveralls
+    - if [[ "$WITH_COVERAGE" == "1" ]]; coveralls; fi
     - echo [distutils]                                  > ~/.pypirc
     - echo index-servers = pypi                        >> ~/.pypirc
     - echo [pypi]                                      >> ~/.pypirc
