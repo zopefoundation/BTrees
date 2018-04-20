@@ -67,7 +67,7 @@ install:
     - pip install coveralls coverage
     - pip install -e .[test,ZODB]
 script:
-    - coverage run zope-testrunner --test-path=. --auto-color --auto-progress
+    - coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress
 notifications:
     email: false
 after_success:
