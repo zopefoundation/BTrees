@@ -74,7 +74,7 @@ script:
       if [[ "$WITH_COVERAGE" == "1" ]]; then
         coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose;
       else
-        zope-testrunner --test-path=. --auto-color --auto-progress;
+        zope-testrunner --test-path=. --auto-color --auto-progress --verbose;
       fi
 notifications:
     email: false
