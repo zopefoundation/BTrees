@@ -70,7 +70,12 @@ install:
     - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
     - pip install -e .[test,ZODB]
 script:
-    - if [[ "$WITH_COVERAGE" == "1" ]]; coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose; else zope-testrunner --test-path=. --auto-color --auto-progress; fi
+    - |
+      if [[ "$WITH_COVERAGE" == "1" ]];
+        coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose;
+      else
+        zope-testrunner --test-path=. --auto-color --auto-progress;
+      fi
 notifications:
     email: false
 after_success:
