@@ -64,12 +64,14 @@ install:
     # (https://travis-ci.org/zopefoundation/BTrees/jobs/192340692) so
     # we install with pip manually.
     - pip install -U persistent
+    - pip install coveralls coverage
     - pip install -e .[test,ZODB]
 script:
-    - zope-testrunner --test-path=. --auto-color --auto-progress
+    - coverage run zope-testrunner --test-path=. --auto-color --auto-progress
 notifications:
     email: false
 after_success:
+    - coveralls
     - echo [distutils]                                  > ~/.pypirc
     - echo index-servers = pypi                        >> ~/.pypirc
     - echo [pypi]                                      >> ~/.pypirc
