@@ -12,7 +12,7 @@
 #
 ##############################################################################
 from __future__ import print_function
-__version__ = '4.4.1'
+version = '4.4.1'
 
 import os
 import sys
@@ -143,7 +143,7 @@ TESTS_REQUIRE = [
 ]
 
 setup(name='BTrees',
-      version=__version__,
+      version=version,
       description='Scalable persistent object containers',
       long_description=README,
       classifiers=[
