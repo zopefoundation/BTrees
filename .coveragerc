@@ -1,3 +1,6 @@
+[run]
+source = BTrees
+
 [report]
 exclude_lines =
     # pragma: no cover
