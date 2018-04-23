@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.5.0 (unreleased)
+4.5.0 (2018-04-23)
 ------------------
 
 - Add support for Python 3.6 and 3.7.
