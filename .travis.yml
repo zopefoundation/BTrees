@@ -39,7 +39,10 @@ matrix:
           env: TERRYFY_PYTHON='macpython 3.5'
         - os: osx
           language: generic
-          env: TERRYFY_PYTHON='macpython 3.6.0'
+          env: TERRYFY_PYTHON='macpython 3.6.1'
+        - os: osx
+          language: generic
+          env: TERRYFY_PYTHON='macpython 3.7.0'
         - services:
             - docker
           env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
@@ -61,12 +64,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then get_python_environment $TERRYFY_PYTHON venv; fi
 install:
     - pip install -U pip setuptools
-    # persistent is a setup_requires, which gets downloaded by
-    # setuptools, not pip. But macpython 3.6.0 setuptools has trouble with SSL on
-    # Travis CI
-    # (https://travis-ci.org/zopefoundation/BTrees/jobs/192340692) so
-    # we install with pip manually.
-    - pip install -U persistent
     - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
     - pip install -e .[test,ZODB]
 script:
