@@ -4,7 +4,10 @@
 4.5.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Produce binary wheels for Python 3.7.
+
+- Use pyproject.toml to specify build dependencies. This requires pip
+  18 or later to build from source.
 
 
 4.5.0 (2018-04-23)
