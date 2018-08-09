@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.5.1 (unreleased)
+4.5.1 (2018-08-09)
 ------------------
 
 - Produce binary wheels for Python 3.7.
