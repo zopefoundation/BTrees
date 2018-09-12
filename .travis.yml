@@ -10,7 +10,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source terryfy/travis_tools.sh; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then get_python_environment $TERRYFY_PYTHON venv; fi
 install:
-    - pip install -U pip setuptools
+    - pip install -U pip 'setuptools==40.0.0'
     - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
     - python setup.py -v -v -v build_ext
     - pip install -vvv -e .[test,ZODB]
