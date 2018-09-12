@@ -12,6 +12,7 @@ before_install:
 install:
     - pip install -U pip setuptools
     - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
+    - python setup.py -v -v -v build_ext
     - pip install -vvv -e .[test,ZODB]
 script:
     - |
