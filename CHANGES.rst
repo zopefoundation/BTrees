@@ -4,7 +4,7 @@
 4.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix tests against persistent 4.4.
 
 
 4.5.1 (2018-08-09)
