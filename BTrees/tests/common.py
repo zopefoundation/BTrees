@@ -365,6 +365,7 @@ class MappingBase(Base):
         t = self._makeOne()
         for i in range(5):
             t[i] = i
+        t._p_oid = b'12345678'
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
@@ -374,9 +375,15 @@ class MappingBase(Base):
             self.assertTrue(r.startswith("BTrees"))
             self.assertTrue(r.endswith(repr(t.items()) + ')'), r)
         else:
-            self.assertEqual(r[:8], '<BTrees.')
+            # persistent-4.4 changed the default reprs, adding
+            # oid and jar reprs, but eliminating the module prefix
+            # in one implementation
+            self.assertIn('BTree object at', r)
+            self.assertIn('oid', r)
+            self.assertIn('12345678', r)
+
         # Make sure it's the same between Python and C
-        self.assertTrue('Py' not in r)
+        self.assertNotIn('Py', r)
 
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -1379,6 +1386,7 @@ class NormalSetTests(Base):
         t = self._makeOne()
         for i in range(5):
             t.add(i)
+        t._p_oid = b'12345678'
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
@@ -1387,9 +1395,14 @@ class NormalSetTests(Base):
         if 'TreeSet' not in r:
             self.assertTrue(r.endswith("Set(%r)" % t.keys()))
         else:
-            self.assertEqual(r[:7], '<BTrees', r)
+            # persistent-4.4 changed the default reprs, adding
+            # oid and jar reprs, but eliminating the module prefix
+            # in one implementation
+            self.assertIn('TreeSet object at', r)
+            self.assertIn('oid', r)
+            self.assertIn('12345678', r)
         # Make sure it's the same between Python and C
-        self.assertTrue('Py' not in r)
+        self.assertNotIn('Py', r)
 
 
     def testInsertReturnsValue(self):
