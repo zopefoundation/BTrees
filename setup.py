@@ -173,7 +173,9 @@ setup(name='BTrees',
       url="https://github.com/zopefoundation/BTrees",
       license="ZPL 2.1",
       platforms=["any"],
-      packages=find_packages(),
+      # Make sure we don't get 'terryfy' included in wheels
+      # created on macOS CI
+      packages=find_packages(include=("BTrees",)),
       include_package_data=True,
       zip_safe=False,
       ext_modules=ext_modules,
