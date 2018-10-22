@@ -140,7 +140,7 @@ REQUIRES = [
 TESTS_REQUIRE = [
     # Our tests check for the new repr strings
     # generated in persistent 4.4.
-    'persistent >= 4.4.2',
+    'persistent >= 4.4.3',
     'transaction',
     'zope.testrunner',
 ]

@@ -376,11 +376,10 @@ class MappingBase(Base):
             self.assertTrue(r.endswith(repr(t.items()) + ')'), r)
         else:
             # persistent-4.4 changed the default reprs, adding
-            # oid and jar reprs, but eliminating the module prefix
-            # in one implementation
+            # oid and jar reprs
+            self.assertIn("<BTrees.", r)
             self.assertIn('BTree object at', r)
-            self.assertIn('oid', r)
-            self.assertIn('12345678', r)
+            self.assertIn('oid 0x3132333435363738', r)
 
         # Make sure it's the same between Python and C
         self.assertNotIn('Py', r)
@@ -1396,11 +1395,11 @@ class NormalSetTests(Base):
             self.assertTrue(r.endswith("Set(%r)" % t.keys()))
         else:
             # persistent-4.4 changed the default reprs, adding
-            # oid and jar reprs, but eliminating the module prefix
-            # in one implementation
+            # oid and jar reprs
+            self.assertIn("<BTrees.", r)
             self.assertIn('TreeSet object at', r)
-            self.assertIn('oid', r)
-            self.assertIn('12345678', r)
+            self.assertIn('oid 0x3132333435363738', r)
+
         # Make sure it's the same between Python and C
         self.assertNotIn('Py', r)
 
