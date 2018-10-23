@@ -6,6 +6,10 @@
 
 - Fix tests against persistent 4.4.
 
+- Stop accidentally installing the 'terryfy' package in macOS wheels.
+  See `issue 98
+  <https://github.com/zopefoundation/BTrees/issues/98>`_.
+
 
 4.5.1 (2018-08-09)
 ------------------
