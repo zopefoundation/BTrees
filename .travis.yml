@@ -1,5 +1,5 @@
 language: python
-sudo: false
+dist: xenial
 matrix:
     include:
         - os: linux
@@ -7,8 +7,6 @@ matrix:
         - os: linux
           python: 2.7
           env: PURE_PYTHON=1
-        - os: linux
-          python: 3.4
         - os: linux
           python: 3.5
         - os: linux
@@ -21,8 +19,6 @@ matrix:
             - WITH_COVERAGE=1
         - os: linux
           python: 3.7
-          dist: xenial
-          sudo: true
         - os: linux
           python: pypy
         - os: linux
@@ -33,9 +29,6 @@ matrix:
         - os: osx
           language: generic
           env: TERRYFY_PYTHON='macpython 2.7'
-        - os: osx
-          language: generic
-          env: TERRYFY_PYTHON='macpython 3.4'
         - os: osx
           language: generic
           env: TERRYFY_PYTHON='macpython 3.5'
