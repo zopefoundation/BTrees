@@ -1,8 +1,10 @@
 ``BTrees`` Changelog
 ====================
 
-4.5.2 (unreleased)
+4.6.0 (unreleased)
 ------------------
+
+- Drop support for Python 3.4.
 
 - Fix tests against persistent 4.4.
 
