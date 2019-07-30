@@ -12,7 +12,7 @@
 #
 ##############################################################################
 from __future__ import print_function
-version = '4.6.0.dev0'
+version = '4.6.0'
 
 import os
 import sys

@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.6.0 (unreleased)
+4.6.0 (2019-07-30)
 ------------------
 
 - Drop support for Python 3.4.
