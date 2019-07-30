@@ -72,5 +72,18 @@ class TestBTreesUnicode(unittest.TestCase):
             self.assertTrue(isinstance(k, str))
             self.assertEqual(self.tree[k], v)
 
+
+class TestBTreeBucketUnicode(unittest.TestCase):
+
+    def testUnicodeRepr(self):
+        # Regression test for
+        # https://github.com/zopefoundation/BTrees/issues/106
+        items = [(1, u'\uaabb')]
+        from BTrees.OOBTree import OOBucket
+        bucket = OOBucket(items)
+        self.assertEqual(repr(bucket),
+                         'BTrees.OOBTree.OOBucket(%s)' % repr(items))
+
+
 def test_suite():
-    return unittest.makeSuite(TestBTreesUnicode)
+    return unittest.defaultTestLoader.loadTestsFromName(__name__)
