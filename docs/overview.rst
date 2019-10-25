@@ -258,12 +258,12 @@ For example,
 
 .. doctest::
 
-   class Mine:
-       def __cmp__(self, other):
-           if other.__class__ is Mine:
-               return cmp(self.data, other.data)
-           else:
-               return cmp(self.data, other)
+   >>> class Mine:
+   ...     def __cmp__(self, other):
+   ...         if other.__class__ is Mine:
+   ...             return cmp(self.data, other.data)
+   ...         else:
+   ...             return cmp(self.data, other)
 
 It's quite possible there that the :keyword:`else` clause allows a result to be
 computed based on memory address.  The bug won't show up until a BTree-based
@@ -395,11 +395,11 @@ may want to override the default sizes.  You can do this by
 subclassing any of the BTree (or TreeSet) classes and specifying new
 values for ``max_leaf_size`` or ``max_internal_size`` in your subclass::
 
-     import BTrees.OOBTree
+     >>> import BTrees.OOBTree
 
-     class MyBTree(BTrees.OOBTree.BTree):
-         max_leaf_size = 500
-         max_internal_size = 1000
+     >>> class MyBTree(BTrees.OOBTree.BTree):
+     ...     max_leaf_size = 500
+     ...     max_internal_size = 1000
 
 ``max_leaf_size`` is used for leaf nodes in a BTree, either Buckets or
 Sets.  ``max_internal_size`` is used for internal nodes, either BTrees
@@ -431,15 +431,17 @@ Repairing a damaged BTree is usually best done by making a copy of it. For
 example, if *self.data* is bound to a corrupted IOBTree,
 
 .. doctest::
+   :options: +SKIP
 
-   self.data = IOBTree(self.data)
+   >>> self.data = IOBTree(self.data)
 
 usually suffices.  If object identity needs to be preserved,
 
 .. doctest::
+   :options: +SKIP
 
-   acopy = IOBTree(self.data)
-   self.data.clear()
-   self.data.update(acopy)
+   >>> acopy = IOBTree(self.data)
+   >>> self.data.clear()
+   >>> self.data.update(acopy)
 
 does the same, but leaves *self.data* bound to the same object.
