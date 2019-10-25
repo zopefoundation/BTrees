@@ -103,16 +103,12 @@ exclusive of the range's endpoints.
    1
    >>> t.minKey(1.5)  # smallest key >= 1.5
    2
-   >>> for k in t.keys():
-   ...     print k,
-   1 2 3 4
-   >>> for k in t:    # new in ZODB 3.3
-   ...     print k,
-   1 2 3 4
-   >>> for pair in t.iteritems():  # new in ZODB 3.3
-   ...     print pair,
-   ...
-   (1, 'red') (2, 'green') (3, 'blue') (4, 'spades')
+   >>> [k for k in t.keys()]
+   [1, 2, 3, 4]
+   >>> [k for k in t]    # new in ZODB 3.3
+   [1, 2, 3, 4]
+   >>> [pair for pair in t.iteritems()]  # new in ZODB 3.3
+   [(1, 'red'), (2, 'green'), (3, 'blue'), (4, 'spades')]
    >>> t.has_key(4)  # returns a true value, but exactly what undefined
    2
    >>> t.has_key(5)
@@ -242,11 +238,11 @@ structure is stored to a database, though.
    ...     pass
    ...
    >>> a, b = C(), C()
-   >>> print a < b   # this may print 0 if you try it
+   >>> print(a < b)   # this may print 0 if you try it
    True
    >>> del a, b
    >>> a, b = C(), C()
-   >>> print a < b   # and this may print 0 or 1
+   >>> print(a < b)   # and this may print 0 or 1
    False
    >>>
 
@@ -334,9 +330,13 @@ Example
    >>> list(s)
    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
    >>> for i in s:  # the output is undefined
-   ...     print i,
+   ...     print(i)
    ...     s.remove(i)
-   0 2 4 6 8
+   0
+   2
+   4
+   6
+   8
    Traceback (most recent call last):
      File "<stdin>", line 1, in ?
    RuntimeError: the bucket being iterated changed size
@@ -353,9 +353,18 @@ of the keys.  Example
    >>> from BTrees.IIBTree import *
    >>> s = IISet(range(10))
    >>> for i in list(s.keys()):  # this is well defined
-   ...     print i,
+   ...     print(i)
    ...     s.remove(i)
-   0 1 2 3 4 5 6 7 8 9
+   0
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   9
    >>> list(s)
    []
    >>>
