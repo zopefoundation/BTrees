@@ -1,5 +1,5 @@
-:mod:`BTrees` API Reference
-===========================
+API Reference
+=============
 
 
 Protocol APIs
@@ -106,3 +106,7 @@ Utilities
      :members:
 
      .. automethod:: __call__
+
+
+.. automodule:: BTrees.check
+    :members:
