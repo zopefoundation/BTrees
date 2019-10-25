@@ -106,3 +106,7 @@ Utilities
      :members:
 
      .. automethod:: __call__
+
+
+.. automodule:: BTrees.check
+    :members:

@@ -21,7 +21,7 @@ need.  The most important case is where you want to store a very large
 mapping.  When a Python dictionary is accessed in a ZODB, the whole
 dictionary has to be unpickled and brought into memory.  If you're storing
 something very large, such as a 100,000-entry user database, unpickling
-such a large object will be slow.  BTrees are a balanced tree data
+such a large object will be slow. BTrees are a balanced tree data
 structure that behave like a mapping but distribute keys throughout a
 number of tree nodes.  The nodes are stored in sorted order (this has
 important consequences -- see below).  Nodes are then only unpickled and
@@ -39,10 +39,10 @@ arbitrary objects as values.
 
 The four data structures provide by each module are a BTree, a Bucket, a
 TreeSet, and a Set.  The BTree and Bucket types are mappings and support
-all the usual mapping methods, e.g. :func:`update` and :func:`keys`.  The
+all the usual mapping methods, e.g. :func:`~BTrees.Interfaces.ISetMutable.update` and :func:`~BTrees.Interfaces.IKeyed.keys`.  The
 TreeSet and Set types are similar to mappings but they have no values; they
 support the methods that make sense for a mapping with no keys, e.g.
-:func:`keys` but not :func:`items`.  The Bucket and Set types are the
+:func:`~BTrees.Interfaces.IKeyed.keys` but not :func:`~BTrees.Interfaces.IMinimalDictionary.items`.  The Bucket and Set types are the
 individual building blocks for BTrees and TreeSets, respectively.  A Bucket
 or Set can be used when you are sure that it will have few elements.  If
 the data structure will grow large, you should use a BTree or TreeSet. Like
@@ -54,11 +54,11 @@ are multi-level tree structures with much better (logarithmic) worst- case
 time bounds, and the tree structure is built out of multiple objects, which
 ZODB can load individually as needed.
 
-The five modules are named :mod:`OOBTree`, :mod:`IOBTree`, :mod:`OIBTree`,
-:mod:`IIBTree`, and (new in ZODB 3.4) :mod:`IFBTree`.  The two letter
-prefixes are repeated in the data types names.  The :mod:`BTrees.OOBTree`
-module defines the following types: :class:`OOBTree`, :class:`OOBucket`,
-:class:`OOSet`, and :class:`OOTreeSet`. Similarly, the other four modules
+The five modules are named :mod:`~BTrees.OOBTree`, :mod:`~BTrees.IOBTree`, :mod:`~BTrees.OIBTree`,
+:mod:`~BTrees.IIBTree`, and (new in ZODB 3.4) :mod:`~BTrees.IFBTree`.  The two letter
+prefixes are repeated in the data types names.  The :mod:`~BTrees.OOBTree`
+module defines the following types: :class:`~BTrees.OOBTree.OOBTree`, :class:`~BTrees.OOBTree.OOBucket`,
+:class:`~BTrees.OOBTree.OOSet`, and :class:`~BTrees.OOBTree.OOTreeSet`. Similarly, the other four modules
 each define their own variants of those four types.
 
 The :func:`keys`, :func:`values`, and :func:`items` methods on BTree and
@@ -140,17 +140,17 @@ exclusive of the range's endpoints.
 
 
 Each of the modules also defines some functions that operate on BTrees --
-:func:`difference`, :func:`union`, and :func:`intersection`.  The
-:func:`difference` function returns a Bucket, while the other two methods return
+:func:`~BTrees._base.difference`, :func:`~BTrees._base.union`, and :func:`~BTrees._base.intersection`.  The
+:func:`~BTrees._base.difference` function returns a Bucket, while the other two methods return
 a Set. If the keys are integers, then the module also defines
-:func:`multiunion`.  If the values are integers or floats, then the module also
-defines :func:`weightedIntersection` and :func:`weightedUnion`.  The function
+:func:`~BTrees._base.multiunion`.  If the values are integers or floats, then the module also
+defines :func:`~BTrees._base.weightedIntersection` and :func:`~BTrees._base.weightedUnion`.  The function
 doc strings describe each function briefly.
 
 .. % XXX I'm not sure all of the following is actually correct.  The
 .. % XXX set functions have complicated behavior.
 
-``BTrees/Interfaces.py`` defines the operations, and is the official
+:mod:`~BTrees.Interfaces` defines the operations, and is the official
 documentation.  Note that the interfaces don't define the concrete types
 returned by most operations, and you shouldn't rely on the concrete types that
 happen to be returned:  stick to operations guaranteed by the interface.  In
@@ -205,7 +205,7 @@ structure.  Don't try to do that, and you don't have to worry about it.
 Another potential problem is mutability:  when a key is inserted in a BTree-
 based structure, it must retain the same order relative to the other keys over
 time.  This is easy to run afoul of if you use mutable objects as keys.  For
-example, lists supply a total ordering, and then 
+example, lists supply a total ordering, and then
 
 .. doctest::
 
@@ -248,7 +248,7 @@ that are instances of a user-defined class that doesn't supply its own
 :meth:`__cmp__` method.  Python compares such instances by memory address.  This
 is fine if such instances are used as keys in temporary BTree-based structures
 used only in a single program run.  It can be disastrous if that BTree-based
-structure is stored to a database, though. 
+structure is stored to a database, though.
 
 .. doctest::
    :options: +SKIP
@@ -273,7 +273,7 @@ Another problem occurs with instances of classes that do define :meth:`__cmp__`,
 but define it incorrectly.  It's possible but rare for a custom :meth:`__cmp__`
 implementation to violate one of the three required formal properties directly.
 It's more common for it to "fall back" to address-based comparison by mistake.
-For example, 
+For example,
 
 .. doctest::
 
@@ -309,8 +309,8 @@ great care:
    Any part of a comparison implementation that relies (explicitly or implicitly)
    on an address-based comparison result will eventually cause serious failure.
 
-#. Do not use :class:`Persistent` objects as keys, or objects of a subclass of
-   :class:`Persistent`.
+#. Do not use :class:`~persistent.Persistent` objects as keys, or objects of a subclass of
+   :class:`~persistent.Persistent`.
 
 That last item may be surprising.  It stems from details of how conflict
 resolution is implemented:  the states passed to conflict resolution do not
@@ -318,15 +318,15 @@ materialize persistent subobjects (if a persistent object P is a key in a BTree,
 then P is a subobject of the bucket containing P).  Instead, if an object O
 references a persistent subobject P directly, and O is involved in a conflict,
 the states passed to conflict resolution contain an instance of an internal
-:class:`PersistentReference` stub class everywhere O references P. Two
-:class:`PersistentReference` instances compare equal if and only if they
+:class:`~persistent.PersistentReference` stub class everywhere O references P. Two
+:class:`~persistent.PersistentReference` instances compare equal if and only if they
 "represent" the same persistent object; when they're not equal, they compare by
 memory address, and, as explained before, memory-based comparison must never
 happen in a sane persistent BTree.  Note that it doesn't help in this case if
-your :class:`Persistent` subclass defines a sane :meth:`__cmp__` method:
+your :class:`~persistent.Persistent` subclass defines a sane :meth:`__cmp__` method:
 conflict resolution doesn't know about your class, and so also doesn't know
 about its :meth:`__cmp__` method.  It only sees instances of the internal
-:class:`PersistentReference` stub class.
+:class:`~persistent.PersistentReference` stub class.
 
 
 Iteration and Mutation
@@ -419,28 +419,28 @@ size nodes, connected in multiple ways via three distinct kinds of C pointers.
 There are some tools available to help check internal consistency of a BTree as
 a whole.
 
-Most generally useful is the :mod:`BTrees.check` module.  The
-:func:`check.check` function examines a BTree (or Bucket, Set, or TreeSet) for
+Most generally useful is the :mod:`~BTrees.check` module.  The
+:func:`~BTrees.check.check` function examines a BTree (or Bucket, Set, or TreeSet) for
 value-based consistency, such as that the keys are in strictly increasing order.
-See the function docstring for details. The :func:`check.display` function
+See the function docstring for details. The :func:`~BTrees.check.display` function
 displays the internal structure of a BTree.
 
 BTrees and TreeSets also have a :meth:`_check` method.  This verifies that the
 (possibly many) internal pointers in a BTree or TreeSet are mutually consistent,
 and raises :exc:`AssertionError` if they're not.
 
-If a :func:`check.check` or :meth:`_check` call fails, it may point to a bug in
+If a :func:`~BTrees.check.check` or :meth:`_check` call fails, it may point to a bug in
 the implementation of BTrees or conflict resolution, or may point to database
 corruption.
 
 Repairing a damaged BTree is usually best done by making a copy of it. For
-example, if *self.data* is bound to a corrupted IOBTree, 
+example, if *self.data* is bound to a corrupted IOBTree,
 
 .. doctest::
 
    self.data = IOBTree(self.data)
 
-usually suffices.  If object identity needs to be preserved, 
+usually suffices.  If object identity needs to be preserved,
 
 .. doctest::
 
@@ -451,12 +451,9 @@ usually suffices.  If object identity needs to be preserved,
 does the same, but leaves *self.data* bound to the same object.
 
 
-
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
