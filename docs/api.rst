@@ -1,5 +1,5 @@
-:mod:`BTrees` API Reference
-===========================
+API Reference
+=============
 
 
 Protocol APIs
