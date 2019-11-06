@@ -4,7 +4,7 @@
 4.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add support for Python 3.8.
 
 
 4.6.0 (2019-07-30)
