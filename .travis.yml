@@ -1,90 +1,103 @@
 language: python
-dist: xenial
-matrix:
-    include:
-        - os: linux
-          python: 2.7
-        - os: linux
-          python: 2.7
-          env: PURE_PYTHON=1
-        - os: linux
-          python: 3.5
-        - os: linux
-          python: 3.6
-          env: WITH_COVERAGE=1
-        - os: linux
-          python: 3.6
-          env:
-            - PURE_PYTHON=1
-            - WITH_COVERAGE=1
-        - os: linux
-          python: 3.7
-        - os: linux
-          python: 3.8
-        - os: linux
-          python: pypy
-        - os: linux
-          python: pypy3
-        # It's important to use 'macpython' builds to get the least
-        # restrictive wheel tag. It's also important to avoid
-        # 'homebrew 3' because it floats instead of being a specific version.
-        - os: osx
-          language: generic
-          env: TERRYFY_PYTHON='macpython 2.7'
-        - os: osx
-          language: generic
-          env: TERRYFY_PYTHON='macpython 3.5'
-        - os: osx
-          language: generic
-          env: TERRYFY_PYTHON='macpython 3.6.1'
-        - os: osx
-          language: generic
-          env: TERRYFY_PYTHON='macpython 3.7.0'
-        - services:
-            - docker
-          env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-          before_install:
-            - if [[ $TRAVIS_TAG ]]; then bash .manylinux.sh; fi
-            - exit 0
-        - services:
-            - docker
-          env:
-            - DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
-            - PRE_CMD=linux32
-          before_install:
-            - if [[ $TRAVIS_TAG ]]; then bash .manylinux.sh; fi
-            - exit 0
-
-before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/MacPython/terryfy; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source terryfy/travis_tools.sh; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then get_python_environment $TERRYFY_PYTHON venv; fi
-install:
-    - pip install -U pip setuptools
-    - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
-    - pip install -e .[test,ZODB]
-script:
-    - |
-      if [[ "$WITH_COVERAGE" == "1" ]]; then
-        coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose;
-      else
-        zope-testrunner --test-path=. --auto-color --auto-progress --verbose;
-      fi
-notifications:
-    email: false
-after_success:
-    - if [[ "$WITH_COVERAGE" == "1" ]]; then coveralls; fi
-    - echo [distutils]                                  > ~/.pypirc
-    - echo index-servers = pypi                        >> ~/.pypirc
-    - echo [pypi]                                      >> ~/.pypirc
-    - echo username=zope.wheelbuilder                  >> ~/.pypirc
-    - echo password=$PYPIPASSWORD                      >> ~/.pypirc
-    - if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then pip install twine; fi
-    - if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then python setup.py bdist_wheel; fi
-    - if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then twine upload dist/*; fi
 
 env:
-    global:
-        secure: "Oh5gRJ+Fo8ZNmCkdrffpx201EPyTr9iUXmv6VqJMTebrzQpFdSWUVcANRmAzyfdyk3Wo0IjifVfWsKc+hvtbFmXZiLRFyEgoCUmzeWVumjebg2xxm0PbFHcRQgl4daBXxB0iqWkP8wXZ3daytuL74sYcbHizMYyhc7AxFbANsZc="
+  global:
+    - TWINE_USERNAME: zope.wheelbuilder
+    # this sets $PYPIPASSWORD
+    - secure: "Oh5gRJ+Fo8ZNmCkdrffpx201EPyTr9iUXmv6VqJMTebrzQpFdSWUVcANRmAzyfdyk3Wo0IjifVfWsKc+hvtbFmXZiLRFyEgoCUmzeWVumjebg2xxm0PbFHcRQgl4daBXxB0iqWkP8wXZ3daytuL74sYcbHizMYyhc7AxFbANsZc="
+
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+  - pypy
+  - pypy3
+
+jobs:
+  include:
+
+    # Special Linux builds
+    - name: "Python: 2.7, pure (no C extensions)"
+      python: 2.7
+      env: PURE_PYTHON=1
+    - name: "Python: 3.6, pure (no C extensions), with coverage"
+      python: 3.6
+      env: PURE_PYTHON=1 WITH_COVERAGE=1
+    - name: "Python: 3.6, with coverage"
+      python: 3.6
+      env: WITH_COVERAGE=1
+
+    # manylinux wheel builds
+    - name: 64-bit manylinux wheels (all Pythons)
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+      install: docker pull $DOCKER_IMAGE
+      script: bash .manylinux.sh
+
+    - name: 32-bit manylinux wheels (all Pythons)
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686 PRE_CMD=linux32
+      install: docker pull $DOCKER_IMAGE
+      script: bash .manylinux.sh
+
+    # It's important to use 'macpython' builds to get the least
+    # restrictive wheel tag. It's also important to avoid
+    # 'homebrew 3' because it floats instead of being a specific version.
+    - name: Python 2.7 wheels for MacOS
+      os: osx
+      language: generic
+      env: TERRYFY_PYTHON='macpython 2.7'
+    - name: Python 3.5 wheels for MacOS
+      os: osx
+      language: generic
+      env: TERRYFY_PYTHON='macpython 3.5'
+    - name: Python 3.6 wheels for MacOS
+      os: osx
+      language: generic
+      env: TERRYFY_PYTHON='macpython 3.6.1'
+    - name: Python 3.7 wheels for MacOS
+      os: osx
+      language: generic
+      env: TERRYFY_PYTHON='macpython 3.7.0'
+
+before_install:
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      git clone https://github.com/MacPython/terryfy
+      source terryfy/travis_tools.sh
+      get_python_environment $TERRYFY_PYTHON venv
+    fi
+
+install:
+  - pip install -U pip setuptools
+  - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
+  - pip install -e .[test,ZODB]
+
+script:
+  - |
+    if [[ "$WITH_COVERAGE" == "1" ]]; then
+      coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose
+    else
+      zope-testrunner --test-path=. --auto-color --auto-progress --verbose
+    fi
+
+after_success:
+  - if [[ "$WITH_COVERAGE" == "1" ]]; then coveralls; fi
+  - |
+    if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then
+      pip install twine
+      python setup.py bdist_wheel
+      TWINE_PASSWORD=$PYPIPASSWORD twine upload --skip-existing dist/*
+    fi
+  - |
+    if [[ $TRAVIS_TAG && -n "$DOCKER_IMAGE" ]]; then
+      pip install twine
+      TWINE_PASSWORD=$PYPIPASSWORD twine upload --skip-existing wheelhouse/*
+    fi
+
+notifications:
+  email: false
 
 cache: pip
