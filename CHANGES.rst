@@ -1,7 +1,7 @@
 ``BTrees`` Changelog
 ====================
 
-4.6.1 (unreleased)
+4.6.1 (2019-11-07)
 ------------------
 
 - Add support for Python 3.8.
