@@ -32,13 +32,13 @@ jobs:
     # manylinux wheel builds
     - name: 64-bit manylinux wheels (all Pythons)
       services: docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux2010_x86_64
       install: docker pull $DOCKER_IMAGE
       script: bash .manylinux.sh
 
     - name: 32-bit manylinux wheels (all Pythons)
       services: docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686 PRE_CMD=linux32
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux2010_i686 PRE_CMD=linux32
       install: docker pull $DOCKER_IMAGE
       script: bash .manylinux.sh
 
@@ -48,7 +48,9 @@ jobs:
     - name: Python 2.7 wheels for MacOS
       os: osx
       language: generic
-      env: TERRYFY_PYTHON='macpython 2.7'
+      # We require at least 2.7.15 to upload wheels.
+      # See https://github.com/zopefoundation/BTrees/issues/113
+      env: TERRYFY_PYTHON='macpython 2.7.17'
     - name: Python 3.5 wheels for MacOS
       os: osx
       language: generic
