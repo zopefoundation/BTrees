@@ -2,9 +2,9 @@ language: python
 
 env:
   global:
-    - TWINE_USERNAME: zope.wheelbuilder
-    # this sets $PYPIPASSWORD
-    - secure: "Oh5gRJ+Fo8ZNmCkdrffpx201EPyTr9iUXmv6VqJMTebrzQpFdSWUVcANRmAzyfdyk3Wo0IjifVfWsKc+hvtbFmXZiLRFyEgoCUmzeWVumjebg2xxm0PbFHcRQgl4daBXxB0iqWkP8wXZ3daytuL74sYcbHizMYyhc7AxFbANsZc="
+    TWINE_USERNAME: zope.wheelbuilder
+    TWINE_PASSWORD:
+      secure: "GoACBHy175St7lL5BIfW6Jz4HLG7XWpyt8znNJPe1HwInjSOWRqc0EZGVAjpCfOGX3iE3HchDH00WydkPuYEgUo0eoH59vVKk+x+LccKmUPQBSBW4HN40UVgQhtMm3BFsdk+dq0taxw2ZNGmv0+uo9uLqVXkcNNpokmOyoXkDmc="
 
 python:
   - 2.7
@@ -78,25 +78,36 @@ install:
   - pip install -e .[test,ZODB]
 
 script:
+  - python --version
   - |
     if [[ "$WITH_COVERAGE" == "1" ]]; then
       coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose
     else
       zope-testrunner --test-path=. --auto-color --auto-progress --verbose
     fi
+  - python setup.py -q bdist_wheel
 
 after_success:
   - if [[ "$WITH_COVERAGE" == "1" ]]; then coveralls; fi
   - |
-    if [[ $TRAVIS_TAG && "$TRAVIS_OS_NAME" == "osx" ]]; then
-      pip install twine
-      python setup.py bdist_wheel
-      TWINE_PASSWORD=$PYPIPASSWORD twine upload --skip-existing dist/*
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      # macpython 3.5 doesn't support recent TLS protocols which causes twine
+      # upload to fail, so we use the system Python to run twine
+      /usr/bin/python -m ensurepip --user
+      /usr/bin/python -m pip install --user -U pip
+      /usr/bin/python -m pip install --user -U -I twine
+      /usr/bin/python -m twine check dist/*
+      if [[ $TRAVIS_TAG ]]; then
+        /usr/bin/python -m twine upload --skip-existing dist/*
+      fi
     fi
   - |
-    if [[ $TRAVIS_TAG && -n "$DOCKER_IMAGE" ]]; then
+    if [[ -n "$DOCKER_IMAGE" ]]; then
       pip install twine
-      TWINE_PASSWORD=$PYPIPASSWORD twine upload --skip-existing wheelhouse/*
+      twine check wheelhouse/*
+      if [[ $TRAVIS_TAG ]]; then
+        twine upload --skip-existing wheelhouse/*
+      fi
     fi
 
 notifications:
