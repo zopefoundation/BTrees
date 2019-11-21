@@ -25,7 +25,7 @@
   <https://github.com/zopefoundation/BTrees/issues/98>`_.
 
 - Fix segmentation fault in ``bucket_repr()``.  See
-  `issue 106 <https://github.com/zopefoundation/BTrees/issue/106>`_.
+  `issue 106 <https://github.com/zopefoundation/BTrees/issues/106>`_.
 
 
 4.5.1 (2018-08-09)
