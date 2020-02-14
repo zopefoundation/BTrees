@@ -21,7 +21,6 @@ from .common import itemsToSet
 from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -47,20 +46,6 @@ class QLBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.QLBTree import QLBTreePy
         return QLBTreePy
-
-
-class QLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QLBTree import QLTreeSet
-        return QLTreeSet
-
-
-class QLTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QLBTree import QLTreeSetPy
-        return QLTreeSetPy
 
 
 class QLBucketTest(MappingBase, unittest.TestCase):
@@ -380,39 +365,3 @@ class QLModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IUnsignedIntegerBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(QLBTreeInternalKeyTest),
-        unittest.makeSuite(QLBTreeInternalKeyTest),
-        unittest.makeSuite(QLTreeSetInternalKeyTest),
-        unittest.makeSuite(QLTreeSetInternalKeyTest),
-        unittest.makeSuite(QLBucketTest),
-        unittest.makeSuite(QLBucketTest),
-        unittest.makeSuite(QLTreeSetTest),
-        unittest.makeSuite(QLTreeSetTest),
-        unittest.makeSuite(QLSetTest),
-        unittest.makeSuite(QLSetTest),
-        unittest.makeSuite(QLBTreeTest),
-        unittest.makeSuite(QLBTreeTest),
-        unittest.makeSuite(TestQLSets),
-        unittest.makeSuite(TestQLSets),
-        unittest.makeSuite(TestQLTreeSets),
-        unittest.makeSuite(TestQLTreeSets),
-        unittest.makeSuite(TestQLMultiUnion),
-        unittest.makeSuite(TestQLMultiUnion),
-        unittest.makeSuite(PureQL),
-        unittest.makeSuite(PureQL),
-        unittest.makeSuite(TestWeightedQL),
-        unittest.makeSuite(TestWeightedQL),
-        unittest.makeSuite(QLBTreeConflictTests),
-        unittest.makeSuite(QLBTreeConflictTests),
-        unittest.makeSuite(QLBucketConflictTests),
-        unittest.makeSuite(QLBucketConflictTests),
-        unittest.makeSuite(QLTreeSetConflictTests),
-        unittest.makeSuite(QLTreeSetConflictTests),
-        unittest.makeSuite(QLSetConflictTests),
-        unittest.makeSuite(QLSetConflictTests),
-        unittest.makeSuite(QLModuleTest),
-    ))

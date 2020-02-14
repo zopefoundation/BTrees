@@ -17,7 +17,6 @@ from .common import UnsignedValuesBTreeTests as BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedValuesMappingBase as MappingBase
 from .common import UnsignedValuesMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -46,20 +45,6 @@ class LQBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LQBTree import LQBTreePy
         return LQBTreePy
-
-
-class LQTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LQBTree import LQTreeSet
-        return LQTreeSet
-
-
-class LQTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LQBTree import LQTreeSetPy
-        return LQTreeSetPy
 
 
 class LQBucketTest(MappingBase, unittest.TestCase):
@@ -379,39 +364,3 @@ class LQModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerUnsignedBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(LQBTreeInternalKeyTest),
-        unittest.makeSuite(LQBTreeInternalKeyTest),
-        unittest.makeSuite(LQTreeSetInternalKeyTest),
-        unittest.makeSuite(LQTreeSetInternalKeyTest),
-        unittest.makeSuite(LQBucketTest),
-        unittest.makeSuite(LQBucketTest),
-        unittest.makeSuite(LQTreeSetTest),
-        unittest.makeSuite(LQTreeSetTest),
-        unittest.makeSuite(LQSetTest),
-        unittest.makeSuite(LQSetTest),
-        unittest.makeSuite(LQBTreeTest),
-        unittest.makeSuite(LQBTreeTest),
-        unittest.makeSuite(TestLQSets),
-        unittest.makeSuite(TestLQSets),
-        unittest.makeSuite(TestLQTreeSets),
-        unittest.makeSuite(TestLQTreeSets),
-        unittest.makeSuite(TestLQMultiUnion),
-        unittest.makeSuite(TestLQMultiUnion),
-        unittest.makeSuite(PureLQ),
-        unittest.makeSuite(PureLQ),
-        unittest.makeSuite(TestWeightedLQ),
-        unittest.makeSuite(TestWeightedLQ),
-        unittest.makeSuite(LQBTreeConflictTests),
-        unittest.makeSuite(LQBTreeConflictTests),
-        unittest.makeSuite(LQBucketConflictTests),
-        unittest.makeSuite(LQBucketConflictTests),
-        unittest.makeSuite(LQTreeSetConflictTests),
-        unittest.makeSuite(LQTreeSetConflictTests),
-        unittest.makeSuite(LQSetConflictTests),
-        unittest.makeSuite(LQSetConflictTests),
-        unittest.makeSuite(LQModuleTest),
-    ))

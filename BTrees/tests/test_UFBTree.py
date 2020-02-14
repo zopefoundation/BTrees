@@ -16,7 +16,6 @@ import unittest
 from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -24,10 +23,9 @@ from .common import MultiUnion
 from .common import UnsignedNormalSetTests as NormalSetTests
 from .common import UnsignedSetConflictTestBase as SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntKeys
 from .common import makeBuilder
 from .common import UnsignedKeysMixin
-from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
+
 
 # pylint:disable=no-name-in-module,arguments-differ
 
@@ -43,20 +41,6 @@ class UFBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.UFBTree import UFBTreePy
         return UFBTreePy
-
-
-class UFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UFBTree import UFTreeSet
-        return UFTreeSet
-
-
-class UFTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UFBTree import UFTreeSetPy
-        return UFTreeSetPy
 
 
 class UFBucketTest(MappingBase, unittest.TestCase):
@@ -113,26 +97,6 @@ class UFBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.UFBTree import UFBTreePy
         return UFBTreePy()
-
-if using64bits:
-
-    class UFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UFBTree import UFBTree
-            return UFBTree()
-
-        def getTwoValues(self):
-            return 0.5, 1.5
-
-    class UFBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UFBTree import UFBTreePy
-            return UFBTreePy()
-
-        def getTwoValues(self):
-            return 0.5, 1.5
 
 
 class _TestUFBTreesBase(object):
@@ -347,34 +311,3 @@ class UFModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IUnsignedFloatBTreeModule
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(UFBTreeInternalKeyTest),
-        unittest.makeSuite(UFBTreePyInternalKeyTest),
-        unittest.makeSuite(UFTreeSetInternalKeyTest),
-        unittest.makeSuite(UFTreeSetPyInternalKeyTest),
-        unittest.makeSuite(UFBucketTest),
-        unittest.makeSuite(UFBucketPyTest),
-        unittest.makeSuite(UFTreeSetTest),
-        unittest.makeSuite(UFTreeSetPyTest),
-        unittest.makeSuite(UFSetTest),
-        unittest.makeSuite(UFSetPyTest),
-        unittest.makeSuite(UFBTreeTest),
-        unittest.makeSuite(UFBTreePyTest),
-        unittest.makeSuite(TestUFBTrees),
-        unittest.makeSuite(TestUFBTreesPy),
-        unittest.makeSuite(TestUFMultiUnion),
-        unittest.makeSuite(TestUFMultiUnionPy),
-        unittest.makeSuite(PureUF),
-        unittest.makeSuite(PureUFPy),
-        unittest.makeSuite(UFBTreeConflictTests),
-        unittest.makeSuite(UFBTreePyConflictTests),
-        unittest.makeSuite(UFBucketConflictTests),
-        unittest.makeSuite(UFBucketPyConflictTests),
-        unittest.makeSuite(UFTreeSetConflictTests),
-        unittest.makeSuite(UFTreeSetPyConflictTests),
-        unittest.makeSuite(UFSetConflictTests),
-        unittest.makeSuite(UFSetPyConflictTests),
-        unittest.makeSuite(UFModuleTest),
-    ))

@@ -17,7 +17,6 @@ from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -25,14 +24,12 @@ from .common import MultiUnion
 from .common import UnsignedNormalSetTests as NormalSetTests
 from .common import UnsignedSetConflictTestBase as SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntKeys
-from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
 from .common import UnsignedKeysMixin
 from .common import UnsignedError
-from BTrees.UIBTree import using64bits #XXX Ugly, but unavoidable
+
 
 
 # pylint:disable=no-name-in-module,arguments-differ
@@ -49,20 +46,6 @@ class UIBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.UIBTree import UIBTreePy
         return UIBTreePy
-
-
-class UITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UIBTree import UITreeSet
-        return UITreeSet
-
-
-class UITreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UIBTree import UITreeSetPy
-        return UITreeSetPy
 
 
 class UIBucketTest(MappingBase, unittest.TestCase):
@@ -151,29 +134,6 @@ class UIBTreeTestPy(_UIBTreeTestBase, unittest.TestCase):
     def _makeOne(self):
         from BTrees.UIBTree import UIBTreePy
         return UIBTreePy()
-
-
-if using64bits:
-
-    class UIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UIBTree import UIBTree
-            return UIBTree()
-
-        def getTwoValues(self):
-            return 1, 2
-
-    class UIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UIBTree import UIBTreePy
-            return UIBTreePy()
-
-        def getTwoValues(self):
-            return 1, 2
 
 
 class _TestUIBTreesBase(object):
@@ -475,42 +435,3 @@ class UIModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IUnsignedIntegerBTreeModule
-
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(UIBTreeInternalKeyTest),
-        unittest.makeSuite(UIBTreePyInternalKeyTest),
-        unittest.makeSuite(UITreeSetInternalKeyTest),
-        unittest.makeSuite(UITreeSetPyInternalKeyTest),
-        unittest.makeSuite(UIBucketTest),
-        unittest.makeSuite(UIBucketPyTest),
-        unittest.makeSuite(UITreeSetTest),
-        unittest.makeSuite(UITreeSetPyTest),
-        unittest.makeSuite(UISetTest),
-        unittest.makeSuite(UISetPyTest),
-        unittest.makeSuite(UIBTreeTest),
-        unittest.makeSuite(UIBTreeTestPy),
-        unittest.makeSuite(TestUIBTrees),
-        unittest.makeSuite(TestUIBTreesPy),
-        unittest.makeSuite(TestUISets),
-        unittest.makeSuite(TestUISetsPy),
-        unittest.makeSuite(TestUITreeSets),
-        unittest.makeSuite(TestUITreeSetsPy),
-        unittest.makeSuite(TestUIMultiUnion),
-        unittest.makeSuite(TestUIMultiUnionPy),
-        unittest.makeSuite(PureUI),
-        unittest.makeSuite(PureUIPy),
-        unittest.makeSuite(TestWeightedUI),
-        unittest.makeSuite(TestWeightedUIPy),
-        unittest.makeSuite(UIBTreeConflictTests),
-        unittest.makeSuite(UIBTreeConflictTestsPy),
-        unittest.makeSuite(UIBucketConflictTests),
-        unittest.makeSuite(UIBucketConflictTestsPy),
-        unittest.makeSuite(UITreeSetConflictTests),
-        unittest.makeSuite(UITreeSetConflictTestsPy),
-        unittest.makeSuite(UISetConflictTests),
-        unittest.makeSuite(UISetConflictTestsPy),
-        unittest.makeSuite(UIModuleTest),
-    ))

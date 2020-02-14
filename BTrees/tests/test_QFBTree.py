@@ -16,7 +16,6 @@ import unittest
 from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -42,20 +41,6 @@ class QFBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.QFBTree import QFBTreePy
         return QFBTreePy
-
-
-class QFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QFBTree import QFTreeSet
-        return QFTreeSet
-
-
-class QFTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QFBTree import QFTreeSetPy
-        return QFTreeSetPy
 
 
 class QFBucketTest(MappingBase, unittest.TestCase):
@@ -286,33 +271,3 @@ class QFModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IUnsignedFloatBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(QFBTreeInternalKeyTest),
-        unittest.makeSuite(QFBTreePyInternalKeyTest),
-        unittest.makeSuite(QFTreeSetInternalKeyTest),
-        unittest.makeSuite(QFTreeSetPyInternalKeyTest),
-        unittest.makeSuite(QFBucketTest),
-        unittest.makeSuite(QFBucketPyTest),
-        unittest.makeSuite(QFTreeSetTest),
-        unittest.makeSuite(QFTreeSetPyTest),
-        unittest.makeSuite(QFSetTest),
-        unittest.makeSuite(QFSetPyTest),
-        unittest.makeSuite(QFBTreeTest),
-        unittest.makeSuite(QFBTreePyTest),
-        unittest.makeSuite(TestQFMultiUnion),
-        unittest.makeSuite(TestQFMultiUnionPy),
-        unittest.makeSuite(PureQF),
-        unittest.makeSuite(PureQFPy),
-        unittest.makeSuite(QFBTreeConflictTests),
-        unittest.makeSuite(QFBTreeConflictTestsPy),
-        unittest.makeSuite(QFBucketConflictTests),
-        unittest.makeSuite(QFBucketConflictTestsPy),
-        unittest.makeSuite(QFTreeSetConflictTests),
-        unittest.makeSuite(QFTreeSetConflictTestsPy),
-        unittest.makeSuite(QFSetConflictTests),
-        unittest.makeSuite(QFSetConflictTestsPy),
-        unittest.makeSuite(QFModuleTest),
-    ))

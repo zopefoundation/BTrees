@@ -18,7 +18,6 @@ from .common import UnsignedBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedMappingBase as MappingBase
 from .common import UnsignedMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -48,20 +47,6 @@ class QQBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.QQBTree import QQBTreePy
         return QQBTreePy
-
-
-class QQTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QQBTree import QQTreeSet
-        return QQTreeSet
-
-
-class QQTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QQBTree import QQTreeSetPy
-        return QQTreeSetPy
 
 
 class QQBucketTest(MappingBase, unittest.TestCase):
@@ -381,39 +366,3 @@ class QQModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IUnsignedUnsignedBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(QQBTreeInternalKeyTest),
-        unittest.makeSuite(QQBTreeInternalKeyTest),
-        unittest.makeSuite(QQTreeSetInternalKeyTest),
-        unittest.makeSuite(QQTreeSetInternalKeyTest),
-        unittest.makeSuite(QQBucketTest),
-        unittest.makeSuite(QQBucketTest),
-        unittest.makeSuite(QQTreeSetTest),
-        unittest.makeSuite(QQTreeSetTest),
-        unittest.makeSuite(QQSetTest),
-        unittest.makeSuite(QQSetTest),
-        unittest.makeSuite(QQBTreeTest),
-        unittest.makeSuite(QQBTreeTest),
-        unittest.makeSuite(TestQQSets),
-        unittest.makeSuite(TestQQSets),
-        unittest.makeSuite(TestQQTreeSets),
-        unittest.makeSuite(TestQQTreeSets),
-        unittest.makeSuite(TestQQMultiUnion),
-        unittest.makeSuite(TestQQMultiUnion),
-        unittest.makeSuite(PureQQ),
-        unittest.makeSuite(PureQQ),
-        unittest.makeSuite(TestWeightedQQ),
-        unittest.makeSuite(TestWeightedQQPy),
-        unittest.makeSuite(QQBTreeConflictTests),
-        unittest.makeSuite(QQBTreeConflictTests),
-        unittest.makeSuite(QQBucketConflictTests),
-        unittest.makeSuite(QQBucketConflictTests),
-        unittest.makeSuite(QQTreeSetConflictTests),
-        unittest.makeSuite(QQTreeSetConflictTests),
-        unittest.makeSuite(QQSetConflictTests),
-        unittest.makeSuite(QQSetConflictTests),
-        unittest.makeSuite(QQModuleTest),
-    ))

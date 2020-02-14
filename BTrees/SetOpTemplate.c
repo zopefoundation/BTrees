@@ -129,7 +129,7 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
 #endif
   else
     {
-      PyErr_SetString(PyExc_TypeError, "invalid argument");
+      PyErr_SetString(PyExc_TypeError, "set operation: invalid argument, cannot iterate");
       return -1;
     }
 
@@ -143,7 +143,7 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
 #endif
 
 static int
-copyRemaining(Bucket *r, SetIteration *i, int merge, 
+copyRemaining(Bucket *r, SetIteration *i, int merge,
 
               /* See comment # 42 */
 #ifdef MERGE
@@ -209,7 +209,7 @@ set_operation(PyObject *s1, PyObject *s2,
                  difference is one.  This works fine in the int value and float value
                  cases but makes no sense in the object value case.  In the object
                  value case, we don't do merging, so we don't use the weights, so it
-                 doesn't matter what they are. 
+                 doesn't matter what they are.
               */
 #ifdef MERGE
               VALUE_TYPE w1, VALUE_TYPE w2,
@@ -427,7 +427,7 @@ wunion_m(PyObject *ignored, PyObject *args)
   PyObject *o1, *o2;
   VALUE_TYPE w1 = 1, w2 = 1;
 
-  UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE, 
+  UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE,
                           &o1, &o2, &w1, &w2)
          ) return NULL;
 
@@ -437,7 +437,7 @@ wunion_m(PyObject *ignored, PyObject *args)
     return Py_BuildValue(VALUE_PARSE "O", w1, o1);
 
   o1 = set_operation(o1, o2, 1, 1, w1, w2, 1, 1, 1);
-  if (o1) 
+  if (o1)
     ASSIGN(o1, Py_BuildValue(VALUE_PARSE "O", (VALUE_TYPE)1, o1));
 
   return o1;
@@ -449,7 +449,7 @@ wintersection_m(PyObject *ignored, PyObject *args)
   PyObject *o1, *o2;
   VALUE_TYPE w1 = 1, w2 = 1;
 
-  UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE, 
+  UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE,
                           &o1, &o2, &w1, &w2)
          ) return NULL;
 

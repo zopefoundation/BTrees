@@ -17,7 +17,6 @@ import unittest
 from .common import UnsignedValuesBTreeTests as BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedValuesMappingBase as MappingBase
 from .common import UnsignedValuesMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -30,7 +29,6 @@ from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
 from .common import UnsignedValuesMixin
-from BTrees.IIBTree import using64bits #XXX Ugly, but necessary
 
 
 class OUBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -45,20 +43,6 @@ class OUBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OUBTree import OUBTreePy
         return OUBTreePy
-
-
-class OUTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OUBTree import OUTreeSet
-        return OUTreeSet
-
-
-class OUTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OUBTree import OUTreeSetPy
-        return OUTreeSetPy
 
 
 class OUBucketTest(MappingBase, unittest.TestCase):
@@ -114,23 +98,6 @@ class OUBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.OUBTree import OUBTreePy
         return OUBTreePy()
-
-
-if using64bits:
-
-    class OUBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
-            from BTrees.OUBTree import OUBTree
-            return OUBTree()
-        def getTwoKeys(self):
-            return object(), object()
-
-    class OUBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
-            from BTrees.OUBTree import OUBTreePy
-            return OUBTreePy()
-        def getTwoKeys(self):
-            return object(), object()
 
 
 class _TestOUBTreesBase(TypeTest):
@@ -351,35 +318,3 @@ class OUModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("OUBTree shouldn't have multiunion")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(OUBTreeInternalKeyTest),
-        unittest.makeSuite(OUBTreePyInternalKeyTest),
-        unittest.makeSuite(OUTreeSetInternalKeyTest),
-        unittest.makeSuite(OUTreeSetPyInternalKeyTest),
-        unittest.makeSuite(OUBucketTest),
-        unittest.makeSuite(OUBucketPyTest),
-        unittest.makeSuite(OUTreeSetTest),
-        unittest.makeSuite(OUTreeSetPyTest),
-        unittest.makeSuite(OUSetTest),
-        unittest.makeSuite(OUSetPyTest),
-        unittest.makeSuite(OUBTreeTest),
-        unittest.makeSuite(OUBTreePyTest),
-        unittest.makeSuite(TestOUBTrees),
-        unittest.makeSuite(TestOUBTreesPy),
-        unittest.makeSuite(PureOU),
-        unittest.makeSuite(PureOUPy),
-        unittest.makeSuite(TestWeightedOU),
-        unittest.makeSuite(TestWeightedOUPy),
-        unittest.makeSuite(OUBucketConflictTests),
-        unittest.makeSuite(OUBucketConflictTestsPy),
-        unittest.makeSuite(OUSetConflictTests),
-        unittest.makeSuite(OUSetConflictTestsPy),
-        unittest.makeSuite(OUBTreeConflictTests),
-        unittest.makeSuite(OUBTreeConflictTestsPy),
-        unittest.makeSuite(OUTreeSetConflictTests),
-        unittest.makeSuite(OUTreeSetConflictTestsPy),
-        unittest.makeSuite(OUModuleTest),
-    ))

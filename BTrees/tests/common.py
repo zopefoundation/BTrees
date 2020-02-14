@@ -13,6 +13,7 @@
 ##############################################################################
 from __future__ import division
 
+import sys
 import functools
 import unittest
 import platform
@@ -1978,13 +1979,13 @@ class TestLongIntKeys(TestLongIntSupport):
         assert o1 != o2
 
         # Test some small key values first:
-        zero_long = self._makeLong(0)
-        t[zero_long] = o1
-        self.assertEqual(t[0], o1)
-        t[0] = o2
-        self.assertEqual(t[zero_long], o2)
-        self.assertEqual(list(t.keys()), [0])
-        self.assertEqual(list(t.keys(None, None)), [0])
+        one_long = self._makeLong(1)
+        t[one_long] = o1
+        self.assertEqual(t[1], o1)
+        t[1] = o2
+        self.assertEqual(t[one_long], o2)
+        self.assertEqual(list(t.keys()), [1])
+        self.assertEqual(list(t.keys(None, None)), [1])
 
         # Test some large key values too:
         k1 = SMALLEST_POSITIVE_33_BITS
@@ -1996,22 +1997,21 @@ class TestLongIntKeys(TestLongIntSupport):
         self.assertEqual(t[k1], o1)
         self.assertEqual(t[k2], o2)
         self.assertEqual(t[k3], o1)
-        self.assertEqual(list(t.keys()), [k3, 0, k1, k2])
-        self.assertEqual(list(t.keys(k3, None)), [k3, 0, k1, k2])
-        self.assertEqual(list(t.keys(None, k2)), [k3, 0, k1, k2])
+        self.assertEqual(list(t.keys()), [k3, 1, k1, k2])
+        self.assertEqual(list(t.keys(k3, None)), [k3, 1, k1, k2])
+        self.assertEqual(list(t.keys(None, k2)), [k3, 1, k1, k2])
 
     def testLongIntKeysOutOfRange(self):
         self._skip_if_not_64bit()
         o1, o2 = self.getTwoValues()
         t = self._makeOne()
         k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2**64 + 1
-        with self.assertRaises((OverflowError, ValueError)):
+        with self.assertRaises(OverflowError):
             t[k1] = o1
 
         t = self._makeOne()
-        with self.assertRaises((OverflowError, ValueError)):
+        with self.assertRaises(OverflowError):
             t[LARGEST_NEGATIVE_65_BITS] = o1
-
 
 class TestLongIntValues(TestLongIntSupport):
     SUPPORTS_NEGATIVE_VALUES = True
@@ -2038,11 +2038,11 @@ class TestLongIntValues(TestLongIntSupport):
         k1, k2 = self.getTwoKeys()
         t = self._makeOne()
         v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2**64 + 1
-        with self.assertRaises((OverflowError, ValueError)):
+        with self.assertRaises(OverflowError):
             t[k1] = v1
 
         t = self._makeOne()
-        with self.assertRaises((OverflowError, ValueError)):
+        with self.assertRaises(OverflowError):
             t[k1] = LARGEST_NEGATIVE_65_BITS
 
 

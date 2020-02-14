@@ -16,7 +16,6 @@ import unittest
 from .common import UnsignedValuesBTreeTests as BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedValuesMappingBase as MappingBase
 from .common import UnsignedValuesMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -44,20 +43,6 @@ class OQBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OQBTree import OQBTreePy
         return OQBTreePy
-
-
-class OQTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OQBTree import OQTreeSet
-        return OQTreeSet
-
-
-class OQTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OQBTree import OQTreeSetPy
-        return OQTreeSetPy
 
 
 class OQBucketTest(MappingBase, unittest.TestCase):
@@ -319,33 +304,3 @@ class OQModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("OQBTree shouldn't have multiunion")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(OQBTreeInternalKeyTest),
-        unittest.makeSuite(OQBTreePyInternalKeyTest),
-        unittest.makeSuite(OQTreeSetInternalKeyTest),
-        unittest.makeSuite(OQTreeSetPyInternalKeyTest),
-        unittest.makeSuite(OQBucketTest),
-        unittest.makeSuite(OQBucketPyTest),
-        unittest.makeSuite(OQTreeSetTest),
-        unittest.makeSuite(OQTreeSetPyTest),
-        unittest.makeSuite(OQSetTest),
-        unittest.makeSuite(OQSetPyTest),
-        unittest.makeSuite(OQBTreeTest),
-        unittest.makeSuite(OQBTreePyTest),
-        unittest.makeSuite(PureOQ),
-        unittest.makeSuite(PureOQPy),
-        unittest.makeSuite(TestWeightedOQ),
-        unittest.makeSuite(TestWeightedOQPy),
-        unittest.makeSuite(OQBucketConflictTests),
-        unittest.makeSuite(OQBucketPyConflictTests),
-        unittest.makeSuite(OQSetConflictTests),
-        unittest.makeSuite(OQSetPyConflictTests),
-        unittest.makeSuite(OQBTreeConflictTests),
-        unittest.makeSuite(OQBTreePyConflictTests),
-        unittest.makeSuite(OQTreeSetConflictTests),
-        unittest.makeSuite(OQTreeSetPyConflictTests),
-        unittest.makeSuite(OQModuleTest),
-    ))

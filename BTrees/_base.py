@@ -1509,12 +1509,14 @@ def to_int(self, v):
 
     return int(v)
 
+# PyPy can raise ValueError converting a negative number to a
+# unsigned value.
 uint_pack, uint_unpack = _packer_unpacker('I')
 
 def to_uint(self, v):
     try:
         uint_pack(index(v))
-    except (struct_error, TypeError):
+    except (struct_error, TypeError, ValueError):
         if isinstance(v, int_types):
             raise OverflowError("Value out of range", v)
         raise TypeError('non-negative 32-bit integer expected')
@@ -1548,7 +1550,7 @@ ulong_pack, ulong_unpack = _packer_unpacker('Q')
 def to_ulong(self, v):
     try:
         ulong_pack(index(v))
-    except (struct_error, TypeError):
+    except (struct_error, TypeError, ValueError):
         if isinstance(v, int_types):
             raise OverflowError("Value out of range", v)
         raise TypeError('non-negative 64-bit integer expected')

@@ -17,7 +17,6 @@ from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -43,20 +42,6 @@ class QOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.QOBTree import QOBTreePy
         return QOBTreePy
-
-
-class QOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QOBTree import QOTreeSet
-        return QOTreeSet
-
-
-class QOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.QOBTree import QOTreeSetPy
-        return QOTreeSetPy
 
 
 class QOBucketTest(MappingBase, unittest.TestCase):
@@ -325,37 +310,3 @@ class QOModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("QOBTree shouldn't have weightedIntersection")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(QOBTreeInternalKeyTest),
-        unittest.makeSuite(QOBTreePyInternalKeyTest),
-        unittest.makeSuite(QOTreeSetInternalKeyTest),
-        unittest.makeSuite(QOTreeSetPyInternalKeyTest),
-        unittest.makeSuite(QOBucketTest),
-        unittest.makeSuite(QOBucketPyTest),
-        unittest.makeSuite(QOTreeSetTest),
-        unittest.makeSuite(QOTreeSetPyTest),
-        unittest.makeSuite(QOSetTest),
-        unittest.makeSuite(QOSetPyTest),
-        unittest.makeSuite(QOBTreeTest),
-        unittest.makeSuite(QOBTreePyTest),
-        unittest.makeSuite(TestQOSets),
-        unittest.makeSuite(TestQOSetsPy),
-        unittest.makeSuite(TestQOTreeSets),
-        unittest.makeSuite(TestQOTreeSetsPy),
-        unittest.makeSuite(TestQOMultiUnion),
-        unittest.makeSuite(TestQOMultiUnionPy),
-        unittest.makeSuite(PureQO),
-        unittest.makeSuite(PureQOPy),
-        unittest.makeSuite(QOBTreeConflictTests),
-        unittest.makeSuite(QOBTreeConflictTestsPy),
-        unittest.makeSuite(QOBucketConflictTests),
-        unittest.makeSuite(QOBucketConflictTestsPy),
-        unittest.makeSuite(QOTreeSetConflictTests),
-        unittest.makeSuite(QOTreeSetConflictTestsPy),
-        unittest.makeSuite(QOSetConflictTests),
-        unittest.makeSuite(QOSetConflictTestsPy),
-        unittest.makeSuite(QOModuleTest),
-    ))

@@ -17,7 +17,6 @@ from .common import UnsignedValuesBTreeTests as BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedValuesMappingBase as MappingBase
 from .common import UnsignedValuesMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -25,14 +24,12 @@ from .common import MultiUnion
 from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntKeys
-from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
 from .common import UnsignedValuesMixin
 from .common import UnsignedError
-from BTrees.IUBTree import using64bits # XXX Ugly, but unavoidable
+
 
 # pylint:disable=no-name-in-module,arguments-differ
 
@@ -48,20 +45,6 @@ class IUBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IUBTree import IUBTreePy
         return IUBTreePy
-
-
-class IUTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IUBTree import IUTreeSet
-        return IUTreeSet
-
-
-class IUTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IUBTree import IUTreeSetPy
-        return IUTreeSetPy
 
 
 class IUBucketTest(MappingBase, unittest.TestCase):
@@ -143,29 +126,6 @@ class IUBTreeTestPy(_IUBTreeTestBase, unittest.TestCase):
     def _makeOne(self):
         from BTrees.IUBTree import IUBTreePy
         return IUBTreePy()
-
-
-if using64bits:
-
-    class IUBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IUBTree import IUBTree
-            return IUBTree()
-
-        def getTwoValues(self):
-            return 1, 2
-
-    class IUBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IUBTree import IUBTreePy
-            return IUBTreePy()
-
-        def getTwoValues(self):
-            return 1, 2
 
 
 class _TestIUBTreesBase(object):
@@ -467,42 +427,3 @@ class IUModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerUnsignedBTreeModule
-
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(IUBTreeInternalKeyTest),
-        unittest.makeSuite(IUBTreePyInternalKeyTest),
-        unittest.makeSuite(IUTreeSetInternalKeyTest),
-        unittest.makeSuite(IUTreeSetPyInternalKeyTest),
-        unittest.makeSuite(IUBucketTest),
-        unittest.makeSuite(IUBucketPyTest),
-        unittest.makeSuite(IUTreeSetTest),
-        unittest.makeSuite(IUTreeSetPyTest),
-        unittest.makeSuite(IUSetTest),
-        unittest.makeSuite(IUSetPyTest),
-        unittest.makeSuite(IUBTreeTest),
-        unittest.makeSuite(IUBTreeTestPy),
-        unittest.makeSuite(TestIUBTrees),
-        unittest.makeSuite(TestIUBTreesPy),
-        unittest.makeSuite(TestIUSets),
-        unittest.makeSuite(TestIUSetsPy),
-        unittest.makeSuite(TestIUTreeSets),
-        unittest.makeSuite(TestIUTreeSetsPy),
-        unittest.makeSuite(TestIUMultiUnion),
-        unittest.makeSuite(TestIUMultiUnionPy),
-        unittest.makeSuite(PureIU),
-        unittest.makeSuite(PureIUPy),
-        unittest.makeSuite(TestWeightedIU),
-        unittest.makeSuite(TestWeightedIUPy),
-        unittest.makeSuite(IUBTreeConflictTests),
-        unittest.makeSuite(IUBTreeConflictTestsPy),
-        unittest.makeSuite(IUBucketConflictTests),
-        unittest.makeSuite(IUBucketConflictTestsPy),
-        unittest.makeSuite(IUTreeSetConflictTests),
-        unittest.makeSuite(IUTreeSetConflictTestsPy),
-        unittest.makeSuite(IUSetConflictTests),
-        unittest.makeSuite(IUSetConflictTestsPy),
-        unittest.makeSuite(IUModuleTest),
-    ))

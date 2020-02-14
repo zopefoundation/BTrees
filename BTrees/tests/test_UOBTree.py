@@ -17,7 +17,6 @@ from .common import UnsignedKeysBTreeTests as BTreeTests
 from .common import UnsignedExtendedSetTests as ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import UnsignedKeysMappingBase as MappingBase
 from .common import UnsignedKeysMappingConflictTestBase as MappingConflictTestBase
 from .common import ModuleTest
@@ -30,7 +29,7 @@ from .common import TestLongIntKeys
 from .common import makeBuilder
 from .common import UnsignedKeysMixin
 from .common import UnsignedError
-from BTrees.UOBTree import using64bits #XXX Ugly, but unavoidable
+
 
 # pylint:disable=no-name-in-module,arguments-differ
 
@@ -46,20 +45,6 @@ class UOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.UOBTree import UOBTreePy
         return UOBTreePy
-
-
-class UOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UOBTree import UOTreeSet
-        return UOTreeSet
-
-
-class UOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.UOBTree import UOTreeSetPy
-        return UOTreeSetPy
 
 
 class UOBucketTest(MappingBase, unittest.TestCase):
@@ -116,23 +101,6 @@ class UOBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.UOBTree import UOBTreePy
         return UOBTreePy()
-
-
-if using64bits:
-
-
-    class UOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UOBTree import UOBTree
-            return UOBTree()
-
-
-    class UOBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.UOBTree import UOBTreePy
-            return UOBTreePy()
 
 
 class _TestUOBTreesBase(TypeTest):
@@ -379,39 +347,3 @@ class UOModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("UOBTree shouldn't have weightedIntersection")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(UOBTreeInternalKeyTest),
-        unittest.makeSuite(UOBTreePyInternalKeyTest),
-        unittest.makeSuite(UOTreeSetInternalKeyTest),
-        unittest.makeSuite(UOTreeSetPyInternalKeyTest),
-        unittest.makeSuite(UOBucketTest),
-        unittest.makeSuite(UOBucketPyTest),
-        unittest.makeSuite(UOTreeSetTest),
-        unittest.makeSuite(UOTreeSetPyTest),
-        unittest.makeSuite(UOSetTest),
-        unittest.makeSuite(UOSetPyTest),
-        unittest.makeSuite(UOBTreeTest),
-        unittest.makeSuite(UOBTreePyTest),
-        unittest.makeSuite(TestUOBTrees),
-        unittest.makeSuite(TestUOBTreesPy),
-        unittest.makeSuite(TestUOSets),
-        unittest.makeSuite(TestUOSetsPy),
-        unittest.makeSuite(TestUOTreeSets),
-        unittest.makeSuite(TestUOTreeSetsPy),
-        unittest.makeSuite(TestUOMultiUnion),
-        unittest.makeSuite(TestUOMultiUnionPy),
-        unittest.makeSuite(PureUO),
-        unittest.makeSuite(PureUOPy),
-        unittest.makeSuite(UOBTreeConflictTests),
-        unittest.makeSuite(UOBTreeConflictTestsPy),
-        unittest.makeSuite(UOBucketConflictTests),
-        unittest.makeSuite(UOBucketConflictTestsPy),
-        unittest.makeSuite(UOTreeSetConflictTests),
-        unittest.makeSuite(UOTreeSetConflictTestsPy),
-        unittest.makeSuite(UOSetConflictTests),
-        unittest.makeSuite(UOSetConflictTestsPy),
-        unittest.makeSuite(UOModuleTest),
-    ))
