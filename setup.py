@@ -104,9 +104,44 @@ base_btrees_depends = [
     "BTrees/sorters.c",
     ]
 
-FLAVORS = {"O": "object", "I": "int", "F": "float", 'L': 'int'}
+FLAVORS = {
+    "O": "object",
+    "F": "float",
+    "I": "int", # Signed 32-bit
+    "L": "int", # Signed 64-bit
+    "U": "int", # Unsigned 32-bit
+    "Q": "int"  # Unsigned 64-bit (from the printf "q" modifier for quad_t)
+}
 # XXX should 'fs' be in ZODB instead?
-FAMILIES = ("OO", "IO", "OI", "II", "IF", "fs", "LO", "OL", "LL", "LF")
+FAMILIES = (
+    # Signed 32-bit keys
+    "IO", # object value
+    "II", # self value
+    "IF", # float value
+    "IU", # opposite sign value
+    # Unsigned 32-bit keys
+    "UO", # object value
+    "UU", # self value
+    "UF", # float value
+    "UI", # opposite sign value
+    # Signed 64-bit keys
+    "LO", # object value
+    "LL", # self value
+    "LF", # float value
+    "LQ", # opposite sign value
+    # Unsigned 64-bit keys
+    "QO", # object value
+    "QQ", # self value
+    "QF", # float value
+    "QL", # opposite sign value
+    # Object keys
+    "OO", # object
+    "OI", # 32-bit signed
+    "OU", # 32-bit unsigned
+    "OL", # 64-bit signed
+    "OQ", # 64-bit unsigned
+    "fs",
+)
 
 KEY_H = "BTrees/%skeymacros.h"
 VALUE_H = "BTrees/%svaluemacros.h"

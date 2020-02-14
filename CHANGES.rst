@@ -2,10 +2,13 @@
  BTrees Changelog
 ==================
 
-4.6.2 (unreleased)
+4.7.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Add unsigned variants of the trees. These use the initial "U" for
+  32-bit data and "Q" for 64-bit data (for "quad", which is similar to
+  what the C ``printf`` function uses and the Python struct module
+  uses).
 
 - Fix the value for ``BTrees.OIBTree.using64bits`` when using the pure Python
   implementation (PyPy and when ``PURE_PYTHON`` is in the environment).

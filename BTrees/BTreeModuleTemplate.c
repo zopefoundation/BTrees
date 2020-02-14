@@ -78,11 +78,40 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #endif
 
 #ifdef NEED_LONG_LONG_KEYS
+#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
+static int
+ulonglong_check(PyObject *ob)
+{
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+	long tmp;
+	tmp = PyInt_AS_LONG(ob);
+	if (tmp < 0) {
+	    PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+	    return 0;
+	}
+	return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+	return 0;
+
+    if (PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 && PyErr_Occurred())
+	return 0;
+    return 1;
+}
+#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
+
 static int
 longlong_check(PyObject *ob)
 {
-    if (INT_CHECK(ob))
+#ifndef PY3K
+    /* Python's small integers can always fit into a long long. */
+    if (PyInt_Check(ob))
         return 1;
+#endif
 
     if (PyLong_Check(ob)) {
         int overflow;
@@ -97,7 +126,49 @@ overflow:
                     "longlong_check: long integer out of range");
     return 0;
 }
+
 #endif
+
+#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
+static PyObject *
+ulonglong_as_object(unsigned PY_LONG_LONG val)
+{
+    if ((val > LONG_MAX))
+        return PyLong_FromUnsignedLongLong(val);
+    return UINT_FROM_LONG((unsigned long)val);
+}
+
+static int
+ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
+{
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+	long tmp;
+	tmp = PyInt_AS_LONG(ob);
+	if (tmp < 0) {
+	    PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+	    return 0;
+	}
+        (*value) = (unsigned PY_LONG_LONG)tmp;
+        return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected integer key");
+        return 0;
+    }
+
+    unsigned PY_LONG_LONG val;
+    val = PyLong_AsUnsignedLongLong(ob);
+    if (val == (unsigned long long)-1 && PyErr_Occurred())
+	return 0;
+    (*value) = val;
+    return 1;
+}
+#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
 
 static PyObject *
 longlong_as_object(PY_LONG_LONG val)
@@ -106,7 +177,6 @@ longlong_as_object(PY_LONG_LONG val)
         return PyLong_FromLongLong(val);
     return INT_FROM_LONG((long)val);
 }
-
 
 static int
 longlong_convert(PyObject *ob, PY_LONG_LONG *value)
@@ -138,6 +208,7 @@ overflow:
     PyErr_SetString(PyExc_ValueError, "long integer out of range");
     return 0;
 }
+
 #endif  /* NEED_LONG_LONG_SUPPORT */
 
 

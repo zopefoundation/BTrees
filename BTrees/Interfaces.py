@@ -451,40 +451,78 @@ class IMergeIntegerKey(IMerge):
 
 class IBTreeFamily(Interface):
     """the 64-bit or 32-bit family"""
-    IO = Attribute('The IIntegerObjectBTreeModule for this family')
-    OI = Attribute('The IObjectIntegerBTreeModule for this family')
-    II = Attribute('The IIntegerIntegerBTreeModule for this family')
     IF = Attribute('The IIntegerFloatBTreeModule for this family')
+    II = Attribute('The IIntegerIntegerBTreeModule for this family')
+    IO = Attribute('The IIntegerObjectBTreeModule for this family')
+    IU = Attribute('The IIntegerUnsignedBTreeModule for this family')
+
+    UF = Attribute('The IUnsignedFloatBTreeModule for this family')
+    UI = Attribute('The IUnsignedIntegerBTreeModule for this family')
+    UO = Attribute('The IUnsignedObjectBTreeModule for this family')
+    UU = Attribute('The IUnsignedUnsignedBTreeModule for this family')
+
+    OI = Attribute('The IObjectIntegerBTreeModule for this family')
     OO = Attribute('The IObjectObjectBTreeModule for this family')
-    maxint = Attribute('The maximum integer storable in this family')
-    minint = Attribute('The minimum integer storable in this family')
+    OU = Attribute('The IObjectUnsignedBTreeModule for this family')
+
+    maxint = Attribute('The maximum signed integer storable in this family')
+    maxuint = Attribute('The maximum unsigned integer storable in this family')
+    minint = Attribute('The minimum signed integer storable in this family')
 
 
-class IIntegerObjectBTreeModule(IBTreeModule, IMerge):
-    """keys, or set values, are integers; values are objects.
-
-    describes IOBTree and LOBTree"""
-
+class _IMergeBTreeModule(IBTreeModule, IMerge):
     family = Attribute('The IBTreeFamily of this module')
 
 
-class IObjectIntegerBTreeModule(IBTreeModule, IIMerge):
-    """keys, or set values, are objects; values are integers.
+class IIntegerObjectBTreeModule(_IMergeBTreeModule):
+    """keys, or set values, are signed integers; values are objects.
+
+    describes IOBTree and LOBTree"""
+
+
+class IUnsignedObjectBTreeModule(_IMergeBTreeModule):
+    """
+    As for `IIntegerObjectBTreeModule` with unsigned integers.
+    """
+
+
+class IObjectIntegerBTreeModule(_IMergeBTreeModule):
+    """keys, or set values, are objects; values are signed integers.
 
     Object keys (and set values) must sort reliably (for instance, *not* on
     object id)!  Homogenous key types recommended.
 
     describes OIBTree and LOBTree"""
 
-    family = Attribute('The IBTreeFamily of this module')
+
+class IObjectUnsignedBTreeModule(_IMergeBTreeModule):
+    """
+    As for `IObjectIntegerBTreeModule` with unsigned integers.
+    """
 
 
-class IIntegerIntegerBTreeModule(IBTreeModule, IIMerge, IMergeIntegerKey):
-    """keys, or set values, are integers; values are also integers.
+class IIntegerIntegerBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
+    """keys, or set values, are signed integers; values are also signed integers.
 
     describes IIBTree and LLBTree"""
 
-    family = Attribute('The IBTreeFamily of this module')
+
+class IUnsignedUnsignedBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
+    """
+    As for `IIntegerIntegerBTreeModule` with unsigned integers.
+    """
+
+
+class IUnsignedIntegerBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
+    """
+    As for `IIntegerIntegerBTreeModule` with unsigned integers for keys only.
+    """
+
+
+class IIntegerUnsignedBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
+    """
+    As for `IIntegerIntegerBTreeModule` with unsigned integers for values only.
+    """
 
 
 class IObjectObjectBTreeModule(IBTreeModule, IMerge):
@@ -499,12 +537,15 @@ class IObjectObjectBTreeModule(IBTreeModule, IMerge):
     # the OO flavor of BTrees.
 
 
-class IIntegerFloatBTreeModule(IBTreeModule, IMerge):
-    """keys, or set values, are integers; values are floats.
+class IIntegerFloatBTreeModule(_IMergeBTreeModule):
+    """keys, or set values, are signed integers; values are floats.
 
     describes IFBTree and LFBTree"""
 
-    family = Attribute('The IBTreeFamily of this module')
+class IUnsignedFloatBTreeModule(_IMergeBTreeModule):
+    """
+    As for `IIntegerFloatBTreeModule` with unsigned integers.
+    """
 
 
 try:

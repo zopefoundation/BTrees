@@ -1509,6 +1509,18 @@ def to_int(self, v):
 
     return int(v)
 
+uint_pack, uint_unpack = _packer_unpacker('I')
+
+def to_uint(self, v):
+    try:
+        uint_pack(index(v))
+    except (struct_error, TypeError):
+        if isinstance(v, int_types):
+            raise OverflowError("Value out of range", v)
+        raise TypeError('non-negative 32-bit integer expected')
+
+    return int(v)
+
 float_pack = _packer_unpacker('f')[0]
 
 def to_float(self, v):
@@ -1526,10 +1538,23 @@ def to_long(self, v):
         long_pack(index(v))
     except (struct_error, TypeError):
         if isinstance(v, int_types):
-            raise ValueError("Value out of range", v)
+            raise OverflowError("Value out of range", v)
         raise TypeError('64-bit integer expected')
 
     return int(v)
+
+ulong_pack, ulong_unpack = _packer_unpacker('Q')
+
+def to_ulong(self, v):
+    try:
+        ulong_pack(index(v))
+    except (struct_error, TypeError):
+        if isinstance(v, int_types):
+            raise OverflowError("Value out of range", v)
+        raise TypeError('non-negative 64-bit integer expected')
+
+    return int(v)
+
 
 def to_bytes(l):
     def to(self, v):
@@ -1538,7 +1563,7 @@ def to_bytes(l):
         return v
     return to
 
-tos = dict(I=to_int, L=to_long, F=to_float, O=to_ob)
+tos = dict(I=to_int, L=to_long, F=to_float, O=to_ob, U=to_uint, Q=to_ulong)
 
 MERGE_DEFAULT_int = 1
 MERGE_DEFAULT_float = 1.0

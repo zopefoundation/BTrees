@@ -2963,7 +2963,7 @@ class Test_helpers(unittest.TestCase):
     def test_to_long_w_overflow(self):
         from BTrees._base import to_long
         faux_self = object()
-        self.assertRaises(ValueError, to_long, faux_self, 2**64)
+        self.assertRaises(OverflowError, to_long, faux_self, 2**64)
 
     def test_to_long_w_invalid(self):
         from BTrees._base import to_long

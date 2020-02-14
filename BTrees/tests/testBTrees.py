@@ -484,8 +484,8 @@ class FamilyTest(unittest.TestCase):
         self.assertTrue(BTrees.family64.minint in s)
         s = LOTreeSet()
         # XXX why oh why do we expect ValueError here, but TypeError in test32?
-        self.assertRaises(ValueError, s.insert, BTrees.family64.maxint + 1)
-        self.assertRaises(ValueError, s.insert, BTrees.family64.minint - 1)
+        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.maxint + 1)
+        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.minint - 1)
         self.check_pickling(BTrees.family64)
 
     def check_pickling(self, family):
