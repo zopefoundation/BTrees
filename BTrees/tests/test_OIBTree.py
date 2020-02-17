@@ -22,12 +22,11 @@ from .common import ModuleTest
 from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntValues
 from .common import TypeTest
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
-from BTrees.OIBTree import using64bits #XXX Ugly, but necessary
+
 
 
 class OIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -97,23 +96,6 @@ class OIBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.OIBTree import OIBTreePy
         return OIBTreePy()
-
-
-if using64bits:
-
-    class OIBTreeTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
-            from BTrees.OIBTree import OIBTree
-            return OIBTree()
-        def getTwoKeys(self):
-            return object(), object()
-
-    class OIBTreePyTest(BTreeTests, TestLongIntValues, unittest.TestCase):
-        def _makeOne(self):
-            from BTrees.OIBTree import OIBTreePy
-            return OIBTreePy()
-        def getTwoKeys(self):
-            return object(), object()
 
 
 class _TestOIBTreesBase(TypeTest):

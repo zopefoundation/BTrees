@@ -23,9 +23,8 @@ from .common import MultiUnion
 from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntKeys
 from .common import makeBuilder
-from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
+
 
 
 class IFBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -96,26 +95,6 @@ class IFBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.IFBTree import IFBTreePy
         return IFBTreePy()
-
-if using64bits:
-
-    class IFBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IFBTree import IFBTree
-            return IFBTree()
-
-        def getTwoValues(self):
-            return 0.5, 1.5
-
-    class IFBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IFBTree import IFBTreePy
-            return IFBTreePy()
-
-        def getTwoValues(self):
-            return 0.5, 1.5
 
 
 class _TestIFBTreesBase(object):

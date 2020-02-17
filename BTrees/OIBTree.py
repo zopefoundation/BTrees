@@ -42,7 +42,7 @@ from ._compat import import_c_extension
 
 _BUCKET_SIZE = 60
 _TREE_SIZE = 250
-using64bits = True
+using64bits = False
 
 class OIBucketPy(Bucket):
     _to_key = _to_key

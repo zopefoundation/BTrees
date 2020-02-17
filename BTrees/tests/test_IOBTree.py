@@ -25,9 +25,8 @@ from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
 from .common import TypeTest
-from .common import TestLongIntKeys
 from .common import makeBuilder
-from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
+
 
 
 class IOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -98,23 +97,6 @@ class IOBTreePyTest(BTreeTests, unittest.TestCase):
     def _makeOne(self):
         from BTrees.IOBTree import IOBTreePy
         return IOBTreePy()
-
-
-if using64bits:
-
-
-    class IOBTreeTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IOBTree import IOBTree
-            return IOBTree()
-
-
-    class IOBTreePyTest(BTreeTests, TestLongIntKeys, unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IOBTree import IOBTreePy
-            return IOBTreePy()
 
 
 class _TestIOBTreesBase(TypeTest):

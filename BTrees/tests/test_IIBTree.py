@@ -24,12 +24,10 @@ from .common import MultiUnion
 from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
-from .common import TestLongIntKeys
-from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
-from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
+
 
 
 class IIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -128,29 +126,6 @@ class IIBTreeTestPy(_IIBTreeTestBase, unittest.TestCase):
     def _makeOne(self):
         from BTrees.IIBTree import IIBTreePy
         return IIBTreePy()
-
-
-if using64bits:
-
-    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IIBTree import IIBTree
-            return IIBTree()
-
-        def getTwoValues(self):
-            return 1, 2
-
-    class IIBTreeTest(BTreeTests, TestLongIntKeys, TestLongIntValues,
-                      unittest.TestCase):
-
-        def _makeOne(self):
-            from BTrees.IIBTree import IIBTreePy
-            return IIBTreePy()
-
-        def getTwoValues(self):
-            return 1, 2
 
 
 class _TestIIBTreesBase(object):
