@@ -17,8 +17,6 @@
   consistent between Python 2 and Python 3 and between 32-bit and
   64-bit variants.
 
-- Fix the value for ``BTrees.OIBTree`` when using the pure Python
-  implementation (PyPy and when ``PURE_PYTHON`` is in the environment).
 
 4.6.1 (2019-11-07)
 ==================

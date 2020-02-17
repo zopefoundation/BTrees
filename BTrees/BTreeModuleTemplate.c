@@ -509,30 +509,30 @@ static char *search_keywords[] = {"min", "max",
 
 static struct PyMethodDef module_methods[] = {
   {"difference", (PyCFunction) difference_m,    METH_VARARGS,
-   "difference(o1, o2) -- "
+   "difference(o1, o2)\n"
    "compute the difference between o1 and o2"
   },
   {"union", (PyCFunction) union_m,      METH_VARARGS,
-   "union(o1, o2) -- compute the union of o1 and o2\n"
+   "union(o1, o2)\ncompute the union of o1 and o2\n"
   },
   {"intersection", (PyCFunction) intersection_m,        METH_VARARGS,
-   "intersection(o1, o2) -- "
+   "intersection(o1, o2)\n"
    "compute the intersection of o1 and o2"
   },
 #ifdef MERGE
   {"weightedUnion", (PyCFunction) wunion_m,     METH_VARARGS,
-   "weightedUnion(o1, o2 [, w1, w2]) -- compute the union of o1 and o2\n"
+   "weightedUnion(o1, o2 [, w1, w2])\ncompute the union of o1 and o2\n"
    "\nw1 and w2 are weights."
   },
   {"weightedIntersection", (PyCFunction) wintersection_m,       METH_VARARGS,
-   "weightedIntersection(o1, o2 [, w1, w2]) -- "
+   "weightedIntersection(o1, o2 [, w1, w2])\n"
    "compute the intersection of o1 and o2\n"
    "\nw1 and w2 are weights."
   },
 #endif
 #ifdef MULTI_INT_UNION
   {"multiunion", (PyCFunction) multiunion_m, METH_VARARGS,
-   "multiunion(seq) -- compute union of a sequence of integer sets.\n"
+   "multiunion(seq)\ncompute union of a sequence of integer sets.\n"
    "\n"
    "Each element of seq must be an integer set, or convertible to one\n"
    "via the set iteration protocol.  The union returned is an IISet."

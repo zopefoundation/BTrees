@@ -1,0 +1,9 @@
+/*
+   sphinx_rtd_theme pulls from wyrm, which applies white-space: nowrap to tables.
+   https://github.com/snide/wyrm/blob/fd41b56978f009e8c33cb26f384dd0dfaf430a7d/sass/wyrm_core/_table.sass#L144
+   That makes it hard to have a table with more than three columns without
+   pointless scrolling.
+*/
+.wrapped td, .wrapped th {
+    white-space: normal !important;
+}

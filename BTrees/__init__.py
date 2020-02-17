@@ -19,8 +19,23 @@ import BTrees.Interfaces
 @zope.interface.implementer(BTrees.Interfaces.IBTreeFamily)
 class _Family(object):
     from BTrees import OOBTree as OO
+    _BITSIZE = 0
+    minint = maxint = maxuint = 0
+
+    def __str__(self):
+        return (
+            "BTree family using {} bits. "
+            "Supports signed integer values from {:,} to {:,} "
+            "and maximum unsigned integer value {:,}."
+        ).format(self._BITSIZE, self.minint, self.maxint, self.maxuint)
+
+    def __repr__(self):
+        return "<%s>" % (
+            self
+        )
 
 class _Family32(_Family):
+    _BITSIZE = 32
     from BTrees import OIBTree as OI
     from BTrees import OUBTree as OU
 
@@ -42,6 +57,7 @@ class _Family32(_Family):
         return _family32, ()
 
 class _Family64(_Family):
+    _BITSIZE = 64
     from BTrees import OLBTree as OI
     from BTrees import OQBTree as OU
 
@@ -70,8 +86,10 @@ def _family64():
     return family64
 _family64.__safe_for_unpickling__ = True
 
-
+#: 32-bit BTree family.
 family32 = _Family32()
+
+#: 64-bit BTree family.
 family64 = _Family64()
 
 for _family in family32, family64:

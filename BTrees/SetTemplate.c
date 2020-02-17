@@ -37,7 +37,7 @@ _Set_update(Bucket *self, PyObject *seq)
 {
     int n=0, ind=0;
     PyObject *iter, *v;
- 
+
     iter = PyObject_GetIter(seq);
     if (iter == NULL)
         return -1;
@@ -177,49 +177,49 @@ set_setstate(Bucket *self, PyObject *args)
 
 static struct PyMethodDef Set_methods[] = {
     {"__getstate__", (PyCFunction) bucket_getstate, METH_VARARGS,
-     "__getstate__() -- Return the picklable state of the object"},
+     "__getstate__()\nReturn the picklable state of the object"},
 
     {"__setstate__", (PyCFunction) set_setstate, METH_VARARGS,
-     "__setstate__() -- Set the state of the object"},
+     "__setstate__()\nSet the state of the object"},
 
     {"keys", (PyCFunction) bucket_keys, METH_VARARGS | METH_KEYWORDS,
-     "keys() -- Return the keys"},
+     "keys()\nReturn the keys"},
 
     {"has_key", (PyCFunction) bucket_has_key, METH_O,
-     "has_key(key) -- Test whether the bucket contains the given key"},
+     "has_key(key)\nTest whether the bucket contains the given key"},
 
     {"clear", (PyCFunction) bucket_clear, METH_VARARGS,
-     "clear() -- Remove all of the items from the bucket"},
+     "clear()\nRemove all of the items from the bucket"},
 
     {"maxKey", (PyCFunction) Bucket_maxKey, METH_VARARGS,
-     "maxKey([key]) -- Find the maximum key\n\n"
+     "maxKey([key])\nFind the maximum key\n\n"
      "If an argument is given, find the maximum <= the argument"},
 
     {"minKey", (PyCFunction) Bucket_minKey, METH_VARARGS,
-     "minKey([key]) -- Find the minimum key\n\n"
+     "minKey([key])\nFind the minimum key\n\n"
      "If an argument is given, find the minimum >= the argument"},
 
 #ifdef PERSISTENT
     {"_p_resolveConflict",
      (PyCFunction) bucket__p_resolveConflict, METH_VARARGS,
-     "_p_resolveConflict() -- Reinitialize from a newly created copy"},
+     "_p_resolveConflict()\nReinitialize from a newly created copy"},
 
     {"_p_deactivate",
      (PyCFunction) bucket__p_deactivate, METH_VARARGS | METH_KEYWORDS,
-     "_p_deactivate() -- Reinitialize from a newly created copy"},
+     "_p_deactivate()\nReinitialize from a newly created copy"},
 #endif
 
     {"add", (PyCFunction)Set_insert, METH_VARARGS,
-     "add(id) -- Add a key to the set"},
+     "add(id)\nAdd a key to the set"},
 
     {"insert", (PyCFunction)Set_insert, METH_VARARGS,
-     "insert(id) -- Add a key to the set"},
+     "insert(id)\nAdd a key to the set"},
 
     {"update", (PyCFunction)Set_update,    METH_VARARGS,
-     "update(seq) -- Add the items from the given sequence to the set"},
+     "update(seq)\nAdd the items from the given sequence to the set"},
 
     {"remove",    (PyCFunction)Set_remove,    METH_VARARGS,
-     "remove(id) -- Remove an id from the set"},
+     "remove(id)\nRemove an id from the set"},
 
     {NULL, NULL}        /* sentinel */
 };
