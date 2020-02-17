@@ -17,7 +17,6 @@ from .common import _skip_under_Py3k
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -39,20 +38,6 @@ class OOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OOBTree import OOBTree
         return OOBTree
-
-
-class OOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSet
-        return OOTreeSet
-
-
-class OOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSetPy
-        return OOTreeSetPy
 
 
 class OOBucketTest(MappingBase, unittest.TestCase):
@@ -187,7 +172,6 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertEqual(list(union(t, t2)), list(t2))
         self.assertEqual(list(intersection(t, t2)), list(t))
 
-    @_skip_under_Py3k
     def testDeleteNoneKey(self):
         # Check that a None key can be deleted in Python 2.
         # This doesn't work on Python 3 because None is unorderable,
@@ -223,11 +207,7 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
             def __eq__(self, other):
                 return False
 
-            def __cmp__(self, other):
-                return 1
-
-            def __lt__(self, other):
-                return False
+            __lt__ = __cmp__ = __eq__
 
         t = self._makeOne()
         bad_key = Bad()
@@ -389,31 +369,3 @@ class OOModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("OOBTree shouldn't have multiunion")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(OOBTreeInternalKeyTest),
-        unittest.makeSuite(OOBTreePyInternalKeyTest),
-        unittest.makeSuite(OOTreeSetInternalKeyTest),
-        unittest.makeSuite(OOTreeSetPyInternalKeyTest),
-        unittest.makeSuite(OOBucketTest),
-        unittest.makeSuite(OOBucketPyTest),
-        unittest.makeSuite(OOTreeSetTest),
-        unittest.makeSuite(OOTreeSetPyTest),
-        unittest.makeSuite(OOSetTest),
-        unittest.makeSuite(OOSetPyTest),
-        unittest.makeSuite(OOBTreeTest),
-        unittest.makeSuite(OOBTreePyTest),
-        unittest.makeSuite(PureOO),
-        unittest.makeSuite(PureOOPy),
-        unittest.makeSuite(OOBucketConflictTests),
-        unittest.makeSuite(OOBucketPyConflictTests),
-        unittest.makeSuite(OOSetConflictTests),
-        unittest.makeSuite(OOSetPyConflictTests),
-        unittest.makeSuite(OOBTreeConflictTests),
-        unittest.makeSuite(OOBTreePyConflictTests),
-        unittest.makeSuite(OOTreeSetConflictTests),
-        unittest.makeSuite(OOTreeSetPyConflictTests),
-        unittest.makeSuite(OOModuleTest),
-    ))

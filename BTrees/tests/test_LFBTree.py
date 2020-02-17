@@ -16,7 +16,6 @@ import unittest
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -40,20 +39,6 @@ class LFBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LFBTree import LFBTreePy
         return LFBTreePy
-
-
-class LFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LFBTree import LFTreeSet
-        return LFTreeSet
-
-
-class LFTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LFBTree import LFTreeSetPy
-        return LFTreeSetPy
 
 
 class LFBucketTest(MappingBase, unittest.TestCase):
@@ -284,33 +269,3 @@ class LFModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerFloatBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(LFBTreeInternalKeyTest),
-        unittest.makeSuite(LFBTreePyInternalKeyTest),
-        unittest.makeSuite(LFTreeSetInternalKeyTest),
-        unittest.makeSuite(LFTreeSetPyInternalKeyTest),
-        unittest.makeSuite(LFBucketTest),
-        unittest.makeSuite(LFBucketPyTest),
-        unittest.makeSuite(LFTreeSetTest),
-        unittest.makeSuite(LFTreeSetPyTest),
-        unittest.makeSuite(LFSetTest),
-        unittest.makeSuite(LFSetPyTest),
-        unittest.makeSuite(LFBTreeTest),
-        unittest.makeSuite(LFBTreePyTest),
-        unittest.makeSuite(TestLFMultiUnion),
-        unittest.makeSuite(TestLFMultiUnionPy),
-        unittest.makeSuite(PureLF),
-        unittest.makeSuite(PureLFPy),
-        unittest.makeSuite(LFBTreeConflictTests),
-        unittest.makeSuite(LFBTreeConflictTestsPy),
-        unittest.makeSuite(LFBucketConflictTests),
-        unittest.makeSuite(LFBucketConflictTestsPy),
-        unittest.makeSuite(LFTreeSetConflictTests),
-        unittest.makeSuite(LFTreeSetConflictTestsPy),
-        unittest.makeSuite(LFSetConflictTests),
-        unittest.makeSuite(LFSetConflictTestsPy),
-        unittest.makeSuite(LFModuleTest),
-    ))

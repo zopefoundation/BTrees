@@ -16,7 +16,6 @@ import unittest
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -28,7 +27,7 @@ from .common import TypeTest
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeBuilder
-from BTrees.IIBTree import using64bits #XXX Ugly, but necessary
+from BTrees.OIBTree import using64bits #XXX Ugly, but necessary
 
 
 class OIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
@@ -43,20 +42,6 @@ class OIBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OIBTree import OIBTreePy
         return OIBTreePy
-
-
-class OITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OIBTree import OITreeSet
-        return OITreeSet
-
-
-class OITreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OIBTree import OITreeSetPy
-        return OITreeSetPy
 
 
 class OIBucketTest(MappingBase, unittest.TestCase):
@@ -349,35 +334,3 @@ class OIModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("OIBTree shouldn't have multiunion")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(OIBTreeInternalKeyTest),
-        unittest.makeSuite(OIBTreePyInternalKeyTest),
-        unittest.makeSuite(OITreeSetInternalKeyTest),
-        unittest.makeSuite(OITreeSetPyInternalKeyTest),
-        unittest.makeSuite(OIBucketTest),
-        unittest.makeSuite(OIBucketPyTest),
-        unittest.makeSuite(OITreeSetTest),
-        unittest.makeSuite(OITreeSetPyTest),
-        unittest.makeSuite(OISetTest),
-        unittest.makeSuite(OISetPyTest),
-        unittest.makeSuite(OIBTreeTest),
-        unittest.makeSuite(OIBTreePyTest),
-        unittest.makeSuite(TestOIBTrees),
-        unittest.makeSuite(TestOIBTreesPy),
-        unittest.makeSuite(PureOI),
-        unittest.makeSuite(PureOIPy),
-        unittest.makeSuite(TestWeightedOI),
-        unittest.makeSuite(TestWeightedOIPy),
-        unittest.makeSuite(OIBucketConflictTests),
-        unittest.makeSuite(OIBucketConflictTestsPy),
-        unittest.makeSuite(OISetConflictTests),
-        unittest.makeSuite(OISetConflictTestsPy),
-        unittest.makeSuite(OIBTreeConflictTests),
-        unittest.makeSuite(OIBTreeConflictTestsPy),
-        unittest.makeSuite(OITreeSetConflictTests),
-        unittest.makeSuite(OITreeSetConflictTestsPy),
-        unittest.makeSuite(OIModuleTest),
-    ))

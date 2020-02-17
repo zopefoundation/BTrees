@@ -1054,13 +1054,12 @@ class _Tree(_Base):
             ):
             return ((data[0].child.__getstate__(), ), )
 
-        sdata = []
+
+        data = iter(data)
+        sdata = [next(data).child]
         for item in data:
-            if sdata:
-                sdata.append(item.key)
-                sdata.append(item.child)
-            else:
-                sdata.append(item.child)
+            sdata.append(item.key)
+            sdata.append(item.child)
 
         return tuple(sdata), self._firstbucket
 

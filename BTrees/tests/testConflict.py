@@ -565,9 +565,3 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         tm2.commit()
         self.assertRaises(ConflictError, tm1.commit)
         tm1.abort()
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(NastyConfictFunctionalTests),
-    ))

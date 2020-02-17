@@ -17,7 +17,6 @@ from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -41,20 +40,6 @@ class LOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LOBTree import LOBTreePy
         return LOBTreePy
-
-
-class LOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LOBTree import LOTreeSet
-        return LOTreeSet
-
-
-class LOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LOBTree import LOTreeSetPy
-        return LOTreeSetPy
 
 
 class LOBucketTest(MappingBase, unittest.TestCase):
@@ -323,37 +308,3 @@ class LOModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("LOBTree shouldn't have weightedIntersection")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(LOBTreeInternalKeyTest),
-        unittest.makeSuite(LOBTreePyInternalKeyTest),
-        unittest.makeSuite(LOTreeSetInternalKeyTest),
-        unittest.makeSuite(LOTreeSetPyInternalKeyTest),
-        unittest.makeSuite(LOBucketTest),
-        unittest.makeSuite(LOBucketPyTest),
-        unittest.makeSuite(LOTreeSetTest),
-        unittest.makeSuite(LOTreeSetPyTest),
-        unittest.makeSuite(LOSetTest),
-        unittest.makeSuite(LOSetPyTest),
-        unittest.makeSuite(LOBTreeTest),
-        unittest.makeSuite(LOBTreePyTest),
-        unittest.makeSuite(TestLOSets),
-        unittest.makeSuite(TestLOSetsPy),
-        unittest.makeSuite(TestLOTreeSets),
-        unittest.makeSuite(TestLOTreeSetsPy),
-        unittest.makeSuite(TestLOMultiUnion),
-        unittest.makeSuite(TestLOMultiUnionPy),
-        unittest.makeSuite(PureLO),
-        unittest.makeSuite(PureLOPy),
-        unittest.makeSuite(LOBTreeConflictTests),
-        unittest.makeSuite(LOBTreeConflictTestsPy),
-        unittest.makeSuite(LOBucketConflictTests),
-        unittest.makeSuite(LOBucketConflictTestsPy),
-        unittest.makeSuite(LOTreeSetConflictTests),
-        unittest.makeSuite(LOTreeSetConflictTestsPy),
-        unittest.makeSuite(LOSetConflictTests),
-        unittest.makeSuite(LOSetConflictTestsPy),
-        unittest.makeSuite(LOModuleTest),
-    ))

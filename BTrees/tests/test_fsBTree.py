@@ -14,7 +14,11 @@
 import unittest
 
 
-class fsBucketBase(object):
+class fsBucketTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from BTrees.fsBTree import fsBucket
+        return fsBucket
 
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
@@ -43,22 +47,9 @@ class fsBucketBase(object):
         self.assertRaises(ValueError, bucket.fromString, b'xxx')
 
 
-class fsBucketTests(unittest.TestCase, fsBucketBase):
 
-    def _getTargetClass(self):
-        from BTrees.fsBTree import fsBucket
-        return fsBucket
-
-
-class fsBucketPyTests(unittest.TestCase, fsBucketBase):
+class fsBucketPyTests(fsBucketTests):
 
     def _getTargetClass(self):
         from BTrees.fsBTree import fsBucketPy
         return fsBucketPy
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(fsBucketTests),
-        unittest.makeSuite(fsBucketPyTests),
-    ))

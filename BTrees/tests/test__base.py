@@ -3061,26 +3061,3 @@ class _Mapping(dict):
         return repr(dict(zip(self._keys, self._values)))
 _Mapping._set_type = _Set
 _Mapping._mapping_type = _Mapping
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(Test_Base),
-        unittest.makeSuite(Test_BucketBase),
-        unittest.makeSuite(Test_SetIteration),
-        unittest.makeSuite(BucketTests),
-        unittest.makeSuite(SetTests),
-        unittest.makeSuite(Test_TreeItem),
-        unittest.makeSuite(Test_Tree),
-        unittest.makeSuite(Test_TreeItems),
-        unittest.makeSuite(TreeTests),
-        unittest.makeSuite(TreeSetTests),
-        unittest.makeSuite(Test_set_operation),
-        unittest.makeSuite(Test_difference),
-        unittest.makeSuite(Test_union),
-        unittest.makeSuite(Test_intersection),
-        unittest.makeSuite(Test_weightedUnion),
-        unittest.makeSuite(Test_weightedIntersection),
-        unittest.makeSuite(Test_multiunion),
-        unittest.makeSuite(Test_helpers),
-    ))

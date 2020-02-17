@@ -17,7 +17,6 @@ from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -32,33 +31,20 @@ from .common import itemsToSet
 from .common import makeBuilder
 from BTrees.IIBTree import using64bits #XXX Ugly, but unavoidable
 
- 
+
 class IIBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IIBTree
         return IIBTree
 
- 
+
 class IIBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.IIBTree import IIBTreePy
         return IIBTreePy
 
-
-class IITreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IIBTree import IITreeSet
-        return IITreeSet
-
-
-class IITreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IIBTree import IITreeSetPy
-        return IITreeSetPy
 
 
 class IIBucketTest(MappingBase, unittest.TestCase):
@@ -466,42 +452,3 @@ class IIModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerIntegerBTreeModule
-
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(IIBTreeInternalKeyTest),
-        unittest.makeSuite(IIBTreePyInternalKeyTest),
-        unittest.makeSuite(IITreeSetInternalKeyTest),
-        unittest.makeSuite(IITreeSetPyInternalKeyTest),
-        unittest.makeSuite(IIBucketTest),
-        unittest.makeSuite(IIBucketPyTest),
-        unittest.makeSuite(IITreeSetTest),
-        unittest.makeSuite(IITreeSetPyTest),
-        unittest.makeSuite(IISetTest),
-        unittest.makeSuite(IISetPyTest),
-        unittest.makeSuite(IIBTreeTest),
-        unittest.makeSuite(IIBTreeTestPy),
-        unittest.makeSuite(TestIIBTrees),
-        unittest.makeSuite(TestIIBTreesPy),
-        unittest.makeSuite(TestIISets),
-        unittest.makeSuite(TestIISetsPy),
-        unittest.makeSuite(TestIITreeSets),
-        unittest.makeSuite(TestIITreeSetsPy),
-        unittest.makeSuite(TestIIMultiUnion),
-        unittest.makeSuite(TestIIMultiUnionPy),
-        unittest.makeSuite(PureII),
-        unittest.makeSuite(PureIIPy),
-        unittest.makeSuite(TestWeightedII),
-        unittest.makeSuite(TestWeightedIIPy),
-        unittest.makeSuite(IIBTreeConflictTests),
-        unittest.makeSuite(IIBTreeConflictTestsPy),
-        unittest.makeSuite(IIBucketConflictTests),
-        unittest.makeSuite(IIBucketConflictTestsPy),
-        unittest.makeSuite(IITreeSetConflictTests),
-        unittest.makeSuite(IITreeSetConflictTestsPy),
-        unittest.makeSuite(IISetConflictTests),
-        unittest.makeSuite(IISetConflictTestsPy),
-        unittest.makeSuite(IIModuleTest),
-    ))

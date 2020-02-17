@@ -16,7 +16,6 @@ import unittest
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -41,20 +40,6 @@ class IFBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IFBTree import IFBTreePy
         return IFBTreePy
-
-
-class IFTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IFBTree import IFTreeSet
-        return IFTreeSet
-
-
-class IFTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IFBTree import IFTreeSetPy
-        return IFTreeSetPy
 
 
 class IFBucketTest(MappingBase, unittest.TestCase):
@@ -345,34 +330,3 @@ class IFModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerFloatBTreeModule
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(IFBTreeInternalKeyTest),
-        unittest.makeSuite(IFBTreePyInternalKeyTest),
-        unittest.makeSuite(IFTreeSetInternalKeyTest),
-        unittest.makeSuite(IFTreeSetPyInternalKeyTest),
-        unittest.makeSuite(IFBucketTest),
-        unittest.makeSuite(IFBucketPyTest),
-        unittest.makeSuite(IFTreeSetTest),
-        unittest.makeSuite(IFTreeSetPyTest),
-        unittest.makeSuite(IFSetTest),
-        unittest.makeSuite(IFSetPyTest),
-        unittest.makeSuite(IFBTreeTest),
-        unittest.makeSuite(IFBTreePyTest),
-        unittest.makeSuite(TestIFBTrees),
-        unittest.makeSuite(TestIFBTreesPy),
-        unittest.makeSuite(TestIFMultiUnion),
-        unittest.makeSuite(TestIFMultiUnionPy),
-        unittest.makeSuite(PureIF),
-        unittest.makeSuite(PureIFPy),
-        unittest.makeSuite(IFBTreeConflictTests),
-        unittest.makeSuite(IFBTreePyConflictTests),
-        unittest.makeSuite(IFBucketConflictTests),
-        unittest.makeSuite(IFBucketPyConflictTests),
-        unittest.makeSuite(IFTreeSetConflictTests),
-        unittest.makeSuite(IFTreeSetPyConflictTests),
-        unittest.makeSuite(IFSetConflictTests),
-        unittest.makeSuite(IFSetPyConflictTests),
-        unittest.makeSuite(IFModuleTest),
-    ))

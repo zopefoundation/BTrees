@@ -13,6 +13,8 @@
 ##############################################################################
 from __future__ import division
 
+import sys
+import functools
 import unittest
 import platform
 from unittest import skip
@@ -1746,13 +1748,6 @@ class InternalKeysMappingTest(object):
         db.close()
 
 
-class InternalKeysSetTest(object):
-    # There must not be any internal keys not in the TreeSet
-
-    def add_key(self, tree, key):
-        tree.add(key)
-
-
 class ModuleTest(object):
     # test for presence of generic names in module
     prefix = None
@@ -1844,26 +1839,25 @@ class TestLongIntSupport(object):
     def getTwoKeys(self):
         # Return two distinct values, these must compare as un-equal.
         #
-        #These values must be usable as keys.
+        # These values must be usable as keys.
         return 0, 1
 
-    def _set_value(self, key, value):
-        t = self._makeOne()
-        t[key] = value
-
+    def _skip_if_not_64bit(self):
+        mod = sys.modules[self._getTargetClass().__module__]
+        if not mod.using64bits:
+            self.skipTest("Needs 64 bit support.") # pragma: no cover
 
 class TestLongIntKeys(TestLongIntSupport):
+    SUPPORTS_NEGATIVE_KEYS = True
 
     def _makeLong(self, v):
         try:
             return long(v)
-        except NameError: #pragma NO COVER Py3k
+        except NameError: # pragma: no cover
             return int(v)
 
     def testLongIntKeysWork(self):
-        from BTrees.IIBTree import using64bits
-        if not using64bits:
-            return
+        self._skip_if_not_64bit()
         t = self._makeOne()
         o1, o2 = self.getTwoValues()
         assert o1 != o2
@@ -1880,7 +1874,7 @@ class TestLongIntKeys(TestLongIntSupport):
         # Test some large key values too:
         k1 = SMALLEST_POSITIVE_33_BITS
         k2 = LARGEST_64_BITS
-        k3 = SMALLEST_64_BITS
+        k3 = SMALLEST_64_BITS if self.SUPPORTS_NEGATIVE_KEYS else 0
         t[k1] = o1
         t[k2] = o2
         t[k3] = o1
@@ -1892,23 +1886,22 @@ class TestLongIntKeys(TestLongIntSupport):
         self.assertEqual(list(t.keys(None,k2)), [k3, 0, k1, k2])
 
     def testLongIntKeysOutOfRange(self):
-        from BTrees.IIBTree import using64bits
-        if not using64bits:
-            return
+        self._skip_if_not_64bit()
         o1, o2 = self.getTwoValues()
-        self.assertRaises(
-            ValueError,
-            self._set_value, SMALLEST_POSITIVE_65_BITS, o1)
-        self.assertRaises(
-            ValueError,
-            self._set_value, LARGEST_NEGATIVE_65_BITS, o1)
+        t = self._makeOne()
+        k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2**64 + 1
+        with self.assertRaises((OverflowError, ValueError)):
+            t[k1] = o1
+
+        t = self._makeOne()
+        with self.assertRaises((OverflowError, ValueError)):
+            t[LARGEST_NEGATIVE_65_BITS] = o1
+
 
 class TestLongIntValues(TestLongIntSupport):
-
+    SUPPORTS_NEGATIVE_VALUES = True
     def testLongIntValuesWork(self):
-        from BTrees.IIBTree import using64bits
-        if not using64bits:
-            return
+        self._skip_if_not_64bit()
         t = self._makeOne()
         keys = sorted(self.getTwoKeys())
         k1, k2 = keys
@@ -1926,16 +1919,17 @@ class TestLongIntValues(TestLongIntSupport):
         self.assertEqual(list(t.values(None,None)), [v1, v2])
 
     def testLongIntValuesOutOfRange(self):
-        from BTrees.IIBTree import using64bits
-        if not using64bits:
-            return
+        self._skip_if_not_64bit()
         k1, k2 = self.getTwoKeys()
-        self.assertRaises(
-            ValueError,
-            self._set_value, k1, SMALLEST_POSITIVE_65_BITS)
-        self.assertRaises(
-            ValueError,
-            self._set_value, k1, LARGEST_NEGATIVE_65_BITS)
+        t = self._makeOne()
+        v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2**64 + 1
+        with self.assertRaises((OverflowError, ValueError)):
+            t[k1] = v1
+
+        t = self._makeOne()
+        with self.assertRaises((OverflowError, ValueError)):
+            t[k1] = LARGEST_NEGATIVE_65_BITS
+
 
 # Given a mapping builder (IIBTree, OOBucket, etc), return a function
 # that builds an object of that type given only a list of keys.

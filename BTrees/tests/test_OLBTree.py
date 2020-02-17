@@ -16,7 +16,6 @@ import unittest
 from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -42,20 +41,6 @@ class OLBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.OLBTree import OLBTreePy
         return OLBTreePy
-
-
-class OLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OLBTree import OLTreeSet
-        return OLTreeSet
-
-
-class OLTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OLBTree import OLTreeSetPy
-        return OLTreeSetPy
 
 
 class OLBucketTest(MappingBase, unittest.TestCase):
@@ -316,33 +301,3 @@ class OLModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("OLBTree shouldn't have multiunion")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(OLBTreeInternalKeyTest),
-        unittest.makeSuite(OLBTreePyInternalKeyTest),
-        unittest.makeSuite(OLTreeSetInternalKeyTest),
-        unittest.makeSuite(OLTreeSetPyInternalKeyTest),
-        unittest.makeSuite(OLBucketTest),
-        unittest.makeSuite(OLBucketPyTest),
-        unittest.makeSuite(OLTreeSetTest),
-        unittest.makeSuite(OLTreeSetPyTest),
-        unittest.makeSuite(OLSetTest),
-        unittest.makeSuite(OLSetPyTest),
-        unittest.makeSuite(OLBTreeTest),
-        unittest.makeSuite(OLBTreePyTest),
-        unittest.makeSuite(PureOL),
-        unittest.makeSuite(PureOLPy),
-        unittest.makeSuite(TestWeightedOL),
-        unittest.makeSuite(TestWeightedOLPy),
-        unittest.makeSuite(OLBucketConflictTests),
-        unittest.makeSuite(OLBucketPyConflictTests),
-        unittest.makeSuite(OLSetConflictTests),
-        unittest.makeSuite(OLSetPyConflictTests),
-        unittest.makeSuite(OLBTreeConflictTests),
-        unittest.makeSuite(OLBTreePyConflictTests),
-        unittest.makeSuite(OLTreeSetConflictTests),
-        unittest.makeSuite(OLTreeSetPyConflictTests),
-        unittest.makeSuite(OLModuleTest),
-    ))

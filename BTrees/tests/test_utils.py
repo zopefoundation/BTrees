@@ -74,10 +74,3 @@ class Test_oid_repr(unittest.TestCase):
 
     def test_w_odd_length(self):
         self.assertEqual(self._callFUT(b'\0\0\0\0\0\0\x0D\xEF'), b'0x0def')
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(Test_non_negative),
-        unittest.makeSuite(Test_oid_repr),
-    ))

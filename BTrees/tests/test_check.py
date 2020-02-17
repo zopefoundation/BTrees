@@ -411,15 +411,3 @@ def _makeTree(fill):
         for i in range(_BUCKET_SIZE + 1):
             tree[i] = 2*i
     return tree
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(Test_classify),
-        unittest.makeSuite(Test_crack_btree),
-        unittest.makeSuite(Test_crack_bucket),
-        unittest.makeSuite(Test_type_and_adr),
-        unittest.makeSuite(WalkerTests),
-        unittest.makeSuite(CheckerTests),
-        unittest.makeSuite(Test_check),
-    ))

@@ -230,7 +230,7 @@ class ToBeDeleted(object):
         return hash(self.id)
 
 
-class BugFixes(unittest.TestCase):
+class TestBugFixes(unittest.TestCase):
 
     # Collector 1843.  Error returns were effectively ignored in
     # Bucket_rangeSearch(), leading to "delayed" errors, or worse.
@@ -523,12 +523,3 @@ class FamilyTest(unittest.TestCase):
         f2, = u.load()
         self.assertTrue(f1 is family)
         self.assertTrue(f2 is family)
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(DegenerateBTree),
-        unittest.makeSuite(BugFixes),
-        unittest.makeSuite(TestCmpError),
-        unittest.makeSuite(FamilyTest),
-    ))

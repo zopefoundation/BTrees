@@ -11,6 +11,8 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
+import unittest
+
 from BTrees.OOBTree import OOBTree, OOBucket
 
 class B(OOBucket):
@@ -24,7 +26,6 @@ class T(OOBTree):
 class S(T):
     pass
 
-import unittest
 
 class SubclassTest(unittest.TestCase):
 
@@ -49,6 +50,3 @@ class SubclassTest(unittest.TestCase):
         sub = sub[0]
         self.assertEqual(sub.__class__, B)
         self.assertEqual(len(sub), 1)
-
-def test_suite():
-    return unittest.makeSuite(SubclassTest)

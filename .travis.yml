@@ -77,9 +77,9 @@ before_install:
     fi
 
 install:
-  - pip install -U pip setuptools
-  - if [[ "$WITH_COVERAGE" == "1" ]]; then pip install coveralls coverage; fi
-  - pip install -e .[test,ZODB]
+  - python -m pip install -U pip setuptools
+  - if [[ "$WITH_COVERAGE" == "1" ]]; then python -m pip install coveralls coverage; fi
+  - python -m pip install -U -e .[test,ZODB]
 
 script:
   - python --version

@@ -17,7 +17,6 @@ from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -43,20 +42,6 @@ class IOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.IOBTree import IOBTreePy
         return IOBTreePy
-
-
-class IOTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IOBTree import IOTreeSet
-        return IOTreeSet
-
-
-class IOTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.IOBTree import IOTreeSetPy
-        return IOTreeSetPy
 
 
 class IOBucketTest(MappingBase, unittest.TestCase):
@@ -376,39 +361,3 @@ class IOModuleTest(ModuleTest, unittest.TestCase):
             pass
         else:
             self.fail("IOBTree shouldn't have weightedIntersection")
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(IOBTreeInternalKeyTest),
-        unittest.makeSuite(IOBTreePyInternalKeyTest),
-        unittest.makeSuite(IOTreeSetInternalKeyTest),
-        unittest.makeSuite(IOTreeSetPyInternalKeyTest),
-        unittest.makeSuite(IOBucketTest),
-        unittest.makeSuite(IOBucketPyTest),
-        unittest.makeSuite(IOTreeSetTest),
-        unittest.makeSuite(IOTreeSetPyTest),
-        unittest.makeSuite(IOSetTest),
-        unittest.makeSuite(IOSetPyTest),
-        unittest.makeSuite(IOBTreeTest),
-        unittest.makeSuite(IOBTreePyTest),
-        unittest.makeSuite(TestIOBTrees),
-        unittest.makeSuite(TestIOBTreesPy),
-        unittest.makeSuite(TestIOSets),
-        unittest.makeSuite(TestIOSetsPy),
-        unittest.makeSuite(TestIOTreeSets),
-        unittest.makeSuite(TestIOTreeSetsPy),
-        unittest.makeSuite(TestIOMultiUnion),
-        unittest.makeSuite(TestIOMultiUnionPy),
-        unittest.makeSuite(PureIO),
-        unittest.makeSuite(PureIOPy),
-        unittest.makeSuite(IOBTreeConflictTests),
-        unittest.makeSuite(IOBTreeConflictTestsPy),
-        unittest.makeSuite(IOBucketConflictTests),
-        unittest.makeSuite(IOBucketConflictTestsPy),
-        unittest.makeSuite(IOTreeSetConflictTests),
-        unittest.makeSuite(IOTreeSetConflictTestsPy),
-        unittest.makeSuite(IOSetConflictTests),
-        unittest.makeSuite(IOSetConflictTestsPy),
-        unittest.makeSuite(IOModuleTest),
-    ))

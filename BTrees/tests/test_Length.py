@@ -16,7 +16,7 @@ import unittest
 
 _marker = object()
 
-class LengthTestCase(unittest.TestCase):
+class TestLength(unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.Length import Length
@@ -104,7 +104,3 @@ class LengthTestCase(unittest.TestCase):
         length = self._makeOne()
         other = copy.copy(length)
         self.assertEqual(other(), 0)
-
-
-def test_suite():
-    return unittest.makeSuite(LengthTestCase)

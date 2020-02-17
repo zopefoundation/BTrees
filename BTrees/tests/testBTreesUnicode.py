@@ -28,7 +28,7 @@ class TestBTreesUnicode(unittest.TestCase):
     def setUp(self):
         #setup an OOBTree with some unicode strings
         from BTrees.OOBTree import OOBTree
-        from BTrees._compat import _bytes
+
 
         self.s = b'dreit\xe4gigen'.decode('latin1')
 
@@ -43,21 +43,18 @@ class TestBTreesUnicode(unittest.TestCase):
 
         self.tree = OOBTree()
         for k, v in self.data:
-            if isinstance(k, _bytes):
+            if isinstance(k, bytes):
                 k = k.decode('latin1')
             self.tree[k] = v
 
-    @_skip_under_Py3k
     def testAllKeys(self):
         # check every item of the tree
-        from BTrees._compat import _bytes
         for k, v in self.data:
-            if isinstance(k, _bytes):
+            if isinstance(k, bytes):
                 k = k.decode(encoding)
-            self.assertTrue(k in self.tree)
+            self.assertIn(k, self.tree)
             self.assertEqual(self.tree[k], v)
 
-    @_skip_under_Py3k
     def testUnicodeKeys(self):
         # try to access unicode keys in tree
         k, v = self.data[-1]
@@ -65,12 +62,17 @@ class TestBTreesUnicode(unittest.TestCase):
         self.assertEqual(self.tree[k], v)
         self.assertEqual(self.tree[self.s], v)
 
-    @_skip_under_Py3k
+
     def testAsciiKeys(self):
-        # try to access some "plain ASCII" keys in the tree
+        # try to access some "plain ASCII" keys in the tree;
+        # they get upconverted to unicode for comparison on Python 2
         for k, v in self.data[0], self.data[2]:
-            self.assertTrue(isinstance(k, str))
-            self.assertEqual(self.tree[k], v)
+            self.assertIsInstance(k, bytes)
+            if bytes is str:
+                self.assertEqual(self.tree[k], v)
+            else:
+                with self.assertRaises(TypeError):
+                    self.tree.__getitem__(k)
 
 
 class TestBTreeBucketUnicode(unittest.TestCase):
@@ -83,7 +85,3 @@ class TestBTreeBucketUnicode(unittest.TestCase):
         bucket = OOBucket(items)
         self.assertEqual(repr(bucket),
                          'BTrees.OOBTree.OOBucket(%s)' % repr(items))
-
-
-def test_suite():
-    return unittest.defaultTestLoader.loadTestsFromName(__name__)

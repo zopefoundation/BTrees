@@ -17,7 +17,6 @@ from .common import BTreeTests
 from .common import ExtendedSetTests
 from .common import I_SetsBase
 from .common import InternalKeysMappingTest
-from .common import InternalKeysSetTest
 from .common import MappingBase
 from .common import MappingConflictTestBase
 from .common import ModuleTest
@@ -44,20 +43,6 @@ class LLBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.LLBTree import LLBTreePy
         return LLBTreePy
-
-
-class LLTreeSetInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LLBTree import LLTreeSet
-        return LLTreeSet
-
-
-class LLTreeSetPyInternalKeyTest(InternalKeysSetTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.LLBTree import LLTreeSetPy
-        return LLTreeSetPy
 
 
 class LLBucketTest(MappingBase, unittest.TestCase):
@@ -377,39 +362,3 @@ class LLModuleTest(ModuleTest, unittest.TestCase):
     def _getInterface(self):
         import BTrees.Interfaces
         return BTrees.Interfaces.IIntegerIntegerBTreeModule
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(LLBTreeInternalKeyTest),
-        unittest.makeSuite(LLBTreeInternalKeyTest),
-        unittest.makeSuite(LLTreeSetInternalKeyTest),
-        unittest.makeSuite(LLTreeSetInternalKeyTest),
-        unittest.makeSuite(LLBucketTest),
-        unittest.makeSuite(LLBucketTest),
-        unittest.makeSuite(LLTreeSetTest),
-        unittest.makeSuite(LLTreeSetTest),
-        unittest.makeSuite(LLSetTest),
-        unittest.makeSuite(LLSetTest),
-        unittest.makeSuite(LLBTreeTest),
-        unittest.makeSuite(LLBTreeTest),
-        unittest.makeSuite(TestLLSets),
-        unittest.makeSuite(TestLLSets),
-        unittest.makeSuite(TestLLTreeSets),
-        unittest.makeSuite(TestLLTreeSets),
-        unittest.makeSuite(TestLLMultiUnion),
-        unittest.makeSuite(TestLLMultiUnion),
-        unittest.makeSuite(PureLL),
-        unittest.makeSuite(PureLL),
-        unittest.makeSuite(TestWeightedLL),
-        unittest.makeSuite(TestWeightedLL),
-        unittest.makeSuite(LLBTreeConflictTests),
-        unittest.makeSuite(LLBTreeConflictTests),
-        unittest.makeSuite(LLBucketConflictTests),
-        unittest.makeSuite(LLBucketConflictTests),
-        unittest.makeSuite(LLTreeSetConflictTests),
-        unittest.makeSuite(LLTreeSetConflictTests),
-        unittest.makeSuite(LLSetConflictTests),
-        unittest.makeSuite(LLSetConflictTests),
-        unittest.makeSuite(LLModuleTest),
-    ))
