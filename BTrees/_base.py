@@ -14,18 +14,24 @@
 """Python BTree implementation
 """
 
-from struct import Struct
-from struct import error as struct_error
-from operator import index
+
 
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
 from ._compat import PY3
 from ._compat import compare
-from ._compat import int_types
 from ._compat import xrange
 
+# XXX: Fix these. These ignores are temporary to
+# reduce the noise and help find specific issues during
+# refactoring
+# pylint:disable=too-many-lines,fixme,protected-access
+# pylint:disable=attribute-defined-outside-init,redefined-builtin,no-else-return
+# pylint:disable=redefined-outer-name,bad-continuation,unused-variable
+# pylint:disable=too-many-branches,too-many-statements,arguments-differ,assigning-non-slot
+# pylint:disable=superfluous-parens,inconsistent-return-statements,unidiomatic-typecheck
+# pylint:disable=deprecated-method,consider-using-enumerate
 
 _marker = object()
 
@@ -33,6 +39,11 @@ _marker = object()
 class _Base(Persistent):
 
     __slots__ = ()
+    # This is used to allocate storage for the keys.
+    # It's probably here so that we could, for example, use
+    # an ``array.array`` for native types. But nothing actually does
+    # that, everything is stored boxed.
+    # TODO: Figure out why not.
     _key_type = list
 
     def __init__(self, items=None):
@@ -190,7 +201,13 @@ class _BucketBase(_Base):
         return iter(self._keys)
 
     def __contains__(self, key):
-        return (self._search(self._to_key(key)) >= 0)
+        try:
+            tree_key = self._to_key(key)
+        except TypeError:
+            # Can't convert the key, so can't possibly be in the tree
+            return False
+
+        return (self._search(tree_key) >= 0)
 
     has_key = __contains__
 
@@ -252,25 +269,6 @@ class _SetIteration(object):
 
         return self
 
-_object_lt = getattr(object, '__lt__', _marker)
-
-def _no_default_comparison(key):
-    # Enforce test that key has non-default comparison.
-    if key is None:
-        return
-    if type(key) is object:
-        raise TypeError("Can't use object() as keys")
-    lt = getattr(key, '__lt__', None)
-    if lt is not None:
-        # CPython 3.x follows PEP 252, defining '__objclass__'
-        if getattr(lt, '__objclass__', None) is object:
-            lt = None  # pragma: no cover Py3k
-        # PyPy3 doesn't follow PEP 252, but defines '__func__'
-        elif getattr(lt, '__func__', None) is _object_lt:
-            lt = None  # pragma: no cover PyPy3
-    if (lt is None and
-        getattr(key, '__cmp__', None) is None):
-        raise TypeError("Object has default comparison")
 
 class Bucket(_BucketBase):
 
@@ -308,7 +306,6 @@ class Bucket(_BucketBase):
             raise TypeError('items must be a sequence of 2-tuples')
 
     def __setitem__(self, key, value):
-        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -319,13 +316,23 @@ class Bucket(_BucketBase):
         self._values = self._value_type()
 
     def get(self, key, default=None):
-        index = self._search(self._to_key(key))
+        try:
+            key = self._to_key(key)
+        except TypeError:
+            # Can't convert, cannot possibly be present.
+            return default
+        index = self._search(key)
         if index < 0:
             return default
         return self._values[index]
 
     def __getitem__(self, key):
-        index = self._search(self._to_key(key))
+        try:
+            tree_key = self._to_key(key)
+        except TypeError:
+            # Can't convert, so cannot possibly be present.
+            raise KeyError(key)
+        index = self._search(tree_key)
         if index < 0:
             raise KeyError(key)
         return self._values[index]
@@ -809,7 +816,6 @@ class _Tree(_Base):
             set(*i)
 
     def __setitem__(self, key, value):
-        _no_default_comparison(key)
         self._set(self._to_key(key), self._to_value(value))
 
     def __delitem__(self, key):
@@ -990,7 +996,7 @@ class _Tree(_Base):
         if isinstance(first.child, type(self)):
             next._firstbucket = first.child._firstbucket
         else:
-            next._firstbucket = first.child;
+            next._firstbucket = first.child
         return next
 
     def _del(self, key):
@@ -1111,7 +1117,7 @@ class _Tree(_Base):
                     "BTree has firstbucket different than "
                     "its first child's firstbucket")
             for i in range(len(data)-1):
-               data[i].child._check(data[i+1].child._firstbucket)
+                data[i].child._check(data[i+1].child._firstbucket)
             data[-1].child._check(nextbucket)
         elif child_class is self._bucket_type:
             assert_(self._firstbucket is data[0].child,
@@ -1297,13 +1303,23 @@ class TreeSet(_Tree):
 
 class set_operation(object):
 
-    __slots__ = ('func',
-                 'set_type',
-                )
+    __slots__ = (
+        'func',
+        'set_type',
+        '__name__',
+        '_module',
+    )
 
     def __init__(self, func, set_type):
         self.func = func
         self.set_type = set_type
+        self.__name__ = func.__name__
+        self._module = func.__module__
+
+    __module__ = property(
+        lambda self: self._module,
+        lambda self, nv: setattr(self, '_module', nv)
+    )
 
     def __call__(self, *a, **k):
         return self.func(self.set_type, *a, **k)
@@ -1492,83 +1508,6 @@ def multiunion(set_type, seqs):
         result.update(s)
     return result
 
-def to_ob(self, v):
-    return v
-
-def _packer_unpacker(struct_format):
-    s = Struct(struct_format)
-    return s.pack, s.unpack
-
-int_pack, int_unpack = _packer_unpacker('i')
-
-def to_int(self, v):
-    try:
-        int_pack(index(v))
-    except (struct_error, TypeError):
-        raise TypeError('32-bit integer expected')
-
-    return int(v)
-
-# PyPy can raise ValueError converting a negative number to a
-# unsigned value.
-uint_pack, uint_unpack = _packer_unpacker('I')
-
-def to_uint(self, v):
-    try:
-        uint_pack(index(v))
-    except (struct_error, TypeError, ValueError):
-        if isinstance(v, int_types):
-            raise OverflowError("Value out of range", v)
-        raise TypeError('non-negative 32-bit integer expected')
-
-    return int(v)
-
-float_pack = _packer_unpacker('f')[0]
-
-def to_float(self, v):
-    try:
-        float_pack(v)
-    except struct_error:
-        raise TypeError('float expected')
-    return float(v)
-
-
-long_pack, long_unpack = _packer_unpacker('q')
-
-def to_long(self, v):
-    try:
-        long_pack(index(v))
-    except (struct_error, TypeError):
-        if isinstance(v, int_types):
-            raise OverflowError("Value out of range", v)
-        raise TypeError('64-bit integer expected')
-
-    return int(v)
-
-ulong_pack, ulong_unpack = _packer_unpacker('Q')
-
-def to_ulong(self, v):
-    try:
-        ulong_pack(index(v))
-    except (struct_error, TypeError, ValueError):
-        if isinstance(v, int_types):
-            raise OverflowError("Value out of range", v)
-        raise TypeError('non-negative 64-bit integer expected')
-
-    return int(v)
-
-
-def to_bytes(l):
-    def to(self, v):
-        if not (isinstance(v, bytes) and len(v) == l):
-            raise TypeError("%s-byte array expected" % l)
-        return v
-    return to
-
-tos = dict(I=to_int, L=to_long, F=to_float, O=to_ob, U=to_uint, Q=to_ulong)
-
-MERGE_DEFAULT_int = 1
-MERGE_DEFAULT_float = 1.0
 
 def MERGE(self, value1, weight1, value2, weight2):
     return (value1 * weight1) + (value2 * weight2)

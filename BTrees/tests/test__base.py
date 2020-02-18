@@ -426,9 +426,9 @@ class BucketTests(unittest.TestCase):
         return Bucket
 
     def _makeOne(self):
+        from .._datatypes import O
         class _Bucket(self._getTargetClass()):
-            def _to_key(self, x):
-                return x
+            _to_key = O()
             def _to_value(self, x):
                 return x
         return _Bucket()
@@ -1465,11 +1465,14 @@ class Test_Tree(unittest.TestCase):
 
     def _makeOne(self, items=None):
         from .._base import Bucket
+        from .._datatypes import O
+        from .._datatypes import Any
         class _Bucket(Bucket):
-            def _to_key(self, k):
-                return k
+            _to_key = O()
+
         class _Test(self._getTargetClass()):
-            _to_key = _to_value = lambda self, x: x
+            _to_key = O()
+            _to_value = Any()
             _bucket_type = _Bucket
             max_leaf_size = 10
             max_internal_size = 15
@@ -2902,86 +2905,6 @@ class Test_multiunion(unittest.TestCase, _SetObBase):
 
 
 class Test_helpers(unittest.TestCase):
-
-    def test_to_ob(self):
-        from BTrees._base import to_ob
-        faux_self = object()
-        for thing in "abc", 0, 1.3, (), frozenset((1, 2)), object():
-            self.assertTrue(to_ob(faux_self, thing) is thing)
-
-    def test_to_int_w_int(self):
-        from BTrees._base import to_int
-        faux_self = object()
-        self.assertEqual(to_int(faux_self, 3), 3)
-
-    def test_to_int_w_long_in_range(self):
-        from BTrees._base import to_int
-        faux_self = object()
-        try:
-            self.assertEqual(to_int(faux_self, long(3)), 3)
-        except NameError: #Python3
-            pass
-
-    def test_to_int_w_overflow(self):
-        from BTrees._base import to_int
-        faux_self = object()
-        self.assertRaises(TypeError, to_int, faux_self, 2**64)
-
-    def test_to_int_w_invalid(self):
-        from BTrees._base import to_int
-        faux_self = object()
-        self.assertRaises(TypeError, to_int, faux_self, ())
-
-    def test_to_float_w_float(self):
-        from BTrees._base import to_float
-        faux_self = object()
-        self.assertEqual(to_float(faux_self, 3.14159), 3.14159)
-
-    def test_to_float_w_int(self):
-        from BTrees._base import to_float
-        faux_self = object()
-        self.assertEqual(to_float(faux_self, 3), 3.0)
-
-    def test_to_float_w_invalid(self):
-        from BTrees._base import to_float
-        faux_self = object()
-        self.assertRaises(TypeError, to_float, faux_self, ())
-
-    def test_to_long_w_int(self):
-        from BTrees._base import to_long
-        faux_self = object()
-        self.assertEqual(to_long(faux_self, 3), 3)
-
-    def test_to_long_w_long_in_range(self):
-        from BTrees._base import to_long
-        faux_self = object()
-        try:
-            self.assertEqual(to_long(faux_self, long(3)), 3)
-        except NameError: #Python3
-            pass
-
-    def test_to_long_w_overflow(self):
-        from BTrees._base import to_long
-        faux_self = object()
-        self.assertRaises(OverflowError, to_long, faux_self, 2**64)
-
-    def test_to_long_w_invalid(self):
-        from BTrees._base import to_long
-        faux_self = object()
-        self.assertRaises(TypeError, to_long, faux_self, ())
-
-    def test_to_bytes_w_ok(self):
-        from BTrees._base import to_bytes
-        faux_self = object()
-        conv = to_bytes(3)
-        self.assertEqual(conv(faux_self, b'abc'), b'abc')
-
-    def test_to_bytes_w_invalid_length(self):
-        from BTrees._base import to_bytes
-        faux_self = object()
-        conv = to_bytes(3)
-        self.assertRaises(TypeError, conv, faux_self, b'ab')
-        self.assertRaises(TypeError, conv, faux_self, b'abcd')
 
     def test_MERGE(self):
         from BTrees._base import MERGE

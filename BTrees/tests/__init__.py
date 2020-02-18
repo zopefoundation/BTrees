@@ -1,1 +1,1 @@
-# If tests is a package, debugging is a bit easier.
+# Make this a package.

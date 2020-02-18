@@ -57,7 +57,9 @@
 **     self    The bucket
 **     keyarg    The key to look for
 **     has_key    Boolean; if true, return a true/false result; else return
-**              the value associated with the key.
+**              the value associated with the key. When true, ignore the TypeError from
+**              a key conversion issue, instead
+**              transforming it into a KeyError.
 **
 ** Return
 **     If has_key:
@@ -81,7 +83,15 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
     int copied = 1;
 
     COPY_KEY_FROM_ARG(key, keyarg, copied);
-    UNLESS (copied) return NULL;
+    UNLESS (copied)
+    {
+        if (has_key && PyErr_ExceptionMatches(PyExc_TypeError))
+        {
+            PyErr_Clear();
+            PyErr_SetObject(PyExc_KeyError, keyarg);
+        }
+        return NULL;
+    }
 
     UNLESS (PER_USE(self)) return NULL;
 
@@ -106,7 +116,17 @@ Done:
 static PyObject *
 bucket_getitem(Bucket *self, PyObject *key)
 {
-    return _bucket_get(self, key, 0);
+    PyObject* result;
+
+    result = _bucket_get(self, key, 0);
+
+    if (result == NULL && PyErr_ExceptionMatches(PyExc_TypeError))
+    {
+        PyErr_Clear();
+        PyErr_SetObject(PyExc_KeyError, key);
+    }
+
+    return result;
 }
 
 /*
@@ -1448,6 +1468,10 @@ bucket_contains(Bucket *self, PyObject *key)
         result = INT_AS_LONG(asobj) ? 1 : 0;
         Py_DECREF(asobj);
     }
+    else if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+        PyErr_Clear();
+        result = 0;
+    }
     return result;
 }
 
@@ -1465,6 +1489,10 @@ bucket_getm(Bucket *self, PyObject *args)
     r = _bucket_get(self, key, 0);
     if (r)
         return r;
+    if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
+        PyErr_SetObject(PyExc_KeyError, key);
+    }
     if (!PyErr_ExceptionMatches(PyExc_KeyError))
         return NULL;
     PyErr_Clear();

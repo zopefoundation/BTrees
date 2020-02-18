@@ -90,17 +90,6 @@ class SignedMixin(object):
     KEY_RANDRANGE_ARGS = (-2000, 2001)
 
 
-class UnsignedMixin(object):
-    SUPPORTS_NEGATIVE_KEYS = False
-    SUPPORTS_NEGATIVE_VALUES = False
-    KEY_RANDRANGE_ARGS = (0, 4002)
-
-class UnsignedValuesMixin(SignedMixin):
-    SUPPORTS_NEGATIVE_VALUES = False
-
-class UnsignedKeysMixin(UnsignedMixin):
-    SUPPORTS_NEGATIVE_VALUES = True
-
 class Base(SignedMixin):
     # Tests common to all types: sets, buckets, and BTrees
 
@@ -998,14 +987,136 @@ class MappingBase(Base):
         # Too many arguments.
         self.assertRaises(TypeError, t.pop, 1, 2, 3)
 
-class UnsignedMappingBase(UnsignedMixin, MappingBase):
-    pass
+    def __test_key_or_value_type(self, k, v, to_test, kvtype):
+        try:
+            kvtype(to_test)
+        except Exception as e: # pylint:disable=broad-except
+            with self.assertRaises(type(e)):
+                self._makeOne()[k] = v
+        else:
+            self._makeOne()[k] = v
 
-class UnsignedValuesMappingBase(UnsignedValuesMixin, MappingBase):
-    pass
+    def __test_key(self, k):
+        v = self.getTwoValues()[0]
+        self.__test_key_or_value_type(k, v, k, self.key_type)
 
-class UnsignedKeysMappingBase(UnsignedKeysMixin, MappingBase):
-    pass
+    def __test_value(self, v):
+        k = self.getTwoKeys()[0]
+        self.__test_key_or_value_type(k, v, v, self.value_type)
+
+    def test_assign_key_type_str(self):
+        self.__test_key('c')
+
+    # Assigning a str may or may not work; but querying for
+    # one will always return a correct answer, not raise
+    # a TypeError.
+    def testStringAllowedInContains(self):
+        self.assertFalse('key' in self._makeOne())
+
+    def testStringKeyRaisesKeyErrorWhenMissing(self):
+        self.assertRaises(KeyError, self._makeOne().__getitem__, 'key')
+
+    def testStringKeyReturnsDefaultFromGetWhenMissing(self):
+        self.assertEqual(self._makeOne().get('key', 42), 42)
+
+    def test_assign_key_type_float(self):
+        self.__test_key(2.5)
+
+    def test_assign_key_type_None(self):
+        self.__test_key(None)
+
+    def test_assign_value_type_str(self):
+        self.__test_value('c')
+
+    def test_assign_value_type_float(self):
+        self.__test_value(2.5)
+
+    def test_assign_value_type_None(self):
+        self.__test_value(None)
+
+    def testEmptyFirstBucketReportedByGuido(self):
+        # This was for Integer keys
+        from .._compat import xrange
+        b = self._makeOne()
+        for i in xrange(29972): # reduce to 29971 and it works
+            b[i] = i
+        for i in xrange(30): # reduce to 29 and it works
+            del b[i]
+            b[i + 40000] = i
+
+        self.assertEqual(b.keys()[0], 30)
+
+    def testKeyAndValueOverflow(self):
+        if self.key_type.get_upper_bound() is None or self.value_type.get_upper_bound() is None:
+            self.skipTest("Needs bounded key and value")
+
+        import struct
+        from .._compat import PY2
+
+        good = set()
+        b = self._makeOne()
+
+        # Some platforms (Windows) use a 32-bit value for long,
+        # meaning that PyInt_AsLong and such can throw OverflowError
+        # for values that are in range on most other platforms. And on Python 2,
+        # PyInt_Check can fail with a TypeError starting at small values
+        # like 2147483648. So we look for small longs and catch those errors
+        # even when we think we should be in range.
+        long_is_32_bit = struct.calcsize('@l') < 8
+        in_range_errors = (OverflowError, TypeError) if long_is_32_bit else ()
+        out_of_range_errors = (OverflowError, TypeError) if long_is_32_bit and PY2 else (OverflowError,)
+
+        def trial(i):
+            i = int(i)
+            __traceback_info__ = i, type(i)
+            # As key
+            if i > self.key_type.get_upper_bound():
+                with self.assertRaises(out_of_range_errors):
+                    b[i] = 0
+            elif i < self.key_type.get_lower_bound():
+                with self.assertRaises(out_of_range_errors):
+                    b[i] = 0
+            else:
+                try:
+                    b[i] = 0
+                except in_range_errors:
+                    pass
+                else:
+                    good.add(i)
+                    self.assertEqual(b[i], 0)
+
+            # As value
+            if i > self.value_type.get_upper_bound():
+                with self.assertRaises(out_of_range_errors):
+                    b[0] = i
+            elif i < self.value_type.get_lower_bound():
+                with self.assertRaises(out_of_range_errors):
+                    b[0] = i
+            else:
+                try:
+                    b[0] = i
+                except in_range_errors:
+                    pass
+                else:
+                    self.assertEqual(b[0], i)
+
+        for i in range(self.key_type.get_upper_bound() - 3,
+                       self.key_type.get_upper_bound() + 3):
+
+            trial(i)
+            trial(-i)
+
+        if 0 in b:
+            del b[0]
+        self.assertEqual(sorted(good), sorted(b))
+        if not long_is_32_bit:
+            if self.key_type.get_lower_bound() == 0:
+                # None of the negative values got in
+                self.assertEqual(4, len(b))
+            else:
+                # 9, not 4 * 2, because of the asymmetry
+                # of twos complement binary integers
+                self.assertEqual(9, len(b))
 
 
 class BTreeTests(MappingBase):
@@ -1462,15 +1573,6 @@ class BTreeTests(MappingBase):
             self.assertEqual(s2, s)
 
 
-class UnsignedBTreeTests(UnsignedMixin, BTreeTests):
-    pass
-
-class UnsignedValuesBTreeTests(UnsignedValuesMixin, BTreeTests):
-    pass
-
-class UnsignedKeysBTreeTests(UnsignedKeysMixin, BTreeTests):
-    pass
-
 class NormalSetTests(Base):
     # Test common to all set types
 
@@ -1773,10 +1875,6 @@ class NormalSetTests(Base):
         # _p_changed being set depends on whether this is a TreeSet or a plain Set
 
 
-class UnsignedNormalSetTests(UnsignedMixin, NormalSetTests):
-    pass
-
-
 class ExtendedSetTests(NormalSetTests):
 
     def testLen(self):
@@ -1795,10 +1893,6 @@ class ExtendedSetTests(NormalSetTests):
             t.insert(x)
         for x in r:
             self.assertEqual(t[x], x)
-
-
-class UnsignedExtendedSetTests(UnsignedMixin, ExtendedSetTests):
-    pass
 
 
 class InternalKeysMappingTest(object):
@@ -1826,13 +1920,19 @@ class InternalKeysMappingTest(object):
         tree = conn.root.tree = self._makeOne()
         i = 0
 
-        # Grow the btree until we have multiple buckets
+        # Grow the btree until we have multiple buckets.
+        # (Calling ``__getstate__`` to check the internals is expensive, especially
+        # with the Python implementation, so only do so when we hit the threshold we expect
+        # the tree to grow. This makes the difference between a 6s test and a 0.6s test.)
+        bucket_size = self.key_type.bucket_size_for_value(self.value_type)
+        tree_size = self.key_type.tree_size
         while 1:
             i += 1
             self.add_key(tree, i)
-            data = tree.__getstate__()[0]
-            if len(data) >= 3:
-                break
+            if i >= bucket_size:
+                data = tree.__getstate__()[0]
+                if len(data) >= 3:
+                    break
 
         transaction.commit()
 
@@ -1849,10 +1949,11 @@ class InternalKeysMappingTest(object):
         while 1:
             i += 1
             self.add_key(tree, i)
-            data = tree.__getstate__()[0]
-            if data[0].__class__ == tree.__class__:
-                assert len(data[2].__getstate__()[0]) >= 3
-                break
+            if i >= tree_size * bucket_size:
+                data = tree.__getstate__()[0]
+                if data[0].__class__ == tree.__class__:
+                    assert len(data[2].__getstate__()[0]) >= 3
+                    break
 
         # Now, delete the internal key and make sure it's really gone
         key = data[1]
@@ -1866,7 +1967,9 @@ class InternalKeysMappingTest(object):
 
 class ModuleTest(object):
     # test for presence of generic names in module
-    prefix = None
+    prefix = ''
+    key_type = None
+    value_type = None
     def _getModule(self):
         pass
     def testNames(self):
@@ -1874,8 +1977,8 @@ class ModuleTest(object):
         for name in names:
             klass = getattr(self._getModule(), name)
             self.assertEqual(klass.__module__, self._getModule().__name__)
-            self.assertTrue(klass is getattr(self._getModule(),
-                                          self.prefix + name))
+            self.assertIs(klass, getattr(self._getModule(),
+                                         self.prefix + name))
         # BBB for zope.app.security ZCML :(
         pfx_iter = self.prefix + 'TreeIterator'
         klass = getattr(self._getModule(), pfx_iter)
@@ -1895,14 +1998,25 @@ class ModuleTest(object):
         elif 'I' in self.prefix:
             self.assertTrue(self._getModule().family is BTrees.family32)
 
+    # The weighted* functions require the value type to support unions.
+    def test_weightedUnion_presence(self):
+        if self.value_type.supports_value_union():
+            self.assertTrue(hasattr(self._getModule(), 'weightedUnion'))
+        else:
+            self.assertFalse(hasattr(self._getModule(), 'weightedUnion'))
 
-class TypeTest(object):
-    # tests of various type errors
+    def test_weightedIntersection_presence(self):
+        if self.value_type.supports_value_union():
+            self.assertTrue(hasattr(self._getModule(), 'weightedIntersection'))
+        else:
+            self.assertFalse(hasattr(self._getModule(), 'weightedIntersection'))
 
-    def testBadTypeRaises(self):
-        self.assertRaises(TypeError, self._stringraises)
-        self.assertRaises(TypeError, self._floatraises)
-        self.assertRaises(TypeError, self._noneraises)
+    # The multiunion function requires the key type to support unions
+    def test_multiunion_presence(self):
+        if self.key_type.supports_value_union():
+            self.assertTrue(hasattr(self._getModule(), 'multiunion'))
+        else:
+            self.assertFalse(hasattr(self._getModule(), 'multiunion'))
 
 
 class I_SetsBase(object):
@@ -1911,24 +2025,37 @@ class I_SetsBase(object):
         super(I_SetsBase, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
+    def _getTargetClass(self):
+        raise NotImplementedError
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
     def testBadBadKeyAfterFirst(self):
+        with self.assertRaises(TypeError):
+            self._getTargetClass()([1, object()])
+
         t = self._makeOne()
-        self.assertRaises(TypeError, t.__class__, [1, ''])
-        self.assertRaises(TypeError, t.update, [1, ''])
+        with self.assertRaises(TypeError):
+            t.update([1, object()])
 
-    def testNonIntegerInsertRaises(self):
-        self.assertRaises(TypeError, self._insertstringraises)
-        self.assertRaises(TypeError, self._insertfloatraises)
-        self.assertRaises(TypeError, self._insertnoneraises)
+    def __test_key(self, k):
+        try:
+            self.key_type(k)
+        except Exception as e: # pylint:disable=broad-except
+            with self.assertRaises(type(e)):
+                self._makeOne().insert(k)
+        else:
+            self._makeOne().insert(k)
 
-    def _insertstringraises(self):
-        self._makeOne().insert('a')
+    def test_key_type_str(self):
+        self.__test_key('c')
 
-    def _insertfloatraises(self):
-        self._makeOne().insert(1.4)
+    def test_key_type_float(self):
+        self.__test_key(2.5)
 
-    def _insertnoneraises(self):
-        self._makeOne().insert(None)
+    def test_key_type_None(self):
+        self.__test_key(None)
 
 
 LARGEST_32_BITS = 2147483647
@@ -2624,15 +2751,6 @@ class MappingConflictTestBase(ConflictTestBase):
         self._test_merge(base, b1, b2, bm, 'merge conflicting inserts',
                          should_fail=1)
 
-class UnsignedMappingConflictTestBase(UnsignedMixin, MappingConflictTestBase):
-    pass
-
-class UnsignedValuesMappingConflictTestBase(UnsignedValuesMixin, MappingConflictTestBase):
-    pass
-
-class UnsignedKeysMappingConflictTestBase(UnsignedKeysMixin, MappingConflictTestBase):
-    pass
-
 
 class SetConflictTestBase(ConflictTestBase):
     "Set (as opposed to TreeSet) specific tests."
@@ -2734,9 +2852,6 @@ class SetConflictTestBase(ConflictTestBase):
         b2.insert(e1[0])
         self._test_merge(base, b1, b2, bm, 'merge conflicting inserts',
                          should_fail=1)
-
-class UnsignedSetConflictTestBase(UnsignedMixin, SetConflictTestBase):
-    pass
 
 ## utility functions
 

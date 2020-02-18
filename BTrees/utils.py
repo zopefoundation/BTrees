@@ -43,3 +43,23 @@ def oid_repr(oid):
         return b''.join(chunks)
     else:
         return repr(oid)
+
+
+class Lazy(object):
+    """
+    A simple version of ``Lazy`` from ``zope.cachedescriptors``
+    """
+
+    __slots__ = ('func',)
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, inst, class_):
+        if inst is None:
+            return self
+
+        func = self.func
+        value = func(inst)
+        inst.__dict__[func.__name__] = value
+        return value

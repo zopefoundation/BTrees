@@ -18,6 +18,10 @@
   64-bit variants.
 
 
+- Make the Bucket types consistent with the BTree types as updated in
+  versions 4.3.2: Querying for keys with default comparisons or that
+  are not integers no longer raises ``TypeError``.
+
 4.6.1 (2019-11-07)
 ==================
 

@@ -32,19 +32,19 @@ from ._base import TreeSet
 from ._base import difference as _difference
 from ._base import intersection as _intersection
 from ._base import set_operation as _set_operation
-from ._base import to_bytes as _to_bytes
 from ._base import union as _union
 from ._base import _fix_pickle
 from ._compat import import_c_extension
+from ._datatypes import Bytes
 
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
 using64bits = False
-_to_key = _to_bytes(2)
-_to_value = _to_bytes(6)
+_to_key = Bytes(2)
+_to_value = Bytes(6)
 
-
+# XXX: Port this to use _module_builder.
 class fsBucketPy(Bucket):
     _to_key = _to_key
     _to_value = _to_value

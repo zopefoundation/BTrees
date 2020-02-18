@@ -12,15 +12,65 @@
 #
 #############################################################################
 
+import sys
 import zope.interface
 import BTrees.Interfaces
+from ._module_builder import create_module
+
+__all__ = [
+    'family32',
+    'family64',
+]
+
+_FAMILIES = (
+    # Signed 32-bit keys
+    "IO", # object value
+    "II", # self value
+    "IF", # float value
+    "IU", # opposite sign value
+    # Unsigned 32-bit keys
+    "UO", # object value
+    "UU", # self value
+    "UF", # float value
+    "UI", # opposite sign value
+    # Signed 64-bit keys
+    "LO", # object value
+    "LL", # self value
+    "LF", # float value
+    "LQ", # opposite sign value
+    # Unsigned 64-bit keys
+    "QO", # object value
+    "QQ", # self value
+    "QF", # float value
+    "QL", # opposite sign value
+    # Object keys
+    "OO", # object
+    "OI", # 32-bit signed
+    "OU", # 32-bit unsigned
+    "OL", # 64-bit signed
+    "OQ", # 64-bit unsigned
+)
+
+# XXX: Do this without completely ruining
+# pylint and other static analysis.
+for family in _FAMILIES:
+    mod = create_module(family)
+    name = vars(mod)['__name__']
+    sys.modules[name] = mod
+    globals()[name.split('.', 1)[1]] = mod
+    __all__.append(name)
 
 
 @zope.interface.implementer(BTrees.Interfaces.IBTreeFamily)
 class _Family(object):
     from BTrees import OOBTree as OO
     _BITSIZE = 0
-    minint = maxint = maxuint = 0
+    minint = maxint = maxuint = None
+
+    def __init__(self):
+        self.maxint = int(2 ** (self._BITSIZE - 1) - 1)
+        self.minint = int(-self.maxint - 1)
+        self.maxuint = int(2 ** self._BITSIZE - 1)
 
     def __str__(self):
         return (
@@ -49,10 +99,6 @@ class _Family32(_Family):
     from BTrees import UOBTree as UO
     from BTrees import UUBTree as UU
 
-    maxuint = int(2**32)
-    maxint = int(2**31-1)
-    minint = -maxint - 1
-
     def __reduce__(self):
         return _family32, ()
 
@@ -70,10 +116,6 @@ class _Family64(_Family):
     from BTrees import QLBTree as UI
     from BTrees import QOBTree as UO
     from BTrees import QQBTree as UU
-
-    maxuint = 2**64
-    maxint = 2**63-1
-    minint = -maxint - 1
 
     def __reduce__(self):
         return _family64, ()
