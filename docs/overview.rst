@@ -1,5 +1,6 @@
-Overview
-========
+==========
+ Overview
+==========
 
 When programming with the ZODB, Python dictionaries aren't always what you
 need.  The most important case is where you want to store a very large
@@ -145,7 +146,7 @@ appear to work, are undefined and should not be relied on.
 
 
 Total Ordering and Persistence
-------------------------------
+==============================
 
 The BTree-based data structures differ from Python dicts in several fundamental
 ways.  One of the most important is that while dicts require that keys support
@@ -311,7 +312,7 @@ about its :meth:`__cmp__` method.  It only sees instances of the internal
 
 
 Iteration and Mutation
-----------------------
+======================
 
 As with a Python dictionary or list, you should not mutate a BTree-based data
 structure while iterating over it, except that it's fine to replace the value
@@ -370,7 +371,7 @@ of the keys.  Example
    >>>
 
 BTree node sizes
-----------------
+================
 
 BTrees (and TreeSets) are made up of a tree of Buckets (and Sets) and
 internal nodes.  There are maximum sizes of these notes configured for
@@ -406,7 +407,7 @@ Sets.  ``max_internal_size`` is used for internal nodes, either BTrees
 or TreeSets.
 
 BTree Diagnostic Tools
-----------------------
+======================
 
 A BTree (or TreeSet) is a complex data structure, really a graph of variable-
 size nodes, connected in multiple ways via three distinct kinds of C pointers.

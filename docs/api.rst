@@ -1,9 +1,10 @@
-API Reference
-=============
+===============
+ API Reference
+===============
 
 
 Protocol APIs
--------------
+=============
 
 .. automodule:: BTrees.Interfaces
 
@@ -98,7 +99,7 @@ Protocol APIs
      :member-order: bysource
 
 Utilities
--------------
+=========
 
 .. automodule:: BTrees.Length
 

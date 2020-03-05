@@ -1,5 +1,6 @@
-``BTrees``:  scalable persistent components
-===========================================
+=========================================
+ BTrees:  scalable persistent components
+=========================================
 
 .. image:: https://travis-ci.org/zopefoundation/BTrees.svg?branch=master
     :target: https://travis-ci.org/zopefoundation/BTrees

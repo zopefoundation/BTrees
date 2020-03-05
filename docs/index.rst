@@ -1,5 +1,6 @@
-:mod:`BTrees` Documentation
-===========================
+======================
+ BTrees Documentation
+======================
 
 This package contains a set of persistent object containers built around
 a modified BTree data structure.  The trees are optimized for use inside
@@ -14,8 +15,9 @@ Contents:
    overview
    api
 
-Indices and tables
-==================
+====================
+ Indices and tables
+====================
 
 * :ref:`genindex`
 * :ref:`modindex`
