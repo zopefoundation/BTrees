@@ -327,8 +327,8 @@ IndexError(int i)
 
     v = INT_FROM_LONG(i);
     if (!v) {
-	v = Py_None;
-	Py_INCREF(v);
+        v = Py_None;
+        Py_INCREF(v);
     }
     PyErr_SetObject(PyExc_IndexError, v);
     Py_DECREF(v);
@@ -355,20 +355,20 @@ PreviousBucket(Bucket **current, Bucket *first)
 
     do {
         trailing = first;
-	PER_USE_OR_RETURN(first, -1);
+        PER_USE_OR_RETURN(first, -1);
         first = first->next;
 
-    	((trailing)->state==cPersistent_STICKY_STATE
-     	&&
-     	((trailing)->state=cPersistent_UPTODATE_STATE));
+        ((trailing)->state==cPersistent_STICKY_STATE
+        &&
+        ((trailing)->state=cPersistent_UPTODATE_STATE));
 
-    	PER_ACCESSED(trailing);
+        PER_ACCESSED(trailing);
 
-	if (first == *current) {
-	    *current = trailing;
-	    result = 1;
-	    break;
-	}
+        if (first == *current) {
+            *current = trailing;
+            result = 1;
+            break;
+        }
     } while (first);
 
     return result;
@@ -383,7 +383,7 @@ BTree_Malloc(size_t sz)
 
     r = malloc(sz);
     if (r)
-	return r;
+        return r;
 
     PyErr_NoMemory();
     return NULL;
@@ -397,12 +397,12 @@ BTree_Realloc(void *p, size_t sz)
     ASSERT(sz > 0, "non-positive size realloc", NULL);
 
     if (p)
-	r = realloc(p, sz);
+        r = realloc(p, sz);
     else
-	r = malloc(sz);
+        r = malloc(sz);
 
     UNLESS (r)
-	PyErr_NoMemory();
+        PyErr_NoMemory();
 
     return r;
 }
@@ -411,8 +411,8 @@ BTree_Realloc(void *p, size_t sz)
  * (iter)?(keys|values|items)
  */
 static char *search_keywords[] = {"min", "max",
-				  "excludemin", "excludemax",
-				  0};
+                                  "excludemin", "excludemax",
+                                  0};
 
 #include "BTreeItemsTemplate.c"
 #include "BucketTemplate.c"
@@ -423,23 +423,23 @@ static char *search_keywords[] = {"min", "max",
 #include "MergeTemplate.c"
 
 static struct PyMethodDef module_methods[] = {
-  {"difference", (PyCFunction) difference_m,	METH_VARARGS,
+  {"difference", (PyCFunction) difference_m,    METH_VARARGS,
    "difference(o1, o2) -- "
    "compute the difference between o1 and o2"
   },
-  {"union", (PyCFunction) union_m,	METH_VARARGS,
+  {"union", (PyCFunction) union_m,      METH_VARARGS,
    "union(o1, o2) -- compute the union of o1 and o2\n"
   },
-  {"intersection", (PyCFunction) intersection_m,	METH_VARARGS,
+  {"intersection", (PyCFunction) intersection_m,        METH_VARARGS,
    "intersection(o1, o2) -- "
    "compute the intersection of o1 and o2"
   },
 #ifdef MERGE
-  {"weightedUnion", (PyCFunction) wunion_m,	METH_VARARGS,
+  {"weightedUnion", (PyCFunction) wunion_m,     METH_VARARGS,
    "weightedUnion(o1, o2 [, w1, w2]) -- compute the union of o1 and o2\n"
    "\nw1 and w2 are weights."
   },
-  {"weightedIntersection", (PyCFunction) wintersection_m,	METH_VARARGS,
+  {"weightedIntersection", (PyCFunction) wintersection_m,       METH_VARARGS,
    "weightedIntersection(o1, o2 [, w1, w2]) -- "
    "compute the intersection of o1 and o2\n"
    "\nw1 and w2 are weights."
@@ -453,7 +453,7 @@ static struct PyMethodDef module_methods[] = {
    "via the set iteration protocol.  The union returned is an IISet."
   },
 #endif
-  {NULL,		NULL}		/* sentinel */
+  {NULL,                NULL}           /* sentinel */
 };
 
 static char BTree_module_documentation[] =
@@ -483,7 +483,7 @@ init_persist_type(PyTypeObject *type)
     type->tp_base = cPersistenceCAPI->pertype;
 
     if (PyType_Ready(type) < 0)
-	return 0;
+        return 0;
 
     return 1;
 }
@@ -584,22 +584,22 @@ module_init(void)
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
     if (!init_persist_type(&BucketType))
-	    return NULL;
+            return NULL;
     if (!init_persist_type(&BTreeType))
-	    return NULL;
+            return NULL;
     if (!init_persist_type(&SetType))
-	    return NULL;
+            return NULL;
     if (!init_persist_type(&TreeSetType))
-	    return NULL;
+            return NULL;
 
     if (PyDict_SetItem(BTreeType.tp_dict, _bucket_type_str,
-		       (PyObject *)&BucketType) < 0)
+                       (PyObject *)&BucketType) < 0)
     {
         fprintf(stderr, "btree failed\n");
         return NULL;
     }
     if (PyDict_SetItem(TreeSetType.tp_dict, _bucket_type_str,
-		       (PyObject *)&SetType) < 0)
+                       (PyObject *)&SetType) < 0)
     {
         fprintf(stderr, "bucket failed\n");
         return NULL;
@@ -610,43 +610,43 @@ module_init(void)
     module = PyModule_Create(&moduledef);
 #else
     module = Py_InitModule4("_" MOD_NAME_PREFIX "BTree",
-		       module_methods, BTree_module_documentation,
-		       (PyObject *)NULL, PYTHON_API_VERSION);
+                       module_methods, BTree_module_documentation,
+                       (PyObject *)NULL, PYTHON_API_VERSION);
 #endif
 
     /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
-			     (PyObject *)&BucketType) < 0)
+                             (PyObject *)&BucketType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "BTree",
-			     (PyObject *)&BTreeType) < 0)
+                             (PyObject *)&BTreeType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Set",
-			     (PyObject *)&SetType) < 0)
+                             (PyObject *)&SetType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeSet",
-			     (PyObject *)&TreeSetType) < 0)
+                             (PyObject *)&TreeSetType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeIterator",
-			     (PyObject *)&BTreeIter_Type) < 0)
+                             (PyObject *)&BTreeIter_Type) < 0)
         return NULL;
-	/* We also want to be able to access these constants without the prefix
-	 * so that code can more easily exchange modules (particularly the integer
-	 * and long modules, but also others).  The TreeIterator is only internal,
-	 * so we don't bother to expose that.
+        /* We also want to be able to access these constants without the prefix
+         * so that code can more easily exchange modules (particularly the integer
+         * and long modules, but also others).  The TreeIterator is only internal,
+         * so we don't bother to expose that.
      */
     if (PyDict_SetItemString(mod_dict, "Bucket",
-			     (PyObject *)&BucketType) < 0)
+                             (PyObject *)&BucketType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, "BTree",
-			     (PyObject *)&BTreeType) < 0)
+                             (PyObject *)&BTreeType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, "Set",
-			     (PyObject *)&SetType) < 0)
+                             (PyObject *)&SetType) < 0)
         return NULL;
     if (PyDict_SetItemString(mod_dict, "TreeSet",
-			     (PyObject *)&TreeSetType) < 0)
+                             (PyObject *)&TreeSetType) < 0)
         return NULL;
 #if defined(ZODB_64BIT_INTS) && defined(NEED_LONG_LONG_SUPPORT)
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_True) < 0)
