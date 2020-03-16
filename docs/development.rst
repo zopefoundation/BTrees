@@ -313,8 +313,8 @@ invariant still holds, with ``lo==i`` and ``hi==lo+1==i+1``::
 so ``i`` is again the correct answer.
 
 
-Optimization points:
---------------------
+Optimization points
+-------------------
 
 + Division by 2 is done via shift rather via "/2".  These are signed ints, and
   almost all C compilers treat signed int division as truncating, and shifting
@@ -405,8 +405,8 @@ correct to exit with ``_cmp`` non-zero, and ``i==lo`` is again the index at
 which ``k`` belongs.
 
 
-Optimization points:
---------------------
+Optimization points
+-------------------
 
 + As for ``BTREE_SEARCH``, shifting of signed ints is cheaper than division.
 
