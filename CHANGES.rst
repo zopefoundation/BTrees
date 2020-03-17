@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.7.0 (unreleased)
+4.7.0 (2020-03-17)
 ==================
 
 - Add unsigned variants of the trees. These use the initial "U" for
