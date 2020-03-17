@@ -97,4 +97,4 @@ def import_c_extension(mod_globals):
         mod_globals[name] = mod_globals[prefix + name]
 
     # Cleanup
-    del mod_globals['import_c_extension']
+    mod_globals.pop('import_c_extension', None)

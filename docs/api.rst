@@ -6,108 +6,151 @@
 Protocol APIs
 =============
 
-.. automodule:: BTrees.Interfaces
+.. module:: BTrees.Interfaces
 
-  .. autointerface:: ICollection
-     :members:
-     :member-order: bysource
+.. autointerface:: ICollection
+.. autointerface:: IReadSequence
+.. autointerface:: IKeyed
+.. autointerface:: ISetMutable
+.. autointerface:: ISized
+.. autointerface:: IKeySequence
+.. autointerface:: IMinimalDictionary
+.. autointerface:: IDictionaryIsh
+.. autointerface:: IMerge
+.. autointerface:: IIMerge
+.. autointerface:: IMergeIntegerKey
 
-  .. autointerface:: IReadSequence
-     :members:
-     :member-order: bysource
+BTree Family APIs
+-----------------
+.. autointerface:: ISet
+.. autointerface:: ITreeSet
+.. autointerface:: IBTree
+.. autointerface:: IBTreeFamily
 
-  .. autointerface:: IKeyed
-     :members:
-     :member-order: bysource
+There are two families defined:
 
-  .. autointerface:: ISetMutable
-     :members:
-     :member-order: bysource
+.. autodata:: BTrees.family32
+.. autodata:: BTrees.family64
 
-  .. autointerface:: ISized
-     :members:
-     :member-order: bysource
+Module APIs
+-----------
+.. autointerface:: IBTreeModule
+.. autointerface:: IObjectObjectBTreeModule
+.. autointerface:: IIntegerObjectBTreeModule
+.. autointerface:: IObjectIntegerBTreeModule
+.. autointerface:: IIntegerIntegerBTreeModule
+.. autointerface:: IIntegerFloatBTreeModule
 
-  .. autointerface:: IKeySequence
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IMinimalDictionary
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IDictionaryIsh
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IMerge
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IIMerge
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IMergeIntegerKey
-     :members:
-     :member-order: bysource
-
-  BTree Family APIs
-  -----------------
-
-  .. autointerface:: ISet
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: ITreeSet
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IBTree
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IBTreeFamily
-     :members:
-     :member-order: bysource
-
-  Module APIs
-  -----------
-
-  .. autointerface:: IBTreeModule
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IObjectObjectBTreeModule
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IIntegerObjectBTreeModule
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IObjectIntegerBTreeModule
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IIntegerIntegerBTreeModule
-     :members:
-     :member-order: bysource
-
-  .. autointerface:: IIntegerFloatBTreeModule
-     :members:
-     :member-order: bysource
 
 Utilities
 =========
 
 .. automodule:: BTrees.Length
 
-  .. autoclass:: Length
-     :members:
-
-     .. automethod:: __call__
-
-
 .. automodule:: BTrees.check
-    :members:
+
+
+BTree Data Structure Variants
+=============================
+
+Integer Keys
+------------
+
+Float Values
+~~~~~~~~~~~~
+.. automodule:: BTrees.IFBTree
+
+Integer Values
+~~~~~~~~~~~~~~
+.. automodule:: BTrees.IIBTree
+
+Object Values
+~~~~~~~~~~~~~
+.. automodule:: BTrees.IOBTree
+
+Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.IUBTree
+
+Long Integer Keys
+-----------------
+
+Float Values
+~~~~~~~~~~~~
+.. automodule:: BTrees.LFBTree
+
+Long Integer Values
+~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.LLBTree
+
+
+Object Values
+~~~~~~~~~~~~~
+.. automodule:: BTrees.LOBTree
+
+Quad Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.LQBTree
+
+
+Object Keys
+-----------
+
+Integer Values
+~~~~~~~~~~~~~~
+.. automodule:: BTrees.OIBTree
+
+Long Integer Values
+~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.OLBTree
+
+Object Values
+~~~~~~~~~~~~~
+.. automodule:: BTrees.OOBTree
+
+Quad Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.OQBTree
+
+Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.OUBTree
+
+
+Quad Unsigned Integer Keys
+--------------------------
+
+Float Values
+~~~~~~~~~~~~
+.. automodule:: BTrees.QFBTree
+
+Long Integer Values
+~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.QLBTree
+
+Object Values
+~~~~~~~~~~~~~
+.. automodule:: BTrees.QOBTree
+
+Quad Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.QQBTree
+
+Unsigned Integer Keys
+---------------------
+
+Float Values
+~~~~~~~~~~~~
+.. automodule:: BTrees.UFBTree
+
+Integer Values
+~~~~~~~~~~~~~~
+.. automodule:: BTrees.UIBTree
+
+Object Values
+~~~~~~~~~~~~~
+.. automodule:: BTrees.UOBTree
+
+Unsigned Integer Values
+~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: BTrees.UUBTree

@@ -77,27 +77,116 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #error "PY_LONG_LONG required but not defined"
 #endif
 
+static int
+longlong_handle_overflow(PY_LONG_LONG result, int overflow)
+{
+    if (overflow)
+    {
+        /* Python 3 tends to have an exception already set, Python 2 not so much */
+        if (!PyErr_Occurred())
+            PyErr_SetString(PyExc_OverflowError, "couldn't convert integer to C long long");
+        return 0;
+    }
+    else if (result == -1 && PyErr_Occurred())
+        /* An exception has already been raised. */
+        return 0;
+    return 1;
+}
+
+
 #ifdef NEED_LONG_LONG_KEYS
+
+#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
+static int
+ulonglong_check(PyObject *ob)
+{
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+        long tmp;
+        tmp = PyInt_AS_LONG(ob);
+        if (tmp < 0) {
+            PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+            return 0;
+        }
+        return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+    {
+        return 0;
+    }
+
+    if (PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 && PyErr_Occurred())
+    {
+        return 0;
+    }
+    return 1;
+}
+#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
+
 static int
 longlong_check(PyObject *ob)
 {
-    if (INT_CHECK(ob))
+#ifndef PY3K
+    /* Python's small integers can always fit into a long long. */
+    if (PyInt_Check(ob))
         return 1;
+#endif
 
     if (PyLong_Check(ob)) {
         int overflow;
-        (void)PyLong_AsLongLongAndOverflow(ob, &overflow);
-        if (overflow)
-            goto overflow;
-        return 1;
+        PY_LONG_LONG result;
+        result = PyLong_AsLongLongAndOverflow(ob, &overflow);
+        return longlong_handle_overflow(result, overflow);
     }
     return 0;
-overflow:
-    PyErr_SetString(PyExc_ValueError,
-                    "longlong_check: long integer out of range");
-    return 0;
 }
+
 #endif
+
+#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
+static PyObject *
+ulonglong_as_object(unsigned PY_LONG_LONG val)
+{
+    if ((val > LONG_MAX))
+        return PyLong_FromUnsignedLongLong(val);
+    return UINT_FROM_LONG((unsigned long)val);
+}
+
+static int
+ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
+{
+    unsigned PY_LONG_LONG val;
+
+#ifndef PY3K
+    if (PyInt_Check(ob))
+    {
+        long tmp;
+        tmp = PyInt_AS_LONG(ob);
+        if (tmp < 0) {
+            PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+            return 0;
+        }
+        (*value) = (unsigned PY_LONG_LONG)tmp;
+        return 1;
+    }
+#endif
+
+    if (!PyLong_Check(ob))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected integer key");
+        return 0;
+    }
+
+    val = PyLong_AsUnsignedLongLong(ob);
+    if (val == (unsigned long long)-1 && PyErr_Occurred())
+        return 0;
+    (*value) = val;
+    return 1;
+}
+#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
 
 static PyObject *
 longlong_as_object(PY_LONG_LONG val)
@@ -107,10 +196,11 @@ longlong_as_object(PY_LONG_LONG val)
     return INT_FROM_LONG((long)val);
 }
 
-
 static int
 longlong_convert(PyObject *ob, PY_LONG_LONG *value)
 {
+    PY_LONG_LONG val;
+    int overflow;
 #ifndef PY3K
     if (PyInt_Check(ob))
     {
@@ -124,20 +214,15 @@ longlong_convert(PyObject *ob, PY_LONG_LONG *value)
         PyErr_SetString(PyExc_TypeError, "expected integer key");
         return 0;
     }
-    else
+    val = PyLong_AsLongLongAndOverflow(ob, &overflow);
+    if (!longlong_handle_overflow(val, overflow))
     {
-        PY_LONG_LONG val;
-        int overflow;
-        val = PyLong_AsLongLongAndOverflow(ob, &overflow);
-        if (overflow)
-            goto overflow;
-        (*value) = val;
-        return 1;
+        return 0;
     }
-overflow:
-    PyErr_SetString(PyExc_ValueError, "long integer out of range");
-    return 0;
+    (*value) = val;
+    return 1;
 }
+
 #endif  /* NEED_LONG_LONG_SUPPORT */
 
 
@@ -424,30 +509,30 @@ static char *search_keywords[] = {"min", "max",
 
 static struct PyMethodDef module_methods[] = {
   {"difference", (PyCFunction) difference_m,    METH_VARARGS,
-   "difference(o1, o2) -- "
+   "difference(o1, o2)\n"
    "compute the difference between o1 and o2"
   },
   {"union", (PyCFunction) union_m,      METH_VARARGS,
-   "union(o1, o2) -- compute the union of o1 and o2\n"
+   "union(o1, o2)\ncompute the union of o1 and o2\n"
   },
   {"intersection", (PyCFunction) intersection_m,        METH_VARARGS,
-   "intersection(o1, o2) -- "
+   "intersection(o1, o2)\n"
    "compute the intersection of o1 and o2"
   },
 #ifdef MERGE
   {"weightedUnion", (PyCFunction) wunion_m,     METH_VARARGS,
-   "weightedUnion(o1, o2 [, w1, w2]) -- compute the union of o1 and o2\n"
+   "weightedUnion(o1, o2 [, w1, w2])\ncompute the union of o1 and o2\n"
    "\nw1 and w2 are weights."
   },
   {"weightedIntersection", (PyCFunction) wintersection_m,       METH_VARARGS,
-   "weightedIntersection(o1, o2 [, w1, w2]) -- "
+   "weightedIntersection(o1, o2 [, w1, w2])\n"
    "compute the intersection of o1 and o2\n"
    "\nw1 and w2 are weights."
   },
 #endif
 #ifdef MULTI_INT_UNION
   {"multiunion", (PyCFunction) multiunion_m, METH_VARARGS,
-   "multiunion(seq) -- compute union of a sequence of integer sets.\n"
+   "multiunion(seq)\ncompute union of a sequence of integer sets.\n"
    "\n"
    "Each element of seq must be an integer set, or convertible to one\n"
    "via the set iteration protocol.  The union returned is an IISet."

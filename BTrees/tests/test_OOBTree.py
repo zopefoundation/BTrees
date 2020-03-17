@@ -11,83 +11,12 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import unittest
+from BTrees import OOBTree
 
-from .common import _skip_under_Py3k
 from .common import BTreeTests
-from .common import ExtendedSetTests
-from .common import InternalKeysMappingTest
-from .common import MappingBase
-from .common import MappingConflictTestBase
-from .common import ModuleTest
-from .common import NormalSetTests
-from .common import SetResult
-from .common import SetConflictTestBase
-from .common import makeBuilder
+from ._test_builder import update_module
 
-
-
-class OOBTreeInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBTreePy
-        return OOBTreePy
-
-class OOBTreePyInternalKeyTest(InternalKeysMappingTest, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBTree
-        return OOBTree
-
-
-class OOBucketTest(MappingBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBucket
-        return OOBucket
-
-
-class OOBucketPyTest(MappingBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBucketPy
-        return OOBucketPy
-
-
-class OOTreeSetTest(NormalSetTests, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSet
-        return OOTreeSet
-
-
-class OOTreeSetPyTest(NormalSetTests, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSetPy
-        return OOTreeSetPy
-
-
-class OOSetTest(ExtendedSetTests, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOSet
-        return OOSet
-
-
-class OOSetPyTest(ExtendedSetTests, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOSetPy
-        return OOSetPy
-
-
-
-class OOBTreeTest(BTreeTests, unittest.TestCase):
-
-    def _makeOne(self, *args):
-        from BTrees.OOBTree import OOBTree
-        return OOBTree(*args)
+class OOBTreeTest(BTreeTests):
 
     def test_byValue(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -109,8 +38,6 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
 
         class C(object):
             pass
-
-        self.assertRaises(TypeError, lambda : t.__setitem__(C(), 1))
 
         with self.assertRaises(TypeError) as raising:
             t[C()] = 1
@@ -151,7 +78,7 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         for i in range(999): # Make sure we multiple buckets
             t[i] = i*i
         t[None] = -1
-        for i in range(-99,0): # Make sure we multiple buckets
+        for i in range(-99, 0): # Make sure we multiple buckets
             t[i] = i*i
         self.assertEqual(list(t), [None] + list(range(-99, 999)))
         self.assertEqual(list(t.values()),
@@ -221,151 +148,4 @@ class OOBTreeTest(BTreeTests, unittest.TestCase):
         self.assertEqual(list(t), [])
 
 
-class OOBTreePyTest(OOBTreeTest):
-#
-# Right now, we can't match the C extension's test / prohibition of the
-# default 'object' comparison semantics.
-#class OOBTreePyTest(BTreeTests, unittest.TestCase):
-
-    def _makeOne(self, *args):
-        from BTrees.OOBTree import OOBTreePy
-        return OOBTreePy(*args)
-
-
-
-class PureOO(SetResult, unittest.TestCase):
-
-    def union(self, *args):
-        from BTrees.OOBTree import union
-        return union(*args)
-
-    def intersection(self, *args):
-        from BTrees.OOBTree import intersection
-        return intersection(*args)
-
-    def difference(self, *args):
-        from BTrees.OOBTree import difference
-        return difference(*args)
-
-    def builders(self):
-        from BTrees.OOBTree import OOBTree
-        from BTrees.OOBTree import OOBucket
-        from BTrees.OOBTree import OOTreeSet
-        from BTrees.OOBTree import OOSet
-        return OOSet, OOTreeSet, makeBuilder(OOBTree), makeBuilder(OOBucket)
-
-
-class PureOOPy(SetResult, unittest.TestCase):
-
-    def union(self, *args):
-        from BTrees.OOBTree import unionPy
-        return unionPy(*args)
-
-    def intersection(self, *args):
-        from BTrees.OOBTree import intersectionPy
-        return intersectionPy(*args)
-
-    def difference(self, *args):
-        from BTrees.OOBTree import differencePy
-        return differencePy(*args)
-
-    def builders(self):
-        from BTrees.OOBTree import OOBTreePy
-        from BTrees.OOBTree import OOBucketPy
-        from BTrees.OOBTree import OOTreeSetPy
-        from BTrees.OOBTree import OOSetPy
-        return (OOSetPy, OOTreeSetPy,
-                makeBuilder(OOBTreePy), makeBuilder(OOBucketPy))
-
-
-class OOBucketConflictTests(MappingConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBucket
-        return OOBucket
-
-
-class OOBucketPyConflictTests(MappingConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBucketPy
-        return OOBucketPy
-
-
-class OOSetConflictTests(SetConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOSet
-        return OOSet
-
-
-class OOSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOSetPy
-        return OOSetPy
-
-
-class OOBTreeConflictTests(MappingConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBTree
-        return OOBTree
-
-
-class OOBTreePyConflictTests(MappingConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOBTreePy
-        return OOBTreePy
-
-
-class OOTreeSetConflictTests(SetConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSet
-        return OOTreeSet
-
-
-class OOTreeSetPyConflictTests(SetConflictTestBase, unittest.TestCase):
-
-    def _getTargetClass(self):
-        from BTrees.OOBTree import OOTreeSetPy
-        return OOTreeSetPy
-
-
-class OOModuleTest(ModuleTest, unittest.TestCase):
-
-    prefix = 'OO'
-
-    def _getModule(self):
-        import BTrees
-        return BTrees.OOBTree
-
-    def _getInterface(self):
-        import BTrees.Interfaces
-        return BTrees.Interfaces.IObjectObjectBTreeModule
-
-    def test_weightedUnion_not_present(self):
-        try:
-            from BTrees.OOBTree import weightedUnion
-        except ImportError:
-            pass
-        else:
-            self.fail("OOBTree shouldn't have weightedUnion")
-
-    def test_weightedIntersection_not_present(self):
-        try:
-            from BTrees.OOBTree import weightedIntersection
-        except ImportError:
-            pass
-        else:
-            self.fail("OOBTree shouldn't have weightedIntersection")
-
-    def test_multiunion_not_present(self):
-        try:
-            from BTrees.OOBTree import multiunion
-        except ImportError:
-            pass
-        else:
-            self.fail("OOBTree shouldn't have multiunion")
+update_module(globals(), OOBTree, btree_tests_base=OOBTreeTest)

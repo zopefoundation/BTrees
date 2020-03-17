@@ -405,9 +405,9 @@ class Test_check(unittest.TestCase):
 
 def _makeTree(fill):
     from BTrees.OOBTree import OOBTree
-    from BTrees.OOBTree import _BUCKET_SIZE
+    from BTrees.OOBTree import OOBTreePy
     tree = OOBTree()
     if fill:
-        for i in range(_BUCKET_SIZE + 1):
+        for i in range(OOBTreePy.max_leaf_size + 1):
             tree[i] = 2*i
     return tree

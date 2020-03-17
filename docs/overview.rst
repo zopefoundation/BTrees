@@ -14,40 +14,98 @@ important consequences -- see below).  Nodes are then only unpickled and
 brought into memory as they're accessed, so the entire tree doesn't have to
 occupy memory (unless you really are touching every single key).
 
-The BTrees package provides a large collection of related data structures.
-There are variants of the data structures specialized to integers, which
-are faster and use less memory.  There are five modules that handle the
-different variants.  The first two letters of the module name specify the
-types of the keys and values in mappings -- O for any object, I for 32-bit
-signed integer, and (new in ZODB 3.4) F for 32-bit C float.  For example,
-the :mod:`BTrees.IOBTree` module provides a mapping with integer keys and
-arbitrary objects as values.
+Related Data Structures
+=======================
 
-The four data structures provide by each module are a BTree, a Bucket, a
-TreeSet, and a Set.  The BTree and Bucket types are mappings and support
-all the usual mapping methods, e.g. :func:`~BTrees.Interfaces.ISetMutable.update` and :func:`~BTrees.Interfaces.IKeyed.keys`.  The
-TreeSet and Set types are similar to mappings but they have no values; they
-support the methods that make sense for a mapping with no keys, e.g.
-:func:`~BTrees.Interfaces.IKeyed.keys` but not :func:`~BTrees.Interfaces.IMinimalDictionary.items`.  The Bucket and Set types are the
-individual building blocks for BTrees and TreeSets, respectively.  A Bucket
-or Set can be used when you are sure that it will have few elements.  If
-the data structure will grow large, you should use a BTree or TreeSet. Like
-Python lists, Buckets and Sets are allocated in one contiguous piece, and
-insertions and deletions can take time proportional to the number of
-existing elements.  Also like Python lists, a Bucket or Set is a single
-object, and is pickled and unpickled in its entirety.  BTrees and TreeSets
-are multi-level tree structures with much better (logarithmic) worst- case
-time bounds, and the tree structure is built out of multiple objects, which
-ZODB can load individually as needed.
+The BTrees package provides a large collection of related data
+structures. The most general data structures store arbitrary ordered_
+objects. There are variants of the data structures specialized to
+numbers, which are faster and more memory efficient than those dealing
+with objects. There are several modules that handle the different
+variants. The first two letters of the module name specify the types
+of the keys and values in mappings. For example, the
+:mod:`BTrees.IOBTree` module provides a mapping with 32-bit integer
+keys and arbitrary objects as values.
 
-The five modules are named :mod:`~BTrees.OOBTree`, :mod:`~BTrees.IOBTree`, :mod:`~BTrees.OIBTree`,
-:mod:`~BTrees.IIBTree`, and (new in ZODB 3.4) :mod:`~BTrees.IFBTree`.  The two letter
-prefixes are repeated in the data types names.  The :mod:`~BTrees.OOBTree`
-module defines the following types: :class:`~BTrees.OOBTree.OOBTree`, :class:`~BTrees.OOBTree.OOBucket`,
-:class:`~BTrees.OOBTree.OOSet`, and :class:`~BTrees.OOBTree.OOTreeSet`. Similarly, the other four modules
+.. list-table:: Data Type Notation
+   :widths: auto
+   :class: wrapped
+   :header-rows: 1
+
+   * - Letter
+     - Mnemonic Device
+     - Data Type
+     - Notes
+   * - O
+     - "Object"
+     - Any sortable Python object
+     -
+   * - I
+     - "Integer"
+     - 32-bit signed integer
+     - Values from ``-2**31 - 1`` through ``2**31 - 1`` (about plus or
+       minus two billion)
+   * - L
+     - "Long integer"
+     - 64-bit signed integer
+     - Values from ``-2**63 - 1`` through
+       ``2**63 - 1`` (about plus or minus nine quintillion)
+   * - F
+     - "Float"
+     - 32-bit C-language ``float``
+     - New in ZODB 3.4
+   * - U
+     - "Unsigned"
+     - 32-bit unsigned integer
+     - (New in BTrees 4.7.0) Values from 0 through ``2**32`` (about four billion)
+   * - Q
+     - "Quad"
+     - 64-bit unsigned integer
+     - Values from 0 through ``2**64`` (about 18 quintillion) (New in BTrees 4.7.0)
+
+
+The four data structures provide by each module are a BTree, a Bucket,
+a TreeSet, and a Set. The BTree and Bucket types are mappings and
+support all the usual mapping methods, e.g.
+:func:`~BTrees.Interfaces.ISetMutable.update` and
+:func:`~BTrees.Interfaces.IKeyed.keys`. The TreeSet and Set types are
+similar to mappings but they have no values; they support the methods
+that make sense for a mapping with no keys, e.g.
+:func:`~BTrees.Interfaces.IKeyed.keys` but not
+:func:`~BTrees.Interfaces.IMinimalDictionary.items`. The Bucket and
+Set types are the individual building blocks for BTrees and TreeSets,
+respectively. A Bucket or Set can be used when you are sure that it
+will have few elements. If the data structure will grow large, you
+should use a BTree or TreeSet. Like Python lists, Buckets and Sets are
+allocated in one contiguous piece, and insertions and deletions can
+take time proportional to the number of existing elements. Also like
+Python lists, a Bucket or Set is a single object, and is pickled and
+unpickled in its entirety. BTrees and TreeSets are multi-level tree
+structures with much better (logarithmic) worst- case time bounds, and
+the tree structure is built out of multiple objects, which ZODB can
+load individually as needed.
+
+The two letter prefixes are repeated in the data types names. For
+example, the
+:mod:`BTrees.OOBTree` module defines the following types:
+:class:`BTrees.OOBTree.OOBTree`, :class:`BTrees.OOBTree.OOBucket`,
+:class:`BTrees.OOBTree.OOSet`, and
+:class:`BTrees.OOBTree.OOTreeSet`. Similarly, the other modules
 each define their own variants of those four types.
 
-The :func:`keys`, :func:`values`, and :func:`items` methods on BTree and
+For convenience, BTrees groups the most closely related data
+structures together into a "family" (defined by
+:class:`BTrees.Interfaces.IBTreeFamily`). :obj:`BTrees.family32`
+groups 32-bit data structures, while :obj:`BTrees.family64` contains
+64-bit data structures. It is a common practice for code that creates
+BTrees to be parameterized on the family so that the caller can choose
+the desired characteristics.
+
+
+Behaviour
+=========
+
+The `keys`, :func:`values`, and :func:`items` methods on BTree and
 TreeSet types do not materialize a list with all of the data.  Instead,
 they return lazy sequences that fetch data from the BTree as needed.  They
 also support optional arguments to specify the minimum and maximum values
@@ -144,6 +202,7 @@ may not be true in future releases. If the interfaces don't specify a behavior,
 then whether that behavior appears to work, and exactly happens if it does
 appear to work, are undefined and should not be relied on.
 
+.. _ordered:
 
 Total Ordering and Persistence
 ==============================
@@ -375,7 +434,8 @@ BTree node sizes
 
 BTrees (and TreeSets) are made up of a tree of Buckets (and Sets) and
 internal nodes.  There are maximum sizes of these notes configured for
-the various key and value types:
+the various key and value types (unsigned and quad unsigned follow
+integer and long, respectively):
 
 ======== ========== ========================== =============================
 Key Type Value Type Maximum Bucket or Set Size Maximum BTree or TreeSet Size
