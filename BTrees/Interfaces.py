@@ -33,7 +33,7 @@ class IReadSequence(Interface):
     def __getitem__(index):
         """Return the value at the given index.
 
-        An IndexError is raised if the index cannot be found.
+        An :class:`IndexError` is raised if the index cannot be found.
         """
 
     def __getslice__(index1, index2):
@@ -52,9 +52,9 @@ class IKeyed(ICollection):
         """
 
     def keys(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an IReadSequence containing the keys in the collection.
+        """Return an :class:`~BTrees.Interfaces.IReadSequence` containing the keys in the collection.
 
-        The type of the IReadSequence is not specified.  It could be a list
+        The type of the :class:`~BTrees.Interfaces.IReadSequence` is not specified.  It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword
@@ -63,7 +63,7 @@ class IKeyed(ICollection):
         If a min is specified, then output is constrained to keys greater
         than or equal to the given min, and, if excludemin is specified and
         true, is further constrained to keys strictly greater than min.  A
-        min value of None is ignored.  If min is None or not specified, and
+        min value of None is ignored. If min is None or not specified, and
         excludemin is true, the smallest key is excluded.
 
         If a max is specified, then output is constrained to keys less than
@@ -101,7 +101,7 @@ class ISetMutable(IKeyed):
     def remove(key):
         """Remove the key from the set.
 
-        Raises KeyError if key is not in the set.
+        Raises :class:`KeyError` if key is not in the set.
         """
 
     def update(seq):
@@ -137,13 +137,15 @@ class IMinimalDictionary(ISized, IKeyed):
     def get(key, default):
         """Get the value associated with the given key.
 
-        Return the default if has_key(key) is false.
+        Return the default if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
+        with the given key.
         """
 
     def __getitem__(key):
         """Get the value associated with the given key.
 
-        Raise KeyError if has_key(key) is false.
+        Raise :class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
+        with the given key.
         """
 
     def __setitem__(key, value):
@@ -152,13 +154,14 @@ class IMinimalDictionary(ISized, IKeyed):
     def __delitem__(key):
         """Delete the value associated with the given key.
 
-        Raise KeyError if has_key(key) is false.
+        Raise class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
+        with the given key.
         """
 
     def values(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an IReadSequence containing the values in the collection.
+        """Return an :class:`BTrees.Interfaces.IReadSequence` containing the values in the collection.
 
-        The type of the IReadSequence is not specified.  It could be a list
+        The type of the :class:`~BTrees.Interfaces.IReadSequence` is not specified. It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword
@@ -180,11 +183,11 @@ class IMinimalDictionary(ISized, IKeyed):
         """
 
     def items(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an IReadSequence containing the items in the collection.
+        """Return an :class:`BTrees.Interfaces.IReadSequence` containing the items in the collection.
 
         An item is a 2-tuple, a (key, value) pair.
 
-        The type of the IReadSequence is not specified.  It could be a list
+        The type of the :class:`BTrees.Interfaces.IReadSequence` is not specified.  It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword
@@ -226,19 +229,19 @@ class IDictionaryIsh(IMinimalDictionary):
     def setdefault(key, d):
         """D.setdefault(k, d) -> D.get(k, d), also set D[k]=d if k not in D.
 
-        Return the value like get() except that if key is missing, d is both
+        Return the value like :meth:`~BTrees.Interfaces.IMinimalDictionary.get` except that if key is missing, d is both
         returned and inserted into the dictionary as the value of k.
 
-        Note that, unlike as for Python's dict.setdefault(), d is not
+        Note that, unlike as for Python's :meth:`dict.setdefault`, d is not
         optional.  Python defaults d to None, but that doesn't make sense
         for mappings that can't have None as a value (for example, an
-        IIBTree can have only integers as values).
+        :class:`~BTrees.IIBTree.IIBTree` can have only integers as values).
         """
 
     def pop(key, d):
         """D.pop(k[, d]) -> v, remove key and return the corresponding value.
 
-        If key is not found, d is returned if given, otherwise KeyError is
+        If key is not found, d is returned if given, otherwise :class:`KeyError` is
         raised.
         """
 
@@ -271,11 +274,11 @@ class IMerge(Interface):
     These methods are supplied in modules that define collection
     classes with particular key and value types. The operations apply
     only to collections from the same module.  For example, the
-    IIBTree.union can only be used with IIBTree.IIBTree,
-    IIBTree.IIBucket, IIBTree.IISet, and IIBTree.IITreeSet.
+    :meth:`BTrees.IIBTree.IIBTree.union` can only be used with :class:`~BTrees.IIBTree.IIBTree`,
+    :class:`~BTrees.IIBTree.IIBucket`, :class:`~BTrees.IIBTree.IISet`, and :class:`~BTrees.IIBTree.IITreeSet`.
 
-    The implementing module has a value type. The IOBTree and OOBTree
-    modules have object value type. The IIBTree and OIBTree modules
+    The implementing module has a value type. The :class:`~BTrees.IOBTree.IOBTree` and :class:`~BTrees.OOBTree.OOBTree`
+    modules have object value type. The :class:`~BTrees.IIBTree.IIBTree` and :class:`~BTrees.OIBTree.OIBTree` modules
     have integer value types. Other modules may be defined in the
     future that have other value types.
 
@@ -418,9 +421,9 @@ class IIMerge(IMerge):
 
 
 class IMergeIntegerKey(IMerge):
-    """IMerge-able objects with integer keys.
+    """:class:`~BTrees.Interfaces.IMerge`-able objects with integer keys.
 
-    Concretely, this means the types in IOBTree and IIBTree.
+    Concretely, this means the types in :class:`~BTree.IOBTree.IOBTree` and :class:`~BTrees.IIBTree.IIBTree`.
     """
 
     def multiunion(seq):
@@ -432,18 +435,18 @@ class IMergeIntegerKey(IMerge):
         + An integer, which is added to the union.
 
         + A Set or TreeSet from the same module (for example, an
-          IIBTree.TreeSet for IIBTree.multiunion()).  The elements of the
+          :class:`BTrees.IIBTree.TreeSet` for :meth:`BTrees.IIBTree.multiunion`).  The elements of the
           set are added to the union.
 
         + A Bucket or BTree from the same module (for example, an
-          IOBTree.IOBTree for IOBTree.multiunion()).  The keys of the
+          :class:`BTrees.IOBTree.IOBTree` for :meth:`BTrees.IOBTree.multiunion`).  The keys of the
           mapping are added to the union.
 
         The union is returned as a Set from the same module (for example,
-        IIBTree.multiunion() returns an IIBTree.IISet).
+        :meth:`BTrees.IIBTree.multiunion` returns an :class:`BTrees.IIBTree.IISet`).
 
         The point to this method is that it can run much faster than
-        doing a sequence of two-input union() calls.  Under the covers,
+        doing a sequence of two-input :meth:`~BTrees.Interfaces.IMerge.union` calls.  Under the covers,
         all the integers in all the inputs are sorted via a single
         linear-time radix sort, then duplicates are removed in a second
         linear-time pass.
@@ -482,7 +485,7 @@ class IIntegerObjectBTreeModule(_IMergeBTreeModule):
 
 class IUnsignedObjectBTreeModule(_IMergeBTreeModule):
     """
-    As for `IIntegerObjectBTreeModule` with unsigned integers.
+    As for :class:`~BTrees.Interfaces.IIntegerObjectBTreeModule` with unsigned integers.
     """
 
 

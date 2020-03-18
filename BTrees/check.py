@@ -16,7 +16,7 @@ Utilities for working with BTrees (TreeSets, Buckets, and Sets) at a low
 level.
 
 The primary function is check(btree), which performs value-based consistency
-checks of a kind btree._check() does not perform.  See the function docstring
+checks of a kind ``BTree._Tree._check()`` does not perform.  See the function docstring
 for details.
 
 display(btree) displays the internal structure of a BTree (TreeSet, etc) to
@@ -442,17 +442,17 @@ class Printer(Walker): #pragma NO COVER
 def check(btree):
     """Check internal value-based invariants in a BTree or TreeSet.
 
-    The btree._check() method checks internal C-level pointer consistency.
-    The check() function here checks value-based invariants:  whether the
+    The ``BTrees._base._Tree._check`` method checks internal C-level pointer consistency.
+    The :func:`~BTrees.check.check` function here checks value-based invariants:  whether the
     keys in leaf bucket and internal nodes are in strictly increasing order,
     and whether they all lie in their expected range.  The latter is a subtle
     invariant that can't be checked locally -- it requires propagating
     range info down from the root of the tree, and modifying it at each
     level for each child.
 
-    Raises AssertionError if anything is wrong, with a string detail
+    Raises :class:`AssertionError` if anything is wrong, with a string detail
     explaining the problems.  The entire tree is checked before
-    AssertionError is raised, and the string detail may be large (depending
+    :class:`AssertionError` is raised, and the string detail may be large (depending
     on how much went wrong).
     """
 
