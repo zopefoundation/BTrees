@@ -73,6 +73,11 @@ class IKeyed(ICollection):
         excludemax is true, the largest key is excluded.
         """
 
+    def iterkeys(min=None, max=None, excludemin=False, excludemax=False):
+        """Return an iterator on
+        :func:`~BTrees.Interfaces.IKeyed.keys`."""
+
+
     def maxKey(key=None):
         """Return the maximum key.
 
@@ -179,6 +184,10 @@ class IMinimalDictionary(ISized, IKeyed):
         corresponding to the largest key is excluded.
         """
 
+    def itervalues(min=None, max=None, excludemin=False, excludemax=False):
+        """Return an iterator on
+        :func:`~BTrees.Interfaces.IMinimalDictionary.values`."""
+
     def items(min=None, max=None, excludemin=False, excludemax=False):
         """Return an IReadSequence containing the items in the collection.
 
@@ -204,6 +213,11 @@ class IMinimalDictionary(ISized, IKeyed):
         None or not specified, and excludemax is true, the item with the
         largest key is excluded.
         """
+
+    def iteritems(min=None, max=None, excludemin=False, excludemax=False):
+        """Return an iterator on
+        :func:`~BTrees.Interfaces.IMinimalDictionary.items`."""
+
 
 class IDictionaryIsh(IMinimalDictionary):
 

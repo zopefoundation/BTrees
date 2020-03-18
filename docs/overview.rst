@@ -105,24 +105,24 @@ the desired characteristics.
 Behaviour
 =========
 
-The `keys`, :func:`values`, and :func:`items` methods on BTree and
+The :func:`~BTrees.Interfaces.IKeyed.keys`, :func:`~BTrees.Interfaces.IMinimalDictionary.values`, and :func:`~BTrees.Interfaces.IMinimalDictionary.items` methods on BTree and
 TreeSet types do not materialize a list with all of the data.  Instead,
 they return lazy sequences that fetch data from the BTree as needed.  They
 also support optional arguments to specify the minimum and maximum values
 to return, often called "range searching".  Because all these types are
 stored in sorted order, range searching is very efficient.
 
-The :func:`keys`, :func:`values`, and :func:`items` methods on Bucket and
+The :func:`~BTrees.Interfaces.IKeyed.keys`, :func:`~BTrees.Interfaces.IMinimalDictionary.values`, and :func:`~BTrees.Interfaces.IMinimalDictionary.items` methods on Bucket and
 Set types do return lists with all the data. Starting in ZODB 3.3, there
-are also :func:`iterkeys`, :func:`itervalues`, and :func:`iteritems`
+are also :func:`~BTrees.Interfaces.IKeyed.iterkeys`, :func:`~BTrees.Interfaces.IMinimalDictionary.itervalues`, and :func:`~BTrees.Interfaces.IMinimalDictionary.iteritems`
 methods that return iterators (in the Python 2.2 sense).  Those methods
 also apply to BTree and TreeSet objects.
 
 A BTree object supports all the methods you would expect of a mapping, with
 a few extensions that exploit the fact that the keys are sorted. The
 example below demonstrates how some of the methods work.  The extra methods
-are :func:`minKey` and :func:`maxKey`, which find the minimum and maximum
-key value subject to an optional bound argument, and :func:`byValue`, which
+are :func:`~BTrees.Interfaces.IKeyed.minKey` and :func:`~BTrees.Interfaces.IKeyed.maxKey`, which find the minimum and maximum
+key value subject to an optional bound argument, and :func:`~BTrees.Interfaces.IDictionaryIsh.byValue`, which
 should probably be ignored (it's hard to explain exactly what it does, and
 as a result it's almost never used -- best to consider it deprecated).  The
 various methods for enumerating keys, values and items also accept minimum
