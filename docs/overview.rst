@@ -180,11 +180,11 @@ exclusive of the range's endpoints.
 
 
 Each of the modules also defines some functions that operate on BTrees --
-:func:`~BTrees._base.difference`, :func:`~BTrees._base.union`, and :func:`~BTrees._base.intersection`.  The
-:func:`~BTrees._base.difference` function returns a Bucket, while the other two methods return
+:func:`~BTrees.Interfaces.IMerge.difference`, :func:`~BTrees.Interfaces.IMerge.union`, and :func:`~BTrees.Interfaces.IMerge.intersection`.  The
+:func:`~BTrees.Interfaces.IMerge.difference` function returns a Bucket, while the other two methods return
 a Set. If the keys are integers, then the module also defines
-:func:`~BTrees._base.multiunion`.  If the values are integers or floats, then the module also
-defines :func:`~BTrees._base.weightedIntersection` and :func:`~BTrees._base.weightedUnion`.  The function
+:func:`~BTrees.Interfaces.IMergeIntegerKey.multiunion`.  If the values are integers or floats, then the module also
+defines :func:`~BTrees.Interfaces.IIMerge.weightedIntersection` and :func:`~BTrees.Interfaces.IIMerge.weightedUnion`.  The function
 doc strings describe each function briefly.
 
 .. % XXX I'm not sure all of the following is actually correct.  The
