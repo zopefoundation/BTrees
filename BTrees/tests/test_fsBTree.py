@@ -15,9 +15,9 @@ import unittest
 
 
 class fsBucketTests(unittest.TestCase):
-
     def _getTargetClass(self):
         from BTrees.fsBTree import fsBucket
+
         return fsBucket
 
     def _makeOne(self, *args, **kw):
@@ -25,12 +25,14 @@ class fsBucketTests(unittest.TestCase):
 
     def _makeBytesItems(self):
         from .._compat import _ascii
-        return[(_ascii(c*2), _ascii(c*6)) for c in 'abcdef']
+
+        return [(_ascii(c * 2), _ascii(c * 6)) for c in "abcdef"]
 
     def test_toString(self):
         bucket = self._makeOne(self._makeBytesItems())
-        self.assertEqual(bucket.toString(),
-                         b'aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff')
+        self.assertEqual(
+            bucket.toString(), b"aabbccddeeffaaaaaabbbbbbccccccddddddeeeeeeffffff"
+        )
 
     def test_fromString(self):
         before = self._makeOne(self._makeBytesItems())
@@ -39,17 +41,16 @@ class fsBucketTests(unittest.TestCase):
 
     def test_fromString_empty(self):
         before = self._makeOne(self._makeBytesItems())
-        after = before.fromString(b'')
+        after = before.fromString(b"")
         self.assertEqual(after.__getstate__(), ((),))
 
     def test_fromString_invalid_length(self):
         bucket = self._makeOne(self._makeBytesItems())
-        self.assertRaises(ValueError, bucket.fromString, b'xxx')
-
+        self.assertRaises(ValueError, bucket.fromString, b"xxx")
 
 
 class fsBucketPyTests(fsBucketTests):
-
     def _getTargetClass(self):
         from BTrees.fsBTree import fsBucketPy
+
         return fsBucketPy

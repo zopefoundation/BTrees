@@ -31,16 +31,17 @@ from ._test_builder import update_module
 # doesn't work with zope-testrunner's ``-m`` filter.
 _suite = unittest.TestSuite()
 for family in _FAMILIES:
-    mod_qname = "BTrees.tests.test_" + family + 'BTree'
+    mod_qname = "BTrees.tests.test_" + family + "BTree"
     try:
         importlib.import_module(mod_qname)
     except ImportError:
-        btree = importlib.import_module("BTrees." + family + 'BTree')
+        btree = importlib.import_module("BTrees." + family + "BTree")
         mod = types.ModuleType(mod_qname)
         update_module(vars(mod), btree)
         sys.modules[mod_qname] = mod
-        globals()[mod_qname.split('.', 1)[1]] = mod
+        globals()[mod_qname.split(".", 1)[1]] = mod
         _suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
+
 
 def test_suite():
     return _suite

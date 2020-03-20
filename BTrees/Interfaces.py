@@ -16,7 +16,6 @@ from zope.interface import Interface, Attribute
 
 
 class ICollection(Interface):
-
     def clear():
         """Remove all of the items from the collection."""
 
@@ -29,7 +28,6 @@ class ICollection(Interface):
 
 
 class IReadSequence(Interface):
-
     def __getitem__(index):
         """Return the value at the given index.
 
@@ -43,8 +41,8 @@ class IReadSequence(Interface):
         including, index2.
         """
 
-class IKeyed(ICollection):
 
+class IKeyed(ICollection):
     def has_key(key):
         """Check whether the object has an item with the given key.
 
@@ -91,7 +89,6 @@ class IKeyed(ICollection):
 
 
 class ISetMutable(IKeyed):
-
     def insert(key):
         """Add the key (value) to the set.
 
@@ -116,7 +113,6 @@ class ISized(Interface):
 
 
 class IKeySequence(IKeyed, ISized):
-
     def __getitem__(index):
         """Return the key in the given index position.
 
@@ -132,8 +128,8 @@ class ISet(IKeySequence, ISetMutable):
 class ITreeSet(IKeyed, ISetMutable):
     pass
 
-class IMinimalDictionary(ISized, IKeyed):
 
+class IMinimalDictionary(ISized, IKeyed):
     def get(key, default):
         """Get the value associated with the given key.
 
@@ -208,8 +204,8 @@ class IMinimalDictionary(ISized, IKeyed):
         largest key is excluded.
         """
 
-class IDictionaryIsh(IMinimalDictionary):
 
+class IDictionaryIsh(IMinimalDictionary):
     def update(collection):
         """Add the items from the given collection object to the collection.
 
@@ -247,7 +243,6 @@ class IDictionaryIsh(IMinimalDictionary):
 
 
 class IBTree(IDictionaryIsh):
-
     def insert(key, value):
         """Insert a key and value into the collection.
 
@@ -325,7 +320,8 @@ class IBTreeModule(Interface):
     BTree = Attribute(
         """The IBTree for this module.
 
-        Also available as [prefix]BTree, as in IOBTree.""")
+        Also available as [prefix]BTree, as in IOBTree."""
+    )
 
     Bucket = Attribute(
         """The leaf-node data buckets used by the BTree.
@@ -334,18 +330,21 @@ class IBTreeModule(Interface):
         IDictionaryIsh, with the exception of __nonzero__, as of this
         writing.)
 
-        Also available as [prefix]Bucket, as in IOBucket.""")
+        Also available as [prefix]Bucket, as in IOBucket."""
+    )
 
     TreeSet = Attribute(
         """The ITreeSet for this module.
 
-        Also available as [prefix]TreeSet, as in IOTreeSet.""")
+        Also available as [prefix]TreeSet, as in IOTreeSet."""
+    )
 
     Set = Attribute(
         """The ISet for this module: the leaf-node data buckets used by the
         TreeSet.
 
-        Also available as [prefix]BTree, as in IOSet.""")
+        Also available as [prefix]BTree, as in IOSet."""
+    )
 
 
 class IIMerge(IMerge):
@@ -452,29 +451,31 @@ class IMergeIntegerKey(IMerge):
         linear-time pass.
         """
 
+
 class IBTreeFamily(Interface):
     """the 64-bit or 32-bit family"""
-    IF = Attribute('The IIntegerFloatBTreeModule for this family')
-    II = Attribute('The IIntegerIntegerBTreeModule for this family')
-    IO = Attribute('The IIntegerObjectBTreeModule for this family')
-    IU = Attribute('The IIntegerUnsignedBTreeModule for this family')
 
-    UF = Attribute('The IUnsignedFloatBTreeModule for this family')
-    UI = Attribute('The IUnsignedIntegerBTreeModule for this family')
-    UO = Attribute('The IUnsignedObjectBTreeModule for this family')
-    UU = Attribute('The IUnsignedUnsignedBTreeModule for this family')
+    IF = Attribute("The IIntegerFloatBTreeModule for this family")
+    II = Attribute("The IIntegerIntegerBTreeModule for this family")
+    IO = Attribute("The IIntegerObjectBTreeModule for this family")
+    IU = Attribute("The IIntegerUnsignedBTreeModule for this family")
 
-    OI = Attribute('The IObjectIntegerBTreeModule for this family')
-    OO = Attribute('The IObjectObjectBTreeModule for this family')
-    OU = Attribute('The IObjectUnsignedBTreeModule for this family')
+    UF = Attribute("The IUnsignedFloatBTreeModule for this family")
+    UI = Attribute("The IUnsignedIntegerBTreeModule for this family")
+    UO = Attribute("The IUnsignedObjectBTreeModule for this family")
+    UU = Attribute("The IUnsignedUnsignedBTreeModule for this family")
 
-    maxint = Attribute('The maximum signed integer storable in this family')
-    maxuint = Attribute('The maximum unsigned integer storable in this family')
-    minint = Attribute('The minimum signed integer storable in this family')
+    OI = Attribute("The IObjectIntegerBTreeModule for this family")
+    OO = Attribute("The IObjectObjectBTreeModule for this family")
+    OU = Attribute("The IObjectUnsignedBTreeModule for this family")
+
+    maxint = Attribute("The maximum signed integer storable in this family")
+    maxuint = Attribute("The maximum unsigned integer storable in this family")
+    minint = Attribute("The minimum signed integer storable in this family")
 
 
 class _IMergeBTreeModule(IBTreeModule, IMerge):
-    family = Attribute('The IBTreeFamily of this module')
+    family = Attribute("The IBTreeFamily of this module")
 
 
 class IIntegerObjectBTreeModule(_IMergeBTreeModule):
@@ -545,6 +546,7 @@ class IIntegerFloatBTreeModule(_IMergeBTreeModule):
 
     describes IFBTree and LFBTree"""
 
+
 class IUnsignedFloatBTreeModule(_IMergeBTreeModule):
     """
     As for `IIntegerFloatBTreeModule` with unsigned integers.
@@ -554,10 +556,12 @@ class IUnsignedFloatBTreeModule(_IMergeBTreeModule):
 try:
     from ZODB.POSException import BTreesConflictError
 except ImportError:
+
     class BTreesConflictError(ValueError):
         @property
         def reason(self):
             return self.args[-1]
+
 
 ###############################################################
 # IMPORTANT NOTE

@@ -15,7 +15,6 @@
 """
 
 
-
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
@@ -59,10 +58,11 @@ class _Base(Persistent):
         # we can (theoretically) avoid a bit of a slowdown.
         # If the C extensions are around, we do need these methods, but
         # these classes are unlikely to be used in production anyway.
-        __import__('BTrees._OOBTree')
+        __import__("BTrees._OOBTree")
     except ImportError:  # pragma: no cover
         pass
     else:
+
         def __reduce__(self):
             # Swap out the type constructor for the C version, if present.
             func, typ_gna, state = Persistent.__reduce__(self)
@@ -76,7 +76,11 @@ class _Base(Persistent):
         @property
         def __class__(self):
             type_self = type(self)
-            return type_self._BTree_reduce_as if type_self._BTree_reduce_up_bound is type_self else type_self
+            return (
+                type_self._BTree_reduce_as
+                if type_self._BTree_reduce_up_bound is type_self
+                else type_self
+            )
 
         @property
         def _BTree_reduce_as(self):
@@ -90,12 +94,14 @@ class _Base(Persistent):
 
         _BTree_reduce_up_bound = _BTree_reduce_as
 
+
 class _BucketBase(_Base):
 
-    __slots__ = ('_keys',
-                 '_next',
-                 '_to_key',
-                )
+    __slots__ = (
+        "_keys",
+        "_next",
+        "_to_key",
+    )
 
     def clear(self):
         self._keys = self._key_type()
@@ -152,14 +158,13 @@ class _BucketBase(_Base):
         if index >= 0:
             return key
         else:
-            index = -index-1
+            index = -index - 1
             if index:
-                return self._keys[index-1]
+                return self._keys[index - 1]
             else:
                 raise ValueError("no key satisfies the conditions")
 
-    def _range(self, min=_marker, max=_marker,
-               excludemin=False, excludemax=False):
+    def _range(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
         if min is _marker or min is None:
             start = 0
             if excludemin:
@@ -207,7 +212,7 @@ class _BucketBase(_Base):
             # Can't convert the key, so can't possibly be in the tree
             return False
 
-        return (self._search(tree_key) >= 0)
+        return self._search(tree_key) >= 0
 
     has_key = __contains__
 
@@ -218,17 +223,18 @@ class _BucketBase(_Base):
         name = name[:-2] if name.endswith("Py") else name
         return "%s.%s(%r)" % (mod, name, items)
 
+
 class _SetIteration(object):
 
-    __slots__ = ('to_iterate',
-                 'useValues',
-                 '_iter',
-                 'active',
-                 'position',
-                 'key',
-                 'value',
-                )
-
+    __slots__ = (
+        "to_iterate",
+        "useValues",
+        "_iter",
+        "active",
+        "position",
+        "key",
+        "value",
+    )
 
     def __init__(self, to_iterate, useValues=False, default=None):
         if to_iterate is None:
@@ -238,7 +244,7 @@ class _SetIteration(object):
             try:
                 itmeth = to_iterate.iteritems
             except AttributeError:
-                if PY3 and isinstance(to_iterate, dict): #pragma no cover Py3k
+                if PY3 and isinstance(to_iterate, dict):  # pragma no cover Py3k
                     itmeth = to_iterate.items().__iter__
                 else:
                     itmeth = to_iterate.__iter__
@@ -293,9 +299,9 @@ class Bucket(_BucketBase):
             return value
 
     def update(self, items):
-        if hasattr(items, 'iteritems'):
+        if hasattr(items, "iteritems"):
             items = items.iteritems()
-        elif hasattr(items, 'items'):
+        elif hasattr(items, "items"):
             items = items.items()
 
         _si = self.__setitem__
@@ -303,7 +309,7 @@ class Bucket(_BucketBase):
             for key, value in items:
                 _si(key, value)
         except ValueError:
-            raise TypeError('items must be a sequence of 2-tuples')
+            raise TypeError("items must be a sequence of 2-tuples")
 
     def __setitem__(self, key, value):
         self._set(self._to_key(key), self._to_value(value))
@@ -349,9 +355,7 @@ class Bucket(_BucketBase):
         """
         index = self._search(key)
         if index >= 0:
-            if (ifunset or
-                self.VALUE_SAME_CHECK and value == self._values[index]
-                ):
+            if ifunset or self.VALUE_SAME_CHECK and value == self._values[index]:
                 return None, self._values[index]
             self._p_changed = True
             self._values[index] = value
@@ -394,14 +398,12 @@ class Bucket(_BucketBase):
     def items(self, *args, **kw):
         keys = self._keys
         values = self._values
-        return [(keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw))]
+        return [(keys[i], values[i]) for i in xrange(*self._range(*args, **kw))]
 
     def iteritems(self, *args, **kw):
         keys = self._keys
         values = self._values
-        return ((keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw)))
+        return ((keys[i], values[i]) for i in xrange(*self._range(*args, **kw)))
 
     def __getstate__(self):
         keys = self._keys
@@ -414,7 +416,7 @@ class Bucket(_BucketBase):
 
         if self._next is not None:
             return data, self._next
-        return (data, )
+        return (data,)
 
     def __setstate__(self, state):
         if not isinstance(state[0], tuple):
@@ -431,7 +433,7 @@ class Bucket(_BucketBase):
         values = self._values
         for i in range(0, len(state), 2):
             keys.append(state[i])
-            values.append(state[i+1])
+            values.append(state[i + 1])
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
         b_old = type(self)()
@@ -443,8 +445,7 @@ class Bucket(_BucketBase):
         b_new = type(self)()
         if s_new is not None:
             b_new.__setstate__(s_new)
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next):
+        if b_com._next != b_old._next or b_new._next != b_old._next:
             raise BTreesConflictError(-1, -1, -1, 0)
 
         if not b_com or not b_new:
@@ -456,7 +457,8 @@ class Bucket(_BucketBase):
 
         def merge_error(reason):
             return BTreesConflictError(
-                i_old.position, i_com.position, i_new.position, reason)
+                i_old.position, i_com.position, i_new.position, reason
+            )
 
         result = type(self)()
 
@@ -479,9 +481,9 @@ class Bucket(_BucketBase):
                     i_old.advance()
                     i_com.advance()
                     i_new.advance()
-                elif (cmpON > 0): # insert in new
+                elif cmpON > 0:  # insert in new
                     merge_output(i_new)
-                elif i_old.value == i_com.value: # deleted new
+                elif i_old.value == i_com.value:  # deleted new
                     if i_new.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -492,9 +494,9 @@ class Bucket(_BucketBase):
                 else:
                     raise merge_error(2)
             elif cmpON == 0:
-                if cmpOC > 0: # insert committed
+                if cmpOC > 0:  # insert committed
                     merge_output(i_com)
-                elif i_old.value == i_new.value: # delete committed
+                elif i_old.value == i_new.value:  # delete committed
                     if i_com.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -504,52 +506,52 @@ class Bucket(_BucketBase):
                     i_new.advance()
                 else:
                     raise merge_error(3)
-            else: # both keys changed
+            else:  # both keys changed
                 cmpCN = compare(i_com.key, i_new.key)
-                if cmpCN == 0: # dueling insert
+                if cmpCN == 0:  # dueling insert
                     raise merge_error(4)
-                if cmpOC > 0: # insert committed
-                    if cmpCN > 0: # insert i_new first
+                if cmpOC > 0:  # insert committed
+                    if cmpCN > 0:  # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmpON > 0: # insert i_new
+                elif cmpON > 0:  # insert i_new
                     merge_output(i_new)
                 else:
-                    raise merge_error(5) # both deleted same key
+                    raise merge_error(5)  # both deleted same key
 
-        while i_com.active and i_new.active: # new inserts
+        while i_com.active and i_new.active:  # new inserts
             cmpCN = compare(i_com.key, i_new.key)
             if cmpCN == 0:
-                raise merge_error(6) # dueling insert
-            if cmpCN > 0: # insert new
+                raise merge_error(6)  # dueling insert
+            if cmpCN > 0:  # insert new
                 merge_output(i_new)
-            else: # insert committed
+            else:  # insert committed
                 merge_output(i_com)
 
-        while i_old.active and i_com.active: # new deletes rest of original
+        while i_old.active and i_com.active:  # new deletes rest of original
             cmpOC = compare(i_old.key, i_com.key)
-            if cmpOC > 0: # insert committed
+            if cmpOC > 0:  # insert committed
                 merge_output(i_com)
-            elif cmpOC == 0 and (i_old.value == i_com.value): # del in new
+            elif cmpOC == 0 and (i_old.value == i_com.value):  # del in new
                 i_old.advance()
                 i_com.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(7)
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
             cmpON = compare(i_old.key, i_new.key)
-            if cmpON > 0: # insert new
+            if cmpON > 0:  # insert new
                 merge_output(i_new)
             elif cmpON == 0 and (i_old.value == i_new.value):
                 # deleted in committed
                 i_old.advance()
                 i_new.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(8)
 
-        if i_old.active: # dueling deletes
+        if i_old.active:  # dueling deletes
             raise merge_error(9)
 
         while i_com.active:
@@ -558,7 +560,7 @@ class Bucket(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma: no cover
+        if len(result._keys) == 0:  # pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -571,6 +573,7 @@ class Bucket(_BucketBase):
 
     def __repr__(self):
         return self._repr_helper(self.items())
+
 
 class Set(_BucketBase):
 
@@ -593,11 +596,11 @@ class Set(_BucketBase):
         data = tuple(self._keys)
         if self._next is not None:
             return data, self._next
-        return (data, )
+        return (data,)
 
     def __setstate__(self, state):
         if not isinstance(state[0], tuple):
-            raise TypeError('tuple required for first state element')
+            raise TypeError("tuple required for first state element")
 
         self.clear()
         if len(state) == 2:
@@ -607,7 +610,6 @@ class Set(_BucketBase):
             state = state[0]
 
         self._keys.extend(state)
-
 
     def _set(self, key, value=None, ifunset=False):
         index = self._search(key)
@@ -651,11 +653,12 @@ class Set(_BucketBase):
         if s_new is not None:
             b_new.__setstate__(s_new)
 
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next): # conflict: com or new changed _next
+        if (
+            b_com._next != b_old._next or b_new._next != b_old._next
+        ):  # conflict: com or new changed _next
             raise BTreesConflictError(-1, -1, -1, 0)
 
-        if not b_com or not b_new: # conflict: com or new empty
+        if not b_com or not b_new:  # conflict: com or new empty
             raise BTreesConflictError(-1, -1, -1, 12)
 
         i_old = _SetIteration(b_old, True)
@@ -664,7 +667,8 @@ class Set(_BucketBase):
 
         def merge_error(reason):
             return BTreesConflictError(
-                i_old.position, i_com.position, i_new.position, reason)
+                i_old.position, i_com.position, i_new.position, reason
+            )
 
         result = type(self)()
 
@@ -676,13 +680,13 @@ class Set(_BucketBase):
             cmpOC = compare(i_old.key, i_com.key)
             cmpON = compare(i_old.key, i_new.key)
             if cmpOC == 0:
-                if cmpON == 0: # all match
+                if cmpON == 0:  # all match
                     merge_output(i_old)
                     i_com.advance()
                     i_new.advance()
-                elif cmpON > 0: # insert in new
+                elif cmpON > 0:  # insert in new
                     merge_output(i_new)
-                else: # deleted new
+                else:  # deleted new
                     if i_new.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -691,9 +695,9 @@ class Set(_BucketBase):
                     i_old.advance()
                     i_com.advance()
             elif cmpON == 0:
-                if cmpOC > 0: # insert committed
+                if cmpOC > 0:  # insert committed
                     merge_output(i_com)
-                else: # delete committed
+                else:  # delete committed
                     if i_com.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -701,51 +705,51 @@ class Set(_BucketBase):
                         raise merge_error(13)
                     i_old.advance()
                     i_new.advance()
-            else: # both com and new keys changed
+            else:  # both com and new keys changed
                 cmpCN = compare(i_com.key, i_new.key)
-                if cmpCN == 0: # both inserted same key
+                if cmpCN == 0:  # both inserted same key
                     raise merge_error(4)
-                if cmpOC > 0: # insert committed
-                    if cmpCN > 0: # insert i_new first
+                if cmpOC > 0:  # insert committed
+                    if cmpCN > 0:  # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmpON > 0: # insert i_new
+                elif cmpON > 0:  # insert i_new
                     merge_output(i_new)
-                else: # both com and new deleted same key
+                else:  # both com and new deleted same key
                     raise merge_error(5)
 
-        while i_com.active and i_new.active: # new inserts
+        while i_com.active and i_new.active:  # new inserts
             cmpCN = compare(i_com.key, i_new.key)
-            if cmpCN == 0: # dueling insert
+            if cmpCN == 0:  # dueling insert
                 raise merge_error(6)
-            if cmpCN > 0: # insert new
+            if cmpCN > 0:  # insert new
                 merge_output(i_new)
-            else: # insert committed
+            else:  # insert committed
                 merge_output(i_com)
 
-        while i_old.active and i_com.active: # new deletes rest of original
+        while i_old.active and i_com.active:  # new deletes rest of original
             cmpOC = compare(i_old.key, i_com.key)
-            if cmpOC > 0: # insert committed
+            if cmpOC > 0:  # insert committed
                 merge_output(i_com)
-            elif cmpOC == 0: # del in new
+            elif cmpOC == 0:  # del in new
                 i_old.advance()
                 i_com.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(7)
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
             cmpON = compare(i_old.key, i_new.key)
-            if cmpON > 0: # insert new
+            if cmpON > 0:  # insert new
                 merge_output(i_new)
-            elif cmpON == 0: # deleted in committed
+            elif cmpON == 0:  # deleted in committed
                 i_old.advance()
                 i_new.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(8)
 
-        if i_old.active: # dueling deletes
+        if i_old.active:  # dueling deletes
             raise merge_error(9)
 
         while i_com.active:
@@ -754,7 +758,7 @@ class Set(_BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma: no cover
+        if len(result._keys) == 0:  # pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -768,11 +772,13 @@ class Set(_BucketBase):
     def __repr__(self):
         return self._repr_helper(self._keys)
 
+
 class _TreeItem(object):
 
-    __slots__ = ('key',
-                 'child',
-                )
+    __slots__ = (
+        "key",
+        "child",
+    )
 
     def __init__(self, key, child):
         self.key = key
@@ -781,9 +787,10 @@ class _TreeItem(object):
 
 class _Tree(_Base):
 
-    __slots__ = ('_data',
-                 '_firstbucket',
-                )
+    __slots__ = (
+        "_data",
+        "_firstbucket",
+    )
 
     def __new__(cls, *args):
         value = _Base.__new__(cls, *args)
@@ -806,9 +813,9 @@ class _Tree(_Base):
             return default
 
     def update(self, items):
-        if hasattr(items, 'iteritems'):
+        if hasattr(items, "iteritems"):
             items = items.iteritems()
-        elif hasattr(items, 'items'):
+        elif hasattr(items, "items"):
             items = items.items()
 
         set = self.__setitem__
@@ -829,7 +836,8 @@ class _Tree(_Base):
 
     def __nonzero__(self):
         return bool(self._data)
-    __bool__ = __nonzero__ #Py3k rename
+
+    __bool__ = __nonzero__  # Py3k rename
 
     def __len__(self):
         l = 0
@@ -884,9 +892,14 @@ class _Tree(_Base):
         r = self._data[index].child.has_key(key)
         return r and r + 1
 
-    def keys(self, min=_marker, max=_marker,
-             excludemin=False, excludemax=False,
-             itertype='iterkeys'):
+    def keys(
+        self,
+        min=_marker,
+        max=_marker,
+        excludemin=False,
+        excludemax=False,
+        itertype="iterkeys",
+    ):
         if not self._data:
             return ()
 
@@ -900,8 +913,7 @@ class _Tree(_Base):
 
         return _TreeItems(bucket, itertype, iterargs)
 
-    def iterkeys(self, min=_marker, max=_marker,
-                 excludemin=False, excludemax=False):
+    def iterkeys(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
         return iter(self.keys(min, max, excludemin, excludemax))
 
     def __iter__(self):
@@ -915,26 +927,27 @@ class _Tree(_Base):
             bucket = self._findbucket(min)
         if bucket is not None:
             return bucket.minKey(min)
-        raise ValueError('empty tree')
+        raise ValueError("empty tree")
 
     def maxKey(self, max=_marker):
         data = self._data
         if not data:
-            raise ValueError('empty tree')
+            raise ValueError("empty tree")
         if max is _marker or max is None:
             return data[-1].child.maxKey()
 
         max = self._to_key(max)
         index = self._search(max)
         if index and compare(data[index].child.minKey(), max) > 0:
-            index -= 1 #pragma: no cover  no idea how to provoke this
+            index -= 1  # pragma: no cover  no idea how to provoke this
         return data[index].child.maxKey(max)
 
-
     def _set(self, key, value=None, ifunset=False):
-        if (self._p_jar is not None and
-            self._p_oid is not None and
-            self._p_serial is not None):
+        if (
+            self._p_jar is not None
+            and self._p_oid is not None
+            and self._p_serial is not None
+        ):
             self._p_jar.readCurrent(self)
         data = self._data
         if data:
@@ -961,17 +974,19 @@ class _Tree(_Base):
         # an oid of its own.  So if we have a single oid-less bucket that
         # changed, it's *our* oid that should be marked as changed -- the
         # bucket doesn't have one.
-        if (grew is not None and
-            type(child) is self._bucket_type and
-            len(data) == 1 and
-            child._p_oid is None):
+        if (
+            grew is not None
+            and type(child) is self._bucket_type
+            and len(data) == 1
+            and child._p_oid is None
+        ):
             self._p_changed = 1
         return result
 
     def _grow(self, child, index):
         self._p_changed = True
         new_child = child._split()
-        self._data.insert(index+1, _TreeItem(new_child.minKey(), new_child))
+        self._data.insert(index + 1, _TreeItem(new_child.minKey(), new_child))
         if len(self._data) >= self.max_internal_size * 2:
             self._split_root()
 
@@ -992,7 +1007,7 @@ class _Tree(_Base):
         first = data[index]
         del data[index:]
         if len(data) == 0:
-            self._firstbucket = None # lost our bucket, can't buy no beer
+            self._firstbucket = None  # lost our bucket, can't buy no beer
         if isinstance(first.child, type(self)):
             next._firstbucket = first.child._firstbucket
         else:
@@ -1000,9 +1015,11 @@ class _Tree(_Base):
         return next
 
     def _del(self, key):
-        if (self._p_jar is not None and
-            self._p_oid is not None and
-            self._p_serial is not None):
+        if (
+            self._p_jar is not None
+            and self._p_oid is not None
+            and self._p_serial is not None
+        ):
             self._p_jar.readCurrent(self)
 
         data = self._data
@@ -1015,9 +1032,7 @@ class _Tree(_Base):
         removed_first_bucket, value = child._del(key)
 
         # See comment in _set about small trees
-        if (len(data) == 1 and
-            type(child) is self._bucket_type and
-            child._p_oid is None):
+        if len(data) == 1 and type(child) is self._bucket_type and child._p_oid is None:
             self._p_changed = True
 
         # fix up the node key, but not for the 0'th one.
@@ -1027,15 +1042,15 @@ class _Tree(_Base):
 
         if removed_first_bucket:
             if index:
-                data[index-1].child._deleteNextBucket()
-                removed_first_bucket = False # clear flag
+                data[index - 1].child._deleteNextBucket()
+                removed_first_bucket = False  # clear flag
             else:
                 self._firstbucket = child._firstbucket
 
         if not child.size:
             if type(child) is self._bucket_type:
                 if index:
-                    data[index-1].child._deleteNextBucket()
+                    data[index - 1].child._deleteNextBucket()
                 else:
                     self._firstbucket = child._next
                     removed_first_bucket = True
@@ -1054,12 +1069,12 @@ class _Tree(_Base):
             # to not be called on unpickling
             return None
 
-        if (len(data) == 1 and
-            type(data[0].child) is not type(self) and
-            data[0].child._p_oid is None
-            ):
-            return ((data[0].child.__getstate__(), ), )
-
+        if (
+            len(data) == 1
+            and type(data[0].child) is not type(self)
+            and data[0].child._p_oid is None
+        ):
+            return ((data[0].child.__getstate__(),),)
 
         data = iter(data)
         sdata = [next(data).child]
@@ -1071,7 +1086,7 @@ class _Tree(_Base):
 
     def __setstate__(self, state):
         if state and not isinstance(state[0], tuple):
-            raise TypeError('tuple required for first state element')
+            raise TypeError("tuple required for first state element")
 
         self.clear()
         if state is None:
@@ -1099,35 +1114,37 @@ class _Tree(_Base):
         data = self._data
         assert_ = self._assert
         if not data:
-            assert_(self._firstbucket is None,
-                    "Empty BTree has non-NULL firstbucket")
+            assert_(self._firstbucket is None, "Empty BTree has non-NULL firstbucket")
             return
-        assert_(self._firstbucket is not None,
-                "Non-empty BTree has NULL firstbucket")
+        assert_(self._firstbucket is not None, "Non-empty BTree has NULL firstbucket")
 
         child_class = type(data[0].child)
         for i in data:
             assert_(i.child is not None, "BTree has NULL child")
-            assert_(type(i.child) is child_class,
-                    "BTree children have different types")
+            assert_(type(i.child) is child_class, "BTree children have different types")
             assert_(i.child.size, "Bucket length < 1")
 
         if child_class is type(self):
-            assert_(self._firstbucket is data[0].child._firstbucket,
-                    "BTree has firstbucket different than "
-                    "its first child's firstbucket")
-            for i in range(len(data)-1):
-                data[i].child._check(data[i+1].child._firstbucket)
+            assert_(
+                self._firstbucket is data[0].child._firstbucket,
+                "BTree has firstbucket different than " "its first child's firstbucket",
+            )
+            for i in range(len(data) - 1):
+                data[i].child._check(data[i + 1].child._firstbucket)
             data[-1].child._check(nextbucket)
         elif child_class is self._bucket_type:
-            assert_(self._firstbucket is data[0].child,
-                    "Bottom-level BTree node has inconsistent firstbucket "
-                    "belief")
-            for i in range(len(data)-1):
-                assert_(data[i].child._next is data[i+1].child,
-                       "Bucket next pointer is damaged")
-            assert_(data[-1].child._next is nextbucket,
-                    "Bucket next pointer is damaged")
+            assert_(
+                self._firstbucket is data[0].child,
+                "Bottom-level BTree node has inconsistent firstbucket " "belief",
+            )
+            for i in range(len(data) - 1):
+                assert_(
+                    data[i].child._next is data[i + 1].child,
+                    "Bucket next pointer is damaged",
+                )
+            assert_(
+                data[-1].child._next is nextbucket, "Bucket next pointer is damaged"
+            )
         else:
             assert_(False, "Incorrect child type")
 
@@ -1135,28 +1152,29 @@ class _Tree(_Base):
         s_old = _get_simple_btree_bucket_state(old)
         s_com = _get_simple_btree_bucket_state(com)
         s_new = _get_simple_btree_bucket_state(new)
-        return ((
-            self._bucket_type()._p_resolveConflict(s_old, s_com, s_new), ), )
+        return ((self._bucket_type()._p_resolveConflict(s_old, s_com, s_new),),)
 
     def __repr__(self):
         r = super(_Tree, self).__repr__()
-        r = r.replace('Py', '')
+        r = r.replace("Py", "")
         return r
+
 
 def _get_simple_btree_bucket_state(state):
     if state is None:
         return state
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple or None for state")
-    if len(state) == 2: # non-degenerate BTree, can't resolve
+    if len(state) == 2:  # non-degenerate BTree, can't resolve
         raise BTreesConflictError(-1, -1, -1, 11)
     # Peel away wrapper to get to only-bucket state.
     if len(state) != 1:
         raise TypeError("_p_resolveConflict: expected 1- or 2-tuple for state")
     state = state[0]
     if not isinstance(state, tuple) or len(state) != 1:
-        raise TypeError("_p_resolveConflict: expected 1-tuple containing "
-                        "bucket state")
+        raise TypeError(
+            "_p_resolveConflict: expected 1-tuple containing " "bucket state"
+        )
     state = state[0]
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple for bucket state")
@@ -1165,14 +1183,15 @@ def _get_simple_btree_bucket_state(state):
 
 class _TreeItems(object):
 
-    __slots__ = ('firstbucket',
-                 'itertype',
-                 'iterargs',
-                 'index',
-                 'it',
-                 'v',
-                 '_len',
-                )
+    __slots__ = (
+        "firstbucket",
+        "itertype",
+        "iterargs",
+        "index",
+        "it",
+        "v",
+        "_len",
+    )
 
     def __init__(self, firstbucket, itertype, iterargs):
         self.firstbucket = firstbucket
@@ -1232,7 +1251,8 @@ class _TreeItems(object):
 class _TreeIterator(object):
     """ Faux implementation for BBB only.
     """
-    def __init__(self, items): #pragma: no cover
+
+    def __init__(self, items):  # pragma: no cover
         raise TypeError(
             "TreeIterators are private implementation details "
             "of the C-based BTrees.\n\n"
@@ -1257,25 +1277,20 @@ class Tree(_Tree):
             return bucket[key]
         raise KeyError(key)
 
-    def values(self, min=_marker, max=_marker,
-               excludemin=False, excludemax=False):
-        return self.keys(min, max, excludemin, excludemax, 'itervalues')
+    def values(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
+        return self.keys(min, max, excludemin, excludemax, "itervalues")
 
-    def itervalues(self, min=_marker, max=_marker,
-                   excludemin=False, excludemax=False):
+    def itervalues(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
         return iter(self.values(min, max, excludemin, excludemax))
 
-    def items(self, min=_marker, max=_marker,
-              excludemin=False, excludemax=False):
-        return self.keys(min, max, excludemin, excludemax, 'iteritems')
+    def items(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
+        return self.keys(min, max, excludemin, excludemax, "iteritems")
 
-    def iteritems(self, min=_marker, max=_marker,
-                  excludemin=False, excludemax=False):
+    def iteritems(self, min=_marker, max=_marker, excludemin=False, excludemax=False):
         return iter(self.items(min, max, excludemin, excludemax))
 
     def byValue(self, min):
-        return reversed(
-                sorted((v, k) for (k, v) in self.iteritems() if v >= min))
+        return reversed(sorted((v, k) for (k, v) in self.iteritems() if v >= min))
 
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
@@ -1304,10 +1319,10 @@ class TreeSet(_Tree):
 class set_operation(object):
 
     __slots__ = (
-        'func',
-        'set_type',
-        '__name__',
-        '_module',
+        "func",
+        "set_type",
+        "__name__",
+        "_module",
     )
 
     def __init__(self, func, set_type):
@@ -1317,8 +1332,7 @@ class set_operation(object):
         self._module = func.__module__
 
     __module__ = property(
-        lambda self: self._module,
-        lambda self, nv: setattr(self, '_module', nv)
+        lambda self: self._module, lambda self, nv: setattr(self, "_module", nv)
     )
 
     def __call__(self, *a, **k):
@@ -1332,13 +1346,17 @@ def difference(set_type, o1, o2):
     i2 = _SetIteration(o2, False, 0)
     if i1.useValues:
         result = o1._mapping_type()
+
         def copy(i):
             result._keys.append(i.key)
             result._values.append(i.value)
+
     else:
         result = o1._set_type()
+
         def copy(i):
             result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1354,6 +1372,7 @@ def difference(set_type, o1, o2):
         i1.advance()
     return result
 
+
 def union(set_type, o1, o2):
     if o1 is None:
         return o2
@@ -1362,8 +1381,10 @@ def union(set_type, o1, o2):
     i1 = _SetIteration(o1, False, 0)
     i2 = _SetIteration(o2, False, 0)
     result = o1._set_type()
+
     def copy(i):
         result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1384,6 +1405,7 @@ def union(set_type, o1, o2):
         i2.advance()
     return result
 
+
 def intersection(set_type, o1, o2):
     if o1 is None:
         return o2
@@ -1392,8 +1414,10 @@ def intersection(set_type, o1, o2):
     i1 = _SetIteration(o1, False, 0)
     i2 = _SetIteration(o2, False, 0)
     result = o1._set_type()
+
     def copy(i):
         result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1406,13 +1430,15 @@ def intersection(set_type, o1, o2):
             i2.advance()
     return result
 
+
 def _prepMergeIterators(o1, o2):
-    MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
+    MERGE_DEFAULT = getattr(o1, "MERGE_DEFAULT", None)
     if MERGE_DEFAULT is None:
         raise TypeError("invalid set operation")
     i1 = _SetIteration(o1, True, MERGE_DEFAULT)
     i2 = _SetIteration(o2, True, MERGE_DEFAULT)
     return i1, i2
+
 
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
@@ -1422,21 +1448,24 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o2 is None:
         return w1, o1
     i1, i2 = _prepMergeIterators(o1, o2)
-    MERGE = getattr(o1, 'MERGE', None)
+    MERGE = getattr(o1, "MERGE", None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
-    MERGE_WEIGHT = getattr(o1, 'MERGE_WEIGHT')
+    MERGE_WEIGHT = getattr(o1, "MERGE_WEIGHT")
     if (not i1.useValues) and i2.useValues:
         i1, i2 = i2, i1
         w1, w2 = w2, w1
     _merging = i1.useValues or i2.useValues
     if _merging:
         result = o1._mapping_type()
+
         def copy(i, w):
             result._keys.append(i.key)
             result._values.append(MERGE_WEIGHT(i.value, w))
+
     else:
         result = o1._set_type()
+
         def copy(i, w):
             result._keys.append(i.key)
 
@@ -1462,6 +1491,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         i2.advance()
     return 1, result
 
+
 def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
         if o2 is None:
@@ -1470,7 +1500,7 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o2 is None:
         return w1, o1
     i1, i2 = _prepMergeIterators(o1, o2)
-    MERGE = getattr(o1, 'MERGE', None)
+    MERGE = getattr(o1, "MERGE", None)
     if MERGE is None and i1.useValues and i2.useValues:
         raise TypeError("invalid set operation")
     if (not i1.useValues) and i2.useValues:
@@ -1497,6 +1527,7 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         return w1 + w2, result
     return 1, result
 
+
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
     result = set_type()
@@ -1504,7 +1535,7 @@ def multiunion(set_type, seqs):
         try:
             iter(s)
         except TypeError:
-            s = set_type((s, ))
+            s = set_type((s,))
         result.update(s)
     return result
 
@@ -1512,11 +1543,14 @@ def multiunion(set_type, seqs):
 def MERGE(self, value1, weight1, value2, weight2):
     return (value1 * weight1) + (value2 * weight2)
 
+
 def MERGE_WEIGHT_default(self, value, weight):
     return value
 
+
 def MERGE_WEIGHT_numeric(self, value, weight):
     return value * weight
+
 
 def _fix_pickle(mod_dict, mod_name):
     # Make the pure-Python objects pickle with the same
@@ -1528,23 +1562,23 @@ def _fix_pickle(mod_dict, mod_name):
     # Each module must call this as `_fix_pickle(globals(), __name__)`
     # at the bottom.
 
-    mod_prefix = mod_name.split('.')[-1][:2] # BTrees.OOBTree -> 'OO'
-    bucket_name = mod_prefix + 'Bucket'
-    py_bucket_name = bucket_name + 'Py'
+    mod_prefix = mod_name.split(".")[-1][:2]  # BTrees.OOBTree -> 'OO'
+    bucket_name = mod_prefix + "Bucket"
+    py_bucket_name = bucket_name + "Py"
 
     have_c_extensions = mod_dict[bucket_name] is not mod_dict[py_bucket_name]
 
-    for name in 'Bucket', 'Set', 'BTree', 'TreeSet', 'TreeIterator':
+    for name in "Bucket", "Set", "BTree", "TreeSet", "TreeIterator":
         raw_name = mod_prefix + name
-        py_name = raw_name + 'Py'
+        py_name = raw_name + "Py"
         try:
             py_type = mod_dict[py_name]
         except KeyError:
-            if name == 'TreeIterator':
+            if name == "TreeIterator":
                 # Optional
                 continue
             raise  # pragma: no cover
-        raw_type = mod_dict[raw_name] # Could be C or Python
+        raw_type = mod_dict[raw_name]  # Could be C or Python
 
         py_type._BTree_reduce_as = raw_type
         py_type._BTree_reduce_up_bound = py_type
@@ -1557,4 +1591,4 @@ def _fix_pickle(mod_dict, mod_name):
             # On the other hand (no C extension) this makes our
             # Python pickle match the C version by default
             py_type.__name__ = raw_name
-            py_type.__qualname__ = raw_name # Py 3.3+
+            py_type.__qualname__ = raw_name  # Py 3.3+

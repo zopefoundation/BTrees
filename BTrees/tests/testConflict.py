@@ -22,6 +22,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
     def _getTargetClass(self):
         from BTrees.OOBTree import OOBTree
+
         return OOBTree
 
     def openDB(self):
@@ -38,23 +39,26 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # serialization (ordering) of the datamanager, and the fact that these tests are
         # single-threaded.
         import threading
-        from ZODB.tests.MVCCMappingStorage  import MVCCMappingStorage
+        from ZODB.tests.MVCCMappingStorage import MVCCMappingStorage
+
         class _MVCCMappingStorage(MVCCMappingStorage):
             def new_instance(self):
                 inst = MVCCMappingStorage.new_instance(self)
                 inst._commit_lock = threading.Lock()
                 return inst
+
         from ZODB.DB import DB
+
         self.storage = _MVCCMappingStorage()
         self.db = DB(self.storage)
         return self.db
-
 
     @_skip_wo_ZODB
     def testSimpleConflict(self):
         # Invoke conflict resolution by committing a transaction and
         # catching a conflict in the storage.
         import transaction
+
         self.openDB()
 
         r1 = self.db.open().root()
@@ -63,14 +67,14 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         r2 = self.db.open().root()
         copy = r2["t"]
-        list(copy)    # unghostify
+        list(copy)  # unghostify
 
         self.assertEqual(t._p_serial, copy._p_serial)
 
-        t.update({1:2, 2:3})
+        t.update({1: 2, 2: 3})
         transaction.commit()
 
-        copy.update({3:4})
+        copy.update({3: 4})
         transaction.commit()
 
     # This tests a problem that cropped up while trying to write
@@ -82,6 +86,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
     @_skip_wo_ZODB
     def testResolutionBlowsUp(self):
         import transaction
+
         b = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -111,12 +116,12 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         self.assertEqual(b._p_serial, copy._p_serial)
 
-        b.update({1:2, 2:3})
+        b.update({1: 2, 2: 3})
         transaction.commit()
 
-        copy.update({3:4})
+        copy.update({3: 4})
         transaction.commit()  # if this doesn't blow up
-        list(copy.values())         # and this doesn't either, then fine
+        list(copy.values())  # and this doesn't either, then fine
 
     @_skip_wo_ZODB
     def testBucketSplitConflict(self):
@@ -125,6 +130,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # implementation details.
         import transaction
         from ZODB.POSException import ConflictError
+
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -173,7 +179,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state = b.__getstate__()
         # Looks like:  ((b0, 60, b1, 75, b2, 120, b3), firstbucket)
         # The next block is still verifying preconditions.
-        self.assertEqual(len(state) , 2)
+        self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 7)
         self.assertEqual(state[0][1], 60)
         self.assertEqual(state[0][3], 75)
@@ -206,6 +212,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # info to unlink the empty bucket from the BTree correctly.
         import transaction
         from ZODB.POSException import ConflictError
+
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -247,7 +254,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state = b.__getstate__()
         # Looks like:  ((bucket0, 60, bucket1, 120, bucket2), firstbucket)
         # The next block is still verifying preconditions.
-        self.assertEqual(len(state) , 2)
+        self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 5)
         self.assertEqual(state[0][1], 92)
         self.assertEqual(state[0][3], 120)
@@ -280,6 +287,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # Tests that a plain empty bucket (on input) is not viewed as a
         # conflict.
         import transaction
+
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -351,6 +359,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # indirectly via the storage, and hence is a more specialized type.
         # This test therefore does not require ZODB.
         from BTrees.Interfaces import BTreesConflictError
+
         t = self._makeOne()
         t[1] = 1
         bucket = t._firstbucket
@@ -358,17 +367,18 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state1 = bucket.__getstate__()
         state2 = bucket.__getstate__()
         state3 = bucket.__getstate__()
-        self.assertTrue(state2 is not state1 and
-                        state2 is not state3 and
-                        state3 is not state1)
-        self.assertTrue(state2 == state1 and
-                        state3 == state1)
-        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
-                          state1, state2, state3)
+        self.assertTrue(
+            state2 is not state1 and state2 is not state3 and state3 is not state1
+        )
+        self.assertTrue(state2 == state1 and state3 == state1)
+        self.assertRaises(
+            BTreesConflictError, bucket._p_resolveConflict, state1, state2, state3
+        )
         # When an empty BTree resolves conflicts, it computes the
         # bucket state as None, so...
-        self.assertRaises(BTreesConflictError, bucket._p_resolveConflict,
-                          None, None, None)
+        self.assertRaises(
+            BTreesConflictError, bucket._p_resolveConflict, None, None, None
+        )
 
     @_skip_wo_ZODB
     def testCantResolveBTreeConflict(self):
@@ -380,6 +390,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # implementation details.
         import transaction
         from ZODB.POSException import ConflictError
+
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -433,6 +444,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # was first reported by Dieter Maurer, to zodb-dev on 22 Mar 2005.
         import transaction
         from ZODB.POSException import ConflictError
+
         b = orig = self._makeOne()
         for i in range(0, 200, 4):
             b[i] = i
@@ -535,6 +547,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         import transaction
         from ZODB.POSException import ConflictError
+
         mytype = self._getTargetClass()
         db = self.openDB()
         tm1 = transaction.TransactionManager()
@@ -549,9 +562,9 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         tm2 = transaction.TransactionManager()
         conn2 = db.open(tm2)
 
-        t[k+1] = k+1
+        t[k + 1] = k + 1
         del conn2.root.t[k]
-        for i in range(200,300):
+        for i in range(200, 300):
             conn2.root.t[i] = i
 
         tm1.commit()
@@ -559,7 +572,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         tm2.abort()
 
         k = t.__getstate__()[0][1]
-        t[k+1] = k+1
+        t[k + 1] = k + 1
         del conn2.root.t[k]
 
         tm2.commit()

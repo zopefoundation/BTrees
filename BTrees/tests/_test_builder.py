@@ -41,6 +41,7 @@ class _FilteredModuleProxy(object):
     Accessing ``def_<name>`` returns a callable that
     returns ``<name>``. This is suitable for use as class attributes.
     """
+
     # Lets us easily access by name a particular attribute
     # in either the Python or C implementation, based on the
     # suffix
@@ -50,10 +51,10 @@ class _FilteredModuleProxy(object):
         self.suffix = suffix
 
     def __getattr__(self, name):
-        attr_name = name[4:] if name.startswith('def_') else name
+        attr_name = name[4:] if name.startswith("def_") else name
         attr_name += self.suffix
         attr = getattr(self.btree_module, attr_name)
-        if name.startswith('def_'):
+        if name.startswith("def_"):
             return staticmethod(lambda: attr)
         return attr
 
@@ -69,10 +70,11 @@ def _flattened(*args):
 
     return tuple(f(args))
 
+
 class ClassBuilder(object):
 
     # Use TestAuto as a prefix to avoid clashing with manual tests
-    TESTCASE_PREFIX = 'TestAuto'
+    TESTCASE_PREFIX = "TestAuto"
 
     def __init__(self, btree_module, btree_tests_base=BTreeTests):
         self.btree_module = btree_module
@@ -89,11 +91,10 @@ class ClassBuilder(object):
 
         self.bounds_mixin = _BoundsMixin
 
-
         self.btree_tests_base = btree_tests_base
 
-        self.prefix = btree_module.__name__.split('.', )[-1][:2]
-        self.test_module = 'BTrees.tests.test_' + self.prefix + 'BTree'
+        self.prefix = btree_module.__name__.split(".",)[-1][:2]
+        self.test_module = "BTrees.tests.test_" + self.prefix + "BTree"
 
         self.test_classes = {}
         # Keep track of tested classes so that we don't
@@ -107,23 +108,26 @@ class ClassBuilder(object):
         self.test_classes[test_cls.__name__] = test_cls
 
     def _fixup_and_store_class(self, btree_module, fut, test_cls):
-        base = [x for x in test_cls.__bases__
-                if x.__module__ != __name__ and x.__module__ != 'unittest'][0]
+        base = [
+            x
+            for x in test_cls.__bases__
+            if x.__module__ != __name__ and x.__module__ != "unittest"
+        ][0]
 
         test_name = self._name_for_test(btree_module, fut, base)
         test_cls.__name__ = test_name
         test_cls.__module__ = self.test_module
-        test_cls.__qualname__ = self.test_module + '.' + test_name
+        test_cls.__qualname__ = self.test_module + "." + test_name
         self._store_class(test_cls)
 
     def _name_for_test(self, btree_module, fut, test_base):
-        fut = getattr(fut, '__name__', fut)
+        fut = getattr(fut, "__name__", fut)
         fut = str(fut)
         if isinstance(test_base, tuple):
             test_base = test_base[0]
         test_name = (
             self.TESTCASE_PREFIX
-            + (self.prefix if not fut.startswith(self.prefix) else '')
+            + (self.prefix if not fut.startswith(self.prefix) else "")
             + fut
             + test_base.__name__
             + btree_module.suffix
@@ -164,10 +168,9 @@ class ClassBuilder(object):
                 weightedUnion = btree_module.def_weightedUnion
                 weightedIntersection = btree_module.def_weightedIntersection
 
-
             # These are specific to MultiUnion, and may not exist
             # in key types that don't support unions (``'O'``)
-            multiunion = getattr(btree_module, 'multiunion', None)
+            multiunion = getattr(btree_module, "multiunion", None)
             mkset = btree_module.Set
             mktreeset = btree_module.TreeSet
             mkbtree = tree
@@ -177,10 +180,10 @@ class ClassBuilder(object):
                     btree_module.Bucket,
                     btree_module.BTree,
                     itemsToSet(btree_module.Set),
-                    itemsToSet(btree_module.TreeSet)
+                    itemsToSet(btree_module.TreeSet),
                 )
 
-        self._fixup_and_store_class(btree_module, '', Test)
+        self._fixup_and_store_class(btree_module, "", Test)
 
     def _create_set_result_test(self, btree_module):
         tree = btree_module.BTree
@@ -198,17 +201,21 @@ class ClassBuilder(object):
                     btree_module.Set,
                     btree_module.TreeSet,
                     makeBuilder(btree_module.BTree),
-                    makeBuilder(btree_module.Bucket)
+                    makeBuilder(btree_module.Bucket),
                 )
 
-        self._fixup_and_store_class(btree_module, '', Test)
+        self._fixup_and_store_class(btree_module, "", Test)
 
     def _create_module_test(self):
         from BTrees import Interfaces as interfaces
+
         mod = self.btree_module
 
-        iface = getattr(interfaces, 'I' + self.key_type.long_name + self.value_type.long_name
-                        + 'BTreeModule')
+        iface = getattr(
+            interfaces,
+            "I" + self.key_type.long_name + self.value_type.long_name + "BTreeModule",
+        )
+
         class Test(ModuleTest, unittest.TestCase):
             prefix = self.prefix
             key_type = self.key_type
@@ -217,7 +224,9 @@ class ClassBuilder(object):
             _getModule = lambda self: mod
             _getInterface = lambda self: iface
 
-        self._fixup_and_store_class(_FilteredModuleProxy(self.btree_module, ''), '', Test)
+        self._fixup_and_store_class(
+            _FilteredModuleProxy(self.btree_module, ""), "", Test
+        )
 
     def _create_type_tests(self, btree_module, type_name, test_bases):
         tree = getattr(btree_module, type_name)
@@ -227,14 +236,18 @@ class ClassBuilder(object):
 
             test_name = self._name_for_test(btree_module, tree, test_base)
             bases = _flattened(self.bounds_mixin, test_base, unittest.TestCase)
-            test_cls = type(test_name, bases, {
-                '__module__': self.test_module,
-                '_getTargetClass': lambda _, t=tree: t,
-                'getTwoKeys': self.key_type.getTwoExamples,
-                'getTwoValues': self.value_type.getTwoExamples,
-                'key_type': self.key_type,
-                'value_type': self.value_type,
-            })
+            test_cls = type(
+                test_name,
+                bases,
+                {
+                    "__module__": self.test_module,
+                    "_getTargetClass": lambda _, t=tree: t,
+                    "getTwoKeys": self.key_type.getTwoExamples,
+                    "getTwoValues": self.value_type.getTwoExamples,
+                    "key_type": self.key_type,
+                    "value_type": self.value_type,
+                },
+            )
             self._store_class(test_cls)
 
     def create_classes(self):
@@ -252,24 +265,23 @@ class ClassBuilder(object):
         if self.value_type.supports_value_union():
             set_ops += (Weighted,)
 
-        for suffix in ('', 'Py'):
+        for suffix in ("", "Py"):
             btree_module = _FilteredModuleProxy(self.btree_module, suffix)
 
             for type_name, test_bases in (
-                    ('BTree', (InternalKeysMappingTest,
-                               MappingConflictTestBase,
-                               btree_tests_base)),
-                    ('Bucket', (MappingBase,
-                                MappingConflictTestBase,)),
-                    ('Set', (ExtendedSetTests,
-                             I_SetsBase,
-                             SetConflictTestBase,)),
-                    ('TreeSet', (I_SetsBase,
-                                 NormalSetTests,
-                                 SetConflictTestBase,))
+                (
+                    "BTree",
+                    (
+                        InternalKeysMappingTest,
+                        MappingConflictTestBase,
+                        btree_tests_base,
+                    ),
+                ),
+                ("Bucket", (MappingBase, MappingConflictTestBase,)),
+                ("Set", (ExtendedSetTests, I_SetsBase, SetConflictTestBase,)),
+                ("TreeSet", (I_SetsBase, NormalSetTests, SetConflictTestBase,)),
             ):
                 self._create_type_tests(btree_module, type_name, test_bases)
-
 
             for test_base in set_ops:
                 self._create_set_op_test(btree_module, test_base)

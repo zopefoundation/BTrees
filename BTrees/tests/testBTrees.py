@@ -61,6 +61,7 @@ class DegenerateBTree(unittest.TestCase):
         from BTrees.IIBTree import IISet
         from BTrees.IIBTree import IITreeSet
         from BTrees.check import check
+
         bucket11 = IISet([11])
 
         bucket7 = IISet()
@@ -171,6 +172,7 @@ class DegenerateBTree(unittest.TestCase):
         # On CPython in PURE_PYTHON mode, this is a *slow* test, taking 15+s
         # on a 2015 laptop.
         from BTrees.check import check
+
         t, keys = self._build_degenerate_tree()
         for oneperm in permutations(keys):
             t, keys = self._build_degenerate_tree()
@@ -187,7 +189,7 @@ class DegenerateBTree(unittest.TestCase):
             # failure at the time its destructor is invoked.  Try to force
             # that to happen now, so it doesn't look like a baffling failure
             # at some unrelated line.
-            del t   # trigger destructor
+            del t  # trigger destructor
 
 
 LP294788_ids = {}
@@ -195,7 +197,7 @@ LP294788_ids = {}
 
 class ToBeDeleted(object):
     def __init__(self, id):
-        assert isinstance(id, int) #we don't want to store any object ref here
+        assert isinstance(id, int)  # we don't want to store any object ref here
         self.id = id
 
         global LP294788_ids
@@ -236,6 +238,7 @@ class TestBugFixes(unittest.TestCase):
     # Bucket_rangeSearch(), leading to "delayed" errors, or worse.
     def testFixed1843(self):
         from BTrees.IIBTree import IISet
+
         t = IISet()
         t.insert(1)
         # This one used to fail to raise the TypeError when it occurred.
@@ -259,7 +262,7 @@ class TestBugFixes(unittest.TestCase):
 
         t = OOBTree()
 
-        trandom = random.Random('OOBTree')
+        trandom = random.Random("OOBTree")
 
         global LP294788_ids
 
@@ -268,7 +271,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
@@ -276,7 +279,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = ToBeDeleted(id)
             else:
-                #del
+                # del
                 keys = list(ids.keys())
                 if keys:
                     id = trandom.choice(list(ids.keys()))
@@ -289,10 +292,10 @@ class TestBugFixes(unittest.TestCase):
             del t[id]
         ids = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
@@ -303,15 +306,15 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
 
                 ids[id] = 1
-                t[id] = (id, ToBeDeleted(id), u'somename')
+                t[id] = (id, ToBeDeleted(id), u"somename")
             else:
-                #del
+                # del
                 keys = list(ids.keys())
                 if keys:
                     id = trandom.choice(keys)
@@ -324,15 +327,14 @@ class TestBugFixes(unittest.TestCase):
             del t[id]
         ids = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
         # \\\
-
 
         # /// BTree keys are objects, value is an int
         t = OOBTree()
@@ -340,7 +342,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = ToBeDeleted(trandom.randint(0, 1000000))
@@ -348,7 +350,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = 1
             else:
-                #del
+                # del
                 id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
@@ -357,13 +359,13 @@ class TestBugFixes(unittest.TestCase):
         trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
-        #release all refs
+        # release all refs
         ids = id = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
@@ -374,16 +376,16 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
-                    id = (id, ToBeDeleted(id), u'somename')
+                    id = (id, ToBeDeleted(id), u"somename")
 
                 ids[id] = 1
                 t[id] = 1
             else:
-                #del
+                # del
                 id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
@@ -392,13 +394,13 @@ class TestBugFixes(unittest.TestCase):
         trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
-        #release all refs
+        # release all refs
         ids = id = key = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
@@ -408,24 +410,24 @@ class TestBugFixes(unittest.TestCase):
 
 
 class DoesntLikeBeingCompared:
-
     def __cmp__(self, other):
-        raise ValueError('incomparable')
+        raise ValueError("incomparable")
+
     __lt__ = __le__ = __eq__ = __ne__ = __ge__ = __gt__ = __cmp__
 
-class TestCmpError(unittest.TestCase):
 
+class TestCmpError(unittest.TestCase):
     def testFoo(self):
         from BTrees.OOBTree import OOBTree
+
         t = OOBTree()
-        t['hello world'] = None
+        t["hello world"] = None
         try:
             t[DoesntLikeBeingCompared()] = None
         except ValueError as e:
-            self.assertEqual(str(e), 'incomparable')
+            self.assertEqual(str(e), "incomparable")
         else:
-            self.fail('incomarable objects should not be allowed into '
-                      'the tree')
+            self.fail("incomarable objects should not be allowed into " "the tree")
 
 
 class FamilyTest(unittest.TestCase):
@@ -433,27 +435,18 @@ class FamilyTest(unittest.TestCase):
         from zope.interface.verify import verifyObject
         import BTrees
         from BTrees.IOBTree import IOTreeSet
+
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family32)
-        self.assertEqual(
-            BTrees.family32.IO, BTrees.IOBTree)
-        self.assertEqual(
-            BTrees.family32.OI, BTrees.OIBTree)
-        self.assertEqual(
-            BTrees.family32.II, BTrees.IIBTree)
-        self.assertEqual(
-            BTrees.family32.IF, BTrees.IFBTree)
-        self.assertEqual(
-            BTrees.family32.UO, BTrees.UOBTree)
-        self.assertEqual(
-            BTrees.family32.OU, BTrees.OUBTree)
-        self.assertEqual(
-            BTrees.family32.UU, BTrees.UUBTree)
-        self.assertEqual(
-            BTrees.family32.UF, BTrees.UFBTree)
-        self.assertEqual(
-            BTrees.family32.OO, BTrees.OOBTree)
-        self.assertEqual(
-            BTrees.family32.OU, BTrees.OUBTree)
+        self.assertEqual(BTrees.family32.IO, BTrees.IOBTree)
+        self.assertEqual(BTrees.family32.OI, BTrees.OIBTree)
+        self.assertEqual(BTrees.family32.II, BTrees.IIBTree)
+        self.assertEqual(BTrees.family32.IF, BTrees.IFBTree)
+        self.assertEqual(BTrees.family32.UO, BTrees.UOBTree)
+        self.assertEqual(BTrees.family32.OU, BTrees.OUBTree)
+        self.assertEqual(BTrees.family32.UU, BTrees.UUBTree)
+        self.assertEqual(BTrees.family32.UF, BTrees.UFBTree)
+        self.assertEqual(BTrees.family32.OO, BTrees.OOBTree)
+        self.assertEqual(BTrees.family32.OU, BTrees.OUBTree)
         s = IOTreeSet()
         s.insert(BTrees.family32.maxint)
         self.assertTrue(BTrees.family32.maxint in s)
@@ -475,27 +468,18 @@ class FamilyTest(unittest.TestCase):
         from zope.interface.verify import verifyObject
         import BTrees
         from BTrees.LOBTree import LOTreeSet
+
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family64)
-        self.assertEqual(
-            BTrees.family64.IO, BTrees.LOBTree)
-        self.assertEqual(
-            BTrees.family64.OI, BTrees.OLBTree)
-        self.assertEqual(
-            BTrees.family64.II, BTrees.LLBTree)
-        self.assertEqual(
-            BTrees.family64.IF, BTrees.LFBTree)
-        self.assertEqual(
-            BTrees.family64.UO, BTrees.QOBTree)
-        self.assertEqual(
-            BTrees.family64.OU, BTrees.OQBTree)
-        self.assertEqual(
-            BTrees.family64.UU, BTrees.QQBTree)
-        self.assertEqual(
-            BTrees.family64.UF, BTrees.QFBTree)
-        self.assertEqual(
-            BTrees.family64.OO, BTrees.OOBTree)
-        self.assertEqual(
-            BTrees.family64.OU, BTrees.OQBTree)
+        self.assertEqual(BTrees.family64.IO, BTrees.LOBTree)
+        self.assertEqual(BTrees.family64.OI, BTrees.OLBTree)
+        self.assertEqual(BTrees.family64.II, BTrees.LLBTree)
+        self.assertEqual(BTrees.family64.IF, BTrees.LFBTree)
+        self.assertEqual(BTrees.family64.UO, BTrees.QOBTree)
+        self.assertEqual(BTrees.family64.OU, BTrees.OQBTree)
+        self.assertEqual(BTrees.family64.UU, BTrees.QQBTree)
+        self.assertEqual(BTrees.family64.UF, BTrees.QFBTree)
+        self.assertEqual(BTrees.family64.OO, BTrees.OOBTree)
+        self.assertEqual(BTrees.family64.OU, BTrees.OQBTree)
         s = LOTreeSet()
         s.insert(BTrees.family64.maxint)
         self.assertTrue(BTrees.family64.maxint in s)
@@ -504,8 +488,12 @@ class FamilyTest(unittest.TestCase):
         self.assertTrue(BTrees.family64.minint in s)
         s = LOTreeSet()
         # XXX why oh why do we expect ValueError here, but TypeError in test32?
-        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.maxint + 1)
-        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.minint - 1)
+        self.assertRaises(
+            (TypeError, OverflowError), s.insert, BTrees.family64.maxint + 1
+        )
+        self.assertRaises(
+            (TypeError, OverflowError), s.insert, BTrees.family64.minint - 1
+        )
         self.check_pickling(BTrees.family64)
 
     def check_pickling(self, family):
@@ -528,7 +516,7 @@ class FamilyTest(unittest.TestCase):
         p.dump([family])
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
-        f2, = u.load()
+        (f2,) = u.load()
         self.assertTrue(f1 is family)
         self.assertTrue(f2 is family)
 
@@ -540,6 +528,6 @@ class FamilyTest(unittest.TestCase):
         p.dump([family])
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
-        f2, = u.load()
+        (f2,) = u.load()
         self.assertTrue(f1 is family)
         self.assertTrue(f2 is family)

@@ -16,10 +16,19 @@
 # expected to be "public" excpect to FileStorage.
 # Each item in an fsBTree maps a two-byte key to a six-byte value.
 
-__all__ = ('Bucket', 'Set', 'BTree', 'TreeSet',
-           'fsBucket', 'fsSet', 'fsBTree', 'fsTreeSet',
-           'union', 'intersection', 'difference',
-          )
+__all__ = (
+    "Bucket",
+    "Set",
+    "BTree",
+    "TreeSet",
+    "fsBucket",
+    "fsSet",
+    "fsBTree",
+    "fsTreeSet",
+    "union",
+    "intersection",
+    "difference",
+)
 
 
 from zope.interface import moduleProvides
@@ -50,14 +59,14 @@ class fsBucketPy(Bucket):
     _to_value = _to_value
 
     def toString(self):
-        return b''.join(self._keys) + b''.join(self._values)
+        return b"".join(self._keys) + b"".join(self._values)
 
     def fromString(self, v):
         length = len(v)
         if length % 8 != 0:
             raise ValueError()
         count = length // 8
-        keys, values = v[:count*2], v[count*2:]
+        keys, values = v[: count * 2], v[count * 2 :]
         self.clear()
         while keys and values:
             key, keys = keys[:2], keys[2:]

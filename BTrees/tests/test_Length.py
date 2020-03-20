@@ -16,10 +16,11 @@ import unittest
 
 _marker = object()
 
-class TestLength(unittest.TestCase):
 
+class TestLength(unittest.TestCase):
     def _getTargetClass(self):
         from BTrees.Length import Length
+
         return Length
 
     def _makeOne(self, value=_marker):
@@ -65,11 +66,12 @@ class TestLength(unittest.TestCase):
 
     def test_change_overflows_to_long(self):
         import sys
+
         try:
             length = self._makeOne(sys.maxint)
-        except AttributeError: #pragma NO COVER Py3k
+        except AttributeError:  # pragma NO COVER Py3k
             return
-        else: #pragma NO COVER Py2
+        else:  # pragma NO COVER Py2
             self.assertEqual(length(), sys.maxint)
             self.assertTrue(type(length()) is int)
             length.change(+1)
@@ -78,11 +80,12 @@ class TestLength(unittest.TestCase):
 
     def test_change_underflows_to_long(self):
         import sys
+
         try:
             minint = (-sys.maxint) - 1
-        except AttributeError: #pragma NO COVER Py3k
+        except AttributeError:  # pragma NO COVER Py3k
             return
-        else: #pragma NO COVER Py2
+        else:  # pragma NO COVER Py2
             length = self._makeOne(minint)
             self.assertEqual(length(), minint)
             self.assertTrue(type(length()) is int)
@@ -101,6 +104,7 @@ class TestLength(unittest.TestCase):
     def test_lp_516653(self):
         # Test for https://bugs.launchpad.net/zodb/+bug/516653
         import copy
+
         length = self._makeOne()
         other = copy.copy(length)
         self.assertEqual(other(), 0)

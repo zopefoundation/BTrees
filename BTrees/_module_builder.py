@@ -20,10 +20,10 @@ from zope.interface import directlyProvides
 
 
 def _create_classes(
-        module_name, key_datatype, value_datatype,
+    module_name, key_datatype, value_datatype,
 ):
     from ._base import Bucket
-    from ._base import MERGE # Won't always want this.
+    from ._base import MERGE  # Won't always want this.
     from ._base import Set
     from ._base import Tree
     from ._base import TreeSet
@@ -35,11 +35,11 @@ def _create_classes(
     prefix = key_datatype.prefix_code + value_datatype.prefix_code
 
     for base in (
-            Bucket,
-            Set,
-            (Tree, 'BTree'),
-            TreeSet,
-            (_TreeIterator, 'TreeIterator'),
+        Bucket,
+        Set,
+        (Tree, "BTree"),
+        TreeSet,
+        (_TreeIterator, "TreeIterator"),
     ):
         if isinstance(base, tuple):
             base, base_name = base
@@ -49,34 +49,39 @@ def _create_classes(
         # XXX: Consider defining these with their natural names
         # now and only aliasing them to 'Py' instead of the
         # opposite. That should make pickling easier.
-        name = prefix + base_name + 'Py'
-        cls = type(name, (base,), dict(
-            _to_key=key_datatype,
-            _to_value=value_datatype,
-            MERGE=MERGE,
-            MERGE_WEIGHT=value_datatype.apply_weight,
-            MERGE_DEFAULT=value_datatype.multiplication_identity,
-            max_leaf_size=key_datatype.bucket_size_for_value(value_datatype),
-            max_internal_size=key_datatype.tree_size,
-        ))
+        name = prefix + base_name + "Py"
+        cls = type(
+            name,
+            (base,),
+            dict(
+                _to_key=key_datatype,
+                _to_value=value_datatype,
+                MERGE=MERGE,
+                MERGE_WEIGHT=value_datatype.apply_weight,
+                MERGE_DEFAULT=value_datatype.multiplication_identity,
+                max_leaf_size=key_datatype.bucket_size_for_value(value_datatype),
+                max_internal_size=key_datatype.tree_size,
+            ),
+        )
         cls.__module__ = module_name
 
         classes[cls.__name__] = cls
         # Importing the C extension does this for the non-py
         # classes.
         # TODO: Unify that.
-        classes[base_name + 'Py'] = cls
+        classes[base_name + "Py"] = cls
 
     for cls in classes.values():
-        cls._mapping_type = classes['BucketPy']
-        cls._set_type = classes['SetPy']
+        cls._mapping_type = classes["BucketPy"]
+        cls._set_type = classes["SetPy"]
 
-        if 'Set' in cls.__name__:
-            cls._bucket_type = classes['SetPy']
+        if "Set" in cls.__name__:
+            cls._bucket_type = classes["SetPy"]
         else:
-            cls._bucket_type = classes['BucketPy']
+            cls._bucket_type = classes["BucketPy"]
 
     return classes
+
 
 def _create_set_operations(module_name, key_type, value_type, set_type):
     from ._base import set_operation
@@ -89,19 +94,14 @@ def _create_set_operations(module_name, key_type, value_type, set_type):
     from ._base import weightedUnion
 
     ops = {
-        op.__name__ + 'Py': set_operation(op, set_type)
-        for op in (
-            difference, intersection,
-            union,
-        ) + (
+        op.__name__ + "Py": set_operation(op, set_type)
+        for op in (difference, intersection, union,)
+        + (
             (weightedIntersection, weightedUnion,)
             if value_type.supports_value_union()
             else ()
-        ) + (
-            (multiunion,)
-            if key_type.supports_value_union()
-            else ()
         )
+        + ((multiunion,) if key_type.supports_value_union() else ())
     }
 
     for key, op in ops.items():
@@ -111,37 +111,45 @@ def _create_set_operations(module_name, key_type, value_type, set_type):
     # TODO: Pickling. These things should be looked up by name.
     return ops
 
+
 def _create_globals(module_name, key_datatype, value_datatype):
     classes = _create_classes(module_name, key_datatype, value_datatype)
-    set_type = classes['SetPy']
-    set_ops = _create_set_operations(module_name, key_datatype, value_datatype, set_type)
+    set_type = classes["SetPy"]
+    set_ops = _create_set_operations(
+        module_name, key_datatype, value_datatype, set_type
+    )
 
     classes.update(set_ops)
     return classes
 
 
-def populate_module(mod_globals,
-                    key_datatype, value_datatype,
-                    interface, module=None):
+def populate_module(mod_globals, key_datatype, value_datatype, interface, module=None):
     from ._compat import import_c_extension
     from ._base import _fix_pickle
 
-    module_name = mod_globals['__name__']
+    module_name = mod_globals["__name__"]
     mod_globals.update(_create_globals(module_name, key_datatype, value_datatype))
 
     # XXX: Maybe derive this from the values we create.
     mod_all = (
-        'Bucket', 'Set', 'BTree', 'TreeSet',
-        'union', 'intersection', 'difference',
-        'weightedUnion', 'weightedIntersection', 'multiunion',
+        "Bucket",
+        "Set",
+        "BTree",
+        "TreeSet",
+        "union",
+        "intersection",
+        "difference",
+        "weightedUnion",
+        "weightedIntersection",
+        "multiunion",
     )
     prefix = key_datatype.prefix_code + value_datatype.prefix_code
 
-    mod_all += tuple(prefix + c for c in ('Bucket', 'Set', 'BTree', 'TreeSet'))
+    mod_all += tuple(prefix + c for c in ("Bucket", "Set", "BTree", "TreeSet"))
 
-    mod_globals['__all__'] = tuple(c for c in mod_all if c in mod_globals)
+    mod_globals["__all__"] = tuple(c for c in mod_all if c in mod_globals)
 
-    mod_globals['using64bits'] = key_datatype.using64bits or value_datatype.using64bits
+    mod_globals["using64bits"] = key_datatype.using64bits or value_datatype.using64bits
 
     import_c_extension(mod_globals)
     # XXX: We can probably do better than fix_pickle now;
@@ -150,17 +158,18 @@ def populate_module(mod_globals,
     _fix_pickle(mod_globals, module_name)
     directlyProvides(module or sys.modules[module_name], interface)
 
+
 def create_module(prefix):
     import types
     from . import _datatypes as datatypes
     from . import Interfaces
 
-    mod = types.ModuleType('BTrees.' + prefix + 'BTree')
+    mod = types.ModuleType("BTrees." + prefix + "BTree")
 
     key_type = getattr(datatypes, prefix[0])()
     val_type = getattr(datatypes, prefix[1])().as_value_type()
 
-    iface_name = 'I' + key_type.long_name + val_type.long_name + 'BTreeModule'
+    iface_name = "I" + key_type.long_name + val_type.long_name + "BTreeModule"
 
     iface = getattr(Interfaces, iface_name)
 

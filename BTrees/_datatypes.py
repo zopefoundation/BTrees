@@ -59,7 +59,7 @@ class DataType(object):
         """
         raise NotImplementedError
 
-    def apply_weight(self, item, weight): # pylint:disable=unused-argument
+    def apply_weight(self, item, weight):  # pylint:disable=unused-argument
         """
         Apply a *weight* multiplier to *item*.
 
@@ -137,8 +137,9 @@ class Any(DataType):
     """
     Arbitrary Python objects.
     """
-    prefix_code = 'O'
-    long_name = 'Object'
+
+    prefix_code = "O"
+    long_name = "Object"
 
     def __call__(self, item):
         return item
@@ -151,7 +152,8 @@ class O(KeyDataType):
     """
     Arbitrary (sortable) Python objects.
     """
-    long_name = 'Object'
+
+    long_name = "Object"
     tree_size = 250
     default_bucket_size = 60
 
@@ -163,10 +165,10 @@ class O(KeyDataType):
 
     @staticmethod
     def _check_default_comparison(
-            item,
-            # PyPy2 doesn't define __lt__ on object; PyPy3 and
-            # CPython 2 and 3 do.
-            _object_lt=getattr(object, '__lt__', object())
+        item,
+        # PyPy2 doesn't define __lt__ on object; PyPy3 and
+        # CPython 2 and 3 do.
+        _object_lt=getattr(object, "__lt__", object()),
     ):
         # Enforce test that key has non-default comparison.
         # (With the exception of None, because we define a sort order
@@ -175,12 +177,11 @@ class O(KeyDataType):
         if item is None:
             return
 
-        if type(item) is object: # pylint:disable=unidiomatic-typecheck
+        if type(item) is object:  # pylint:disable=unidiomatic-typecheck
             raise TypeError("Can't use object() as keys")
 
         # Now more complicated checks to be sure we didn't
         # inherit default comparison on any version of Python.
-
 
         # TODO: Using a custom ABC and doing ``isinstance(item, NoDefaultComparison)``
         # would automatically gain us caching.
@@ -193,23 +194,24 @@ class O(KeyDataType):
         # as ``_object_lt`` at that point). Also, weirdly, CPython 2 classes inherit
         # ``__lt__``, but *instances* do not.
 
-        lt = getattr(item, '__lt__', None)
+        lt = getattr(item, "__lt__", None)
         if lt is not None:
             # CPython 2 and 3 follow PEP 252, defining '__objclass__'
             # for methods of builtin types like str; methods of
             # classes defined in Python don't get it. ``__objclass__``
-            if getattr(lt, '__objclass__', None) is object:
+            if getattr(lt, "__objclass__", None) is object:
                 lt = None  # pragma: no cover Py3k
             # PyPy3 doesn't follow PEP 252, but defines '__func__'
-            elif getattr(lt, '__func__', None) is _object_lt:
+            elif getattr(lt, "__func__", None) is _object_lt:
                 lt = None  # pragma: no cover PyPy3
 
-        if (lt is None
-                # TODO: Shouldn't we only check __cmp__ on Python 2?
-                # Python 3 won't use it.
-                and getattr(item, '__cmp__', None) is None):
+        if (
+            lt is None
+            # TODO: Shouldn't we only check __cmp__ on Python 2?
+            # Python 3 won't use it.
+            and getattr(item, "__cmp__", None) is None
+        ):
             raise TypeError("Object has default comparison")
-
 
     def __call__(self, item):
         self._check_default_comparison(item)
@@ -234,7 +236,9 @@ class _AbstractNativeDataType(KeyDataType):
 
     def __call__(self, item):
         try:
-            self._check_native(self._as_packable(item)) # pylint:disable=too-many-function-args
+            self._check_native(
+                self._as_packable(item)
+            )  # pylint:disable=too-many-function-args
         except (struct_error, TypeError, ValueError):
             # PyPy can raise ValueError converting a negative number to a
             # unsigned value.
@@ -249,6 +253,7 @@ class _AbstractNativeDataType(KeyDataType):
 
     def supports_value_union(self):
         return True
+
 
 class _AbstractIntDataType(_AbstractNativeDataType):
     _as_python_type = int
@@ -276,7 +281,7 @@ class _AbstractIntDataType(_AbstractNativeDataType):
 
 
 class _AbstractUIntDataType(_AbstractIntDataType):
-    long_name = 'Unsigned'
+    long_name = "Unsigned"
 
     def get_lower_bound(self):
         return 0
@@ -287,35 +292,36 @@ class _AbstractUIntDataType(_AbstractIntDataType):
 
 
 class I(_AbstractIntDataType):
-    _struct_format = 'i'
+    _struct_format = "i"
     _error_description = "32-bit integer expected"
 
 
 class U(_AbstractUIntDataType):
-    _struct_format = 'I'
-    _error_description = 'non-negative 32-bit integer expected'
+    _struct_format = "I"
+    _error_description = "non-negative 32-bit integer expected"
 
 
 class F(_AbstractNativeDataType):
-    _struct_format = 'f'
+    _struct_format = "f"
     _as_python_type = float
-    _error_description = 'float expected'
-    _as_packable = lambda self, k: k # identity
+    _error_description = "float expected"
+    _as_packable = lambda self, k: k  # identity
     multiplication_identity = 1.0
-    long_name = 'Float'
+    long_name = "Float"
 
     def getTwoExamples(self):
         return 0.5, 1.5
 
+
 class L(_AbstractIntDataType):
-    _struct_format = 'q'
-    _error_description = '64-bit integer expected'
+    _struct_format = "q"
+    _error_description = "64-bit integer expected"
     using64bits = True
 
 
 class Q(_AbstractUIntDataType):
-    _struct_format = 'Q'
-    _error_description = 'non-negative 64-bit integer expected'
+    _struct_format = "Q"
+    _error_description = "non-negative 64-bit integer expected"
     using64bits = True
 
 
@@ -323,8 +329,9 @@ class Bytes(KeyDataType):
     """
     An exact-length byte string type.
     """
+
     __slots__ = ()
-    prefix_code = 'fs'
+    prefix_code = "fs"
     default_bucket_size = 500
 
     def __init__(self, length):

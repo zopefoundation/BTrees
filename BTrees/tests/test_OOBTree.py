@@ -16,13 +16,14 @@ from BTrees import OOBTree
 from .common import BTreeTests
 from ._test_builder import update_module
 
-class OOBTreeTest(BTreeTests):
 
+class OOBTreeTest(BTreeTests):
     def test_byValue(self):
-        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
+        ITEMS = [(y, x) for x, y in enumerate("abcdefghijklmnopqrstuvwxyz")]
         tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.byValue(22)),
-                         [(y, x) for x, y in reversed(ITEMS[22:])])
+        self.assertEqual(
+            list(tree.byValue(22)), [(y, x) for x, y in reversed(ITEMS[22:])]
+        )
 
     def testRejectDefaultComparisonOnSet(self):
         # Check that passing int keys w default comparison fails.
@@ -34,6 +35,7 @@ class OOBTreeTest(BTreeTests):
         # Otherwise, there are many permutations that would have to be
         # checked.
         from .._compat import PY2
+
         t = self._makeOne()
 
         class C(object):
@@ -44,11 +46,12 @@ class OOBTreeTest(BTreeTests):
 
         self.assertEqual(raising.exception.args[0], "Object has default comparison")
 
-        if PY2: # we only check for __cmp__ on Python2
+        if PY2:  # we only check for __cmp__ on Python2
 
             class With___cmp__(object):
                 def __cmp__(*args):
                     return 1
+
             c = With___cmp__()
             t[c] = 1
 
@@ -66,6 +69,7 @@ class OOBTreeTest(BTreeTests):
     def testAcceptDefaultComparisonOnGet(self):
         # Issue #42
         t = self._makeOne()
+
         class C(object):
             pass
 
@@ -75,14 +79,13 @@ class OOBTreeTest(BTreeTests):
 
     def test_None_is_smallest(self):
         t = self._makeOne()
-        for i in range(999): # Make sure we multiple buckets
-            t[i] = i*i
+        for i in range(999):  # Make sure we multiple buckets
+            t[i] = i * i
         t[None] = -1
-        for i in range(-99, 0): # Make sure we multiple buckets
-            t[i] = i*i
+        for i in range(-99, 0):  # Make sure we multiple buckets
+            t[i] = i * i
         self.assertEqual(list(t), [None] + list(range(-99, 999)))
-        self.assertEqual(list(t.values()),
-                         [-1] + [i*i for i in range(-99, 999)])
+        self.assertEqual(list(t.values()), [-1] + [i * i for i in range(-99, 999)])
         self.assertEqual(t[2], 4)
         self.assertEqual(t[-2], 4)
         self.assertEqual(t[None], -1)
@@ -92,9 +95,10 @@ class OOBTreeTest(BTreeTests):
         del t[None]
         self.assertEqual(list(t), list(range(-99, 999)))
 
-        if 'Py' in self.__class__.__name__:
+        if "Py" in self.__class__.__name__:
             return
         from BTrees.OOBTree import difference, union, intersection
+
         self.assertEqual(list(difference(t2, t).items()), [(None, -2)])
         self.assertEqual(list(union(t, t2)), list(t2))
         self.assertEqual(list(intersection(t, t2)), list(t))
@@ -117,9 +121,10 @@ class OOBTreeTest(BTreeTests):
         # data that looks like this: {None: 42}, even though None
         # is unorderable..
         # This pickle was captured in BTree/ZODB3 3.10.7
-        data = b'ccopy_reg\n__newobj__\np0\n(cBTrees.OOBTree\nOOBTree\np1\ntp2\nRp3\n((((NI42\ntp4\ntp5\ntp6\ntp7\nb.'
+        data = b"ccopy_reg\n__newobj__\np0\n(cBTrees.OOBTree\nOOBTree\np1\ntp2\nRp3\n((((NI42\ntp4\ntp5\ntp6\ntp7\nb."
 
         import pickle
+
         t = pickle.loads(data)
         keys = list(t)
         self.assertEqual([None], keys)

@@ -21,6 +21,7 @@ to_float = _datatypes.F()
 to_long = _datatypes.L()
 to_bytes = _datatypes.Bytes
 
+
 class TestDatatypes(unittest.TestCase):
     def test_to_ob(self):
         for thing in "abc", 0, 1.3, (), frozenset((1, 2)), object():
@@ -32,11 +33,11 @@ class TestDatatypes(unittest.TestCase):
     def test_to_int_w_long_in_range(self):
         try:
             self.assertEqual(to_int(long(3)), 3)
-        except NameError: #Python3
+        except NameError:  # Python3
             pass
 
     def test_to_int_w_overflow(self):
-        self.assertRaises(OverflowError, to_int, 2**64)
+        self.assertRaises(OverflowError, to_int, 2 ** 64)
 
     def test_to_int_w_invalid(self):
         self.assertRaises(TypeError, to_int, ())
@@ -56,20 +57,20 @@ class TestDatatypes(unittest.TestCase):
     def test_to_long_w_long_in_range(self):
         try:
             self.assertEqual(to_long(long(3)), 3)
-        except NameError: #Python3
+        except NameError:  # Python3
             pass
 
     def test_to_long_w_overflow(self):
-        self.assertRaises(OverflowError, to_long, 2**64)
+        self.assertRaises(OverflowError, to_long, 2 ** 64)
 
     def test_to_long_w_invalid(self):
         self.assertRaises(TypeError, to_long, ())
 
     def test_to_bytes_w_ok(self):
         conv = to_bytes(3)
-        self.assertEqual(conv(b'abc'), b'abc')
+        self.assertEqual(conv(b"abc"), b"abc")
 
     def test_to_bytes_w_invalid_length(self):
         conv = to_bytes(3)
-        self.assertRaises(TypeError, conv, b'ab')
-        self.assertRaises(TypeError, conv, b'abcd')
+        self.assertRaises(TypeError, conv, b"ab")
+        self.assertRaises(TypeError, conv, b"abcd")

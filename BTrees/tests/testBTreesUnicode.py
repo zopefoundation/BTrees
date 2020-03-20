@@ -20,31 +20,32 @@ from .common import _skip_under_Py3k
 # either ascii strings or encoded as unicoded using the
 # corresponding encoding
 
-encoding = 'ISO-8859-1'
+encoding = "ISO-8859-1"
+
 
 class TestBTreesUnicode(unittest.TestCase):
     """ test unicode"""
 
     def setUp(self):
-        #setup an OOBTree with some unicode strings
+        # setup an OOBTree with some unicode strings
         from BTrees.OOBTree import OOBTree
 
+        self.s = b"dreit\xe4gigen".decode("latin1")
 
-        self.s = b'dreit\xe4gigen'.decode('latin1')
-
-        self.data = [(b'alien', 1),
-                     (b'k\xf6nnten', 2),
-                     (b'fox', 3),
-                     (b'future', 4),
-                     (b'quick', 5),
-                     (b'zerst\xf6rt', 6),
-                     (u'dreit\xe4gigen', 7),
-                    ]
+        self.data = [
+            (b"alien", 1),
+            (b"k\xf6nnten", 2),
+            (b"fox", 3),
+            (b"future", 4),
+            (b"quick", 5),
+            (b"zerst\xf6rt", 6),
+            (u"dreit\xe4gigen", 7),
+        ]
 
         self.tree = OOBTree()
         for k, v in self.data:
             if isinstance(k, bytes):
-                k = k.decode('latin1')
+                k = k.decode("latin1")
             self.tree[k] = v
 
     def testAllKeys(self):
@@ -62,7 +63,6 @@ class TestBTreesUnicode(unittest.TestCase):
         self.assertEqual(self.tree[k], v)
         self.assertEqual(self.tree[self.s], v)
 
-
     def testAsciiKeys(self):
         # try to access some "plain ASCII" keys in the tree;
         # they get upconverted to unicode for comparison on Python 2
@@ -76,12 +76,11 @@ class TestBTreesUnicode(unittest.TestCase):
 
 
 class TestBTreeBucketUnicode(unittest.TestCase):
-
     def testUnicodeRepr(self):
         # Regression test for
         # https://github.com/zopefoundation/BTrees/issues/106
-        items = [(1, u'\uaabb')]
+        items = [(1, u"\uaabb")]
         from BTrees.OOBTree import OOBucket
+
         bucket = OOBucket(items)
-        self.assertEqual(repr(bucket),
-                         'BTrees.OOBTree.OOBucket(%s)' % repr(items))
+        self.assertEqual(repr(bucket), "BTrees.OOBTree.OOBucket(%s)" % repr(items))

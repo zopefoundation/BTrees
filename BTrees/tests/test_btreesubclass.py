@@ -15,20 +15,22 @@ import unittest
 
 from BTrees.OOBTree import OOBTree, OOBucket
 
+
 class B(OOBucket):
     pass
+
 
 class T(OOBTree):
     _bucket_type = B
     max_leaf_size = 2
     max_internal_size = 3
 
+
 class S(T):
     pass
 
 
 class SubclassTest(unittest.TestCase):
-
     def testSubclass(self):
         # test that a subclass that defines _bucket_type gets buckets
         # of that type

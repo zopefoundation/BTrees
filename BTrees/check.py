@@ -93,27 +93,44 @@ from ._compat import compare
 
 _type2kind = {}
 _FAMILIES = (
-    'OO', 'OI', 'OU', 'OL', 'OQ',
-    'II', 'IO', 'IF', 'IU',
-    'LL', 'LO', 'LF', 'LQ',
-    'UU', 'UO', 'UF', 'UI',
-    'QQ', 'QO', 'QF', 'QL',
+    "OO",
+    "OI",
+    "OU",
+    "OL",
+    "OQ",
+    "II",
+    "IO",
+    "IF",
+    "IU",
+    "LL",
+    "LO",
+    "LF",
+    "LQ",
+    "UU",
+    "UO",
+    "UF",
+    "UI",
+    "QQ",
+    "QO",
+    "QF",
+    "QL",
     # Note that fs is missing from this list.
 )
 for kv in _FAMILIES:
     for name, kind in (
-            ('BTree', (TYPE_BTREE, True)),
-            ('Bucket', (TYPE_BUCKET, True)),
-            ('TreeSet', (TYPE_BTREE, False)),
-            ('Set', (TYPE_BUCKET, False)),
+        ("BTree", (TYPE_BTREE, True)),
+        ("Bucket", (TYPE_BUCKET, True)),
+        ("TreeSet", (TYPE_BTREE, False)),
+        ("Set", (TYPE_BUCKET, False)),
     ):
         _type2kind[globals()[kv + name]] = kind
-        py = kv + name + 'Py'
+        py = kv + name + "Py"
         _type2kind[globals()[py]] = kind
 
 # Return pair
 #
 #     TYPE_BTREE or TYPE_BUCKET, is_mapping
+
 
 def classify(obj):
     return _type2kind[type(obj)]
@@ -161,12 +178,12 @@ BTREE_EMPTY, BTREE_ONE, BTREE_NORMAL = range(3)
 
 _btree2bucket = {}
 for kv in _FAMILIES:
-    _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
-    py = kv + 'BTreePy'
-    _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
-    _btree2bucket[globals()[kv+'TreeSet']] = globals()[kv+'Set']
-    py = kv + 'TreeSetPy'
-    _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
+    _btree2bucket[globals()[kv + "BTree"]] = globals()[kv + "Bucket"]
+    py = kv + "BTreePy"
+    _btree2bucket[globals()[py]] = globals()[kv + "BucketPy"]
+    _btree2bucket[globals()[kv + "TreeSet"]] = globals()[kv + "Set"]
+    py = kv + "TreeSetPy"
+    _btree2bucket[globals()[kv + "TreeSetPy"]] = globals()[kv + "SetPy"]
 
 
 def crack_btree(t, is_mapping):
@@ -196,6 +213,7 @@ def crack_btree(t, is_mapping):
         i += 1
     return BTREE_NORMAL, keys, kids
 
+
 # Returns
 #
 #     keys, values  # for a mapping; len(keys) == len(values) in this case
@@ -224,6 +242,7 @@ def crack_btree(t, is_mapping):
 #          <self->next iff non-NULL>
 #     )
 
+
 def crack_bucket(b, is_mapping):
     state = b.__getstate__()
     assert isinstance(state, tuple)
@@ -244,18 +263,21 @@ def crack_bucket(b, is_mapping):
         i += 1
     return keys, values
 
+
 def type_and_adr(obj):
-    if hasattr(obj, '_p_oid'):
+    if hasattr(obj, "_p_oid"):
         oid = oid_repr(obj._p_oid)
     else:
-        oid = 'None'
+        oid = "None"
     return "%s (0x%x oid=%s)" % (type(obj).__name__, positive_id(obj), oid)
+
 
 # Walker implements a depth-first search of a BTree (or TreeSet or Set or
 # Bucket).  Subclasses must implement the visit_btree() and visit_bucket()
 # methods, and arrange to call the walk() method.  walk() calls the
 # visit_XYZ() methods once for each node in the tree, in depth-first
 # left-to-right order.
+
 
 class Walker:
     def __init__(self, obj):
@@ -274,8 +296,7 @@ class Walker:
     # lie in (lo inclusive, hi exclusive).  lo is None if there is no lower
     # bound known, and hi is None if no upper bound is known.
 
-    def visit_btree(self, obj, path, parent, is_mapping,
-                    keys, kids, lo, hi):
+    def visit_btree(self, obj, path, parent, is_mapping, keys, kids, lo, hi):
         raise NotImplementedError
 
     # obj is the bucket (Bucket or Set).
@@ -290,8 +311,7 @@ class Walker:
     # lie in (lo inclusive, hi exclusive).  lo is None if there is no lower
     # bound known, and hi is None if no upper bound is known.
 
-    def visit_bucket(self, obj, path, parent, is_mapping,
-                     keys, values, lo, hi):
+    def visit_bucket(self, obj, path, parent, is_mapping, keys, values, lo, hi):
         raise NotImplementedError
 
     def walk(self):
@@ -307,17 +327,13 @@ class Walker:
                     # push the kids, in reverse order (so they're popped off
                     # the stack in forward order)
                     n = len(kids)
-                    for i in range(len(kids)-1, -1, -1):
-                        newlo, newhi = lo,  hi
-                        if i < n-1:
+                    for i in range(len(kids) - 1, -1, -1):
+                        newlo, newhi = lo, hi
+                        if i < n - 1:
                             newhi = keys[i]
                         if i > 0:
-                            newlo = keys[i-1]
-                        stack.append((kids[i],
-                                      path + [i],
-                                      obj,
-                                      newlo,
-                                      newhi))
+                            newlo = keys[i - 1]
+                        stack.append((kids[i], path + [i], obj, newlo, newhi))
 
                 elif bkind is BTREE_EMPTY:
                     pass
@@ -326,37 +342,19 @@ class Walker:
                     # Yuck.  There isn't a bucket object to pass on, as
                     # the bucket state is embedded directly in the BTree
                     # state.  Synthesize a bucket.
-                    assert kids is None   # and "keys" is really the bucket
-                                          # state
+                    assert kids is None  # and "keys" is really the bucket
+                    # state
                     bucket = _btree2bucket[type(obj)]()
                     bucket.__setstate__(keys)
-                    stack.append((bucket,
-                                  path + [0],
-                                  obj,
-                                  lo,
-                                  hi))
+                    stack.append((bucket, path + [0], obj, lo, hi))
                     keys = []
                     kids = [bucket]
 
-                self.visit_btree(obj,
-                                 path,
-                                 parent,
-                                 is_mapping,
-                                 keys,
-                                 kids,
-                                 lo,
-                                 hi)
+                self.visit_btree(obj, path, parent, is_mapping, keys, kids, lo, hi)
             else:
                 assert kind is TYPE_BUCKET
                 keys, values = crack_bucket(obj, is_mapping)
-                self.visit_bucket(obj,
-                                  path,
-                                  parent,
-                                  is_mapping,
-                                  keys,
-                                  values,
-                                  lo,
-                                  hi)
+                self.visit_bucket(obj, path, parent, is_mapping, keys, values, lo, hi)
 
 
 class Checker(Walker):
@@ -372,12 +370,10 @@ class Checker(Walker):
             s = "\n".join(self.errors)
             raise AssertionError(s)
 
-    def visit_btree(self, obj, path, parent, is_mapping,
-                    keys, kids, lo, hi):
+    def visit_btree(self, obj, path, parent, is_mapping, keys, kids, lo, hi):
         self.check_sorted(obj, path, keys, lo, hi)
 
-    def visit_bucket(self, obj, path, parent, is_mapping,
-                     keys, values, lo, hi):
+    def visit_bucket(self, obj, path, parent, is_mapping, keys, values, lo, hi):
         self.check_sorted(obj, path, keys, lo, hi)
 
     def check_sorted(self, obj, path, keys, lo, hi):
@@ -391,53 +387,56 @@ class Checker(Walker):
             if hi is not None and not compare(x, hi) < 0:
                 s = "key %r >= upper bound %r at index %d" % (x, hi, i)
                 self.complain(s, obj, path)
-            if i < n-1 and not compare(x, keys[i+1]) < 0:
+            if i < n - 1 and not compare(x, keys[i + 1]) < 0:
                 s = "key %r at index %d >= key %r at index %d" % (
-                    x, i, keys[i+1], i+1)
+                    x,
+                    i,
+                    keys[i + 1],
+                    i + 1,
+                )
                 self.complain(s, obj, path)
             i += 1
 
     def complain(self, msg, obj, path):
         s = "%s, in %s, path from root %s" % (
-                msg,
-                type_and_adr(obj),
-                ".".join(map(str, path)))
+            msg,
+            type_and_adr(obj),
+            ".".join(map(str, path)),
+        )
         self.errors.append(s)
 
-class Printer(Walker): #pragma NO COVER
+
+class Printer(Walker):  # pragma NO COVER
     def __init__(self, obj):
         Walker.__init__(self, obj)
 
     def display(self):
         self.walk()
 
-    def visit_btree(self, obj, path, parent, is_mapping,
-                    keys, kids, lo, hi):
+    def visit_btree(self, obj, path, parent, is_mapping, keys, kids, lo, hi):
         indent = "    " * len(path)
-        print("%s%s %s with %d children" % (
-                  indent,
-                  ".".join(map(str, path)),
-                  type_and_adr(obj),
-                  len(kids)))
+        print(
+            "%s%s %s with %d children"
+            % (indent, ".".join(map(str, path)), type_and_adr(obj), len(kids))
+        )
         indent += "    "
         n = len(keys)
         for i in range(n):
             print("%skey %d: %r" % (indent, i, keys[i]))
 
-    def visit_bucket(self, obj, path, parent, is_mapping,
-                     keys, values, lo, hi):
+    def visit_bucket(self, obj, path, parent, is_mapping, keys, values, lo, hi):
         indent = "    " * len(path)
-        print("%s%s %s with %d keys" % (
-                  indent,
-                  ".".join(map(str, path)),
-                  type_and_adr(obj),
-                  len(keys)))
+        print(
+            "%s%s %s with %d keys"
+            % (indent, ".".join(map(str, path)), type_and_adr(obj), len(keys))
+        )
         indent += "    "
         n = len(keys)
         for i in range(n):
             print("%skey %d: %r" % (indent, i, keys[i]),)
             if is_mapping:
                 print("value %r" % (values[i],))
+
 
 def check(btree):
     """Check internal value-based invariants in a BTree or TreeSet.
@@ -458,6 +457,7 @@ def check(btree):
 
     Checker(btree).check()
 
-def display(btree): #pragma NO COVER
+
+def display(btree):  # pragma NO COVER
     "Display the internal structure of a BTree, Bucket, TreeSet or Set."
     Printer(btree).display()

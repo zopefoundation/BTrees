@@ -14,6 +14,7 @@
 
 import persistent
 
+
 class Length(persistent.Persistent):
     """BTree lengths are often too expensive to compute.
 
@@ -29,6 +30,7 @@ class Length(persistent.Persistent):
     class-defined slot methods (like __len__) in C type slots.  Thus,
     instance-defined slot fillers are ignored.
     """
+
     # class-level default required to keep copy.deepcopy happy -- see
     # https://bugs.launchpad.net/zodb/+bug/516653
     value = 0

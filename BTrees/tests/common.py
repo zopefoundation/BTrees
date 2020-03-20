@@ -24,13 +24,15 @@ from BTrees._compat import PY3
 from BTrees._compat import PURE_PYTHON
 from BTrees._compat import PYPY
 
+
 def _no_op(test_method):
     return test_method
 
+
 try:
-    __import__('ZODB')
+    __import__("ZODB")
 except ImportError:
-    _skip_wo_ZODB = skip('ZODB not available')
+    _skip_wo_ZODB = skip("ZODB not available")
 else:
     _skip_wo_ZODB = _no_op
 
@@ -39,7 +41,7 @@ if PY3:
 else:
     _skip_under_Py3k = _no_op
 
-if platform.architecture()[0] == '32bit':
+if platform.architecture()[0] == "32bit":
     _skip_on_32_bits = skip("32-bit platform")
 else:
     _skip_on_32_bits = _no_op
@@ -49,12 +51,14 @@ if PURE_PYTHON:
 else:
     skipOnPurePython = _no_op
 
+
 def _skip_if_pure_py_and_py_test(self):
-    if PURE_PYTHON and 'Py' in type(self).__name__:
+    if PURE_PYTHON and "Py" in type(self).__name__:
         # No need to run this again. The "C" tests will catch it.
         # This relies on the fact that we always define tests in pairs,
         # one normal/C and one with Py in the name for the Py test.
         raise unittest.SkipTest("Redundant with the C test")
+
 
 # pylint:disable=too-many-lines
 # pylint:disable=no-member,protected-access,unused-variable,import-error
@@ -66,6 +70,7 @@ def _skip_if_pure_py_and_py_test(self):
 #: by the interpreter and is nicer than the manual error.
 UnsignedError = (TypeError, OverflowError)
 
+
 def uses_negative_keys_and_values(func):
     """
     Apply this decorator to tests that use negative keys and values.
@@ -73,6 +78,7 @@ def uses_negative_keys_and_values(func):
     If the underlying mapping doesn't support that, it will
     be expected to raise a TypeError or OverflowError.
     """
+
     @functools.wraps(func)
     def test(self):
         if not (self.SUPPORTS_NEGATIVE_KEYS and self.SUPPORTS_NEGATIVE_VALUES):
@@ -80,7 +86,9 @@ def uses_negative_keys_and_values(func):
                 func(self)
         else:
             func(self)
+
     return test
+
 
 class SignedMixin(object):
     SUPPORTS_NEGATIVE_KEYS = True
@@ -112,6 +120,7 @@ class Base(SignedMixin):
     def _getRoot(self):
         from ZODB import DB
         from ZODB.MappingStorage import MappingStorage
+
         if self.db is None:
             # Unclear:  On the next line, the ZODB4 flavor of this routine
             # [asses a cache_size argument:
@@ -124,6 +133,7 @@ class Base(SignedMixin):
 
     def _closeRoot(self, root):
         import transaction
+
         # If we don't commit/abort the transaction, then
         # closing the Connection tends to fail with
         # "Cannot close connection joined to transaction"
@@ -139,10 +149,11 @@ class Base(SignedMixin):
             pass
 
         __traceback_info__ = self._getTargetClass(), persistent.Persistent
-        type('Subclass', (self._getTargetClass(), PersistentSubclass), {})
+        type("Subclass", (self._getTargetClass(), PersistentSubclass), {})
 
     def testPurePython(self):
         import importlib
+
         kind = self._getTargetClass()
         class_name = kind.__name__
         module_name = kind.__module__
@@ -156,15 +167,16 @@ class Base(SignedMixin):
         # module still doesn't have the _ in it, but we should be able to find
         # a Py class that's different
 
-        self.assertNotIn('_', module_name)
+        self.assertNotIn("_", module_name)
         self.assertIs(getattr(module, class_name), kind)
 
-        if not PURE_PYTHON and 'Py' not in type(self).__name__:
-            self.assertIsNot(getattr(module, class_name + 'Py'), kind)
+        if not PURE_PYTHON and "Py" not in type(self).__name__:
+            self.assertIsNot(getattr(module, class_name + "Py"), kind)
 
     @_skip_wo_ZODB
     def testLoadAndStore(self):
         import transaction
+
         for i in 0, 10, 1000:
             t = self._makeOne()
             self._populate(t, i)
@@ -174,7 +186,7 @@ class Base(SignedMixin):
             transaction.commit()
 
             root2 = self._getRoot()
-            if hasattr(t, 'items'):
+            if hasattr(t, "items"):
                 self.assertEqual(list(root2[i].items()), list(t.items()))
             else:
                 self.assertEqual(list(root2[i].keys()), list(t.keys()))
@@ -184,15 +196,16 @@ class Base(SignedMixin):
 
     def testSetstateArgumentChecking(self):
         try:
-            self._makeOne().__setstate__(('',))
+            self._makeOne().__setstate__(("",))
         except TypeError as v:
-            self.assertEqual(str(v), 'tuple required for first state element')
+            self.assertEqual(str(v), "tuple required for first state element")
         else:
             raise AssertionError("Expected exception")
 
     @_skip_wo_ZODB
     def testGhostUnghost(self):
         import transaction
+
         for i in 0, 10, 1000:
             t = self._makeOne()
             self._populate(t, i)
@@ -203,7 +216,7 @@ class Base(SignedMixin):
             root2 = self._getRoot()
             root2[i]._p_deactivate()
             transaction.commit()
-            if hasattr(t, 'items'):
+            if hasattr(t, "items"):
                 self.assertEqual(list(root2[i].items()), list(t.items()))
             else:
                 self.assertEqual(list(root2[i].keys()), list(t.keys()))
@@ -240,24 +253,24 @@ class Base(SignedMixin):
 
         for low, high, expected in ((-1, 3, [0, 1, 2]), (-1, 2, [0, 1])):
             if self.SUPPORTS_NEGATIVE_KEYS:
-                self.assertEqual(list(t.keys(low, high, excludemin=True, excludemax=True)),
-                                 expected)
+                self.assertEqual(
+                    list(t.keys(low, high, excludemin=True, excludemax=True)), expected
+                )
             else:
                 with self.assertRaises(UnsignedError):
                     t.keys(low, high, excludemin=True, excludemax=True)
 
-        self.assertEqual(list(t.keys(0, 3, excludemin=True, excludemax=True)),
-                         [1, 2])
-        self.assertEqual(list(t.keys(0, 2, excludemin=True, excludemax=True)),
-                         [1])
+        self.assertEqual(list(t.keys(0, 3, excludemin=True, excludemax=True)), [1, 2])
+        self.assertEqual(list(t.keys(0, 2, excludemin=True, excludemax=True)), [1])
 
     @_skip_wo_ZODB
     def test_UpdatesDoReadChecksOnInternalNodes(self):
         import transaction
         from ZODB import DB
         from ZODB.MappingStorage import MappingStorage
+
         t = self._makeOne()
-        if not hasattr(t, '_firstbucket'):
+        if not hasattr(t, "_firstbucket"):
             return
         self._populate(t, 1000)
         store = MappingStorage()
@@ -267,6 +280,7 @@ class Base(SignedMixin):
         transaction.commit()
 
         read = []
+
         def readCurrent(ob):
             read.append(ob)
             conn.__class__.readCurrent(conn, ob)
@@ -278,8 +292,10 @@ class Base(SignedMixin):
             add = t.add
             remove = t.remove
         except AttributeError:
+
             def add(i):
                 t[i] = i
+
             def remove(i):
                 del t[i]
 
@@ -303,11 +319,12 @@ class Base(SignedMixin):
         # implementation classes, and unpickling should give us
         # back the best available type
         import pickle
+
         made_one = self._makeOne()
 
         for proto in range(1, pickle.HIGHEST_PROTOCOL + 1):
             dumped_str = pickle.dumps(made_one, proto)
-            self.assertTrue(b'Py' not in dumped_str, repr(dumped_str))
+            self.assertTrue(b"Py" not in dumped_str, repr(dumped_str))
 
             loaded_one = pickle.loads(dumped_str)
 
@@ -316,10 +333,18 @@ class Base(SignedMixin):
             # extension but the made type will be the Python version.
             # Otherwise, they match. (Note that if we don't have C extensions
             # available, the __name__ will be altered to not have Py in it. See _fix_pickle)
-            if 'Py' in type(made_one).__name__:
+            if "Py" in type(made_one).__name__:
                 self.assertTrue(type(loaded_one) is not type(made_one))
             else:
-                self.assertTrue(type(loaded_one) is type(made_one) is self._getTargetClass(), (type(loaded_one), type(made_one), self._getTargetClass(), repr(dumped_str)))
+                self.assertTrue(
+                    type(loaded_one) is type(made_one) is self._getTargetClass(),
+                    (
+                        type(loaded_one),
+                        type(made_one),
+                        self._getTargetClass(),
+                        repr(dumped_str),
+                    ),
+                )
 
             dumped_str2 = pickle.dumps(loaded_one, proto)
             self.assertEqual(dumped_str, dumped_str2)
@@ -330,6 +355,7 @@ class Base(SignedMixin):
         # in an object that can be pickled, yielding an identical
         # pickle (and not an AttributeError)
         import pickle
+
         t = self._makeOne()
 
         s = pickle.dumps(t)
@@ -338,7 +364,7 @@ class Base(SignedMixin):
         s2 = pickle.dumps(t2)
         self.assertEqual(s, s2)
 
-        if hasattr(t2, '__len__'):
+        if hasattr(t2, "__len__"):
             # checks for _firstbucket
             self.assertEqual(0, len(t2))
 
@@ -352,11 +378,12 @@ class Base(SignedMixin):
         # We need a globally named subclass for pickle, but it needs
         # to be unique in case tests run in parallel
         base_class = type(self._makeOne())
-        class_name = 'PickleSubclassOf' + base_class.__name__
+        class_name = "PickleSubclassOf" + base_class.__name__
         PickleSubclass = type(class_name, (base_class,), {})
         globals()[class_name] = PickleSubclass
 
         import pickle
+
         loaded = pickle.loads(pickle.dumps(PickleSubclass()))
         self.assertTrue(type(loaded) is PickleSubclass, type(loaded))
         self.assertTrue(PickleSubclass().__class__ is PickleSubclass)
@@ -383,12 +410,12 @@ class Base(SignedMixin):
             # contrary to the usual mechanism
             self.assertFalse(issubclass(t.__class__, type(t)))
 
-
         class NonSub(object):
             pass
 
         self.assertFalse(issubclass(NonSub, type(t)))
         self.assertFalse(isinstance(NonSub(), type(t)))
+
 
 class MappingBase(Base):
     # Tests common to mappings (buckets, btrees)
@@ -406,24 +433,24 @@ class MappingBase(Base):
         t = self._makeOne()
         for i in range(5):
             t[i] = i
-        t._p_oid = b'12345678'
+        t._p_oid = b"12345678"
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
         self.assertTrue(len(r) < 10000)
         # Make sure the repr is human readable if it's a bucket
-        if 'Bucket' in r:
+        if "Bucket" in r:
             self.assertTrue(r.startswith("BTrees"))
-            self.assertTrue(r.endswith(repr(t.items()) + ')'), r)
+            self.assertTrue(r.endswith(repr(t.items()) + ")"), r)
         else:
             # persistent-4.4 changed the default reprs, adding
             # oid and jar reprs
             self.assertIn("<BTrees.", r)
-            self.assertIn('BTree object at', r)
-            self.assertIn('oid 0x3132333435363738', r)
+            self.assertIn("BTree object at", r)
+            self.assertIn("oid 0x3132333435363738", r)
 
         # Make sure it's the same between Python and C
-        self.assertNotIn('Py', r)
+        self.assertNotIn("Py", r)
 
     def testRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -436,7 +463,7 @@ class MappingBase(Base):
         # Make sure the repr is 10000 bytes long for a bucket.
         # But since the test is also run for btrees, skip the length
         # check if the repr starts with '<'
-        if not r.startswith('<'):
+        if not r.startswith("<"):
             self.assertTrue(len(r) > 10000)
 
     def testGetItemFails(self):
@@ -447,7 +474,7 @@ class MappingBase(Base):
 
     def testGetReturnsDefault(self):
         self.assertEqual(self._makeOne().get(1), None)
-        self.assertEqual(self._makeOne().get(1, 'foo'), 'foo')
+        self.assertEqual(self._makeOne().get(1, "foo"), "foo")
 
     def testSetItemGetItemWorks(self):
         t = self._makeOne()
@@ -464,6 +491,7 @@ class MappingBase(Base):
 
     def testLen(self):
         import random
+
         t = self._makeOne()
         added = {}
         r = list(range(1000))
@@ -476,6 +504,7 @@ class MappingBase(Base):
 
     def testHasKeyWorks(self):
         from .._compat import PY2
+
         t = self._makeOne()
         t[1] = 1
         if PY2:
@@ -487,20 +516,20 @@ class MappingBase(Base):
     def testValuesWorks(self):
         t = self._makeOne()
         for x in range(100):
-            t[x] = x*x
+            t[x] = x * x
         v = t.values()
         for i in range(100):
-            self.assertEqual(v[i], i*i)
-        self.assertRaises(IndexError, lambda: v[i+1])
+            self.assertEqual(v[i], i * i)
+        self.assertRaises(IndexError, lambda: v[i + 1])
         i = 0
         for value in t.itervalues():
-            self.assertEqual(value, i*i)
+            self.assertEqual(value, i * i)
             i += 1
 
     def testValuesWorks1(self):
         t = self._makeOne()
         for x in range(100):
-            t[99-x] = x
+            t[99 - x] = x
 
         for x in range(40):
             lst = sorted(t.values(0 + x, 99 - x))
@@ -536,8 +565,8 @@ class MappingBase(Base):
             lst = t.keys(0 + x, 99 - x)
             self.assertEqual(list(lst), list(range(0 + x, 99 - x + 1)))
 
-            lst = t.keys(max=99-x, min=0+x)
-            self.assertEqual(list(lst), list(range(0+x, 99-x+1)))
+            lst = t.keys(max=99 - x, min=0 + x)
+            self.assertEqual(list(lst), list(range(0 + x, 99 - x + 1)))
 
         self.assertEqual(len(v), 100)
 
@@ -556,18 +585,18 @@ class MappingBase(Base):
     def testItemsWorks(self):
         t = self._makeOne()
         for x in range(100):
-            t[x] = 2*x
+            t[x] = 2 * x
         v = t.items()
         i = 0
         for x in v:
             self.assertEqual(x[0], i)
-            self.assertEqual(x[1], 2*i)
+            self.assertEqual(x[1], 2 * i)
             i += 1
-        self.assertRaises(IndexError, lambda: v[i+1])
+        self.assertRaises(IndexError, lambda: v[i + 1])
 
         i = 0
         for x in t.iteritems():
-            self.assertEqual(x, (i, 2*i))
+            self.assertEqual(x, (i, 2 * i))
             i += 1
 
         items = list(t.items(min=12, max=20))
@@ -632,6 +661,7 @@ class MappingBase(Base):
 
     def testClear(self):
         import random
+
         t = self._makeOne()
         r = list(range(100))
         for x in r:
@@ -643,6 +673,7 @@ class MappingBase(Base):
 
     def testUpdate(self):
         import random
+
         t = self._makeOne()
         d = {}
         l = []
@@ -665,6 +696,7 @@ class MappingBase(Base):
     # Before ZODB 3.4.2, update/construction from PersistentMapping failed.
     def testUpdateFromPersistentMapping(self):
         from persistent.mapping import PersistentMapping
+
         t = self._makeOne()
         pm = PersistentMapping({1: 2})
         t.update(pm)
@@ -706,6 +738,7 @@ class MappingBase(Base):
         # http://collector.zope.org/Zope/419,
         # "BTreeItems slice contains 1 too many elements".
         from .._compat import xrange
+
         t = self._makeOne()
         val_multiplier = -2 if self.SUPPORTS_NEGATIVE_VALUES else 2
         for n in range(10):
@@ -741,7 +774,7 @@ class MappingBase(Base):
             x = islice[:]
             self.assertEqual(list(x), items[:])
 
-            for lo in range(-2*n, 2*n+1):
+            for lo in range(-2 * n, 2 * n + 1):
                 # Test one-sided slices.
                 x = kslice[:lo]
                 self.assertEqual(list(x), keys[:lo])
@@ -758,7 +791,7 @@ class MappingBase(Base):
                 x = islice[lo:]
                 self.assertEqual(list(x), items[lo:])
 
-                for hi in range(-2*n, 2*n+1):
+                for hi in range(-2 * n, 2 * n + 1):
                     # Test two-sided slices.
                     x = kslice[lo:hi]
                     self.assertEqual(list(x), keys[lo:hi])
@@ -775,7 +808,7 @@ class MappingBase(Base):
             t[i] = 1
         tslice = t.items()[20:80]
         self.assertEqual(len(tslice), 60)
-        self.assertEqual(list(tslice), list(zip(range(20, 80), [1]*60)))
+        self.assertEqual(list(tslice), list(zip(range(20, 80), [1] * 60)))
 
     @uses_negative_keys_and_values
     def testIterators(self):
@@ -873,15 +906,18 @@ class MappingBase(Base):
     def testSimpleExclusivRanges(self):
         def identity(x):
             return x
+
         def dup(x):
             return [(y, y) for y in x]
 
-        for methodname, f in (("keys", identity),
-                              ("values", identity),
-                              ("items", dup),
-                              ("iterkeys", identity),
-                              ("itervalues", identity),
-                              ("iteritems", dup)):
+        for methodname, f in (
+            ("keys", identity),
+            ("values", identity),
+            ("items", dup),
+            ("iterkeys", identity),
+            ("itervalues", identity),
+            ("iteritems", dup),
+        ):
 
             t = self._makeOne()
             meth = getattr(t, methodname, None)
@@ -915,23 +951,20 @@ class MappingBase(Base):
             self.assertEqual(list(meth()), f([0, 1, 2]))
             self.assertEqual(list(meth(excludemin=True)), f([1, 2]))
             self.assertEqual(list(meth(excludemax=True)), f([0, 1]))
-            self.assertEqual(list(meth(excludemin=True, excludemax=True)),
-                             f([1]))
+            self.assertEqual(list(meth(excludemin=True, excludemax=True)), f([1]))
             if supports_negative:
-                self.assertEqual(list(meth(-1, 2, excludemin=True,
-                                           excludemax=True)),
-                                 f([0, 1]))
+                self.assertEqual(
+                    list(meth(-1, 2, excludemin=True, excludemax=True)), f([0, 1])
+                )
 
-                self.assertEqual(list(meth(-1, 3, excludemin=True,
-                                           excludemax=True)),
-                                 f([0, 1, 2]))
+                self.assertEqual(
+                    list(meth(-1, 3, excludemin=True, excludemax=True)), f([0, 1, 2])
+                )
 
-            self.assertEqual(list(meth(0, 3, excludemin=True,
-                                       excludemax=True)),
-                             f([1, 2]))
-            self.assertEqual(list(meth(0, 2, excludemin=True,
-                                       excludemax=True)),
-                             f([1]))
+            self.assertEqual(
+                list(meth(0, 3, excludemin=True, excludemax=True)), f([1, 2])
+            )
+            self.assertEqual(list(meth(0, 2, excludemin=True, excludemax=True)), f([1]))
 
     def testSetdefault(self):
         t = self._makeOne()
@@ -949,7 +982,6 @@ class MappingBase(Base):
         self.assertRaises(TypeError, t.setdefault, 1)
         # Too many arguments.
         self.assertRaises(TypeError, t.setdefault, 1, 2, 3)
-
 
     def testPop(self):
         t = self._makeOne()
@@ -990,7 +1022,7 @@ class MappingBase(Base):
     def __test_key_or_value_type(self, k, v, to_test, kvtype):
         try:
             kvtype(to_test)
-        except Exception as e: # pylint:disable=broad-except
+        except Exception as e:  # pylint:disable=broad-except
             with self.assertRaises(type(e)):
                 self._makeOne()[k] = v
         else:
@@ -1005,19 +1037,19 @@ class MappingBase(Base):
         self.__test_key_or_value_type(k, v, v, self.value_type)
 
     def test_assign_key_type_str(self):
-        self.__test_key('c')
+        self.__test_key("c")
 
     # Assigning a str may or may not work; but querying for
     # one will always return a correct answer, not raise
     # a TypeError.
     def testStringAllowedInContains(self):
-        self.assertFalse('key' in self._makeOne())
+        self.assertFalse("key" in self._makeOne())
 
     def testStringKeyRaisesKeyErrorWhenMissing(self):
-        self.assertRaises(KeyError, self._makeOne().__getitem__, 'key')
+        self.assertRaises(KeyError, self._makeOne().__getitem__, "key")
 
     def testStringKeyReturnsDefaultFromGetWhenMissing(self):
-        self.assertEqual(self._makeOne().get('key', 42), 42)
+        self.assertEqual(self._makeOne().get("key", 42), 42)
 
     def test_assign_key_type_float(self):
         self.__test_key(2.5)
@@ -1026,7 +1058,7 @@ class MappingBase(Base):
         self.__test_key(None)
 
     def test_assign_value_type_str(self):
-        self.__test_value('c')
+        self.__test_value("c")
 
     def test_assign_value_type_float(self):
         self.__test_value(2.5)
@@ -1037,17 +1069,21 @@ class MappingBase(Base):
     def testEmptyFirstBucketReportedByGuido(self):
         # This was for Integer keys
         from .._compat import xrange
+
         b = self._makeOne()
-        for i in xrange(29972): # reduce to 29971 and it works
+        for i in xrange(29972):  # reduce to 29971 and it works
             b[i] = i
-        for i in xrange(30): # reduce to 29 and it works
+        for i in xrange(30):  # reduce to 29 and it works
             del b[i]
             b[i + 40000] = i
 
         self.assertEqual(b.keys()[0], 30)
 
     def testKeyAndValueOverflow(self):
-        if self.key_type.get_upper_bound() is None or self.value_type.get_upper_bound() is None:
+        if (
+            self.key_type.get_upper_bound() is None
+            or self.value_type.get_upper_bound() is None
+        ):
             self.skipTest("Needs bounded key and value")
 
         import struct
@@ -1062,9 +1098,11 @@ class MappingBase(Base):
         # PyInt_Check can fail with a TypeError starting at small values
         # like 2147483648. So we look for small longs and catch those errors
         # even when we think we should be in range.
-        long_is_32_bit = struct.calcsize('@l') < 8
+        long_is_32_bit = struct.calcsize("@l") < 8
         in_range_errors = (OverflowError, TypeError) if long_is_32_bit else ()
-        out_of_range_errors = (OverflowError, TypeError) if long_is_32_bit and PY2 else (OverflowError,)
+        out_of_range_errors = (
+            (OverflowError, TypeError) if long_is_32_bit and PY2 else (OverflowError,)
+        )
 
         def trial(i):
             i = int(i)
@@ -1100,8 +1138,9 @@ class MappingBase(Base):
                 else:
                     self.assertEqual(b[0], i)
 
-        for i in range(self.key_type.get_upper_bound() - 3,
-                       self.key_type.get_upper_bound() + 3):
+        for i in range(
+            self.key_type.get_upper_bound() - 3, self.key_type.get_upper_bound() + 3
+        ):
 
             trial(i)
             trial(-i)
@@ -1132,11 +1171,12 @@ class BTreeTests(MappingBase):
             return type(self._makeOne())
         raise NotImplementedError()
 
-    def _makeOne(self, *args): # pylint:disable=arguments-differ
+    def _makeOne(self, *args):  # pylint:disable=arguments-differ
         return self._getTargetClass()(*args)
 
     def _checkIt(self, t):
         from BTrees.check import check
+
         t._check()
         check(t)
 
@@ -1216,6 +1256,7 @@ class BTreeTests(MappingBase):
 
     def testRandomNonOverlappingInserts(self):
         import random
+
         t = self._makeOne()
         added = {}
         r = list(range(100))
@@ -1231,6 +1272,7 @@ class BTreeTests(MappingBase):
 
     def testRandomOverlappingInserts(self):
         import random
+
         t = self._makeOne()
         added = {}
         r = list(range(100))
@@ -1245,6 +1287,7 @@ class BTreeTests(MappingBase):
 
     def testRandomDeletes(self):
         import random
+
         t = self._makeOne()
         r = list(range(1000))
         added = []
@@ -1270,6 +1313,7 @@ class BTreeTests(MappingBase):
 
     def testTargetedDeletes(self):
         import random
+
         t = self._makeOne()
         r = list(range(1000))
         for x in r:
@@ -1309,6 +1353,7 @@ class BTreeTests(MappingBase):
 
     def testSuccessorChildParentRewriteExerciseCase(self):
         t = self._makeOne()
+        # fmt: off
         add_order = [
             85, 73, 165, 273, 215, 142, 233, 67, 86, 166, 235, 225, 255,
             73, 175, 171, 285, 162, 108, 28, 283, 258, 232, 199, 260,
@@ -1347,6 +1392,7 @@ class BTreeTests(MappingBase):
             172, 28, 188, 77, 90, 199, 297, 282, 141, 100, 161, 216,
             73, 19, 17, 189, 30, 258
             ]
+        # fmt: on
         for x in add_order:
             t[x] = 1
         for x in delete_order:
@@ -1377,6 +1423,7 @@ class BTreeTests(MappingBase):
 
     def testRangeSearchAfterRandomInsert(self):
         import random
+
         t = self._makeOne()
         r = range(100)
         a = {}
@@ -1402,7 +1449,7 @@ class BTreeTests(MappingBase):
         for i in range(range_begin, 200 + range_begin):
             t[i] = i
         items, dummy = t.__getstate__()
-        self.assertTrue(len(items) > 2)   # at least two buckets and a key
+        self.assertTrue(len(items) > 2)  # at least two buckets and a key
         # All values in the first bucket are < firstkey.  All in the
         # second bucket are >= firstkey, and firstkey is the first key in
         # the second bucket.
@@ -1451,8 +1498,9 @@ class BTreeTests(MappingBase):
             try:
                 del t[k[0]]
             except RuntimeError as detail:
-                self.assertEqual(str(detail), "the bucket being iterated "
-                                              "changed size")
+                self.assertEqual(
+                    str(detail), "the bucket being iterated " "changed size"
+                )
                 break
             except KeyError as v:
                 # The Python implementation behaves very differently and
@@ -1471,7 +1519,8 @@ class BTreeTests(MappingBase):
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
-        t._p_oid = b'\0\0\0\0\0'
+        t._p_oid = b"\0\0\0\0\0"
+
         class Jar(object):
             def __init__(self):
                 self._cache = self
@@ -1479,8 +1528,10 @@ class BTreeTests(MappingBase):
 
             def mru(self, arg):
                 pass
+
             def readCurrent(self, arg):
                 pass
+
             def register(self, arg):
                 self.registered = arg
 
@@ -1502,7 +1553,7 @@ class BTreeTests(MappingBase):
 
         # Likewise with only a single value
         t = self._makeOne()
-        t._p_oid = b'\0\0\0\0\0'
+        t._p_oid = b"\0\0\0\0\0"
         t._p_jar = Jar()
         t[1] = 3
         # reset these, setting _firstbucket triggered a change
@@ -1521,7 +1572,8 @@ class BTreeTests(MappingBase):
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
-        t._p_oid = b'\0\0\0\0\0'
+        t._p_oid = b"\0\0\0\0\0"
+
         class Jar(object):
             def __init__(self):
                 self._cache = self
@@ -1529,8 +1581,10 @@ class BTreeTests(MappingBase):
 
             def mru(self, arg):
                 pass
+
             def readCurrent(self, arg):
                 pass
+
             def register(self, arg):
                 self.registered = arg
 
@@ -1552,24 +1606,27 @@ class BTreeTests(MappingBase):
         # it (unfortunately) unpickles to the python type. But
         # new pickles never produce that.
         import pickle
+
         made_one = self._makeOne()
 
         for proto in (1, 2):
             s = pickle.dumps(made_one, proto)
             # It's not legacy
-            assert b'TreePy\n' not in s, repr(s)
+            assert b"TreePy\n" not in s, repr(s)
             # \np for protocol 1, \nq for proto 2,
-            assert b'Tree\np' in s or b'Tree\nq' in s, repr(s)
+            assert b"Tree\np" in s or b"Tree\nq" in s, repr(s)
 
             # Now make it pseudo-legacy
-            legacys = s.replace(b'Tree\np', b'TreePy\np').replace(b'Tree\nq', b'TreePy\nq')
+            legacys = s.replace(b"Tree\np", b"TreePy\np").replace(
+                b"Tree\nq", b"TreePy\nq"
+            )
 
             # It loads up as the specified class
             loaded_one = pickle.loads(legacys)
 
             # It still functions and can be dumped again, as the original class
             s2 = pickle.dumps(loaded_one, proto)
-            self.assertTrue(b'Py' not in s2)
+            self.assertTrue(b"Py" not in s2)
             self.assertEqual(s2, s)
 
 
@@ -1584,24 +1641,23 @@ class NormalSetTests(Base):
         t = self._makeOne()
         for i in range(5):
             t.add(i)
-        t._p_oid = b'12345678'
+        t._p_oid = b"12345678"
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
         self.assertTrue(len(r) < 10000)
         # Make sure the repr is human readable, unless it's a tree
-        if 'TreeSet' not in r:
+        if "TreeSet" not in r:
             self.assertTrue(r.endswith("Set(%r)" % t.keys()))
         else:
             # persistent-4.4 changed the default reprs, adding
             # oid and jar reprs
             self.assertIn("<BTrees.", r)
-            self.assertIn('TreeSet object at', r)
-            self.assertIn('oid 0x3132333435363738', r)
+            self.assertIn("TreeSet object at", r)
+            self.assertIn("oid 0x3132333435363738", r)
 
         # Make sure it's the same between Python and C
-        self.assertNotIn('Py', r)
-
+        self.assertNotIn("Py", r)
 
     def testInsertReturnsValue(self):
         t = self._makeOne()
@@ -1616,6 +1672,7 @@ class NormalSetTests(Base):
 
     def testInsert(self):
         from .._compat import PY2
+
         t = self._makeOne()
         t.insert(1)
         if PY2:
@@ -1626,6 +1683,7 @@ class NormalSetTests(Base):
     def testBigInsert(self):
         from .._compat import PY2
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
@@ -1637,6 +1695,7 @@ class NormalSetTests(Base):
 
     def testRemoveSucceeds(self):
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
@@ -1652,6 +1711,7 @@ class NormalSetTests(Base):
 
     def testHasKeyFails(self):
         from .._compat import PY2
+
         t = self._makeOne()
         if PY2:
             self.assertTrue(not t.has_key(1))
@@ -1659,6 +1719,7 @@ class NormalSetTests(Base):
 
     def testKeys(self):
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(1000)
         for x in r:
@@ -1668,9 +1729,9 @@ class NormalSetTests(Base):
         diff = lsubtract(t.keys(None, None), r)
         self.assertEqual(diff, [])
 
-
     def testClear(self):
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(1000)
         for x in r:
@@ -1698,9 +1759,9 @@ class NormalSetTests(Base):
         self.assertEqual(t.minKey(3), 3)
         self.assertEqual(t.minKey(9), 10)
         self.assertTrue(t.minKey() in t)
-        self.assertTrue(t.minKey()-1 not in t)
+        self.assertTrue(t.minKey() - 1 not in t)
         self.assertTrue(t.maxKey() in t)
-        self.assertTrue(t.maxKey()+1 not in t)
+        self.assertTrue(t.maxKey() + 1 not in t)
 
         try:
             t.maxKey(t.minKey() - 1)
@@ -1718,6 +1779,7 @@ class NormalSetTests(Base):
 
     def testUpdate(self):
         import random
+
         t = self._makeOne()
         d = {}
         l = []
@@ -1762,7 +1824,7 @@ class NormalSetTests(Base):
             t.clear()
             self.assertEqual(len(t), 0)
 
-            keys = range(10*n, 11*n)
+            keys = range(10 * n, 11 * n)
             t.update(keys)
             self.assertEqual(len(t), n)
 
@@ -1773,14 +1835,14 @@ class NormalSetTests(Base):
             x = kslice[:]
             self.assertEqual(list(x), list(keys[:]))
 
-            for lo in range(-2*n, 2*n+1):
+            for lo in range(-2 * n, 2 * n + 1):
                 # Test one-sided slices.
                 x = kslice[:lo]
                 self.assertEqual(list(x), list(keys[:lo]))
                 x = kslice[lo:]
                 self.assertEqual(list(x), list(keys[lo:]))
 
-                for hi in range(-2*n, 2*n+1):
+                for hi in range(-2 * n, 2 * n + 1):
                     # Test two-sided slices.
                     x = kslice[lo:hi]
                     self.assertEqual(list(x), list(keys[lo:hi]))
@@ -1822,7 +1884,8 @@ class NormalSetTests(Base):
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
-        t._p_oid = b'\0\0\0\0\0'
+        t._p_oid = b"\0\0\0\0\0"
+
         class Jar(object):
             def __init__(self):
                 self._cache = self
@@ -1830,8 +1893,10 @@ class NormalSetTests(Base):
 
             def mru(self, arg):
                 pass
+
             def readCurrent(self, arg):
                 pass
+
             def register(self, arg):
                 self.registered = arg
 
@@ -1853,7 +1918,8 @@ class NormalSetTests(Base):
         t = self._makeOne()
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
-        t._p_oid = b'\0\0\0\0\0'
+        t._p_oid = b"\0\0\0\0\0"
+
         class Jar(object):
             def __init__(self):
                 self._cache = self
@@ -1861,8 +1927,10 @@ class NormalSetTests(Base):
 
             def mru(self, arg):
                 pass
+
             def readCurrent(self, arg):
                 pass
+
             def register(self, arg):
                 self.registered = arg
 
@@ -1876,9 +1944,9 @@ class NormalSetTests(Base):
 
 
 class ExtendedSetTests(NormalSetTests):
-
     def testLen(self):
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
@@ -1887,6 +1955,7 @@ class ExtendedSetTests(NormalSetTests):
 
     def testGetItem(self):
         from .._compat import xrange
+
         t = self._makeOne()
         r = xrange(10000)
         for x in r:
@@ -1914,6 +1983,7 @@ class InternalKeysMappingTest(object):
         # with bucket children.
         import transaction
         from ZODB.MappingStorage import DB
+
         db = DB()
         conn = db.open()
 
@@ -1967,60 +2037,61 @@ class InternalKeysMappingTest(object):
 
 class ModuleTest(object):
     # test for presence of generic names in module
-    prefix = ''
+    prefix = ""
     key_type = None
     value_type = None
+
     def _getModule(self):
         pass
+
     def testNames(self):
-        names = ['Bucket', 'BTree', 'Set', 'TreeSet']
+        names = ["Bucket", "BTree", "Set", "TreeSet"]
         for name in names:
             klass = getattr(self._getModule(), name)
             self.assertEqual(klass.__module__, self._getModule().__name__)
-            self.assertIs(klass, getattr(self._getModule(),
-                                         self.prefix + name))
+            self.assertIs(klass, getattr(self._getModule(), self.prefix + name))
         # BBB for zope.app.security ZCML :(
-        pfx_iter = self.prefix + 'TreeIterator'
+        pfx_iter = self.prefix + "TreeIterator"
         klass = getattr(self._getModule(), pfx_iter)
         self.assertEqual(klass.__module__, self._getModule().__name__)
 
     def testModuleProvides(self):
         from zope.interface.verify import verifyObject
+
         verifyObject(self._getInterface(), self._getModule())
 
     def testFamily(self):
         import BTrees
-        if self.prefix == 'OO':
-            self.assertTrue(
-                getattr(self._getModule(), 'family', self) is self)
-        elif 'L' in self.prefix:
+
+        if self.prefix == "OO":
+            self.assertTrue(getattr(self._getModule(), "family", self) is self)
+        elif "L" in self.prefix:
             self.assertTrue(self._getModule().family is BTrees.family64)
-        elif 'I' in self.prefix:
+        elif "I" in self.prefix:
             self.assertTrue(self._getModule().family is BTrees.family32)
 
     # The weighted* functions require the value type to support unions.
     def test_weightedUnion_presence(self):
         if self.value_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'weightedUnion'))
+            self.assertTrue(hasattr(self._getModule(), "weightedUnion"))
         else:
-            self.assertFalse(hasattr(self._getModule(), 'weightedUnion'))
+            self.assertFalse(hasattr(self._getModule(), "weightedUnion"))
 
     def test_weightedIntersection_presence(self):
         if self.value_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'weightedIntersection'))
+            self.assertTrue(hasattr(self._getModule(), "weightedIntersection"))
         else:
-            self.assertFalse(hasattr(self._getModule(), 'weightedIntersection'))
+            self.assertFalse(hasattr(self._getModule(), "weightedIntersection"))
 
     # The multiunion function requires the key type to support unions
     def test_multiunion_presence(self):
         if self.key_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'multiunion'))
+            self.assertTrue(hasattr(self._getModule(), "multiunion"))
         else:
-            self.assertFalse(hasattr(self._getModule(), 'multiunion'))
+            self.assertFalse(hasattr(self._getModule(), "multiunion"))
 
 
 class I_SetsBase(object):
-
     def setUp(self):
         super(I_SetsBase, self).setUp()
         _skip_if_pure_py_and_py_test(self)
@@ -2042,14 +2113,14 @@ class I_SetsBase(object):
     def __test_key(self, k):
         try:
             self.key_type(k)
-        except Exception as e: # pylint:disable=broad-except
+        except Exception as e:  # pylint:disable=broad-except
             with self.assertRaises(type(e)):
                 self._makeOne().insert(k)
         else:
             self._makeOne().insert(k)
 
     def test_key_type_str(self):
-        self.__test_key('c')
+        self.__test_key("c")
 
     def test_key_type_float(self):
         self.__test_key(2.5)
@@ -2064,7 +2135,7 @@ SMALLEST_32_BITS = -LARGEST_32_BITS - 1
 SMALLEST_POSITIVE_33_BITS = LARGEST_32_BITS + 1
 LARGEST_NEGATIVE_33_BITS = SMALLEST_32_BITS - 1
 
-LARGEST_64_BITS = 0x7fffffffffffffff # Signed. 2**63 - 1
+LARGEST_64_BITS = 0x7FFFFFFFFFFFFFFF  # Signed. 2**63 - 1
 SMALLEST_64_BITS = -LARGEST_64_BITS - 1
 
 SMALLEST_POSITIVE_65_BITS = LARGEST_64_BITS + 1
@@ -2072,7 +2143,6 @@ LARGEST_NEGATIVE_65_BITS = SMALLEST_64_BITS - 1
 
 
 class TestLongIntSupport(object):
-
     def getTwoValues(self):
         # Return two distinct values; these must compare as un-equal.
         #
@@ -2088,7 +2158,8 @@ class TestLongIntSupport(object):
     def _skip_if_not_64bit(self):
         mod = sys.modules[self._getTargetClass().__module__]
         if not mod.using64bits:
-            self.skipTest("Needs 64 bit support.") # pragma: no cover
+            self.skipTest("Needs 64 bit support.")  # pragma: no cover
+
 
 class TestLongIntKeys(TestLongIntSupport):
     SUPPORTS_NEGATIVE_KEYS = True
@@ -2096,7 +2167,7 @@ class TestLongIntKeys(TestLongIntSupport):
     def _makeLong(self, v):
         try:
             return long(v)
-        except NameError: # pragma: no cover
+        except NameError:  # pragma: no cover
             return int(v)
 
     def testLongIntKeysWork(self):
@@ -2132,7 +2203,7 @@ class TestLongIntKeys(TestLongIntSupport):
         self._skip_if_not_64bit()
         o1, o2 = self.getTwoValues()
         t = self._makeOne()
-        k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2**64 + 1
+        k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2 ** 64 + 1
         with self.assertRaises(OverflowError):
             t[k1] = o1
 
@@ -2140,8 +2211,10 @@ class TestLongIntKeys(TestLongIntSupport):
         with self.assertRaises(OverflowError):
             t[LARGEST_NEGATIVE_65_BITS] = o1
 
+
 class TestLongIntValues(TestLongIntSupport):
     SUPPORTS_NEGATIVE_VALUES = True
+
     def testLongIntValuesWork(self):
         self._skip_if_not_64bit()
         t = self._makeOne()
@@ -2164,7 +2237,7 @@ class TestLongIntValues(TestLongIntSupport):
         self._skip_if_not_64bit()
         k1, k2 = self.getTwoKeys()
         t = self._makeOne()
-        v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2**64 + 1
+        v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2 ** 64 + 1
         with self.assertRaises(OverflowError):
             t[k1] = v1
 
@@ -2178,7 +2251,9 @@ class TestLongIntValues(TestLongIntSupport):
 def makeBuilder(mapbuilder):
     def result(keys=(), mapbuilder=mapbuilder):
         return mapbuilder(list(zip(keys, keys)))
+
     return result
+
 
 # Subclasses have to set up:
 #     builders() - function returning functions to build inputs,
@@ -2189,8 +2264,8 @@ class SetResult(object):
         super(SetResult, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
-        self.Akeys = [1,    3,    5, 6]
-        self.Bkeys = [   2, 3, 4,    6, 7]
+        self.Akeys = [1, 3, 5, 6]
+        self.Bkeys = [2, 3, 4, 6, 7]
         self.As = [makeset(self.Akeys) for makeset in self.builders()]
         self.Bs = [makeset(self.Bkeys) for makeset in self.builders()]
         self.emptys = [makeset() for makeset in self.builders()]
@@ -2303,8 +2378,9 @@ class SetResult(object):
                     self.assertEqual(list(C), want)
 
     def testLargerInputs(self):
-        from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module
+        from BTrees.IIBTree import IISet  # pylint:disable=no-name-in-module
         from random import randint
+
         MAXSIZE = 200
         MAXVAL = 400
         for i in range(3):
@@ -2318,15 +2394,19 @@ class SetResult(object):
             Bs = [makeset(Bkeys) for makeset in self.builders()]
             Bkeys = IISet(Bkeys)
 
-            for op, simulator in ((self.union, self._union),
-                                  (self.intersection, self._intersection),
-                                  (self.difference, self._difference)):
+            for op, simulator in (
+                (self.union, self._union),
+                (self.intersection, self._intersection),
+                (self.difference, self._difference),
+            ):
                 for A in As:
                     for B in Bs:
                         got = op(A, B)
                         want = simulator(Akeys, Bkeys)
-                        self.assertEqual(list(got), want,
-                                         (A, B, Akeys, Bkeys, list(got), want))
+                        self.assertEqual(
+                            list(got), want, (A, B, Akeys, Bkeys, list(got), want)
+                        )
+
 
 # Subclasses must set up (as class variables):
 #     weightedUnion, weightedIntersection
@@ -2334,7 +2414,6 @@ class SetResult(object):
 #     union, intersection -- the module routines of those names
 #     mkbucket -- the module bucket builder
 class Weighted(SignedMixin):
-
     def setUp(self):
         self.Aitems = [(1, 10), (3, 30), (5, 50), (6, 60)]
         self.Bitems = [(2, 21), (3, 31), (4, 41), (6, 61), (7, 71)]
@@ -2397,7 +2476,7 @@ class Weighted(SignedMixin):
         for key in self.union()(A, B):
             v1 = A.get(key, 0)
             v2 = B.get(key, 0)
-            result.append((key, v1*w1 + v2*w2))
+            result.append((key, v1 * w1 + v2 * w2))
         return 1, result
 
     def testUnion(self):
@@ -2431,7 +2510,7 @@ class Weighted(SignedMixin):
         B = self._normalize(B)
         result = []
         for key in self.intersection()(A, B):
-            result.append((key, A[key]*w1 + B[key]*w2))
+            result.append((key, A[key] * w1 + B[key] * w2))
         return 1, result
 
     def testIntersection(self):
@@ -2457,24 +2536,27 @@ class Weighted(SignedMixin):
                     else:
                         self.assertEqual(got_s.items(), want_s)
 
+
 # Given a set builder (like OITreeSet or OISet), return a function that
 # takes a list of (key, value) pairs and builds a set out of the keys.
 def itemsToSet(setbuilder):
     def result(items, setbuilder=setbuilder):
         return setbuilder([key for key, value in items])
+
     return result
+
 
 # 'thing' is a bucket, btree, set or treeset.  Return true iff it's one of the
 # latter two.
 def isaset(thing):
-    return not hasattr(thing, 'values')
+    return not hasattr(thing, "values")
+
 
 # Subclasses must set up (as class variables):
 #     multiunion, union
 #     mkset, mktreeset
 #     mkbucket, mkbtree
 class MultiUnion(SignedMixin):
-
     def setUp(self):
         super(MultiUnion, self).setUp()
         _skip_if_pure_py_and_py_test(self)
@@ -2484,9 +2566,9 @@ class MultiUnion(SignedMixin):
 
     def testOne(self):
         for sequence in (
-                [3],
-                list(range(20)),
-                list(range(-10, 0, 2)) + list(range(1, 10, 2)),
+            [3],
+            list(range(20)),
+            list(range(-10, 0, 2)) + list(range(1, 10, 2)),
         ):
             if min(sequence) < 0 and not self.SUPPORTS_NEGATIVE_KEYS:
                 continue
@@ -2508,7 +2590,7 @@ class MultiUnion(SignedMixin):
 
     def testBigInput(self):
         N = 100000
-        if (PURE_PYTHON or 'Py' in type(self).__name__) and not PYPY:
+        if (PURE_PYTHON or "Py" in type(self).__name__) and not PYPY:
             # This is extremely slow in CPython implemented in Python,
             # taking 20s or more on a 2015-era laptop
             N = N // 10
@@ -2516,11 +2598,12 @@ class MultiUnion(SignedMixin):
         output = self.multiunion([input] * 10)
         self.assertEqual(len(output), N)
         self.assertEqual(output.minKey(), 0)
-        self.assertEqual(output.maxKey(), N-1)
+        self.assertEqual(output.maxKey(), N - 1)
         self.assertEqual(list(output), list(range(N)))
 
     def testLotsOfLittleOnes(self):
         from random import shuffle
+
         N = 5000
         inputs = []
         mkset, mktreeset = self.mkset, self.mktreeset
@@ -2547,7 +2630,7 @@ class MultiUnion(SignedMixin):
         slow = mkset()
         for i in range(N):
             slow = union(slow, mkset([i]))
-        fast = self.multiunion(list(range(N))) # like N distinct singleton sets
+        fast = self.multiunion(list(range(N)))  # like N distinct singleton sets
         self.assertEqual(len(slow), N)
         self.assertEqual(len(fast), N)
         self.assertEqual(list(slow), list(fast))
@@ -2562,13 +2645,16 @@ class ConflictTestBase(SignedMixin, object):
     def setUp(self):
         super(ConflictTestBase, self).setUp()
         _skip_if_pure_py_and_py_test(self)
+
         def identity(x):
             return x
+
         self.key_tx = abs if not self.SUPPORTS_NEGATIVE_KEYS else identity
         self.val_tx = abs if not self.SUPPORTS_NEGATIVE_VALUES else identity
 
     def tearDown(self):
         import transaction
+
         transaction.abort()
         if self.storage is not None:
             self.storage.close()
@@ -2581,14 +2667,17 @@ class ConflictTestBase(SignedMixin, object):
         import os
         from ZODB.FileStorage import FileStorage
         from ZODB.DB import DB
-        n = 'fs_tmp__%s' % os.getpid()
+
+        n = "fs_tmp__%s" % os.getpid()
         self.storage = FileStorage(n)
         self.db = DB(self.storage)
         return self.db
 
-
-    def _test_merge(self, o1, o2, o3, expect, message='failed to merge', should_fail=False):
+    def _test_merge(
+        self, o1, o2, o3, expect, message="failed to merge", should_fail=False
+    ):
         from BTrees.Interfaces import BTreesConflictError
+
         s1 = o1.__getstate__()
         s2 = o2.__getstate__()
         s3 = o3.__getstate__()
@@ -2608,18 +2697,19 @@ class ConflictTestBase(SignedMixin, object):
 class MappingConflictTestBase(ConflictTestBase):
     # Tests common to mappings (buckets, btrees).
 
-
     def _deletefail(self):
         t = self._makeOne()
         del t[1]
 
     def _setupConflict(self):
         key_tx = self.key_tx
+        # fmt: off
         l = [
             -5124, -7377, 2274, 8801, -9901, 7327, 1565, 17, -679,
             3686, -3607, 14, 6419, -5637, 6040, -4556, -8622, 3847, 7191,
             -4067
         ]
+        # fmt: on
         l = [key_tx(v) for v in l]
 
         e1 = [(-1704, 0), (5420, 1), (-239, 2), (4024, 3), (-6984, 4)]
@@ -2628,14 +2718,14 @@ class MappingConflictTestBase(ConflictTestBase):
         e2 = [(key_tx(k), v) for k, v in e2]
 
         base = self._makeOne()
-        base.update([(i, i*i) for i in l[:20]])
+        base.update([(i, i * i) for i in l[:20]])
         b1 = type(base)(base)
         b2 = type(base)(base)
         bm = type(base)(base)
 
         items = base.items()
 
-        return  base, b1, b2, bm, e1, e2, items
+        return base, b1, b2, bm, e1, e2, items
 
     def testMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2647,7 +2737,7 @@ class MappingConflictTestBase(ConflictTestBase):
         del bm[items[5][0]]
         del bm[items[-1][0]]
         del bm[items[-2][0]]
-        self._test_merge(base, b1, b2, bm, 'merge  delete')
+        self._test_merge(base, b1, b2, bm, "merge  delete")
 
     def testMergeDeleteAndUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2659,7 +2749,7 @@ class MappingConflictTestBase(ConflictTestBase):
         bm[items[5][0]] = 1
         del bm[items[-1][0]]
         bm[items[-2][0]] = 2
-        self._test_merge(base, b1, b2, bm, 'merge update and delete')
+        self._test_merge(base, b1, b2, bm, "merge update and delete")
 
     def testMergeUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2671,28 +2761,27 @@ class MappingConflictTestBase(ConflictTestBase):
         bm[items[5][0]] = 2
         bm[items[-1][0]] = 3
         bm[items[-2][0]] = 4
-        self._test_merge(base, b1, b2, bm, 'merge update')
+        self._test_merge(base, b1, b2, bm, "merge update")
 
     def testFailMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         del b1[items[0][0]]
         del b2[items[0][0]]
-        self._test_merge(base, b1, b2, bm, 'merge conflicting delete',
-                         should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge conflicting delete", should_fail=1)
 
     def testFailMergeUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         b1[items[0][0]] = 1
         b2[items[0][0]] = 2
-        self._test_merge(base, b1, b2, bm, 'merge conflicting update',
-                         should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge conflicting update", should_fail=1)
 
     def testFailMergeDeleteAndUpdate(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         del b1[items[0][0]]
         b2[items[0][0]] = self.val_tx(-9)
-        self._test_merge(base, b1, b2, bm, 'merge conflicting update and delete',
-                         should_fail=1)
+        self._test_merge(
+            base, b1, b2, bm, "merge conflicting update and delete", should_fail=1
+        )
 
     def testMergeInserts(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2706,8 +2795,14 @@ class MappingConflictTestBase(ConflictTestBase):
         bm[e1[0][0]] = e1[0][1]
         bm[99999] = 99999
         bm[e1[2][0]] = e1[2][1]
-        self._test_merge(base, b1, b2, bm, 'merge insert',
-                         should_fail=not self.SUPPORTS_NEGATIVE_KEYS)
+        self._test_merge(
+            base,
+            b1,
+            b2,
+            bm,
+            "merge insert",
+            should_fail=not self.SUPPORTS_NEGATIVE_KEYS,
+        )
 
     def testMergeInsertsFromEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2722,7 +2817,7 @@ class MappingConflictTestBase(ConflictTestBase):
         b2.update(e2)
         bm.update(e2)
 
-        self._test_merge(base, b1, b2, bm, 'merge insert from empty')
+        self._test_merge(base, b1, b2, bm, "merge insert from empty")
 
     def testFailMergeEmptyAndFill(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2732,7 +2827,7 @@ class MappingConflictTestBase(ConflictTestBase):
         b2.update(e2)
         bm.update(e2)
 
-        self._test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge insert from empty", should_fail=1)
 
     def testMergeEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2740,7 +2835,7 @@ class MappingConflictTestBase(ConflictTestBase):
         b1.clear()
         bm.clear()
 
-        self._test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
+        self._test_merge(base, b1, b2, bm, "empty one and not other", should_fail=1)
 
     def testFailMergeInsert(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2748,24 +2843,22 @@ class MappingConflictTestBase(ConflictTestBase):
         b1[e1[0][0]] = e1[0][1]
         b2[99999] = 99999
         b2[e1[0][0]] = e1[0][1]
-        self._test_merge(base, b1, b2, bm, 'merge conflicting inserts',
-                         should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge conflicting inserts", should_fail=1)
 
 
 class SetConflictTestBase(ConflictTestBase):
     "Set (as opposed to TreeSet) specific tests."
 
     def _setupConflict(self):
+        # fmt: off
         l = [self.key_tx(x) for x in [
             -5124, -7377, 2274, 8801, -9901, 7327, 1565, 17, -679,
             3686, -3607, 14, 6419, -5637, 6040, -4556, -8622, 3847, 7191,
             -4067]]
+        # fmt: on
 
-        e1 = [self.key_tx(x) for x in
-              [-1704, 5420, -239, 4024, -6984]]
-        e2 = [self.key_tx(x) for x in
-              [7745, 4868, -2548, -2711, -3154]]
-
+        e1 = [self.key_tx(x) for x in [-1704, 5420, -239, 4024, -6984]]
+        e2 = [self.key_tx(x) for x in [7745, 4868, -2548, -2711, -3154]]
 
         base = self._makeOne()
         base.update(l)
@@ -2775,7 +2868,7 @@ class SetConflictTestBase(ConflictTestBase):
 
         items = base.keys()
 
-        return  base, b1, b2, bm, e1, e2, items
+        return base, b1, b2, bm, e1, e2, items
 
     def testMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2787,14 +2880,13 @@ class SetConflictTestBase(ConflictTestBase):
         bm.remove(items[5])
         bm.remove(items[-1])
         bm.remove(items[-2])
-        self._test_merge(base, b1, b2, bm, 'merge  delete')
+        self._test_merge(base, b1, b2, bm, "merge  delete")
 
     def testFailMergeDelete(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
         b1.remove(items[0])
         b2.remove(items[0])
-        self._test_merge(base, b1, b2, bm, 'merge conflicting delete',
-                         should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge conflicting delete", should_fail=1)
 
     def testMergeInserts(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2808,8 +2900,14 @@ class SetConflictTestBase(ConflictTestBase):
         bm.insert(e1[0])
         bm.insert(99999)
         bm.insert(e1[2])
-        self._test_merge(base, b1, b2, bm, 'merge insert',
-                         should_fail=not self.SUPPORTS_NEGATIVE_KEYS)
+        self._test_merge(
+            base,
+            b1,
+            b2,
+            bm,
+            "merge insert",
+            should_fail=not self.SUPPORTS_NEGATIVE_KEYS,
+        )
 
     def testMergeInsertsFromEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2824,7 +2922,7 @@ class SetConflictTestBase(ConflictTestBase):
         b2.update(e2)
         bm.update(e2)
 
-        self._test_merge(base, b1, b2, bm, 'merge insert from empty')
+        self._test_merge(base, b1, b2, bm, "merge insert from empty")
 
     def testFailMergeEmptyAndFill(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2834,7 +2932,7 @@ class SetConflictTestBase(ConflictTestBase):
         b2.update(e2)
         bm.update(e2)
 
-        self._test_merge(base, b1, b2, bm, 'merge insert from empty', should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge insert from empty", should_fail=1)
 
     def testMergeEmpty(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2842,7 +2940,7 @@ class SetConflictTestBase(ConflictTestBase):
         b1.clear()
         bm.clear()
 
-        self._test_merge(base, b1, b2, bm, 'empty one and not other', should_fail=1)
+        self._test_merge(base, b1, b2, bm, "empty one and not other", should_fail=1)
 
     def testFailMergeInsert(self):
         base, b1, b2, bm, e1, e2, items = self._setupConflict()
@@ -2850,19 +2948,23 @@ class SetConflictTestBase(ConflictTestBase):
         b1.insert(e1[0])
         b2.insert(99999)
         b2.insert(e1[0])
-        self._test_merge(base, b1, b2, bm, 'merge conflicting inserts',
-                         should_fail=1)
+        self._test_merge(base, b1, b2, bm, "merge conflicting inserts", should_fail=1)
+
 
 ## utility functions
+
 
 def lsubtract(l1, l2):
     l1 = list(l1)
     l2 = list(l2)
-    return (list(filter(lambda x, l1=l1: x not in l1, l2)) +
-            list(filter(lambda x, l2=l2: x not in l2, l1)))
+    return list(filter(lambda x, l1=l1: x not in l1, l2)) + list(
+        filter(lambda x, l2=l2: x not in l2, l1)
+    )
+
 
 def realseq(itemsob):
     return list(itemsob)
+
 
 def permutations(x):
     # Return a list of all permutations of list x.
