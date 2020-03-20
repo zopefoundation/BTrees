@@ -151,72 +151,72 @@ class Test_BucketBase(unittest.TestCase):
 
     def test__range_defaults_empty(self):
         bucket = self._makeOne()
-        self.assertEqual(bucket._range(), (0, 0))
+        self.assertEqual(bucket._range(), (0, 0, 1))
 
     def test__range_defaults_filled(self):
         bucket = self._makeOne()
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(), (0, 5))
+        self.assertEqual(bucket._range(), (0, 5, 1))
 
     def test__range_defaults_exclude_min(self):
         bucket = self._makeOne()
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(excludemin=True), (1, 5))
+        self.assertEqual(bucket._range(excludemin=True), (1, 5, 1))
 
     def test__range_defaults_exclude_max(self):
         bucket = self._makeOne()
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(excludemax=True), (0, 4))
+        self.assertEqual(bucket._range(excludemax=True), (0, 4, 1))
 
     def test__range_w_min_hit(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(min='bravo'), (1, 5))
+        self.assertEqual(bucket._range(min='bravo'), (1, 5, 1))
 
     def test__range_w_min_miss(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(min='candy'), (2, 5))
+        self.assertEqual(bucket._range(min='candy'), (2, 5, 1))
 
     def test__range_w_min_hit_w_exclude_min(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(min='bravo', excludemin=True), (2, 5))
+        self.assertEqual(bucket._range(min='bravo', excludemin=True), (2, 5, 1))
 
     def test__range_w_min_miss_w_exclude_min(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
         # 'excludemin' doesn't fire on miss
-        self.assertEqual(bucket._range(min='candy', excludemin=True), (2, 5))
+        self.assertEqual(bucket._range(min='candy', excludemin=True), (2, 5, 1))
 
     def test__range_w_max_hit(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(max='delta'), (0, 4))
+        self.assertEqual(bucket._range(max='delta'), (0, 4, 1))
 
     def test__range_w_max_miss(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(max='dandy'), (0, 3))
+        self.assertEqual(bucket._range(max='dandy'), (0, 3, 1))
 
     def test__range_w_max_hit_w_exclude_max(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual(bucket._range(max='delta', excludemax=True), (0, 3))
+        self.assertEqual(bucket._range(max='delta', excludemax=True), (0, 3, 1))
 
     def test__range_w_max_miss_w_exclude_max(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
         # 'excludemax' doesn't fire on miss
-        self.assertEqual(bucket._range(max='dandy', excludemax=True), (0, 3))
+        self.assertEqual(bucket._range(max='dandy', excludemax=True), (0, 3, 1))
 
     def test_keys_defaults_empty(self):
         bucket = self._makeOne()

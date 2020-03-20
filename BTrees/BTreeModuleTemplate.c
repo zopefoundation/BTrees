@@ -270,6 +270,7 @@ typedef struct Sized_s {
 typedef struct Bucket_s {
   sizedcontainer_HEAD
   struct Bucket_s *next;    /* the bucket with the next-larger keys */
+  struct Bucket_s *prev;
   KEY_TYPE *keys;           /* 'len' keys, in increasing order */
   VALUE_TYPE *values;       /* 'len' corresponding values; NULL if a set */
 } Bucket;
@@ -497,7 +498,7 @@ BTree_Realloc(void *p, size_t sz)
  */
 static char *search_keywords[] = {"min", "max",
                                   "excludemin", "excludemax",
-                                  0};
+                                  "reverse", 0};
 
 #include "BTreeItemsTemplate.c"
 #include "BucketTemplate.c"

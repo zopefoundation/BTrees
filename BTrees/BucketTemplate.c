@@ -623,6 +623,8 @@ bucket_split(Bucket *self, int index, Bucket *next)
 
     Py_INCREF(next);
     self->next = next;
+    Py_INCREF(self);
+    next->prev = self;
 
     if (PER_CHANGED(self) < 0)
         return -1;
@@ -658,6 +660,11 @@ Bucket_deleteNextBucket(Bucket *self)
 
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
+        if (next)
+        {
+            Py_XINCREF(self);
+            next->prev = self;
+        }
         Py_DECREF(successor);
         if (PER_CHANGED(self) < 0)
             goto Done;
@@ -807,7 +814,7 @@ Bucket_maxKey(Bucket *self, PyObject *args)
 
 static int
 Bucket_rangeSearch(Bucket *self, PyObject *args, PyObject *kw,
-                   int *low, int *high)
+                   int *low, int *high, int *reverse)
 {
     PyObject *min = Py_None;
     PyObject *max = Py_None;
@@ -817,11 +824,12 @@ Bucket_rangeSearch(Bucket *self, PyObject *args, PyObject *kw,
 
     if (args)
     {
-        if (! PyArg_ParseTupleAndKeywords(args, kw, "|OOii", search_keywords,
+        if (! PyArg_ParseTupleAndKeywords(args, kw, "|OOiii", search_keywords,
                                           &min,
                                           &max,
                                           &excludemin,
-                                          &excludemax))
+                                          &excludemax,
+                                          reverse))
             return -1;
     }
 
@@ -892,11 +900,11 @@ static PyObject *
 bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject *r = NULL, *key;
-    int i, low, high;
+    int i, low, high, k, reverse=0;
 
     PER_USE_OR_RETURN(self, NULL);
 
-    if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
+    if (Bucket_rangeSearch(self, args, kw, &low, &high, &reverse) < 0)
         goto err;
 
     r = PyList_New(high-low+1);
@@ -906,7 +914,13 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
     for (i=low; i <= high; i++)
     {
         COPY_KEY_TO_OBJECT(key, self->keys[i]);
-        if (PyList_SetItem(r, i-low , key) < 0)
+
+        if (!reverse)
+            k = i-low;
+        else
+            k = high-i;
+
+        if (PyList_SetItem(r, k , key) < 0)
             goto err;
     }
 
@@ -933,11 +947,11 @@ static PyObject *
 bucket_values(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject *r=0, *v;
-    int i, low, high;
+    int i, low, high, k, reverse=0;
 
     PER_USE_OR_RETURN(self, NULL);
 
-    if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
+    if (Bucket_rangeSearch(self, args, kw, &low, &high, &reverse) < 0)
         goto err;
 
     UNLESS (r=PyList_New(high-low+1))
@@ -948,7 +962,13 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
         COPY_VALUE_TO_OBJECT(v, self->values[i]);
         UNLESS (v)
             goto err;
-        if (PyList_SetItem(r, i-low, v) < 0)
+
+        if (!reverse)
+            k = i-low;
+        else
+            k = high-i;
+
+        if (PyList_SetItem(r, k, v) < 0)
             goto err;
     }
 
@@ -975,11 +995,11 @@ static PyObject *
 bucket_items(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject *r=0, *o=0, *item=0;
-    int i, low, high;
+    int i, low, high, k, reverse=0;
 
     PER_USE_OR_RETURN(self, NULL);
 
-    if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
+    if (Bucket_rangeSearch(self, args, kw, &low, &high, &reverse) < 0)
         goto err;
 
     UNLESS (r=PyList_New(high-low+1))
@@ -1000,7 +1020,12 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
             goto err;
         PyTuple_SET_ITEM(item, 1, o);
 
-        if (PyList_SetItem(r, i-low, item) < 0)
+        if (!reverse)
+            k = i-low;
+        else
+            k = high-i;
+
+        if (PyList_SetItem(r, k, item) < 0)
             goto err;
 
         item = 0;
@@ -1103,6 +1128,11 @@ _bucket_clear(Bucket *self)
     {
         Py_DECREF(self->next);
         self->next = NULL;
+    }
+    if (self->prev)
+    {
+        Py_DECREF(self->prev);
+        self->prev = NULL;
     }
 
     /* Silence compiler warning about unused variable len for the case
@@ -1310,6 +1340,8 @@ _bucket_setstate(Bucket *self, PyObject *state)
     self->len = 0;
 
     if (self->next) {
+        Py_DECREF(self);
+        self->next->prev = NULL;
         Py_DECREF(self->next);
         self->next = NULL;
     }
@@ -1347,6 +1379,8 @@ _bucket_setstate(Bucket *self, PyObject *state)
     if (next) {
         self->next = next;
         Py_INCREF(next);
+        next->prev = self;
+        Py_INCREF(self);
     }
 
     return 0;
@@ -1513,15 +1547,15 @@ static PyObject *
 buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 {
     BTreeItems *items;
-    int lowoffset, highoffset;
+    int lowoffset, highoffset, reverse=0;
     BTreeIter *result = NULL;
 
     PER_USE_OR_RETURN(self, NULL);
-    if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset) < 0)
+    if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset, &reverse) < 0)
         goto Done;
 
     items = (BTreeItems *)newBTreeItems(kind, self, lowoffset,
-                                        self, highoffset);
+                                        self, highoffset, reverse);
     if (items == NULL)
         goto Done;
 

@@ -29,6 +29,9 @@
  * alone, or 'i'items (key+value pairs).  'kind' is also readonly after
  * initialization.
  *
+ * reverse determines wether to return values from start ot end or end to
+ * start.
+ *
  * The combination of currentbucket, currentoffset and pseudoindex acts as
  * a search finger.  Offset currentoffset in bucket currentbucket is at index
  * pseudoindex, where pseudoindex==0 corresponds to offset first in bucket
@@ -52,6 +55,7 @@ typedef struct
     int first;              /* Start offset in firstbucket    */
     int last;               /* End offset in lastbucket       */
     char kind;              /* 'k', 'v', 'i'                  */
+    int reverse;            /* Wether ot iterate backward     */
 } BTreeItems;
 
 #define ITEMS(O)((BTreeItems*)(O))
@@ -59,7 +63,8 @@ typedef struct
 static PyObject *
 newBTreeItems(char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset);
+              Bucket *highbucket, int highoffset,
+              int reverse);
 
 static void
 BTreeItems_dealloc(BTreeItems *self)
@@ -145,6 +150,9 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
     currentbucket = self->currentbucket;
     if (currentbucket == NULL)
         goto no_match;
+
+    if (self->reverse)
+        i = -i-1;
 
     delta = i - pseudoindex;
     while (delta > 0) /* move right */
@@ -335,6 +343,7 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
     Bucket *highbucket;
     int lowoffset;
     int highoffset;
+    int reverse = 0;
     Py_ssize_t length = -1;  /* len(self), but computed only if needed */
 
     /* Complications:
@@ -405,7 +414,7 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
         highoffset = self->currentoffset;
     }
     return newBTreeItems(self->kind,
-                         lowbucket, lowoffset, highbucket, highoffset);
+                         lowbucket, lowoffset, highbucket, highoffset, reverse);
 }
 
 static PyObject *
@@ -527,7 +536,8 @@ static PyTypeObject BTreeItemsType = {
 static PyObject *
 newBTreeItems(char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset)
+              Bucket *highbucket, int highoffset,
+              int reverse)
 {
     BTreeItems *self;
 
@@ -551,12 +561,31 @@ newBTreeItems(char kind,
         self->firstbucket = lowbucket;
         Py_INCREF(highbucket);
         self->lastbucket = highbucket;
-        Py_INCREF(lowbucket);
-        self->currentbucket = lowbucket;
+
+        if (!reverse)
+        {
+            Py_INCREF(lowbucket);
+            self->currentbucket = lowbucket;
+        }
+        else
+        {
+            Py_INCREF(highbucket);
+            self->currentbucket = highbucket;
+        }
     }
 
-    self->currentoffset = lowoffset;
-    self->pseudoindex = 0;
+    self->reverse = reverse;
+
+    if (!reverse)
+    {
+        self->currentoffset = lowoffset;
+        self->pseudoindex = 0;
+    }
+    else
+    {
+        self->currentoffset = highoffset;
+        self->pseudoindex = -1;
+    }
 
     return OBJECT(self);
 }
@@ -704,7 +733,7 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
         return NULL;
 
     PER_USE_OR_RETURN(bucket, NULL);
-    if (i >= bucket->len)
+    if (i < 0 || i >= bucket->len)
     {
         /* We never leave this routine normally with i >= len:  somebody
             * else mutated the current bucket.
@@ -712,7 +741,10 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
         PyErr_SetString(PyExc_RuntimeError,
                     "the bucket being iterated changed size");
         /* Arrange for that this error is sticky too. */
-        items->currentoffset = INT_MAX;
+        if (!items->reverse)
+            items->currentoffset = INT_MAX;
+        else
+            items->currentoffset = INT_MIN;
         goto Done;
     }
 
@@ -720,7 +752,8 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     result = getBucketEntry(bucket, i, items->kind);
 
     /* Advance position for next call. */
-    if (bucket == items->lastbucket && i >= items->last)
+    if ((!items->reverse && bucket == items->lastbucket && i >= items->last) ||
+        (items->reverse && bucket == items->firstbucket && i <= items->first))
     {
         /* Next call should terminate the iteration. */
         Py_DECREF(items->currentbucket);
@@ -728,14 +761,27 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     }
     else
     {
-        ++i;
-        if (i >= bucket->len)
+        if (items->reverse)
+            --i;
+        else
+            ++i;
+
+        if (!items->reverse && i >= bucket->len)
         {
             Py_XINCREF(bucket->next);
             items->currentbucket = bucket->next;
             Py_DECREF(bucket);
             i = 0;
         }
+
+        if (items->reverse && i < 0)
+        {
+            Py_XINCREF(bucket->prev);
+            items->currentbucket = bucket->prev;
+            Py_DECREF(bucket);
+            i = bucket->prev->len-1;
+        }
+
         items->currentoffset = i;
     }
 

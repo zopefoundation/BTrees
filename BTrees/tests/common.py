@@ -809,6 +809,36 @@ class MappingBase(Base):
             self.assertEqual(list(t.iteritems()), list(t.items()))
 
     @uses_negative_keys_and_values
+    def testReverseIterators(self):
+        t = self._makeOne()
+
+        for keys in ([], [-2], [1, 4], list(range(-170, 2000, 6))):
+            t.clear()
+            for k in keys:
+                val = -3 * k
+                t[k] = val
+
+            self.assertEqual(list(t), keys)
+
+            #it = reversed(t)
+            #self.assertTrue(it is reversed(it))
+            #x = []
+            #try:
+            #    while 1:
+            #        x.append(next(it))
+            #except StopIteration:
+            #    pass
+            #self.assertEqual(x, keys)
+
+            self.assertEqual(list(t.iterkeys(reverse=True)), keys[::-1])
+            self.assertEqual(list(t.keys(reverse=True)), keys[::-1])
+            self.assertEqual(list(t.itervalues(reverse=True)), list(t.values())[::-1])
+            self.assertEqual(list(t.values(reverse=True)), list(t.values())[::-1])
+            self.assertEqual(list(t.iteritems(reverse=True)), list(t.items())[::-1])
+            self.assertEqual(list(t.items(reverse=True)), list(t.items())[::-1])
+
+
+    @uses_negative_keys_and_values
     def testRangedIterators(self):
         t = self._makeOne()
 

@@ -1668,6 +1668,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
     PyObject *max = Py_None;
     int excludemin = 0;
     int excludemax = 0;
+    int reverse = 0;
     int rc;
     Bucket *lowbucket = NULL;
     Bucket *highbucket = NULL;
@@ -1677,11 +1678,12 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 
     if (args)
     {
-        if (! PyArg_ParseTupleAndKeywords(args, kw, "|OOii", search_keywords,
+        if (! PyArg_ParseTupleAndKeywords(args, kw, "|OOiii", search_keywords,
                                         &min,
                                         &max,
                                         &excludemin,
-                                        &excludemax))
+                                        &excludemax,
+                                        &reverse))
         return NULL;
     }
 
@@ -1822,7 +1824,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 
     PER_UNUSE(self);
 
-    result = newBTreeItems(type, lowbucket, lowoffset, highbucket, highoffset);
+    result = newBTreeItems(type, lowbucket, lowoffset, highbucket, highoffset, reverse);
     Py_DECREF(lowbucket);
     Py_DECREF(highbucket);
     return result;
@@ -1841,7 +1843,7 @@ empty_and_decref_buckets:
 
 empty:
     PER_UNUSE(self);
-    return newBTreeItems(type, 0, 0, 0, 0);
+    return newBTreeItems(type, 0, 0, 0, 0, 0);
 }
 
 /*
