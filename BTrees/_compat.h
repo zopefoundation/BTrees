@@ -23,13 +23,7 @@
 #define INTERN PyUnicode_InternFromString
 #define INT_FROM_LONG(x) PyLong_FromLong(x)
 #define INT_CHECK(x) PyLong_Check(x)
-/* PyLong_AS_LONG isn't a documnted API function. But because of
- * an issue in persistent/_compat.h, if we define it to be
- * the documented function, PyLong_AsLong, we get
- * warnings about macro redefinition. See
- * https://github.com/zopefoundation/persistent/issues/125
-*/
-#define INT_AS_LONG(x) PyLong_AS_LONG(x)
+#define INT_AS_LONG(x) PyLong_AsLong(x)
 #define UINT_FROM_LONG(x) PyLong_FromUnsignedLong(x)
 #define UINT_AS_LONG(x) PyLong_AsUnsignedLong(x)
 #define TEXT_FROM_STRING PyUnicode_FromString
