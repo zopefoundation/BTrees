@@ -5,7 +5,9 @@
 4.7.1 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix the definitions of ``__all__`` in modules. In 4.7.0, they
+  incorrectly left out names. See `PR 132
+  <https://github.com/zopefoundation/BTrees/pull/132>`_.
 
 
 4.7.0 (2020-03-17)
@@ -22,7 +24,6 @@
 - Make the errors that are raised when values are out of range more
   consistent between Python 2 and Python 3 and between 32-bit and
   64-bit variants.
-
 
 - Make the Bucket types consistent with the BTree types as updated in
   versions 4.3.2: Querying for keys with default comparisons or that

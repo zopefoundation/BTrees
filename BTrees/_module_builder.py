@@ -127,8 +127,15 @@ def populate_module(mod_globals,
     from ._base import _fix_pickle
 
     module_name = mod_globals['__name__']
+    # Define the Python implementations
     mod_globals.update(_create_globals(module_name, key_datatype, value_datatype))
+    # Import the C versions, if possible. Whether or not this is possible,
+    # this currently makes the non-`Py' suffixed names available. This should change
+    # if we start defining the Python classes with their natural name, only aliased
+    # to the 'Py` suffix (which simplifies pickling)
+    import_c_extension(mod_globals)
 
+    # Next, define __all__ after all the name aliasing is done.
     # XXX: Maybe derive this from the values we create.
     mod_all = (
         'Bucket', 'Set', 'BTree', 'TreeSet',
@@ -143,10 +150,9 @@ def populate_module(mod_globals,
 
     mod_globals['using64bits'] = key_datatype.using64bits or value_datatype.using64bits
 
-    import_c_extension(mod_globals)
     # XXX: We can probably do better than fix_pickle now;
     # we can know if we're going to be renaming classes
-    # ahead of time.
+    # ahead of time. See above.
     _fix_pickle(mod_globals, module_name)
     directlyProvides(module or sys.modules[module_name], interface)
 

@@ -1972,17 +1972,23 @@ class ModuleTest(object):
     value_type = None
     def _getModule(self):
         pass
+
     def testNames(self):
         names = ['Bucket', 'BTree', 'Set', 'TreeSet']
+        mod = self._getModule()
+        mod_all = mod.__all__
         for name in names:
-            klass = getattr(self._getModule(), name)
-            self.assertEqual(klass.__module__, self._getModule().__name__)
-            self.assertIs(klass, getattr(self._getModule(),
+            klass = getattr(mod, name)
+            self.assertEqual(klass.__module__, mod.__name__)
+            self.assertIs(klass, getattr(mod,
                                          self.prefix + name))
+            self.assertIn(name, mod_all)
+            self.assertIn(self.prefix + name, mod_all)
+
         # BBB for zope.app.security ZCML :(
         pfx_iter = self.prefix + 'TreeIterator'
-        klass = getattr(self._getModule(), pfx_iter)
-        self.assertEqual(klass.__module__, self._getModule().__name__)
+        klass = getattr(mod, pfx_iter)
+        self.assertEqual(klass.__module__, mod.__name__)
 
     def testModuleProvides(self):
         from zope.interface.verify import verifyObject
@@ -1998,25 +2004,29 @@ class ModuleTest(object):
         elif 'I' in self.prefix:
             self.assertTrue(self._getModule().family is BTrees.family32)
 
+    def _check_union_presence(self, datatype, name):
+        mod = self._getModule()
+        if datatype.supports_value_union():
+            in_ = self.assertIn
+            has = self.assertTrue
+        else:
+            in_ = self.assertNotIn
+            has = self.assertFalse
+
+        in_(name, dir(mod))
+        has(hasattr(mod, name))
+        in_(name, mod.__all__)
+
     # The weighted* functions require the value type to support unions.
     def test_weightedUnion_presence(self):
-        if self.value_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'weightedUnion'))
-        else:
-            self.assertFalse(hasattr(self._getModule(), 'weightedUnion'))
+        self._check_union_presence(self.value_type, 'weightedUnion')
 
     def test_weightedIntersection_presence(self):
-        if self.value_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'weightedIntersection'))
-        else:
-            self.assertFalse(hasattr(self._getModule(), 'weightedIntersection'))
+        self._check_union_presence(self.value_type, 'weightedIntersection')
 
     # The multiunion function requires the key type to support unions
     def test_multiunion_presence(self):
-        if self.key_type.supports_value_union():
-            self.assertTrue(hasattr(self._getModule(), 'multiunion'))
-        else:
-            self.assertFalse(hasattr(self._getModule(), 'multiunion'))
+        self._check_union_presence(self.key_type, 'multiunion')
 
 
 class I_SetsBase(object):

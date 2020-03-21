@@ -223,6 +223,7 @@ setup(name='BTrees',
           'docs': [
               'Sphinx',
               'repoze.sphinx.autointerface',
+              'sphinx_rtd_theme',
           ],
       },
       test_suite="BTrees.tests",
