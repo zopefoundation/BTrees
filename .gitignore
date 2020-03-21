@@ -18,3 +18,4 @@ dist
 .eggs/
 .dir-locals.el
 pip-wheel-metadata/
+htmlcov/
