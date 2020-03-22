@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.7.1 (unreleased)
+4.7.1 (2020-03-22)
 ==================
 
 - Fix the definitions of ``__all__`` in modules. In 4.7.0, they
