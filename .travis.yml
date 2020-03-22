@@ -30,12 +30,12 @@ jobs:
     - name: "Python: 2.7, pure (no C extensions)"
       python: 2.7
       env: PURE_PYTHON=1
-    - name: "Python: 3.6, pure (no C extensions), with coverage"
-      python: 3.6
-      env: PURE_PYTHON=1 WITH_COVERAGE=1
-    - name: "Python: 3.6, with coverage"
-      python: 3.6
-      env: WITH_COVERAGE=1
+    - name: "Python: 3.8, pure (no C extensions), with coverage, strict IRO"
+      python: 3.8
+      env: PURE_PYTHON=1 WITH_COVERAGE=1 ZOPE_INTERFACE_STRICT_IRO=1
+    - name: "Python: 3.8, with coverage, strict IRO"
+      python: 3.8
+      env: WITH_COVERAGE=1 ZOPE_INTERFACE_STRICT_IRO=1
 
     # manylinux wheel builds
     - name: 64-bit manylinux wheels (all Pythons)
@@ -91,9 +91,11 @@ install:
 
 script:
   - python --version
+# Temporary use of unittest over zope.testrunner; see tox.ini.
+# (WITH_COVERAGE implies STRICT_IRO)
   - |
     if [[ "$WITH_COVERAGE" == "1" ]]; then
-      python -m coverage run -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose
+      python -m coverage run -m unittest discover -s .
     else
       python -m zope.testrunner --test-path=. --auto-color --auto-progress --verbose
     fi

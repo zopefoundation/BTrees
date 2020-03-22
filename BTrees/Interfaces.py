@@ -129,7 +129,7 @@ class ISet(IKeySequence, ISetMutable):
     pass
 
 
-class ITreeSet(IKeyed, ISetMutable):
+class ITreeSet(ISetMutable):
     pass
 
 class IMinimalDictionary(ISized, IKeyed):

@@ -9,6 +9,8 @@
   incorrectly left out names. See `PR 132
   <https://github.com/zopefoundation/BTrees/pull/132>`_.
 
+- Ensure the interface resolution order of all objects is consistent.
+  See `issue 137 <https://github.com/zopefoundation/BTrees/issues/137>`_.
 
 4.7.0 (2020-03-17)
 ==================

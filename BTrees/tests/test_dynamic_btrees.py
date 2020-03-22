@@ -43,4 +43,9 @@ for family in _FAMILIES:
         _suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
 
 def test_suite():
+    # zope.testrunner protocol
     return _suite
+
+def load_tests(loader, standard_tests, pattern): # pylint:disable=unused-argument
+    # Pure unittest protocol.
+    return test_suite()
