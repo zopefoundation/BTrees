@@ -5,7 +5,15 @@
 4.7.2 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix more cases of C and Python inconsistency. The C implementation
+  now behaves like the Python implementation when it comes to integer
+  overflow for the integer keys for ``in``, ``get`` and ``has_key``.
+  Now they return False, the default value, and False, respectively in
+  both versions if the tested value would overflow or underflow.
+  Previously, the C implementation would raise ``OverflowError`` or
+  ``KeyError``, while the Python implementation functioned as
+  expected. See `issue 140
+  <https://github.com/zopefoundation/BTrees/issues/140>`_.
 
 
 4.7.1 (2020-03-22)

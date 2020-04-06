@@ -168,10 +168,10 @@ exclusive of the range's endpoints.
    [1, 2, 3, 4]
    >>> [pair for pair in t.iteritems()]  # new in ZODB 3.3
    [(1, 'red'), (2, 'green'), (3, 'blue'), (4, 'spades')]
-   >>> t.has_key(4)  # returns a true value, but exactly what undefined
-   2
+   >>> t.has_key(4)  # returns a true value
+   True
    >>> t.has_key(5)
-   0
+   False
    >>> 4 in t  # new in ZODB 3.3
    True
    >>> 5 in t  # new in ZODB 3.3
@@ -256,10 +256,10 @@ example, lists supply a total ordering, and then
    >>> list(s.keys())           # note that the lists are in sorted order
    [[1], [2], [3]]
    >>> s.has_key([3])           # and [3] is in the set
-   1
+   True
    >>> L2[0] = 5                # horrible -- the set is insane now
    >>> s.has_key([3])           # for example, it's insane this way
-   0
+   False
    >>> s
    OOSet([[1], [5], [3]])
    >>>

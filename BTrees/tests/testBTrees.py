@@ -114,14 +114,14 @@ class DegenerateBTree(unittest.TestCase):
         t, keys = self._build_degenerate_tree()
         self.assertEqual(len(t), len(keys))
         self.assertEqual(list(t.keys()), keys)
-        # has_key actually returns the depth of a bucket.
-        self.assertEqual(t.has_key(1), 4)
-        self.assertEqual(t.has_key(3), 4)
-        self.assertEqual(t.has_key(5), 6)
-        self.assertEqual(t.has_key(7), 5)
-        self.assertEqual(t.has_key(11), 5)
+
+        self.assertTrue(t.has_key(1))
+        self.assertTrue(t.has_key(3))
+        self.assertTrue(t.has_key(5))
+        self.assertTrue(t.has_key(7))
+        self.assertTrue(t.has_key(11))
         for i in 0, 2, 4, 6, 8, 9, 10, 12:
-            self.assertTrue(i not in t)
+            self.assertNotIn(i, t)
 
     def _checkRanges(self, tree, keys):
         self.assertEqual(len(tree), len(keys))

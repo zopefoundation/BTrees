@@ -82,9 +82,11 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
 {
     if (overflow)
     {
-        /* Python 3 tends to have an exception already set, Python 2 not so much */
-        if (!PyErr_Occurred())
-            PyErr_SetString(PyExc_OverflowError, "couldn't convert integer to C long long");
+        PyErr_Clear();
+        /* Python 3 tends to have an exception already set, Python 2 not so
+           much. We want to consistently raise a TypeError.
+        */
+        PyErr_SetString(PyExc_TypeError, "couldn't convert integer to C long long");
         return 0;
     }
     else if (result == -1 && PyErr_Occurred())
@@ -106,7 +108,7 @@ ulonglong_check(PyObject *ob)
         long tmp;
         tmp = PyInt_AS_LONG(ob);
         if (tmp < 0) {
-            PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+            PyErr_SetString(PyExc_TypeError, "unsigned value less than 0");
             return 0;
         }
         return 1;
@@ -166,7 +168,7 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
         long tmp;
         tmp = PyInt_AS_LONG(ob);
         if (tmp < 0) {
-            PyErr_SetString(PyExc_OverflowError, "unsigned value less than 0");
+            PyErr_SetString(PyExc_TypeError, "unsigned value less than 0");
             return 0;
         }
         (*value) = (unsigned PY_LONG_LONG)tmp;
@@ -182,7 +184,14 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
 
     val = PyLong_AsUnsignedLongLong(ob);
     if (val == (unsigned long long)-1 && PyErr_Occurred())
+    {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError))
+        {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_TypeError, "overflow error converting int to C long long");
+        }
         return 0;
+    }
     (*value) = val;
     return 1;
 }

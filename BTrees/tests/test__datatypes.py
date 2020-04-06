@@ -36,7 +36,7 @@ class TestDatatypes(unittest.TestCase):
             pass
 
     def test_to_int_w_overflow(self):
-        self.assertRaises(OverflowError, to_int, 2**64)
+        self.assertRaises(TypeError, to_int, 2**64)
 
     def test_to_int_w_invalid(self):
         self.assertRaises(TypeError, to_int, ())
@@ -60,7 +60,7 @@ class TestDatatypes(unittest.TestCase):
             pass
 
     def test_to_long_w_overflow(self):
-        self.assertRaises(OverflowError, to_long, 2**64)
+        self.assertRaises(TypeError, to_long, 2**64)
 
     def test_to_long_w_invalid(self):
         self.assertRaises(TypeError, to_long, ())

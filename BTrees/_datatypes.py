@@ -55,7 +55,7 @@ class DataType(object):
         """
         Convert *item* into the correct format and return it.
 
-        If this cannot be done, raise an appropriate exception.
+        If this cannot be done, raise a :exc:`TypeError`.
         """
         raise NotImplementedError
 
@@ -239,7 +239,7 @@ class _AbstractNativeDataType(KeyDataType):
             # PyPy can raise ValueError converting a negative number to a
             # unsigned value.
             if isinstance(item, int_types):
-                raise OverflowError("Value out of range", item)
+                raise TypeError("Value out of range", item)
             raise TypeError(self._error_description)
 
         return self._as_python_type(item)

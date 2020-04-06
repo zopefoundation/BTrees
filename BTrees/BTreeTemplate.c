@@ -1972,12 +1972,6 @@ BTree_getm(BTree *self, PyObject *args)
 }
 
 static PyObject *
-BTree_has_key(BTree *self, PyObject *key)
-{
-    return _BTree_get(self, key, 1, _BGET_REPLACE_TYPE_ERROR);
-}
-
-static PyObject *
 BTree_setdefault(BTree *self, PyObject *args)
 {
     PyObject *key;
@@ -2080,6 +2074,21 @@ BTree_contains(BTree *self, PyObject *key)
     }
     return result;
 }
+
+static PyObject *
+BTree_has_key(BTree *self, PyObject *key)
+{
+    int result = -1;
+    result = BTree_contains(self, key);
+    if (result == -1) {
+        return NULL;
+    }
+
+    if (result)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
 
 static PyObject *
 BTree_addUnique(BTree *self, PyObject *args)

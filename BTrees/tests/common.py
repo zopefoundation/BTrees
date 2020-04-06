@@ -449,6 +449,19 @@ class MappingBase(Base):
         self.assertEqual(self._makeOne().get(1), None)
         self.assertEqual(self._makeOne().get(1, 'foo'), 'foo')
 
+    def testGetReturnsDefaultWrongTypes(self):
+        self.assertIsNone(self._makeOne().get('abc'))
+        self.assertEqual(self._makeOne().get('abc', 'def'), 'def')
+
+    def testGetReturnsDefaultOverflowRanges(self):
+        too_big = 2 ** 64 + 1
+        self.assertIsNone(self._makeOne().get(too_big))
+        self.assertEqual(self._makeOne().get(too_big, 'def'), 'def')
+
+        too_small = -too_big
+        self.assertIsNone(self._makeOne().get(too_small))
+        self.assertEqual(self._makeOne().get(too_small, 'def'), 'def')
+
     def testSetItemGetItemWorks(self):
         t = self._makeOne()
         t[1] = 1
@@ -475,14 +488,24 @@ class MappingBase(Base):
         self.assertEqual(len(t), len(addl), len(t))
 
     def testHasKeyWorks(self):
-        from .._compat import PY2
         t = self._makeOne()
         t[1] = 1
-        if PY2:
-            self.assertTrue(t.has_key(1))
-        self.assertTrue(1 in t)
-        self.assertTrue(0 not in t)
-        self.assertTrue(2 not in t)
+        self.assertTrue(t.has_key(1))
+
+        self.assertIn(1, t)
+        self.assertNotIn(0, t)
+        self.assertNotIn(2, t)
+
+    def testHasKeyOverflowAndTypes(self):
+        t = self._makeOne()
+
+        too_big = 2 ** 64 + 1
+        too_small = -too_big
+        self.assertNotIn(too_big, t)
+        self.assertNotIn(too_small, t)
+        self.assertFalse(t.has_key(too_big))
+        self.assertFalse(t.has_key(too_small))
+        self.assertFalse(t.has_key('abc'))
 
     def testValuesWorks(self):
         t = self._makeOne()
@@ -1061,10 +1084,11 @@ class MappingBase(Base):
         # for values that are in range on most other platforms. And on Python 2,
         # PyInt_Check can fail with a TypeError starting at small values
         # like 2147483648. So we look for small longs and catch those errors
-        # even when we think we should be in range.
+        # even when we think we should be in range. In all cases, our code
+        # catches the unexpected error (OverflowError) and turns it into TypeError.
         long_is_32_bit = struct.calcsize('@l') < 8
-        in_range_errors = (OverflowError, TypeError) if long_is_32_bit else ()
-        out_of_range_errors = (OverflowError, TypeError) if long_is_32_bit and PY2 else (OverflowError,)
+        in_range_errors = TypeError
+        out_of_range_errors = TypeError
 
         def trial(i):
             i = int(i)
@@ -2143,11 +2167,11 @@ class TestLongIntKeys(TestLongIntSupport):
         o1, o2 = self.getTwoValues()
         t = self._makeOne()
         k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2**64 + 1
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = o1
 
         t = self._makeOne()
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[LARGEST_NEGATIVE_65_BITS] = o1
 
 class TestLongIntValues(TestLongIntSupport):
@@ -2175,11 +2199,11 @@ class TestLongIntValues(TestLongIntSupport):
         k1, k2 = self.getTwoKeys()
         t = self._makeOne()
         v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2**64 + 1
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = v1
 
         t = self._makeOne()
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = LARGEST_NEGATIVE_65_BITS
 
 
