@@ -15,6 +15,7 @@ Contents:
    overview
    api
    development
+   changes
 
 ====================
  Indices and tables
