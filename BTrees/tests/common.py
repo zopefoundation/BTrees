@@ -390,7 +390,7 @@ class Base(SignedMixin):
         self.assertFalse(issubclass(NonSub, type(t)))
         self.assertFalse(isinstance(NonSub(), type(t)))
 
-class MappingBase(Base):
+class MappingBase(Base): # pylint:disable=too-many-public-methods
     # Tests common to mappings (buckets, btrees)
     SUPPORTS_NEGATIVE_VALUES = True
 
@@ -449,6 +449,19 @@ class MappingBase(Base):
         self.assertEqual(self._makeOne().get(1), None)
         self.assertEqual(self._makeOne().get(1, 'foo'), 'foo')
 
+    def testGetReturnsDefaultWrongTypes(self):
+        self.assertIsNone(self._makeOne().get('abc'))
+        self.assertEqual(self._makeOne().get('abc', 'def'), 'def')
+
+    def testGetReturnsDefaultOverflowRanges(self):
+        too_big = 2 ** 64 + 1
+        self.assertIsNone(self._makeOne().get(too_big))
+        self.assertEqual(self._makeOne().get(too_big, 'def'), 'def')
+
+        too_small = -too_big
+        self.assertIsNone(self._makeOne().get(too_small))
+        self.assertEqual(self._makeOne().get(too_small, 'def'), 'def')
+
     def testSetItemGetItemWorks(self):
         t = self._makeOne()
         t[1] = 1
@@ -475,14 +488,24 @@ class MappingBase(Base):
         self.assertEqual(len(t), len(addl), len(t))
 
     def testHasKeyWorks(self):
-        from .._compat import PY2
         t = self._makeOne()
         t[1] = 1
-        if PY2:
-            self.assertTrue(t.has_key(1))
-        self.assertTrue(1 in t)
-        self.assertTrue(0 not in t)
-        self.assertTrue(2 not in t)
+        self.assertTrue(t.has_key(1))
+
+        self.assertIn(1, t)
+        self.assertNotIn(0, t)
+        self.assertNotIn(2, t)
+
+    def testHasKeyOverflowAndTypes(self):
+        t = self._makeOne()
+
+        too_big = 2 ** 64 + 1
+        too_small = -too_big
+        self.assertNotIn(too_big, t)
+        self.assertNotIn(too_small, t)
+        self.assertFalse(t.has_key(too_big))
+        self.assertFalse(t.has_key(too_small))
+        self.assertFalse(t.has_key('abc'))
 
     def testValuesWorks(self):
         t = self._makeOne()
@@ -699,7 +722,7 @@ class MappingBase(Base):
         self.assertEqual(list(keys), [])
         self.assertEqual(list(t.iterkeys(max=50, min=200)), [])
 
-    def testSlicing(self):
+    def testSlicing(self): # pylint:disable=too-many-locals
         # Test that slicing of .keys()/.values()/.items() works exactly the
         # same way as slicing a Python list with the same contents.
         # This tests fixes to several bugs in this area, starting with
@@ -809,7 +832,7 @@ class MappingBase(Base):
             self.assertEqual(list(t.iteritems()), list(t.items()))
 
     @uses_negative_keys_and_values
-    def testRangedIterators(self):
+    def testRangedIterators(self): # pylint:disable=too-many-locals
         t = self._makeOne()
 
         for keys in [], [-2], [1, 4], list(range(-170, 2000, 13)):
@@ -1051,7 +1074,6 @@ class MappingBase(Base):
             self.skipTest("Needs bounded key and value")
 
         import struct
-        from .._compat import PY2
 
         good = set()
         b = self._makeOne()
@@ -1061,10 +1083,11 @@ class MappingBase(Base):
         # for values that are in range on most other platforms. And on Python 2,
         # PyInt_Check can fail with a TypeError starting at small values
         # like 2147483648. So we look for small longs and catch those errors
-        # even when we think we should be in range.
+        # even when we think we should be in range. In all cases, our code
+        # catches the unexpected error (OverflowError) and turns it into TypeError.
         long_is_32_bit = struct.calcsize('@l') < 8
-        in_range_errors = (OverflowError, TypeError) if long_is_32_bit else ()
-        out_of_range_errors = (OverflowError, TypeError) if long_is_32_bit and PY2 else (OverflowError,)
+        in_range_errors = TypeError
+        out_of_range_errors = TypeError
 
         def trial(i):
             i = int(i)
@@ -1971,7 +1994,7 @@ class ModuleTest(object):
     key_type = None
     value_type = None
     def _getModule(self):
-        pass
+        raise NotImplementedError
 
     def testNames(self):
         names = ['Bucket', 'BTree', 'Set', 'TreeSet']
@@ -2143,11 +2166,11 @@ class TestLongIntKeys(TestLongIntSupport):
         o1, o2 = self.getTwoValues()
         t = self._makeOne()
         k1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_KEYS else 2**64 + 1
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = o1
 
         t = self._makeOne()
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[LARGEST_NEGATIVE_65_BITS] = o1
 
 class TestLongIntValues(TestLongIntSupport):
@@ -2175,11 +2198,11 @@ class TestLongIntValues(TestLongIntSupport):
         k1, k2 = self.getTwoKeys()
         t = self._makeOne()
         v1 = SMALLEST_POSITIVE_65_BITS if self.SUPPORTS_NEGATIVE_VALUES else 2**64 + 1
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = v1
 
         t = self._makeOne()
-        with self.assertRaises(OverflowError):
+        with self.assertRaises(TypeError):
             t[k1] = LARGEST_NEGATIVE_65_BITS
 
 
@@ -2199,8 +2222,8 @@ class SetResult(object):
         super(SetResult, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
-        self.Akeys = [1,    3,    5, 6]
-        self.Bkeys = [   2, 3, 4,    6, 7]
+        self.Akeys = [1,    3,    5, 6] # pylint:disable=bad-whitespace
+        self.Bkeys = [   2, 3, 4,    6, 7] # pylint:disable=bad-whitespace
         self.As = [makeset(self.Akeys) for makeset in self.builders()]
         self.Bs = [makeset(self.Bkeys) for makeset in self.builders()]
         self.emptys = [makeset() for makeset in self.builders()]
@@ -2312,7 +2335,7 @@ class SetResult(object):
                 else:
                     self.assertEqual(list(C), want)
 
-    def testLargerInputs(self):
+    def testLargerInputs(self): # pylint:disable=too-many-locals
         from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module
         from random import randint
         MAXSIZE = 200
@@ -2568,6 +2591,7 @@ class ConflictTestBase(SignedMixin, object):
     # Tests common to all types: sets, buckets, and BTrees
 
     storage = None
+    db = None
 
     def setUp(self):
         super(ConflictTestBase, self).setUp()

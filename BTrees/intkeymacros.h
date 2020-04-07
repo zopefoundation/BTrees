@@ -23,9 +23,15 @@
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)                    \
   if (INT_CHECK(ARG)) {                                           \
       long vcopy = INT_AS_LONG(ARG);                              \
-      if (PyErr_Occurred()) { (STATUS)=0; (TARGET)=0; }           \
+      if (PyErr_Occurred()) {                                     \
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
+            PyErr_Clear();                                        \
+            PyErr_SetString(PyExc_TypeError, "integer out of range"); \
+        }                                                         \
+        (STATUS)=0; (TARGET)=0;                                   \
+      }                                                           \
       else if ((int)vcopy != vcopy) {                             \
-        PyErr_SetString(PyExc_OverflowError, "integer out of range"); \
+        PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else TARGET = vcopy;                                        \
@@ -55,13 +61,19 @@
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)                    \
   if (INT_CHECK(ARG)) {                                           \
       long vcopy = INT_AS_LONG(ARG);                     \
-      if (PyErr_Occurred()) { (STATUS)=0; (TARGET)=0; }           \
+      if (PyErr_Occurred()) {                                     \
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
+            PyErr_Clear();                                        \
+            PyErr_SetString(PyExc_TypeError, "integer out of range"); \
+        }                                                         \
+        (STATUS)=0; (TARGET)=0;                                   \
+      }                                                           \
       else if (vcopy < 0) {                                       \
-        PyErr_SetString(PyExc_OverflowError, "can't convert negative value to unsigned int"); \
+        PyErr_SetString(PyExc_TypeError, "can't convert negative value to unsigned int"); \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if ((unsigned int)vcopy != vcopy) {                     \
-        PyErr_SetString(PyExc_OverflowError, "integer out of range"); \
+        PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else TARGET = vcopy;                                        \

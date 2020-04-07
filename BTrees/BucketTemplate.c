@@ -1367,11 +1367,6 @@ bucket_setstate(Bucket *self, PyObject *state)
     return Py_None;
 }
 
-static PyObject *
-bucket_has_key(Bucket *self, PyObject *key)
-{
-    return _bucket_get(self, key, 1);
-}
 
 static PyObject *
 bucket_setdefault(Bucket *self, PyObject *args)
@@ -1473,6 +1468,20 @@ bucket_contains(Bucket *self, PyObject *key)
         result = 0;
     }
     return result;
+}
+
+static PyObject *
+bucket_has_key(Bucket *self, PyObject *key)
+{
+    int result = -1;
+    result = bucket_contains(self, key);
+    if (result == -1) {
+        return NULL;
+    }
+
+    if (result)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
 }
 
 /*
