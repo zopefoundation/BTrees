@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.7.2 (unreleased)
+4.7.2 (2020-04-07)
 ==================
 
 - Fix more cases of C and Python inconsistency. The C implementation
