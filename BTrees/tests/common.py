@@ -390,7 +390,7 @@ class Base(SignedMixin):
         self.assertFalse(issubclass(NonSub, type(t)))
         self.assertFalse(isinstance(NonSub(), type(t)))
 
-class MappingBase(Base):
+class MappingBase(Base): # pylint:disable=too-many-public-methods
     # Tests common to mappings (buckets, btrees)
     SUPPORTS_NEGATIVE_VALUES = True
 
@@ -722,7 +722,7 @@ class MappingBase(Base):
         self.assertEqual(list(keys), [])
         self.assertEqual(list(t.iterkeys(max=50, min=200)), [])
 
-    def testSlicing(self):
+    def testSlicing(self): # pylint:disable=too-many-locals
         # Test that slicing of .keys()/.values()/.items() works exactly the
         # same way as slicing a Python list with the same contents.
         # This tests fixes to several bugs in this area, starting with
@@ -832,7 +832,7 @@ class MappingBase(Base):
             self.assertEqual(list(t.iteritems()), list(t.items()))
 
     @uses_negative_keys_and_values
-    def testRangedIterators(self):
+    def testRangedIterators(self): # pylint:disable=too-many-locals
         t = self._makeOne()
 
         for keys in [], [-2], [1, 4], list(range(-170, 2000, 13)):
@@ -1074,7 +1074,6 @@ class MappingBase(Base):
             self.skipTest("Needs bounded key and value")
 
         import struct
-        from .._compat import PY2
 
         good = set()
         b = self._makeOne()
@@ -1995,7 +1994,7 @@ class ModuleTest(object):
     key_type = None
     value_type = None
     def _getModule(self):
-        pass
+        raise NotImplementedError
 
     def testNames(self):
         names = ['Bucket', 'BTree', 'Set', 'TreeSet']
@@ -2223,8 +2222,8 @@ class SetResult(object):
         super(SetResult, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
-        self.Akeys = [1,    3,    5, 6]
-        self.Bkeys = [   2, 3, 4,    6, 7]
+        self.Akeys = [1,    3,    5, 6] # pylint:disable=bad-whitespace
+        self.Bkeys = [   2, 3, 4,    6, 7] # pylint:disable=bad-whitespace
         self.As = [makeset(self.Akeys) for makeset in self.builders()]
         self.Bs = [makeset(self.Bkeys) for makeset in self.builders()]
         self.emptys = [makeset() for makeset in self.builders()]
@@ -2336,7 +2335,7 @@ class SetResult(object):
                 else:
                     self.assertEqual(list(C), want)
 
-    def testLargerInputs(self):
+    def testLargerInputs(self): # pylint:disable=too-many-locals
         from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module
         from random import randint
         MAXSIZE = 200
@@ -2592,6 +2591,7 @@ class ConflictTestBase(SignedMixin, object):
     # Tests common to all types: sets, buckets, and BTrees
 
     storage = None
+    db = None
 
     def setUp(self):
         super(ConflictTestBase, self).setUp()

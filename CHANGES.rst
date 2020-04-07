@@ -15,6 +15,10 @@
   expected. See `issue 140
   <https://github.com/zopefoundation/BTrees/issues/140>`_.
 
+  .. note::
+     The unspecified true return values of ``has_key``
+     have changed.
+
 
 4.7.1 (2020-03-22)
 ==================
