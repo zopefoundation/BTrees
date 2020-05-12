@@ -23,6 +23,7 @@ from unittest import skip
 from BTrees._compat import PY3
 from BTrees._compat import PURE_PYTHON
 from BTrees._compat import PYPY
+from BTrees._base   import _tp_name
 
 def _no_op(test_method):
     return test_method
@@ -1594,6 +1595,46 @@ class BTreeTests(MappingBase):
             s2 = pickle.dumps(loaded_one, proto)
             self.assertTrue(b'Py' not in s2)
             self.assertEqual(s2, s)
+
+    def testSetstateBadChild(self):
+        # tree used to allow to pass in non (tree or bucket) node as a child
+        # via __setstate__. This was leading to crashes when using C mode.
+        t = self._makeOne()
+        b = t._bucket_type()
+        if isaset(b):
+            b.add(1)
+        else:
+            b[1] = 11
+
+        # xchild is non-BTree class deriving from Persistent
+        import persistent
+        xchild = persistent.Persistent()
+        self.assertIs(xchild._p_oid, None)
+
+        typeErrOK = "tree child %s is neither %s nor %s" % \
+                        (_tp_name(type(xchild)), _tp_name(type(t)),
+                         _tp_name(t._bucket_type))
+
+        # if the following is allowed, e.g.
+        # t.__getstate__(), or t[0]=1 corrupt memory and crash.
+        with self.assertRaises(TypeError) as exc:
+            t.__setstate__(
+                    (
+                        (xchild,), # child0 is neither tree nor bucket
+                        b
+                    )
+                )
+        self.assertEqual(str(exc.exception), typeErrOK)
+
+        # if the following is allowed, e.g. t[5]=1 corrupts memory and crash.
+        with self.assertRaises(TypeError) as exc:
+            t.__setstate__(
+                    (
+                        (b, 4, xchild),
+                        b
+                    )
+                )
+        self.assertEqual(str(exc.exception), typeErrOK)
 
 
 class NormalSetTests(Base):
