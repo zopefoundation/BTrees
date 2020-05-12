@@ -1463,17 +1463,20 @@ class Test_Tree(unittest.TestCase):
         from .._base import _Tree
         return _Tree
 
-    def _makeOne(self, items=None):
+    def _makeOne(self, items=None, bucket_type=None):
         from .._base import Bucket
         from .._datatypes import O
         from .._datatypes import Any
-        class _Bucket(Bucket):
-            _to_key = O()
+        if bucket_type is None:
+            class _Bucket(Bucket):
+                _to_key = O()
+
+            bucket_type = _Bucket
 
         class _Test(self._getTargetClass()):
             _to_key = O()
             _to_value = Any()
-            _bucket_type = _Bucket
+            _bucket_type = bucket_type
             max_leaf_size = 10
             max_internal_size = 15
         return _Test(items)
@@ -2009,7 +2012,7 @@ class Test_Tree(unittest.TestCase):
         class _Bucket(Bucket):
             def _to_key(self, x):
                 return x
-        tree = self._makeOne()
+        tree = self._makeOne(bucket_type=_Bucket)
         b1 = _Bucket({'a': 0, 'b': 1})
         b2 = _Bucket({'c': 2, 'd': 3})
         b1._next = b2

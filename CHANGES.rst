@@ -5,7 +5,9 @@
 4.7.3 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix ``Tree.__setstate__`` to no longer accept children besides
+  tree or bucket types to prevent crashes. See `PR 143
+  <https://github.com/zopefoundation/BTrees/pull/143>`_ for details.
 
 
 4.7.2 (2020-04-07)

@@ -1085,6 +1085,16 @@ class _Tree(_Base):
         data, self._firstbucket = state
         data = list(reversed(data))
 
+        # verify children are either tree or bucket nodes.
+        # NOTE for tree-kind node type is compared as "is", not as
+        # "isinstance", to match C version.
+        for child in data[::2]:
+            if not ((type(child) is type(self)) or
+                    isinstance(child, self._bucket_type)):
+                raise TypeError("tree child %s is neither %s nor %s" %
+                                (_tp_name(type(child)), _tp_name(type(self)),
+                                 _tp_name(self._bucket_type)))
+
         self._data.append(_TreeItem(None, data.pop()))
         while data:
             key = data.pop()
@@ -1558,3 +1568,9 @@ def _fix_pickle(mod_dict, mod_name):
             # Python pickle match the C version by default
             py_type.__name__ = raw_name
             py_type.__qualname__ = raw_name # Py 3.3+
+
+
+# tp_name returns full name of a type in the same way as how it is provided by
+# typ->tp_name in C.
+def _tp_name(typ):
+    return '.'.join([typ.__module__, typ.__name__])
