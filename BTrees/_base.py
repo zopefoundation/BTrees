@@ -218,6 +218,16 @@ class _BucketBase(_Base):
         name = name[:-2] if name.endswith("Py") else name
         return "%s.%s(%r)" % (mod, name, items)
 
+    def __sub__(self, other):
+        return difference(self.__class__, self, other)
+
+    def __or__(self, other):
+        return union(self.__class__, self, other)
+
+    def __and__(self, other):
+        return intersection(self.__class__, self, other)
+
+
 class _SetIteration(object):
 
     __slots__ = ('to_iterate',
@@ -1142,6 +1152,16 @@ class _Tree(_Base):
         r = super(_Tree, self).__repr__()
         r = r.replace('Py', '')
         return r
+
+    def __sub__(self, other):
+        return difference(self.__class__, self, other)
+
+    def __or__(self, other):
+        return union(self.__class__, self, other)
+
+    def __and__(self, other):
+        return intersection(self.__class__, self, other)
+
 
 def _get_simple_btree_bucket_state(state):
     if state is None:

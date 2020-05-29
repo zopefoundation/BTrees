@@ -16,6 +16,7 @@
  Set operations
 ****************************************************************************/
 
+#include "SetOpTemplate.h"
 #define SETOPTEMPLATE_C "$Id$\n"
 
 #ifdef KEY_CHECK

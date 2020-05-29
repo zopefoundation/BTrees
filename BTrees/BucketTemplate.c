@@ -12,6 +12,7 @@
 
 ****************************************************************************/
 
+#include "SetOpTemplate.h"
 #define BUCKETTEMPLATE_C "$Id$\n"
 
 /* Use BUCKET_SEARCH to find the index at which a key belongs.
@@ -1367,6 +1368,26 @@ bucket_setstate(Bucket *self, PyObject *state)
     return Py_None;
 }
 
+static PyObject *
+bucket_sub(PyObject *self, PyObject *other)
+{
+    PyObject *args = Py_BuildValue("OO", self, other);
+    return difference_m(NULL, args);
+}
+
+static PyObject *
+bucket_or(PyObject *self, PyObject *other)
+{
+    PyObject *args = Py_BuildValue("OO", self, other);
+    return union_m(NULL, args);
+}
+
+static PyObject *
+bucket_and(PyObject *self, PyObject *other)
+{
+    PyObject *args = Py_BuildValue("OO", self, other);
+    return intersection_m(NULL, args);
+}
 
 static PyObject *
 bucket_setdefault(Bucket *self, PyObject *args)
@@ -1847,6 +1868,29 @@ static PySequenceMethods Bucket_as_sequence = {
     0,                                  /* sq_inplace_repeat */
 };
 
+static PyNumberMethods Bucket_as_number = {
+     (binaryfunc)0,                     /* nb_add */
+     bucket_sub,                        /* nb_subtract */
+     (binaryfunc)0,                     /* nb_multiply */
+#ifndef PY3K
+     0,                                 /* nb_divide */
+#endif
+     (binaryfunc)0,                     /* nb_remainder */
+     (binaryfunc)0,                     /* nb_divmod */
+     (ternaryfunc)0,                    /* nb_power */
+     (unaryfunc)0,                      /* nb_negative */
+     (unaryfunc)0,                      /* nb_positive */
+     (unaryfunc)0,                      /* nb_absolute */
+     (inquiry)0,                        /* nb_bool */
+     (unaryfunc)0,                      /* nb_invert */
+     (binaryfunc)0,                     /* nb_lshift */
+     (binaryfunc)0,                     /* nb_rshift */
+     bucket_and,                        /* nb_and */
+     (binaryfunc)0,                     /* nb_xor */
+     bucket_or,                         /* nb_or */
+};
+
+
 static PyObject *
 bucket_repr(Bucket *self)
 {
@@ -1911,7 +1955,7 @@ static PyTypeObject BucketType = {
     0,                                      /* tp_setattr */
     0,                                      /* tp_compare */
     (reprfunc)bucket_repr,                  /* tp_repr */
-    0,                                      /* tp_as_number */
+    &Bucket_as_number,                      /* tp_as_number */
     &Bucket_as_sequence,                    /* tp_as_sequence */
     &Bucket_as_mapping,                     /* tp_as_mapping */
     0,                                      /* tp_hash */
@@ -1920,6 +1964,9 @@ static PyTypeObject BucketType = {
     0,                                      /* tp_getattro */
     0,                                      /* tp_setattro */
     0,                                      /* tp_as_buffer */
+#ifndef PY3K
+    Py_TPFLAGS_CHECKTYPES |
+#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                    /* tp_flags */

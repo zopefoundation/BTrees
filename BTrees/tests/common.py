@@ -2313,6 +2313,7 @@ class SetResult(object):
                 C = self.union(A, B)
                 self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self._union(A, B))
+                self.assertEqual(set(A) | set(B), set(A | B))
 
     def testIntersection(self):
         inputs = self.As + self.Bs
@@ -2321,6 +2322,7 @@ class SetResult(object):
                 C = self.intersection(A, B)
                 self.assertTrue(not hasattr(C, "values"))
                 self.assertEqual(list(C), self._intersection(A, B))
+                self.assertEqual(set(A) & set(B), set(A & B))
 
     def testDifference(self):
         inputs = self.As + self.Bs
@@ -2334,6 +2336,7 @@ class SetResult(object):
                     self.assertEqual(list(C.items()), want)
                 else:
                     self.assertEqual(list(C), want)
+                self.assertEqual(set(A) - set(B), set(A - B))
 
     def testLargerInputs(self): # pylint:disable=too-many-locals
         from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module

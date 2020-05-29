@@ -2425,7 +2425,7 @@ BTree_nonzero(BTree *self)
 
 static PyNumberMethods BTree_as_number_for_nonzero = {
     0,                                      /* nb_add */
-    0,                                      /* nb_subtract */
+    bucket_sub,                             /* nb_subtract */
     0,                                      /* nb_multiply */
 #ifndef PY3K
     0,                                      /* nb_divide */
@@ -2436,7 +2436,13 @@ static PyNumberMethods BTree_as_number_for_nonzero = {
     0,                                      /* nb_negative */
     0,                                      /* nb_positive */
     0,                                      /* nb_absolute */
-    (inquiry)BTree_nonzero                  /* nb_nonzero */
+    (inquiry)BTree_nonzero,                 /* nb_nonzero */
+    (unaryfunc)0,                           /* nb_invert */
+    (binaryfunc)0,                          /* nb_lshift */
+    (binaryfunc)0,                          /* nb_rshift */
+    bucket_and,                             /* nb_and */
+    (binaryfunc)0,                          /* nb_xor */
+    bucket_or,                              /* nb_or */
 };
 
 static PyTypeObject BTreeType = {
@@ -2459,6 +2465,9 @@ static PyTypeObject BTreeType = {
     0,                                      /* tp_getattro */
     0,                                      /* tp_setattro */
     0,                                      /* tp_as_buffer */
+#ifndef PY3K
+    Py_TPFLAGS_CHECKTYPES |
+#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                    /* tp_flags */

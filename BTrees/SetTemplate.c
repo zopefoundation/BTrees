@@ -304,6 +304,28 @@ static PySequenceMethods set_as_sequence = {
     0,                                  /* sq_inplace_repeat */
 };
 
+static PyNumberMethods set_as_number = {
+     (binaryfunc)0,                     /* nb_add */
+     bucket_sub,                        /* nb_subtract */
+     (binaryfunc)0,                     /* nb_multiply */
+#ifndef PY3K
+     0,                                 /* nb_divide */
+#endif
+     (binaryfunc)0,                     /* nb_remainder */
+     (binaryfunc)0,                     /* nb_divmod */
+     (ternaryfunc)0,                    /* nb_power */
+     (unaryfunc)0,                      /* nb_negative */
+     (unaryfunc)0,                      /* nb_positive */
+     (unaryfunc)0,                      /* nb_absolute */
+     (inquiry)0,                        /* nb_bool */
+     (unaryfunc)0,                      /* nb_invert */
+     (binaryfunc)0,                     /* nb_lshift */
+     (binaryfunc)0,                     /* nb_rshift */
+     bucket_and,                        /* nb_and */
+     (binaryfunc)0,                     /* nb_xor */
+     bucket_or,                         /* nb_or */
+};
+
 static PyTypeObject SetType = {
     PyVarObject_HEAD_INIT(NULL, 0)      /* PyPersist_Type */
     MODULE_NAME MOD_NAME_PREFIX "Set",  /* tp_name */
@@ -315,7 +337,7 @@ static PyTypeObject SetType = {
     0,                                  /* tp_setattr */
     0,                                  /* tp_compare */
     (reprfunc)set_repr,                 /* tp_repr */
-    0,                                  /* tp_as_number */
+    &set_as_number,                     /* tp_as_number */
     &set_as_sequence,                   /* tp_as_sequence */
     0,                                  /* tp_as_mapping */
     0,                                  /* tp_hash */
@@ -324,6 +346,9 @@ static PyTypeObject SetType = {
     0,                                  /* tp_getattro */
     0,                                  /* tp_setattro */
     0,                                  /* tp_as_buffer */
+#ifndef PY3K
+    Py_TPFLAGS_CHECKTYPES |
+#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                /* tp_flags */
