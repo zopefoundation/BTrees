@@ -5,7 +5,11 @@
 4.7.3 (unreleased)
 ==================
 
-- Nothing changed yet.
+- BTrees, TreeSet, Set and Buckets implements the ``__and__``,
+  ``__or__`` and ``__sub__`` as shortcuts for
+  :meth:`~BTrees.Interfaces.IMerge.intersection`,
+  :meth:`~BTrees.Interfaces.IMerge.union` and
+  :meth:`~BTrees.Interfaces.IMerge.difference`.
 
 
 4.7.2 (2020-04-07)

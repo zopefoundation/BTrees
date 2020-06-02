@@ -277,6 +277,10 @@ class IMerge(Interface):
     :meth:`BTrees.IIBTree.IIBTree.union` can only be used with :class:`~BTrees.IIBTree.IIBTree`,
     :class:`~BTrees.IIBTree.IIBucket`, :class:`~BTrees.IIBTree.IISet`, and :class:`~BTrees.IIBTree.IITreeSet`.
 
+    The number protocols methods ``__and__``, ``__or__`` and ``__sub__`` are provided
+    by all the data structures. They are shortcuts for :meth:`~BTrees.Interfaces.IMerge.intersection`,
+    :meth:`~BTrees.Interfaces.IMerge.union` and :meth:`~BTrees.Interfaces.IMerge.difference`.
+
     The implementing module has a value type. The :class:`~BTrees.IOBTree.IOBTree` and :class:`~BTrees.OOBTree.OOBTree`
     modules have object value type. The :class:`~BTrees.IIBTree.IIBTree` and :class:`~BTrees.OIBTree.OIBTree` modules
     have integer value types. Other modules may be defined in the
@@ -315,6 +319,16 @@ class IMerge(Interface):
         The output is a Set containing matching keys from the input
         collections.
         """
+
+    def __and__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference`"""
+
 
 
 class IBTreeModule(Interface):
