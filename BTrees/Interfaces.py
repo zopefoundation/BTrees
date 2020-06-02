@@ -126,11 +126,26 @@ class IKeySequence(IKeyed, ISized):
 
 
 class ISet(IKeySequence, ISetMutable):
-    pass
+    def __and__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
 
 
 class ITreeSet(ISetMutable):
-    pass
+    def __and__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
+
 
 class IMinimalDictionary(ISized, IKeyed):
 
@@ -266,6 +281,15 @@ class IBTree(IDictionaryIsh):
           while not t.insert(key, value):
               key=generate_key()
         """
+
+    def __and__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(self, other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference`"""
 
 
 class IMerge(Interface):
