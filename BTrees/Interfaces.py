@@ -320,16 +320,6 @@ class IMerge(Interface):
         collections.
         """
 
-    def __and__(self, other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
-
-    def __or__(self, other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
-
-    def __sub__(self, other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference`"""
-
-
 
 class IBTreeModule(Interface):
     """These are available in all modules (IOBTree, OIBTree, OOBTree, IIBTree,
