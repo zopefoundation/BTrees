@@ -1179,6 +1179,7 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     PyObject *items, *firstbucket = NULL;
     BTreeItem *d;
     int len, l, i, copied=1;
+    PyTypeObject *leaftype = (noval ? &SetType : &BucketType);
 
     if (_BTree_clear(self) < 0)
         return -1;
@@ -1248,6 +1249,17 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
         }
         else
         {
+            if (!(SameType_Check(self, v) ||
+                  PyObject_IsInstance(v, (PyObject *)leaftype)))
+            {
+                PyErr_Format(PyExc_TypeError,
+                             "tree child %s is neither %s nor %s",
+                             Py_TYPE(v)->tp_name,
+                             Py_TYPE(self)->tp_name,
+                             leaftype->tp_name);
+                return -1;
+            }
+
             d->child = (Sized *)v;
             Py_INCREF(v);
         }
@@ -1257,8 +1269,7 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     if (!firstbucket)
         firstbucket = (PyObject *)self->data->child;
 
-    if (!PyObject_IsInstance(firstbucket, (PyObject *)
-                            (noval ? &SetType : &BucketType)))
+    if (!PyObject_IsInstance(firstbucket, (PyObject *)leaftype))
     {
         PyErr_SetString(PyExc_TypeError,
                         "No firstbucket in non-empty BTree");
