@@ -126,11 +126,26 @@ class IKeySequence(IKeyed, ISized):
 
 
 class ISet(IKeySequence, ISetMutable):
-    pass
+    def __and__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
 
 
 class ITreeSet(ISetMutable):
-    pass
+    def __and__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
+
 
 class IMinimalDictionary(ISized, IKeyed):
 
@@ -267,6 +282,15 @@ class IBTree(IDictionaryIsh):
               key=generate_key()
         """
 
+    def __and__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
+
+    def __or__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
+
+    def __sub__(other):
+        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference`"""
+
 
 class IMerge(Interface):
     """Object with methods for merging sets, buckets, and trees.
@@ -276,6 +300,10 @@ class IMerge(Interface):
     only to collections from the same module.  For example, the
     :meth:`BTrees.IIBTree.IIBTree.union` can only be used with :class:`~BTrees.IIBTree.IIBTree`,
     :class:`~BTrees.IIBTree.IIBucket`, :class:`~BTrees.IIBTree.IISet`, and :class:`~BTrees.IIBTree.IITreeSet`.
+
+    The number protocols methods ``__and__``, ``__or__`` and ``__sub__`` are provided
+    by all the data structures. They are shortcuts for :meth:`~BTrees.Interfaces.IMerge.intersection`,
+    :meth:`~BTrees.Interfaces.IMerge.union` and :meth:`~BTrees.Interfaces.IMerge.difference`.
 
     The implementing module has a value type. The :class:`~BTrees.IOBTree.IOBTree` and :class:`~BTrees.OOBTree.OOBTree`
     modules have object value type. The :class:`~BTrees.IIBTree.IIBTree` and :class:`~BTrees.OIBTree.OIBTree` modules

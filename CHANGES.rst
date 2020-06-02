@@ -8,6 +8,11 @@
 - Fix ``Tree.__setstate__`` to no longer accept children besides
   tree or bucket types to prevent crashes. See `PR 143
   <https://github.com/zopefoundation/BTrees/pull/143>`_ for details.
+- BTrees, TreeSet, Set and Buckets implements the ``__and__``,
+  ``__or__`` and ``__sub__`` as shortcuts for
+  ``BTrees.Interfaces.IMerge.intersection``,
+  ``BTrees.Interfaces.IMerge.union`` and
+  ``BTrees.Interfaces.IMerge.difference``.
 
 
 4.7.2 (2020-04-07)
