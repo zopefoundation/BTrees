@@ -2,8 +2,8 @@
  BTrees:  scalable persistent components
 =========================================
 
-.. image:: https://travis-ci.org/zopefoundation/BTrees.svg?branch=master
-    :target: https://travis-ci.org/zopefoundation/BTrees
+.. image:: https://travis-ci.com/zopefoundation/BTrees.svg?branch=master
+    :target: https://travis-ci.com/zopefoundation/BTrees
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/zopefoundation/BTrees?branch=master&svg=true
     :target: https://ci.appveyor.com/project/mgedmin/BTrees
