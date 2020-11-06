@@ -1050,6 +1050,7 @@ class _Tree(_Base):
                     self._firstbucket = child._next
                     removed_first_bucket = True
             del data[index]
+            self._p_changed = True
 
         return removed_first_bucket, value
 
