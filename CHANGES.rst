@@ -6,7 +6,7 @@
 ==================
 
 - Fix persistency bug in the Python version
-  (`#118 https://github.com/zopefoundation/BTrees/issues/118`_).
+  (`#118 <https://github.com/zopefoundation/BTrees/issues/118>`_).
 
 - Fix ``Tree.__setstate__`` to no longer accept children besides
   tree or bucket types to prevent crashes. See `PR 143
