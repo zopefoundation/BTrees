@@ -91,24 +91,14 @@ class SignedMixin(object):
     KEY_RANDRANGE_ARGS = (-2000, 2001)
 
 
-class Base(SignedMixin):
-    # Tests common to all types: sets, buckets, and BTrees
+class ZODBAccess(object):
 
     db = None
-
-    def _getTargetClass(self):
-        raise NotImplementedError("subclass should return the target type")
-
-    def _makeOne(self):
-        return self._getTargetClass()()
-
-    def setUp(self):
-        super(Base, self).setUp()
-        _skip_if_pure_py_and_py_test(self)
 
     def tearDown(self):
         if self.db is not None:
             self.db.close()
+            del self.db
 
     def _getRoot(self):
         from ZODB import DB
@@ -130,6 +120,21 @@ class Base(SignedMixin):
         # "Cannot close connection joined to transaction"
         transaction.abort()
         root._p_jar.close()
+
+    
+class Base(ZODBAccess, SignedMixin):
+    # Tests common to all types: sets, buckets, and BTrees
+
+    def _getTargetClass(self):
+        raise NotImplementedError("subclass should return the target type")
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def setUp(self):
+        super(Base, self).setUp()
+        _skip_if_pure_py_and_py_test(self)
+
 
     def testPersistentSubclass(self):
         # Can we subclass this and Persistent?
