@@ -2,6 +2,9 @@
 
 set -e -x
 
+# Missing libffi on aarch64
+yum install -y libffi-devel
+
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if [[ "${PYBIN}" == *"cp27"* ]] || \

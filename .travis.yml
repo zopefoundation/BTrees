@@ -44,6 +44,13 @@ jobs:
       install: docker pull $DOCKER_IMAGE
       script: bash .manylinux.sh
 
+    - name: 64-bit aarch64 manylinux wheels (all Pythons)
+      arch: arm64
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux2014_aarch64
+      install: docker pull $DOCKER_IMAGE
+      script: bash .manylinux.sh
+
     - name: 32-bit manylinux wheels (all Pythons)
       services: docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux2010_i686 PRE_CMD=linux32
