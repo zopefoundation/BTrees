@@ -33,7 +33,6 @@ for PYBIN in /opt/python/*/bin; do
         "${PYBIN}/pip" install persistent wheel setuptools
         "${PYBIN}/python" setup.py bdist_wheel
         ls dist
-        mv dist/*whl /io/wheelhouse
         if [ `uname -m` == 'aarch64' ]; then
             # Running the test suite takes forever in
             # emulation; an early run (using tox, which is also slow)
@@ -53,6 +52,6 @@ for PYBIN in /opt/python/*/bin; do
 done
 
 # Bundle external shared libraries into the wheels
-for whl in wheelhouse/BTrees*.whl; do
+for whl in dist/BTrees*.whl; do
     auditwheel repair "$whl" -w /io/wheelhouse/
 done
