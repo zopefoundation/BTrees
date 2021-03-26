@@ -218,7 +218,7 @@ jobs:
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
-          unzip -n dist/BTrees-*whl -d src
+          unzip -n dist/BTrees-*whl -d .
           pip install -U -e .[test,ZODB]
       - name: Set coverage status
         # coverage is too slow on PyPy. We can't submit it from macOS (see that action),
