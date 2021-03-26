@@ -21,34 +21,40 @@ fi
 ls -ld /cache
 ls -ld /cache/pip
 
+export CFLAGS="-pipe"
+if [ `uname -m` == 'aarch64' ]; then
+    # Compiling with -Ofast on the arm emulator takes hours. The default settings have -O3,
+    # and adding -Os doesn't help much; -O1 seems too.
+    echo "Compiling with -O1"
+    export CFLAGS="-O1 $CFLAGS"
+else
+    echo "Compiling with -Ofast"
+    export CFLAGS="-Ofast $CFLAGS"
+fi
+
 # Compile wheels
 cd /io/
-for PYBIN in /opt/python/*/bin; do
-    if [[ "${PYBIN}" == *"cp27"* ]] || \
-       [[ "${PYBIN}" == *"cp35"* ]] || \
-       [[ "${PYBIN}" == *"cp36"* ]] || \
-       [[ "${PYBIN}" == *"cp37"* ]] || \
-       [[ "${PYBIN}" == *"cp38"* ]] || \
-       [[ "${PYBIN}" == *"cp39"* ]]; then
-        "${PYBIN}/pip" install persistent wheel setuptools
-        "${PYBIN}/python" setup.py bdist_wheel
-        ls dist
-        if [ `uname -m` == 'aarch64' ]; then
-            # Running the test suite takes forever in
-            # emulation; an early run (using tox, which is also slow)
-            # took over an hour to build and then run the 2.7 tests and move on
-            # to the 3.5 tests. We still want to run tests, though!
-            # We don't want to distribute wheels for a platform that's
-            # completely untested. Consequently, we limit it to running
-            # in just one interpreter, the last one on the list (which in principle
-            # should be the fastest), and we don't install the ZODB extra.
-            if [[ "${PYBIN}" == *"cp39"* ]]; then
-               "${PYBIN}/pip" install .[test]
-               "${PYBIN}/python" -m unittest discover -s BTrees -t .
-            fi
+for variant in `ls -d /opt/python/cp{27,36,37,38,39}*`; do
+    PYBIN="$variant/bin"
+    "${PYBIN}/pip" install persistent wheel setuptools
+    "${PYBIN}/python" setup.py bdist_wheel
+    ls dist
+    if [ `uname -m` == 'aarch64' ]; then
+        # Running the test suite takes forever in
+        # emulation; an early run (using tox, which is also slow)
+        # took over an hour to build and then run the 2.7 tests and move on
+        # to the 3.5 tests. We still want to run tests, though!
+        # We don't want to distribute wheels for a platform that's
+        # completely untested. Consequently, we limit it to running
+        # in just one interpreter, the newest one on the list (which in principle
+        # should be the fastest), and we don't install the ZODB extra.
+        if [[ "${PYBIN}" == *"cp39"* ]]; then
+            "${PYBIN}/pip" install .[test]
+            "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'
+            "${PYBIN}/python" -m unittest discover -s BTrees -t .
         fi
-        rm -rf /io/build /io/*.egg-info
     fi
+    rm -rf /io/build /io/*.egg-info
 done
 
 # Bundle external shared libraries into the wheels
