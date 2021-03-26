@@ -22,6 +22,7 @@ ls -ld /cache
 ls -ld /cache/pip
 
 # Compile wheels
+cd /io/
 for PYBIN in /opt/python/*/bin; do
     if [[ "${PYBIN}" == *"cp27"* ]] || \
        [[ "${PYBIN}" == *"cp35"* ]] || \
@@ -29,13 +30,23 @@ for PYBIN in /opt/python/*/bin; do
        [[ "${PYBIN}" == *"cp37"* ]] || \
        [[ "${PYBIN}" == *"cp38"* ]] || \
        [[ "${PYBIN}" == *"cp39"* ]]; then
-        "${PYBIN}/pip" install -e /io/
-        "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+        "${PYBIN}/pip" install persistent wheel setuptools
+        "${PYBIN}/python" setup.py bdist_wheel
+        ls dist
+        mv dist/*whl /io/wheelhouse
         if [ `uname -m` == 'aarch64' ]; then
-         cd /io/
-         "${PYBIN}/pip" install tox
-         "${PYBIN}/tox" -e py
-         cd ..
+            # Running the test suite takes forever in
+            # emulation; an early run (using tox, which is also slow)
+            # took over an hour to build and then run the 2.7 tests and move on
+            # to the 3.5 tests. We still want to run tests, though!
+            # We don't want to distribute wheels for a platform that's
+            # completely untested. Consequently, we limit it to running
+            # in just one interpreter, the last one on the list (which in principle
+            # should be the fastest), and we don't install the ZODB extra.
+            if [[ "${PYBIN}" == *"cp39"* ]]; then
+               "${PYBIN}/pip" install .[test]
+               "${PYBIN}/python" -m unittest discover -s BTrees -t .
+            fi
         fi
         rm -rf /io/build /io/*.egg-info
     fi

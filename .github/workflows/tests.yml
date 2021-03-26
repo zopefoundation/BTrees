@@ -232,9 +232,9 @@ jobs:
         # runs once under PyPy anyway (but with coverage takes forever).
         run: |
           if [[ "$WITH_COVERAGE" == "1" ]]; then
-              coverage run -p -m unittest discover -s .
+              coverage run -p -m unittest discover -s BTrees -t .
           else
-              python -m unittest discover -s .
+              python -m unittest discover -s BTrees -t .
           fi
       - name: Run PURE_PYTHON tests
         if: (matrix.python-version == 2.7 || matrix.python-version == 3.9) && startsWith(runner.os, 'Linux')
