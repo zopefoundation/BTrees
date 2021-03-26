@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.7.3 (unreleased)
+4.8.0 (unreleased)
 ==================
 
 - Fix persistency bug in the Python version
@@ -17,6 +17,9 @@
   ``BTrees.Interfaces.IMerge.union`` and
   ``BTrees.Interfaces.IMerge.difference``.
 
+- Add support for Python 3.9.
+
+- Build and upload aarch64 wheels.
 
 4.7.2 (2020-04-07)
 ==================
