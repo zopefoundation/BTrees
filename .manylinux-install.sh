@@ -49,9 +49,13 @@ for variant in `ls -d /opt/python/cp{27,36,37,38,39}*`; do
         # in just one interpreter, the newest one on the list (which in principle
         # should be the fastest), and we don't install the ZODB extra.
         if [[ "${PYBIN}" == *"cp39"* ]]; then
-            "${PYBIN}/pip" install .[test]
+            # Until we move from ./BTrees/ to ./src/BTrees/,
+            # installing BTrees as non-editable is incompatible with using
+            # /io/ as the working directory: the local directory shadows the installed
+            # version, and we can't import the C extensions.
+            "${PYBIN}/pip" install -e .[test]
             "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'
-            "${PYBIN}/python" -m unittest discover -s BTrees -t .
+            "${PYBIN}/python" -m unittest discover -s BTrees -t . -v
         fi
     fi
     rm -rf /io/build /io/*.egg-info
