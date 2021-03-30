@@ -6,11 +6,11 @@ include *.rst
 include *.py
 include buildout.cfg
 include tox.ini
-include .travis.yml
 include .coveragerc
 
 recursive-include docs *
 recursive-include BTrees *
+recursive-include .github *
 
 global-exclude *.dll
 global-exclude *.pyc
