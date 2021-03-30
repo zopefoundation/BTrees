@@ -55,7 +55,7 @@ for variant in `ls -d /opt/python/cp{27,36,37,38,39}*`; do
             # version, and we can't import the C extensions.
             "${PYBIN}/pip" install -e .[test]
             "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'
-            "${PYBIN}/python" -m unittest discover -s BTrees -t . -v
+            "${PYBIN}/python" -m unittest discover -s src
         fi
     fi
     rm -rf /io/build /io/*.egg-info

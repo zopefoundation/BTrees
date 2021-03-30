@@ -68,7 +68,7 @@ env:
 
   ###
   # caching
-  # This is where we'd set up ccache, but this compiles so fast its not worth it.
+  # This is where we'd set up ccache
   ###
 
 
@@ -218,7 +218,7 @@ jobs:
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
-          unzip -n dist/BTrees-*whl -d .
+          unzip -n dist/BTrees-*whl -d src
           pip install -U -e .[test,ZODB]
       - name: Set coverage status
         # coverage is too slow on PyPy. We can't submit it from macOS (see that action),
@@ -232,14 +232,14 @@ jobs:
         # runs once under PyPy anyway (but with coverage takes forever).
         run: |
           if [[ "$WITH_COVERAGE" == "1" ]]; then
-              coverage run -p -m unittest discover -s BTrees -t .
+              coverage run -p -m unittest discover -s src
           else
-              python -m unittest discover -s BTrees -t .
+              python -m unittest discover -s src
           fi
       - name: Run PURE_PYTHON tests
         if: (matrix.python-version == 2.7 || matrix.python-version == 3.9) && startsWith(runner.os, 'Linux')
         run: |
-          PURE_PYTHON=1 coverage run -p -m unittest discover -s .
+          PURE_PYTHON=1 coverage run -p -m unittest discover -s src
       - name: Report coverage
         run: |
           coverage combine || true

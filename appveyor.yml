@@ -15,6 +15,8 @@ environment:
     - python: 37-x64
     - python: 38
     - python: 38-x64
+    - python: 39
+    - python: 39-x64
 
 install:
   - "SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%"
@@ -34,7 +36,7 @@ build_script:
   - python -W ignore setup.py -q bdist_wheel
 
 test_script:
-  - zope-testrunner --test-path=.
+  - zope-testrunner --test-path=src
 
 artifacts:
   - path: 'dist\*.whl'

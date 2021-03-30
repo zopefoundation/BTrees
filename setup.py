@@ -12,7 +12,6 @@
 #
 ##############################################################################
 from __future__ import print_function
-version = '4.7.3.dev0'
 
 import os
 import sys
@@ -26,6 +25,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
+version = '4.7.3.dev0'
 
 def _read(fname):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -93,16 +93,16 @@ include = [ModuleHeaderDir('persistent')]
 
 # Set up dependencies for the BTrees package
 base_btrees_depends = [
-    "BTrees/BTreeItemsTemplate.c",
-    "BTrees/BTreeModuleTemplate.c",
-    "BTrees/BTreeTemplate.c",
-    "BTrees/BucketTemplate.c",
-    "BTrees/MergeTemplate.c",
-    "BTrees/SetOpTemplate.c",
-    "BTrees/SetTemplate.c",
-    "BTrees/TreeSetTemplate.c",
-    "BTrees/sorters.c",
-    ]
+    "src/BTrees/BTreeItemsTemplate.c",
+    "src/BTrees/BTreeModuleTemplate.c",
+    "src/BTrees/BTreeTemplate.c",
+    "src/BTrees/BucketTemplate.c",
+    "src/BTrees/MergeTemplate.c",
+    "src/BTrees/SetOpTemplate.c",
+    "src/BTrees/SetTemplate.c",
+    "src/BTrees/TreeSetTemplate.c",
+    "src/BTrees/sorters.c",
+]
 
 FLAVORS = {
     "O": "object",
@@ -143,15 +143,15 @@ FAMILIES = (
     "fs",
 )
 
-KEY_H = "BTrees/%skeymacros.h"
-VALUE_H = "BTrees/%svaluemacros.h"
+KEY_H = "src/BTrees/%skeymacros.h"
+VALUE_H = "src/BTrees/%svaluemacros.h"
 
 
 def BTreeExtension(family):
     key = family[0]
     value = family[1]
     name = "BTrees._%sBTree" % family
-    sources = ["BTrees/_%sBTree.c" % family]
+    sources = ["src/BTrees/_%sBTree.c" % family]
     kwargs = {"include_dirs": include}
     if family != "fs":
         kwargs["depends"] = (base_btrees_depends + [KEY_H % FLAVORS[key],
@@ -209,9 +209,8 @@ setup(name='BTrees',
       url="https://github.com/zopefoundation/BTrees",
       license="ZPL 2.1",
       platforms=["any"],
-      # Make sure we don't get 'terryfy' included in wheels
-      # created on macOS CI
-      packages=find_packages(include=("BTrees",)),
+      packages=find_packages('src'),
+      package_dir={'': 'src'},
       include_package_data=True,
       zip_safe=False,
       ext_modules=ext_modules,
