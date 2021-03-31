@@ -36,7 +36,7 @@ class Test_non_negative(unittest.TestCase):
         import sys
         try:
             self.assertEqual(self._callFUT(sys.maxint), sys.maxint)
-        except AttributeError: #pragma NO COVER Py3k
+        except AttributeError: # pragma: no cover Py3k
             pass
 
 

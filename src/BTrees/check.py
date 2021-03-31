@@ -404,7 +404,7 @@ class Checker(Walker):
                 ".".join(map(str, path)))
         self.errors.append(s)
 
-class Printer(Walker): #pragma NO COVER
+class Printer(Walker): # pragma: no cover
     def __init__(self, obj):
         Walker.__init__(self, obj)
 
@@ -458,6 +458,6 @@ def check(btree):
 
     Checker(btree).check()
 
-def display(btree): #pragma NO COVER
+def display(btree): # pragma: no cover
     "Display the internal structure of a BTree, Bucket, TreeSet or Set."
     Printer(btree).display()

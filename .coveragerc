@@ -7,3 +7,4 @@ relative_files = True
 exclude_lines =
     pragma: no cover
     class I[A-Z]\w+\((Interface|I[A-Z].*)\):
+    self.fail
