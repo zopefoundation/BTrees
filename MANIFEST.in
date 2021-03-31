@@ -1,4 +1,3 @@
-prune terryfy
 include pyproject.toml
 
 include *.txt
@@ -9,7 +8,7 @@ include tox.ini
 include .coveragerc
 
 recursive-include docs *
-recursive-include BTrees *
+recursive-include src *
 recursive-include .github *
 
 global-exclude *.dll
