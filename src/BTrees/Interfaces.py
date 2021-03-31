@@ -13,35 +13,28 @@
 ##############################################################################
 
 from zope.interface import Interface, Attribute
+from zope.interface.common.collections import ISized
+from zope.interface.common.sequence import IMinimalSequence
+from zope.interface.common.collections import IMapping
 
+# pylint:disable=inherit-non-class,no-method-argument,no-self-argument
+# pylint:disable=unexpected-special-method-signature
 
 class ICollection(Interface):
+    """
+    A collection of zero or more objects.
+
+    In a boolean context, objects implementing this interface are
+    `True` if the collection is non-empty, and `False` if the
+    collection is empty.
+    """
 
     def clear():
         """Remove all of the items from the collection."""
 
-    def __nonzero__():
-        """Check if the collection is non-empty.
 
-        Return a true value if the collection is non-empty and a
-        false value otherwise.
-        """
-
-
-class IReadSequence(Interface):
-
-    def __getitem__(index):
-        """Return the value at the given index.
-
-        An :class:`IndexError` is raised if the index cannot be found.
-        """
-
-    def __getslice__(index1, index2):
-        """Return a subsequence from the original sequence.
-
-        The subsequence includes the items from index1 up to, but not
-        including, index2.
-        """
+# Backwards compatibility alias. To be removed in 5.0
+IReadSequence = IMinimalSequence
 
 class IKeyed(ICollection):
 
@@ -52,9 +45,9 @@ class IKeyed(ICollection):
         """
 
     def keys(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an :class:`~BTrees.Interfaces.IReadSequence` containing the keys in the collection.
+        """Return an :class:`~BTrees.Interfaces.IMinimalSequence` containing the keys in the collection.
 
-        The type of the :class:`~BTrees.Interfaces.IReadSequence` is not specified.  It could be a list
+        The type of the :class:`~BTrees.Interfaces.IMinimalSequence` is not specified.  It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword
@@ -108,13 +101,6 @@ class ISetMutable(IKeyed):
         """Add the items from the given sequence to the set."""
 
 
-class ISized(Interface):
-    """An object that supports __len__."""
-
-    def __len__():
-        """Return the number of items in the container."""
-
-
 class IKeySequence(IKeyed, ISized):
 
     def __getitem__(index):
@@ -147,7 +133,14 @@ class ITreeSet(ISetMutable):
         """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
 
 
-class IMinimalDictionary(ISized, IKeyed):
+
+class IMinimalDictionary(IKeyed, IMapping):
+    """
+    Mapping operations.
+
+    .. versionchanged:: 4.8.0
+       Now extends :class:`zope.interface.common.collections.IMapping`.
+    """
 
     def get(key, default):
         """Get the value associated with the given key.
@@ -174,9 +167,9 @@ class IMinimalDictionary(ISized, IKeyed):
         """
 
     def values(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an :class:`BTrees.Interfaces.IReadSequence` containing the values in the collection.
+        """Return an :class:`BTrees.Interfaces.IMinimalSequence` containing the values in the collection.
 
-        The type of the :class:`~BTrees.Interfaces.IReadSequence` is not specified. It could be a list
+        The type of the :class:`~BTrees.Interfaces.IMinimalSequence` is not specified. It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword
@@ -198,11 +191,11 @@ class IMinimalDictionary(ISized, IKeyed):
         """
 
     def items(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an :class:`BTrees.Interfaces.IReadSequence` containing the items in the collection.
+        """Return an ``IMinimalSequence`` containing the items in the collection.
 
         An item is a 2-tuple, a (key, value) pair.
 
-        The type of the :class:`BTrees.Interfaces.IReadSequence` is not specified.  It could be a list
+        The type of the ``IMinimalSequence`` is not specified.  It could be a list
         or a tuple or some other type.
 
         All arguments are optional, and may be specified as keyword

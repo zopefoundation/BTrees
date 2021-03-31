@@ -8,11 +8,17 @@ Protocol APIs
 
 .. module:: BTrees.Interfaces
 
+.. versionchanged:: 4.8.0
+   Previously, ``ISized`` was defined here, but now it is
+   imported from :mod:`zope.interface.common.collections`. The
+   definition is the same.
+
+   Similarly, ``IReadSequence``, previously defined here,
+   has been replaced with :class:`zope.interface.common.sequence.IMinimalSequence`.
+
 .. autointerface:: ICollection
-.. autointerface:: IReadSequence
 .. autointerface:: IKeyed
 .. autointerface:: ISetMutable
-.. autointerface:: ISized
 .. autointerface:: IKeySequence
 .. autointerface:: IMinimalDictionary
 .. autointerface:: IDictionaryIsh

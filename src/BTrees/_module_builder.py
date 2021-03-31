@@ -17,6 +17,7 @@ BTree modules.
 """
 import sys
 from zope.interface import directlyProvides
+from zope.interface import classImplements
 
 
 def _create_classes(
@@ -27,6 +28,7 @@ def _create_classes(
     from ._base import Set
     from ._base import Tree
     from ._base import TreeSet
+    from ._base import _TreeItems as TreeItems
     from ._base import _TreeIterator
     from ._base import _fix_pickle
 
@@ -34,6 +36,7 @@ def _create_classes(
 
     prefix = key_datatype.prefix_code + value_datatype.prefix_code
 
+    classes['TreeItems'] = classes['TreeItemsPy'] = TreeItems
     for base in (
             Bucket,
             Set,
@@ -123,6 +126,7 @@ def _create_globals(module_name, key_datatype, value_datatype):
 def populate_module(mod_globals,
                     key_datatype, value_datatype,
                     interface, module=None):
+    from . import Interfaces as interfaces
     from ._compat import import_c_extension
     from ._base import _fix_pickle
 
@@ -154,7 +158,19 @@ def populate_module(mod_globals,
     # we can know if we're going to be renaming classes
     # ahead of time. See above.
     _fix_pickle(mod_globals, module_name)
+
+    # Apply interface definitions.
     directlyProvides(module or sys.modules[module_name], interface)
+    for cls_name, iface in {
+            'BTree': interfaces.IBTree,
+            'Bucket': interfaces.IMinimalDictionary,
+            'Set': interfaces.ISet,
+            'TreeSet': interfaces.ITreeSet,
+            'TreeItems': interfaces.IMinimalSequence,
+    }.items():
+        classImplements(mod_globals[cls_name], iface)
+        classImplements(mod_globals[cls_name + 'Py'], iface)
+
 
 def create_module(prefix):
     import types

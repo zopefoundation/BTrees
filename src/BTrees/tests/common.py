@@ -128,6 +128,9 @@ class Base(ZODBAccess, SignedMixin):
     def _getTargetClass(self):
         raise NotImplementedError("subclass should return the target type")
 
+    def _getTargetInterface(self):
+        raise NotImplementedError("subclass must return the expected interface ")
+
     def _makeOne(self):
         return self._getTargetClass()()
 
@@ -135,6 +138,26 @@ class Base(ZODBAccess, SignedMixin):
         super(Base, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
+    def testProvidesInterface(self):
+        from zope.interface.verify import verifyObject
+        t = self._makeOne()
+        self._populate(t, 10)
+        # reprs are usually the same in the Python and C implementations,
+        # so you need the actual class to be sure of what you're dealing with
+        __traceback_info__ = type(t)
+        verifyObject(self._getTargetInterface(), t)
+
+        if hasattr(t, 'keys'):
+            from BTrees.Interfaces import IReadSequence
+            keys = t.keys()
+            if type(keys) not in (tuple, list):
+                verifyObject(IReadSequence, keys)
+
+        if hasattr(t, 'values'):
+            from BTrees.Interfaces import IReadSequence
+            values = t.values()
+            if type(values) not in (tuple, list):
+                verifyObject(IReadSequence, values)
 
     def testPersistentSubclass(self):
         # Can we subclass this and Persistent?
