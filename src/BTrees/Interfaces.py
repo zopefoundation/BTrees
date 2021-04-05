@@ -111,7 +111,7 @@ class IKeySequence(IKeyed, ISized):
         """
 
 
-class ISet(IKeySequence, ISetMutable):
+class ISet(ISetMutable, IKeySequence):
     def __and__(other):
         """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
 

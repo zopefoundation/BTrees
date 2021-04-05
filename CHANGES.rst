@@ -41,6 +41,16 @@
   objects actually implemented such a method; instead, the boolean value
   is typically taken from ``__len__``.
 
+- Adjust the definition of ``ISet`` to produce the same resolution
+  order under the C3 and legacy orderings. This means that the legacy
+  order has changed slightly, but that this package emits no warnings
+  when ``ZOPE_INTERFACE_LOG_CHANGED_IRO=1``. Note that the legacy
+  order was not being used for these objects because the C3 ordering
+  was still consistent; it could only be obtained using
+  ``ZOPE_INTERFACE_USE_LEGACY_IRO=1``. See `PR 159
+  <https://github.com/zopefoundation/BTrees/pull/159>`_ for all the
+  interface updates.
+
 4.7.2 (2020-04-07)
 ==================
 
