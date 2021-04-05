@@ -2610,8 +2610,8 @@ class Test_union(unittest.TestCase, _SetObBase):
     def test_lhs_mapping_rhs_set(self):
         lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
         rhs = self._makeSet('a', 'd')
-        result = self._callFUT(lhs.__class__, lhs, rhs)
-        self.assertTrue(isinstance(result, _Set))
+        result = self._callFUT(lhs._set_type, lhs, rhs)
+        self.assertIsInstance(result, _Set)
         self.assertEqual(list(result), ['a', 'b', 'c', 'd'])
 
     def test_both_mappings_rhs_empty(self):
@@ -2662,8 +2662,8 @@ class Test_intersection(unittest.TestCase, _SetObBase):
     def test_lhs_mapping_rhs_set(self):
         lhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
         rhs = self._makeSet('a', 'd')
-        result = self._callFUT(lhs.__class__, lhs, rhs)
-        self.assertTrue(isinstance(result, _Set))
+        result = self._callFUT(lhs._set_type, lhs, rhs)
+        self.assertIsInstance(result, _Set)
         self.assertEqual(list(result), ['a'])
 
     def test_both_mappings_rhs_empty(self):

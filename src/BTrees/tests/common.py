@@ -2357,7 +2357,7 @@ class SetResult(object):
         for A in inputs:
             for B in inputs:
                 for convert in lambda x: x, list, tuple, set:
-                    C = self.union(A, convert(B))
+                    C = self.union(convert(A), convert(B))
                     self.assertTrue(not hasattr(C, "values"))
                     self.assertEqual(list(C), self._union(A, B))
                     self.assertEqual(set(A) | set(B), set(A | B))
@@ -2367,7 +2367,7 @@ class SetResult(object):
         for A in inputs:
             for B in inputs:
                 for convert in lambda x: x, list, tuple, set:
-                    C = self.intersection(A, convert(B))
+                    C = self.intersection(convert(A), convert(B))
                     self.assertTrue(not hasattr(C, "values"))
                     self.assertEqual(list(C), self._intersection(A, B))
                     self.assertEqual(set(A) & set(B), set(A & B))
@@ -2377,6 +2377,8 @@ class SetResult(object):
         for A in inputs:
             for B in inputs:
                 for convert in lambda x: x, list, tuple, set:
+                    # Difference is unlike the others: The first argument
+                    # must be a BTree type, in both C and Python.
                     C = self.difference(A, convert(B))
                     # Difference preserves LHS values.
                     self.assertEqual(hasattr(C, "values"), hasattr(A, "values"))

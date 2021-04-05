@@ -222,10 +222,10 @@ class _BucketBase(_Base):
         return difference(self.__class__, self, other)
 
     def __or__(self, other):
-        return union(self.__class__, self, other)
+        return union(self._set_type, self, other)
 
     def __and__(self, other):
-        return intersection(self.__class__, self, other)
+        return intersection(self._set_type, self, other)
 
 
 class _SetIteration(object):
@@ -1168,10 +1168,10 @@ class _Tree(_Base):
         return difference(self.__class__, self, other)
 
     def __or__(self, other):
-        return union(self.__class__, self, other)
+        return union(self._set_type, self, other)
 
     def __and__(self, other):
-        return intersection(self.__class__, self, other)
+        return intersection(self._set_type, self, other)
 
 
 def _get_simple_btree_bucket_state(state):
@@ -1392,7 +1392,7 @@ def union(set_type, o1, o2):
         return o1
     i1 = _SetIteration(o1, False, 0)
     i2 = _SetIteration(o2, False, 0)
-    result = o1._set_type()
+    result = set_type()
     def copy(i):
         result._keys.append(i.key)
     while i1.active and i2.active:
@@ -1422,7 +1422,7 @@ def intersection(set_type, o1, o2):
         return o1
     i1 = _SetIteration(o1, False, 0)
     i2 = _SetIteration(o2, False, 0)
-    result = o1._set_type()
+    result = set_type()
     def copy(i):
         result._keys.append(i.key)
     while i1.active and i2.active:
