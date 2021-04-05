@@ -121,7 +121,7 @@ class ZODBAccess(object):
         transaction.abort()
         root._p_jar.close()
 
-    
+
 class Base(ZODBAccess, SignedMixin):
     # Tests common to all types: sets, buckets, and BTrees
 
@@ -2261,7 +2261,7 @@ def makeBuilder(mapbuilder):
 
 # Subclasses have to set up:
 #     builders() - function returning functions to build inputs,
-#     each returned callable tkes an optional keys arg
+#     each returned callable takes an optional keys arg
 #     intersection, union, difference - set to the type-correct versions
 class SetResult(object):
     def setUp(self):
@@ -2302,18 +2302,18 @@ class SetResult(object):
     def testNone(self):
         for op in self.union, self.intersection, self.difference:
             C = op(None, None)
-            self.assertTrue(C is None)
+            self.assertIsNone(C)
 
         for op in self.union, self.intersection, self.difference:
             for A in self.As:
                 C = op(A, None)
-                self.assertTrue(C is A)
+                self.assertIs(C, A)
 
                 C = op(None, A)
                 if op == self.difference:
-                    self.assertTrue(C is None)
+                    self.assertIsNone(C, None)
                 else:
-                    self.assertTrue(C is A)
+                    self.assertIs(C, A)
 
     def testEmptyUnion(self):
         for A in self.As:
@@ -2356,33 +2356,36 @@ class SetResult(object):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                C = self.union(A, B)
-                self.assertTrue(not hasattr(C, "values"))
-                self.assertEqual(list(C), self._union(A, B))
-                self.assertEqual(set(A) | set(B), set(A | B))
+                for convert in lambda x: x, list, tuple, set:
+                    C = self.union(A, convert(B))
+                    self.assertTrue(not hasattr(C, "values"))
+                    self.assertEqual(list(C), self._union(A, B))
+                    self.assertEqual(set(A) | set(B), set(A | B))
 
     def testIntersection(self):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                C = self.intersection(A, B)
-                self.assertTrue(not hasattr(C, "values"))
-                self.assertEqual(list(C), self._intersection(A, B))
-                self.assertEqual(set(A) & set(B), set(A & B))
+                for convert in lambda x: x, list, tuple, set:
+                    C = self.intersection(A, convert(B))
+                    self.assertTrue(not hasattr(C, "values"))
+                    self.assertEqual(list(C), self._intersection(A, B))
+                    self.assertEqual(set(A) & set(B), set(A & B))
 
     def testDifference(self):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                C = self.difference(A, B)
-                # Difference preserves LHS values.
-                self.assertEqual(hasattr(C, "values"), hasattr(A, "values"))
-                want = self._difference(A, B)
-                if hasattr(A, "values"):
-                    self.assertEqual(list(C.items()), want)
-                else:
-                    self.assertEqual(list(C), want)
-                self.assertEqual(set(A) - set(B), set(A - B))
+                for convert in lambda x: x, list, tuple, set:
+                    C = self.difference(A, convert(B))
+                    # Difference preserves LHS values.
+                    self.assertEqual(hasattr(C, "values"), hasattr(A, "values"))
+                    want = self._difference(A, B)
+                    if hasattr(A, "values"):
+                        self.assertEqual(list(C.items()), want)
+                    else:
+                        self.assertEqual(list(C), want)
+                    self.assertEqual(set(A) - set(B), set(A - B))
 
     def testLargerInputs(self): # pylint:disable=too-many-locals
         from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module
@@ -2564,7 +2567,7 @@ class MultiUnion(SignedMixin):
     def testEmpty(self):
         self.assertEqual(len(self.multiunion([])), 0)
 
-    def testOne(self):
+    def _testOne(self, builder):
         for sequence in (
                 [3],
                 list(range(20)),
@@ -2576,17 +2579,83 @@ class MultiUnion(SignedMixin):
             seq2 = list(reversed(sequence[:]))
             seqsorted = sorted(sequence[:])
             for seq in seq1, seq2, seqsorted:
-                for builder in self.mkset, self.mktreeset:
-                    input = builder(seq)
-                    output = self.multiunion([input])
-                    self.assertEqual(len(seq), len(output))
-                    self.assertEqual(seqsorted, list(output))
+                input = builder(seq)
+                output = self.multiunion([input])
+                self.assertEqual(len(seq), len(output))
+                self.assertEqual(seqsorted, list(output))
+
+    def testOneBTSet(self):
+        self._testOne(self.mkset)
+
+    def testOneBTTreeSet(self):
+        self._testOne(self.mktreeset)
+
+    def testOneList(self):
+        self._testOne(list)
+
+    def testOneTuple(self):
+        self._testOne(tuple)
+
+    def testOneSet(self):
+        self._testOne(set)
+
+    def testOneGenerator(self):
+        def generator(seq):
+            for i in seq:
+                yield i
+
+        self._testOne(generator)
 
     def testValuesIgnored(self):
-        for builder in self.mkbucket, self.mkbtree:
+        for builder in self.mkbucket, self.mkbtree, dict:
             input = builder([(1, 2), (3, 4), (5, 6)])
             output = self.multiunion([input])
             self.assertEqual([1, 3, 5], list(output))
+
+    def testValuesIgnoredNonInteger(self):
+        # This only uses a dict because the bucket and tree can't
+        # hold non-integers.
+        i1 = {1: 'a', 2: 'b'}
+        i2 = {1: 'c', 3: 'd'}
+
+        output = self.multiunion((i1, i2))
+        self.assertEqual([1, 2, 3], list(output))
+
+    def testRangeInputs(self):
+        i1 = range(3)
+        i2 = range(7)
+
+        output = self.multiunion((i1, i2))
+        self.assertEqual([0, 1, 2, 3, 4, 5, 6], list(output))
+
+    def testNegativeKeys(self):
+        i1 = (-1, -2, -3)
+        i2 = (0, 1, 2)
+
+        if not self.SUPPORTS_NEGATIVE_KEYS:
+            with self.assertRaises(TypeError):
+                self.multiunion((i2, i1))
+        else:
+            output = self.multiunion((i2, i1))
+            self.assertEqual([-3, -2, -1, 0, 1, 2], list(output))
+
+    def testOneIterableWithBadKeys(self):
+        i1 = [1, 2, 3, 'a']
+        for kind in list, tuple:
+            with self.assertRaises(TypeError):
+                self.multiunion((kind(i1),))
+
+    def testBadIterable(self):
+        class MyException(Exception):
+            pass
+
+        def gen():
+            for i in range(3):
+                yield i
+            raise MyException
+
+        with self.assertRaises(MyException):
+            self.multiunion((gen(),))
 
     def testBigInput(self):
         N = 100000

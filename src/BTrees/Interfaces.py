@@ -322,6 +322,9 @@ class IMerge(Interface):
 
         If neither c1 nor c2 is None, the output is a Set if c1 is a Set or
         TreeSet, and is a Bucket if c1 is a Bucket or BTree.
+
+        While *c1* must be one of those types, *c2* can be any Python iterable
+        returning the correct types of objects.
         """
 
     def union(c1, c2):
@@ -332,6 +335,9 @@ class IMerge(Interface):
 
         The output is a Set containing keys from the input
         collections.
+
+        While *c1* must be one of those types, *c2* can be any Python iterable
+        returning the correct types of objects.
         """
 
     def intersection(c1, c2):
@@ -342,6 +348,9 @@ class IMerge(Interface):
 
         The output is a Set containing matching keys from the input
         collections.
+
+        While *c1* must be one of those types, *c2* can be any Python iterable
+        returning the correct types of objects.
         """
 
 
@@ -469,6 +478,9 @@ class IMergeIntegerKey(IMerge):
         + A Bucket or BTree from the same module (for example, an
           :class:`BTrees.IOBTree.IOBTree` for :meth:`BTrees.IOBTree.multiunion`).  The keys of the
           mapping are added to the union.
+
+        + Any iterable Python object that iterates across integers. This
+          will be slower than the above types.
 
         The union is returned as a Set from the same module (for example,
         :meth:`BTrees.IIBTree.multiunion` returns an :class:`BTrees.IIBTree.IISet`).
