@@ -33,7 +33,8 @@ class ICollection(Interface):
         """Remove all of the items from the collection."""
 
 
-# Backwards compatibility alias. To be removed in 5.0
+# Backwards compatibility alias. To be removed in 5.0.
+# Docs deprecated only in docs/api.rst.
 IReadSequence = IMinimalSequence
 
 class IKeyed(ICollection):
@@ -45,25 +46,29 @@ class IKeyed(ICollection):
         """
 
     def keys(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an :class:`~BTrees.Interfaces.IMinimalSequence` containing the keys in the collection.
+        """
+        Return an :mod:`IMinimalSequence <zope.interface.common.sequence>`
+        containing the keys in the collection.
 
-        The type of the :class:`~BTrees.Interfaces.IMinimalSequence` is not specified.  It could be a list
-        or a tuple or some other type.
+        The type of the ``IMinimalSequence`` is not specified. It
+        could be a `list` or a `tuple` or some other type.
 
         All arguments are optional, and may be specified as keyword
         arguments, or by position.
 
-        If a min is specified, then output is constrained to keys greater
-        than or equal to the given min, and, if excludemin is specified and
-        true, is further constrained to keys strictly greater than min.  A
-        min value of None is ignored. If min is None or not specified, and
-        excludemin is true, the smallest key is excluded.
+        If a *min* is specified, then output is constrained to keys
+        greater than or equal to the given min, and, if *excludemin*
+        is specified and true, is further constrained to keys strictly
+        greater than *min*. A *min* value of `None` is ignored. If
+        *min* is `None` or not specified, and *excludemin* is true,
+        the smallest key is excluded.
 
-        If a max is specified, then output is constrained to keys less than
-        or equal to the given max, and, if excludemax is specified and
-        true, is further constrained to keys strictly less than max.  A max
-        value of None is ignored.  If max is None or not specified, and
-        excludemax is true, the largest key is excluded.
+        If a *max* is specified, then output is constrained to keys
+        less than or equal to the given *max*, and, if *excludemax* is
+        specified and true, is further constrained to keys strictly
+        less than *max*. A *max* value of `None` is ignored. If *max*
+        is `None` or not specified, and *excludemax* is true, the
+        largest key is excluded.
         """
 
     def maxKey(key=None):
@@ -167,53 +172,61 @@ class IMinimalDictionary(IKeyed, IMapping):
         """
 
     def values(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an :class:`BTrees.Interfaces.IMinimalSequence` containing the values in the collection.
+        """
+        Return an :mod:`IMinimalSequence <zope.interface.common.sequence.IMinimalSequence>`
+        containing the values in the collection.
 
-        The type of the :class:`~BTrees.Interfaces.IMinimalSequence` is not specified. It could be a list
-        or a tuple or some other type.
+        The type of the ``IMinimalSequence`` is not specified. It
+        could be a `list` or a `tuple` or some other type.
 
         All arguments are optional, and may be specified as keyword
         arguments, or by position.
 
-        If a min is specified, then output is constrained to values whose
-        keys are greater than or equal to the given min, and, if excludemin
-        is specified and true, is further constrained to values whose keys
-        are strictly greater than min.  A min value of None is ignored.  If
-        min is None or not specified, and excludemin is true, the value
-        corresponding to the smallest key is excluded.
+        If a *min* is specified, then output is constrained to values
+        whose keys are greater than or equal to the given *min*, and, if
+        *excludemin* is specified and true, is further constrained to
+        values whose keys are strictly greater than *min*. A *min* value
+        of `None` is ignored. If *min* is `None` or not specified, and
+        *excludemin* is true, the value corresponding to the smallest
+        key is excluded.
 
-        If a max is specified, then output is constrained to values whose
-        keys are less than or equal to the given max, and, if excludemax is
-        specified and true, is further constrained to values whose keys are
-        strictly less than max.  A max value of None is ignored.  If max is
-        None or not specified, and excludemax is true, the value
-        corresponding to the largest key is excluded.
+        If a *max* is specified, then output is constrained to values
+        whose keys are less than or equal to the given *max*, and, if
+        *excludemax* is specified and true, is further constrained to
+        values whose keys are strictly less than *max*. A *max* value of
+        `None` is ignored. If *max* is `None` or not specified, and
+        *excludemax* is true, the value corresponding to the largest key
+        is excluded.
         """
 
     def items(min=None, max=None, excludemin=False, excludemax=False):
-        """Return an ``IMinimalSequence`` containing the items in the collection.
+        """
+        Return an ``IMinimalSequence`` containing the items in the
+        collection.
 
-        An item is a 2-tuple, a (key, value) pair.
+        An item is a 2-tuple, a ``(key, value)`` pair.
 
-        The type of the ``IMinimalSequence`` is not specified.  It could be a list
-        or a tuple or some other type.
+        The type of the ``IMinimalSequence`` is not specified. It
+        could be a `list` or a `tuple` or some other type.
 
         All arguments are optional, and may be specified as keyword
         arguments, or by position.
 
-        If a min is specified, then output is constrained to items whose
-        keys are greater than or equal to the given min, and, if excludemin
-        is specified and true, is further constrained to items whose keys
-        are strictly greater than min.  A min value of None is ignored.  If
-        min is None or not specified, and excludemin is true, the item with
-        the smallest key is excluded.
+        If a *min* is specified, then output is constrained to items
+        whose keys are greater than or equal to the given *min*, and,
+        if *excludemin* is specified and true, is further constrained
+        to items whose keys are strictly greater than *min*. A *min*
+        value of `None` is ignored. If *min* is `None` or not
+        specified, and *excludemin* is true, the item with the
+        smallest key is excluded.
 
-        If a max is specified, then output is constrained to items whose
-        keys are less than or equal to the given max, and, if excludemax is
-        specified and true, is further constrained to items whose keys are
-        strictly less than max.  A max value of None is ignored.  If max is
-        None or not specified, and excludemax is true, the item with the
-        largest key is excluded.
+        If a *max* is specified, then output is constrained to items
+        whose keys are less than or equal to the given *max*, and, if
+        *excludemax is specified and true, is further constrained to
+        items whose keys are strictly less than *max*. A *max* value
+        of `None` is ignored. If *max* is `None` or not specified, and
+        *excludemax* is true, the item with the largest key is
+        excluded.
         """
 
 class IDictionaryIsh(IMinimalDictionary):

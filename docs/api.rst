@@ -14,7 +14,22 @@ Protocol APIs
    definition is the same.
 
    Similarly, ``IReadSequence``, previously defined here,
-   has been replaced with :class:`zope.interface.common.sequence.IMinimalSequence`.
+   has been replaced with
+   :mod:`zope.interface.common.sequence.IMinimalSequence <zope.interface.common.sequence>`.
+
+.. caution::
+
+   Before version 4.8.0, most of these interfaces served as
+   documentation only, and were *not* implemented by the classes of
+   this package. For example, :class:`BTrees.OOBTree.BTree` did *not*
+   implement `IBTree`. (The exceptions were the :class:`IBTreeModule`
+   and :class:`IBTreeFamily` families of interfaces and
+   implementations.)
+
+   Beginning with version 4.8.0, objects implement the expected
+   interface; the ``BTree`` classes implement ``IBTree``, the set
+   classes implement the appropriate set interface and so on.
+
 
 .. autointerface:: ICollection
 .. autointerface:: IKeyed

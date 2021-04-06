@@ -139,6 +139,8 @@ class Base(ZODBAccess, SignedMixin):
         _skip_if_pure_py_and_py_test(self)
 
     def testProvidesInterface(self):
+        from zope.interface import providedBy
+        from zope.interface.common.sequence import IMinimalSequence
         from zope.interface.verify import verifyObject
         t = self._makeOne()
         self._populate(t, 10)
@@ -147,17 +149,14 @@ class Base(ZODBAccess, SignedMixin):
         __traceback_info__ = type(t)
         verifyObject(self._getTargetInterface(), t)
 
-        if hasattr(t, 'keys'):
-            from BTrees.Interfaces import IReadSequence
-            keys = t.keys()
-            if type(keys) not in (tuple, list):
-                verifyObject(IReadSequence, keys)
-
-        if hasattr(t, 'values'):
-            from BTrees.Interfaces import IReadSequence
-            values = t.values()
-            if type(values) not in (tuple, list):
-                verifyObject(IReadSequence, values)
+        for meth in ('keys', 'values'):
+            if providedBy(t).get(meth):
+                # The interface says it should be here,
+                # make sure it is. This will be things
+                # like Tree, Bucket, Set.
+                seq = getattr(t, meth)()
+                if type(seq) not in (tuple, list):
+                    verifyObject(IMinimalSequence, seq)
 
     def testPersistentSubclass(self):
         # Can we subclass this and Persistent?
