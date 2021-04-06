@@ -52,6 +52,11 @@ env:
   PYTHONDEVMODE: 1
   PYTHONFAULTHANDLER: 1
   ZOPE_INTERFACE_STRICT_IRO: 1
+  # Require C extensions; this will be disabled later for
+  # PyPy because zope.interface through at least 5.3
+  # tries to import its C module even on PyPy with this, but
+  # the wheels tend not to have it.
+  PURE_PYTHON: 0
 
   PIP_UPGRADE_STRATEGY: eager
   # Don't get warnings about Python 2 support being deprecated. We
@@ -132,7 +137,12 @@ jobs:
         run: |
           pip install -U pip
           pip install -U setuptools wheel twine
-          pip install -U coveralls coverage
+          pip install -U coveralls coverage persistent
+
+      - name: Set pure Python
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
+        run: |
+          echo PURE_PYTHON=1 >> $GITHUB_ENV
 
       - name: Build BTrees
         run: |
@@ -198,6 +208,10 @@ jobs:
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      - name: Set pure Python
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
+        run: |
+          echo PURE_PYTHON=1 >> $GITHUB_ENV
 
       - name: Download BTrees wheel
         uses: actions/download-artifact@v2

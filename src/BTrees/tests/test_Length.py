@@ -67,9 +67,9 @@ class TestLength(unittest.TestCase):
         import sys
         try:
             length = self._makeOne(sys.maxint)
-        except AttributeError: #pragma NO COVER Py3k
+        except AttributeError: # pragma: no cover Py3k
             return
-        else: #pragma NO COVER Py2
+        else: # pragma: no cover Py2
             self.assertEqual(length(), sys.maxint)
             self.assertTrue(type(length()) is int)
             length.change(+1)
@@ -80,9 +80,9 @@ class TestLength(unittest.TestCase):
         import sys
         try:
             minint = (-sys.maxint) - 1
-        except AttributeError: #pragma NO COVER Py3k
+        except AttributeError: # pragma: no cover Py3k
             return
-        else: #pragma NO COVER Py2
+        else: # pragma: no cover Py2
             length = self._makeOne(minint)
             self.assertEqual(length(), minint)
             self.assertTrue(type(length()) is int)

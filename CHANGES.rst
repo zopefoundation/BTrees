@@ -21,6 +21,14 @@
 
 - Build and upload aarch64 wheels.
 
+- Make a value of ``0`` in the ``PURE_PYTHON`` environment variable
+  require the C extensions (except on PyPy). Previously, and if this
+  variable is unset, missing or unusable C extensions would be
+  silently ignored. With this variable set to ``0``, an
+  ``ImportError`` will be raised if the C extensions are unavailable.
+  See `issue 156
+  <https://github.com/zopefoundation/BTrees/issues/156>`_.
+
 4.7.2 (2020-04-07)
 ==================
 

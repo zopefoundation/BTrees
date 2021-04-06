@@ -21,7 +21,7 @@ from unittest import skip
 
 
 from BTrees._compat import PY3
-from BTrees._compat import PURE_PYTHON
+from BTrees._compat import _c_optimizations_ignored
 from BTrees._compat import PYPY
 from BTrees._base   import _tp_name
 
@@ -45,13 +45,13 @@ if platform.architecture()[0] == '32bit':
 else:
     _skip_on_32_bits = _no_op
 
-if PURE_PYTHON:
+if _c_optimizations_ignored():
     skipOnPurePython = skip("Not on Pure Python")
 else:
     skipOnPurePython = _no_op
 
 def _skip_if_pure_py_and_py_test(self):
-    if PURE_PYTHON and 'Py' in type(self).__name__:
+    if _c_optimizations_ignored() and 'Py' in type(self).__name__:
         # No need to run this again. The "C" tests will catch it.
         # This relies on the fact that we always define tests in pairs,
         # one normal/C and one with Py in the name for the Py test.
@@ -121,7 +121,7 @@ class ZODBAccess(object):
         transaction.abort()
         root._p_jar.close()
 
-    
+
 class Base(ZODBAccess, SignedMixin):
     # Tests common to all types: sets, buckets, and BTrees
 
@@ -165,7 +165,7 @@ class Base(ZODBAccess, SignedMixin):
         self.assertNotIn('_', module_name)
         self.assertIs(getattr(module, class_name), kind)
 
-        if not PURE_PYTHON and 'Py' not in type(self).__name__:
+        if not _c_optimizations_ignored() and 'Py' not in type(self).__name__:
             self.assertIsNot(getattr(module, class_name + 'Py'), kind)
 
     @_skip_wo_ZODB
@@ -1624,21 +1624,21 @@ class BTreeTests(MappingBase):
         # t.__getstate__(), or t[0]=1 corrupt memory and crash.
         with self.assertRaises(TypeError) as exc:
             t.__setstate__(
-                    (
-                        (xchild,), # child0 is neither tree nor bucket
-                        b
-                    )
+                (
+                    (xchild,), # child0 is neither tree nor bucket
+                    b
                 )
+            )
         self.assertEqual(str(exc.exception), typeErrOK)
 
         # if the following is allowed, e.g. t[5]=1 corrupts memory and crash.
         with self.assertRaises(TypeError) as exc:
             t.__setstate__(
-                    (
-                        (b, 4, xchild),
-                        b
-                    )
+                (
+                    (b, 4, xchild),
+                    b
                 )
+            )
         self.assertEqual(str(exc.exception), typeErrOK)
 
 
@@ -2590,7 +2590,7 @@ class MultiUnion(SignedMixin):
 
     def testBigInput(self):
         N = 100000
-        if (PURE_PYTHON or 'Py' in type(self).__name__) and not PYPY:
+        if (_c_optimizations_ignored() or 'Py' in type(self).__name__) and not PYPY:
             # This is extremely slow in CPython implemented in Python,
             # taking 20s or more on a 2015-era laptop
             N = N // 10

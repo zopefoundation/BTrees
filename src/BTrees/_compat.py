@@ -15,13 +15,9 @@ import os
 import sys
 
 PYPY = hasattr(sys, 'pypy_version_info')
-# We can and do build the C extensions on PyPy, but
-# as of Persistent 4.2.5 the persistent C extension is not
-# built on PyPy, so importing our C extension will fail anyway.
-PURE_PYTHON = os.environ.get('PURE_PYTHON', PYPY)
 
 
-if sys.version_info[0] < 3: #pragma NO COVER Python2
+if sys.version_info[0] < 3: # pragma: no cover Python2
 
     PY2 = True
     PY3 = False
@@ -43,7 +39,7 @@ if sys.version_info[0] < 3: #pragma NO COVER Python2
     def _ascii(x):
         return bytes(x)
 
-else: #pragma NO COVER Python3
+else: # pragma: no cover Python3
 
     PY2 = False
     PY3 = True
@@ -67,18 +63,80 @@ else: #pragma NO COVER Python3
         return bytes(x, 'ascii')
 
 
-def import_c_extension(mod_globals):
+def _c_optimizations_required():
+    """
+    Return a true value if the C optimizations are required.
+
+    This uses the ``PURE_PYTHON`` variable as documented in `import_c_extension`.
+    """
+    pure_env = os.environ.get('PURE_PYTHON')
+    require_c = pure_env == "0"
+    return require_c
+
+
+def _c_optimizations_available(module_name):
+    """
+    Return the C optimization module, if available, otherwise
+    a false value.
+
+    If the optimizations are required but not available, this
+    raises the ImportError.
+
+    This does not say whether they should be used or not.
+    """
     import importlib
+    catch = () if _c_optimizations_required() else (ImportError,)
+    try:
+        return importlib.import_module('BTrees._' + module_name)
+    except catch: # pragma: no cover
+        return False
+
+
+def _c_optimizations_ignored():
+    """
+    The opposite of `_c_optimizations_required`.
+    """
+    pure_env = os.environ.get('PURE_PYTHON')
+    return pure_env != "0" if pure_env is not None else PYPY
+
+
+def _should_attempt_c_optimizations():
+    """
+    Return a true value if we should attempt to use the C optimizations.
+
+    This takes into account whether we're on PyPy and the value of the
+    ``PURE_PYTHON`` environment variable, as defined in `import_c_extension`.
+    """
+    if PYPY:
+        return False
+
+    if _c_optimizations_required():
+        return True
+    return not _c_optimizations_ignored()
+
+
+def import_c_extension(mod_globals):
+    """
+    Call this function with the globals of a module that implements
+    Python versions of a BTree family to find the C optimizations.
+
+    If the ``PURE_PYTHON`` environment variable is set to any value
+    other than ``"0"``, or we're on PyPy, ignore the C implementation.
+    If the C implementation cannot be imported, return the Python
+    version. If ``PURE_PYTHON`` is set to ``"0"``, *require* the C
+    implementation (let the ImportError propagate); the exception again
+    is PyPy, where we never use the C extension (although it builds here, the
+    ``persistent`` library doesn't provide native extensions for PyPy).
+
+    """
     c_module = None
     module_name = mod_globals['__name__']
     assert module_name.startswith('BTrees.')
     module_name = module_name.split('.')[1]
-    if not PURE_PYTHON:
-        try:
-            c_module = importlib.import_module('BTrees._' + module_name)
-        except ImportError:
-            pass
-    if c_module is not None:
+    if _should_attempt_c_optimizations():
+        c_module = _c_optimizations_available(module_name)
+
+    if c_module:
         new_values = dict(c_module.__dict__)
         new_values.pop("__name__", None)
         new_values.pop('__file__', None)

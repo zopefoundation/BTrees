@@ -24,7 +24,7 @@ def non_negative(int_val):
     return int_val
 
 
-def positive_id(obj): #pragma NO COVER
+def positive_id(obj): # pragma: no cover
     """Return id(obj) as a non-negative integer."""
     return non_negative(id(obj))
 
