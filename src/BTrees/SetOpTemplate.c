@@ -35,6 +35,45 @@ nextKeyAsSet(SetIteration *i)
 }
 #endif
 
+static int nextGenericKeyIter(SetIteration* i)
+{
+    PyObject* next = NULL;
+    int copied = 1;
+
+    if (i->position < 0)
+    {
+        /* Already finished. Do nothing. */
+        return 0;
+    }
+
+    if (i->position)
+    {
+        /* If we've been called before, release the key cache. */
+        DECREF_KEY(i->key);
+    }
+
+    i->position += 1;
+    next = PyIter_Next(i->set);
+    if (next == NULL)
+    {
+        /* Either an error, or the end of iteration. */
+        if (!PyErr_Occurred())
+        {
+            /* End of iteration. */
+            i->position = -1;
+            return 0;
+        }
+        /* Propagate the error. */
+        return -1;
+    }
+
+    COPY_KEY_FROM_ARG(i->key, next, copied);
+    Py_DECREF(next);
+    UNLESS(copied) return -1;
+    INCREF_KEY(i->key);
+    return 0;
+}
+
 /* initSetIteration
  *
  * Start the set iteration protocol.  See the comments at struct SetIteration.
@@ -128,6 +167,16 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
       i->next = nextKeyAsSet;
     }
 #endif
+  else if (!useValues)
+    {
+        /* If we don't need keys and values, we can just use an iterator. */
+        /* Error detection on types is moved to the next() call. */
+        /* This is slower, but very convenient. If it raises a TypeError, */
+        /* let that propagate. */
+        i->set = PyObject_GetIter(s); /* Return a new reference. */
+        UNLESS(i->set) return -1;
+        i->next = nextGenericKeyIter;
+    }
   else
     {
       PyErr_SetString(PyExc_TypeError, "set operation: invalid argument, cannot iterate");

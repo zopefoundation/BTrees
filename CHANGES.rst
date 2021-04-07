@@ -5,6 +5,14 @@
 4.8.0 (unreleased)
 ==================
 
+- Make the ``multiunion``, ``union``, ``intersection``, and
+  ``difference`` functions accept arbitrary Python iterables (that
+  iterate across the correct types). Previously, the Python
+  implementation allowed this, but the C implementation only allowed
+  objects (like ``TreeSet`` or ``Bucket``) defined in the same module
+  providing the function. See `issue 24
+  <https://github.com/zopefoundation/BTrees/issues/24>`_.
+
 - Fix persistency bug in the Python version
   (`#118 <https://github.com/zopefoundation/BTrees/issues/118>`_).
 

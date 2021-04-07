@@ -328,6 +328,12 @@ class IMerge(Interface):
 
         If neither c1 nor c2 is None, the output is a Set if c1 is a Set or
         TreeSet, and is a Bucket if c1 is a Bucket or BTree.
+
+        While *c1* must be one of those types, *c2* can be any Python iterable
+        returning the correct types of objects.
+
+        .. versionchanged:: 4.8.0
+           Add support for *c2* to be an arbitrary iterable.
         """
 
     def union(c1, c2):
@@ -338,6 +344,12 @@ class IMerge(Interface):
 
         The output is a Set containing keys from the input
         collections.
+
+        *c1* and *c2* can be any Python iterables returning the
+        correct type of objects.
+
+        .. versionchanged:: 4.8.0
+           Add support for arbitrary iterables.
         """
 
     def intersection(c1, c2):
@@ -348,6 +360,12 @@ class IMerge(Interface):
 
         The output is a Set containing matching keys from the input
         collections.
+
+        *c1* and *c2* can be any Python iterables returning the
+        correct type of objects.
+
+        .. versionchanged:: 4.8.0
+           Add support for arbitrary iterables.
         """
 
 
@@ -476,6 +494,9 @@ class IMergeIntegerKey(IMerge):
           :class:`BTrees.IOBTree.IOBTree` for :meth:`BTrees.IOBTree.multiunion`).  The keys of the
           mapping are added to the union.
 
+        + Any iterable Python object that iterates across integers. This
+          will be slower than the above types.
+
         The union is returned as a Set from the same module (for example,
         :meth:`BTrees.IIBTree.multiunion` returns an :class:`BTrees.IIBTree.IISet`).
 
@@ -484,6 +505,9 @@ class IMergeIntegerKey(IMerge):
         all the integers in all the inputs are sorted via a single
         linear-time radix sort, then duplicates are removed in a second
         linear-time pass.
+
+        .. versionchanged:: 4.8.0
+           Add support for arbitrary iterables of integers.
         """
 
 class IBTreeFamily(Interface):
