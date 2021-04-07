@@ -94,7 +94,7 @@ release = rqmt.version
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+default_role = "obj"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
@@ -274,7 +274,8 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ('https://docs.python.org/3/', None),
-    "persistent": ('https://persistent.readthedocs.io/en/latest/', None),
-    "ZODB": ("https://zodb-docs.readthedocs.io/en/latest/", None),
+    'https://docs.python.org/3/': None,
+    'https://persistent.readthedocs.io/en/latest/': None,
+    "https://zodb.readthedocs.io/en/latest/": None,
+    "https://zopeinterface.readthedocs.io/en/latest/": None,
 }

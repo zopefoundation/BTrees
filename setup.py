@@ -169,7 +169,8 @@ REQUIRES = [
     # 4.1.0 is the first version that PURE_PYTHON can run
     # ZODB tests
     'persistent >= 4.1.0',
-    'zope.interface',
+    # 5.0.0 added zope.interface.common.collections
+    'zope.interface >= 5.0.0',
 ]
 
 TESTS_REQUIRE = [

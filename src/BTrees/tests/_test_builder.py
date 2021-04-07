@@ -220,7 +220,15 @@ class ClassBuilder(object):
         self._fixup_and_store_class(_FilteredModuleProxy(self.btree_module, ''), '', Test)
 
     def _create_type_tests(self, btree_module, type_name, test_bases):
+        from BTrees import Interfaces as interfaces
         tree = getattr(btree_module, type_name)
+        iface = {
+            'BTree': interfaces.IBTree,
+            'Bucket': interfaces.IMinimalDictionary,
+            'Set': interfaces.ISet,
+            'TreeSet': interfaces.ITreeSet
+        }[type_name]
+
         for test_base in test_bases:
             if not self._needs_test(tree, test_base):
                 continue
@@ -230,6 +238,7 @@ class ClassBuilder(object):
             test_cls = type(test_name, bases, {
                 '__module__': self.test_module,
                 '_getTargetClass': lambda _, t=tree: t,
+                '_getTargetInterface': lambda _, i=iface: i,
                 'getTwoKeys': self.key_type.getTwoExamples,
                 'getTwoValues': self.value_type.getTwoExamples,
                 'key_type': self.key_type,

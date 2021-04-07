@@ -52,6 +52,7 @@ env:
   PYTHONDEVMODE: 1
   PYTHONFAULTHANDLER: 1
   ZOPE_INTERFACE_STRICT_IRO: 1
+  ZOPE_INTERFACE_LOG_CHANGED_IRO: 1
   # Require C extensions; this will be disabled later for
   # PyPy because zope.interface through at least 5.3
   # tries to import its C module even on PyPy with this, but

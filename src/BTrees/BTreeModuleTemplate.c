@@ -742,6 +742,9 @@ module_init(void)
     if (PyDict_SetItemString(mod_dict, "TreeSet",
                              (PyObject *)&TreeSetType) < 0)
         return NULL;
+    if (PyDict_SetItemString(mod_dict, "TreeItems",
+                             (PyObject *)&BTreeItemsType) < 0)
+        return NULL;
 #if defined(ZODB_64BIT_INTS) && defined(NEED_LONG_LONG_SUPPORT)
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_True) < 0)
         return NULL;
