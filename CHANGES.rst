@@ -19,8 +19,9 @@
 - Fix ``Tree.__setstate__`` to no longer accept children besides
   tree or bucket types to prevent crashes. See `PR 143
   <https://github.com/zopefoundation/BTrees/pull/143>`_ for details.
-- BTrees, TreeSet, Set and Buckets implements the ``__and__``,
-  ``__or__`` and ``__sub__`` as shortcuts for
+
+- Make BTrees, TreeSet, Set and Buckets implements the ``__and__``,
+  ``__or__`` and ``__sub__`` special methods as shortcuts for
   ``BTrees.Interfaces.IMerge.intersection``,
   ``BTrees.Interfaces.IMerge.union`` and
   ``BTrees.Interfaces.IMerge.difference``.
@@ -58,6 +59,12 @@
   ``ZOPE_INTERFACE_USE_LEGACY_IRO=1``. See `PR 159
   <https://github.com/zopefoundation/BTrees/pull/159>`_ for all the
   interface updates.
+
+- Fix the ``get``, ``setdefault`` and ``pop`` methods, as well as the
+  ``in`` operator, to not suppress ``POSKeyError`` if the object or
+  subobjects are corrupted. Previously, such errors were logged by
+  ZODB, but not propagated. See `issue 161
+  <https://github.com/zopefoundation/BTrees/issues/161>`_.
 
 4.7.2 (2020-04-07)
 ==================

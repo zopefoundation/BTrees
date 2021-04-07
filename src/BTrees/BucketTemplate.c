@@ -1300,8 +1300,7 @@ _bucket_setstate(Bucket *self, PyObject *state)
     }
 
     len = PyTuple_Size(items);
-    if (len < 0)
-        return -1;
+    ASSERT(len >= 0, "_bucket_setstate: items tuple has negative size", -1);
     len /= 2;
 
     for (i = self->len; --i >= 0; ) {
@@ -1407,7 +1406,7 @@ bucket_setdefault(Bucket *self, PyObject *args)
     /* The key isn't in the bucket.  If that's not due to a KeyError exception,
      * pass back the unexpected exception.
      */
-    if (! PyErr_ExceptionMatches(PyExc_KeyError))
+    if (! BTree_ShouldSuppressKeyError())
         return NULL;
     PyErr_Clear();
 
@@ -1448,7 +1447,7 @@ bucket_pop(Bucket *self, PyObject *args)
     /* The key isn't in the bucket.  If that's not due to a KeyError exception,
      * pass back the unexpected exception.
      */
-    if (! PyErr_ExceptionMatches(PyExc_KeyError))
+    if (! BTree_ShouldSuppressKeyError())
         return NULL;
 
     if (failobj != NULL) {
@@ -1484,7 +1483,7 @@ bucket_contains(Bucket *self, PyObject *key)
         result = INT_AS_LONG(asobj) ? 1 : 0;
         Py_DECREF(asobj);
     }
-    else if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+    else if (BTree_ShouldSuppressKeyError()) {
         PyErr_Clear();
         result = 0;
     }
@@ -1523,7 +1522,7 @@ bucket_getm(Bucket *self, PyObject *args)
         PyErr_Clear();
         PyErr_SetObject(PyExc_KeyError, key);
     }
-    if (!PyErr_ExceptionMatches(PyExc_KeyError))
+    if (!BTree_ShouldSuppressKeyError())
         return NULL;
     PyErr_Clear();
     Py_INCREF(d);
