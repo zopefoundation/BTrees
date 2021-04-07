@@ -25,9 +25,10 @@ class OOBTreeTest(BTreeTests):
                          [(y, x) for x, y in reversed(ITEMS[22:])])
 
     def testRejectDefaultComparisonOnSet(self):
-        # Check that passing int keys w default comparison fails.
-        # Only applies to new-style class instances. Old-style
-        # instances are too hard to introspect.
+        # Check that passing in keys w default comparison fails. Only
+        # applies to new-style class instances if we're using the C
+        # extensions; old-style instances are too hard to introspect
+        # in C.
 
         # This is white box because we know that the check is being
         # used in a function that's used in lots of places.
@@ -36,13 +37,22 @@ class OOBTreeTest(BTreeTests):
         from .._compat import PY2
         t = self._makeOne()
 
+        class OldStyle:
+            pass
+
+        if self._getTargetClass() is OOBTree.OOBTreePy or not PY2:
+            with self.assertRaises(TypeError):
+                t[OldStyle()] = 1
+
         class C(object):
             pass
 
         with self.assertRaises(TypeError) as raising:
             t[C()] = 1
 
-        self.assertEqual(raising.exception.args[0], "Object has default comparison")
+        self.assertEqual(
+            raising.exception.args[0],
+            "Object of class C has default comparison")
 
         if PY2: # we only check for __cmp__ on Python2
 
@@ -60,6 +70,14 @@ class OOBTreeTest(BTreeTests):
 
         c = With___lt__()
         t[c] = 1
+        t.clear()
+
+        class With___lt__Old:
+            def __lt__(*args):
+                return 1
+
+        c = With___lt__Old()
+        t[c] = 1
 
         t.clear()
 
@@ -72,6 +90,16 @@ class OOBTreeTest(BTreeTests):
         self.assertEqual(t.get(C(), 42), 42)
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
+
+
+    def testNewStyleClassWithCustomMetaClassAllowed(self):
+        class Meta(type):
+            def __lt__(cls, other):
+                return 1
+
+        cls = Meta('Class', (object,), {})
+        m = self._makeOne()
+        m[cls] = self.getTwoValues()[0]
 
     def test_None_is_smallest(self):
         t = self._makeOne()

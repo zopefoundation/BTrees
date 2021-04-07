@@ -5,6 +5,13 @@
 4.8.0 (unreleased)
 ==================
 
+- Make Python 2 forbid the use of type objects as keys (unless a
+  custom metaclass is used that implements comparison as required by
+  BTrees.) On Python 3, types are not orderable so they were already
+  forbidden, but on Python 2 types can be ordered by memory address,
+  which makes them unsuitable for use as keys. See `issue
+  <https://github.com/zopefoundation/BTrees/issues/153>`_.
+
 - Make the ``multiunion``, ``union``, ``intersection``, and
   ``difference`` functions accept arbitrary Python iterables (that
   iterate across the correct types). Previously, the Python

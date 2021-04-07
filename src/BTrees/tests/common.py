@@ -1143,6 +1143,32 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
     def test_assign_value_type_None(self):
         self.__test_value(None)
 
+    def testNewStyleClassAsKeyNotAllowed(self):
+        m = self._makeOne()
+        class New(object):
+            pass
+
+        with self.assertRaises(TypeError):
+            m[New] = self.getTwoValues()[0]
+
+    def testOldStyleClassAsKeyNotALlowed(self):
+        m = self._makeOne()
+        class Old: # Python 2: Old style class
+            pass
+
+        with self.assertRaises(TypeError):
+            m[Old] = self.getTwoValues()[0]
+
+    def testNewStyleClassWithCustomMetaClassNotAllowed(self):
+
+        class Meta(type):
+            pass
+
+        cls = Meta('Class', (object,), {})
+        m = self._makeOne()
+        with self.assertRaises(TypeError):
+            m[cls] = self.getTwoValues()[0]
+
     def testEmptyFirstBucketReportedByGuido(self):
         # This was for Integer keys
         from .._compat import xrange
