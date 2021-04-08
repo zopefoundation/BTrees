@@ -468,6 +468,23 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
         from BTrees._compat import collections_abc
         return collections_abc.MutableMapping
 
+    def test_popitem(self):
+        t = self._makeOne()
+        # Empty
+        with self.assertRaises(KeyError):
+            t.popitem()
+
+        self._populate(t, 2000)
+        self.assertEqual(len(t), 2000)
+        for i in range(2000):
+            self.assertEqual(t.popitem(), (i, i))
+            self.assertEqual(len(t), 2000 - i - 1)
+
+        # Back to empty
+        self.assertEqual(len(t), 0)
+        with self.assertRaises(KeyError):
+            t.popitem()
+
     def testShortRepr(self):
         # test the repr because buckets have a complex repr implementation
         # internally the cutoff from a stack allocated buffer to a heap

@@ -2090,7 +2090,7 @@ BTree_popitem(BTree* self, PyObject* args)
     }
 
     Py_DECREF(key);
-    return result_val;
+    return result;
 }
 
 

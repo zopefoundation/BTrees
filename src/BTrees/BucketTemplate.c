@@ -1496,7 +1496,7 @@ bucket_popitem(Bucket* self, PyObject* args)
     }
 
     Py_DECREF(key);
-    return result_val;
+    return result;
 }
 
 
