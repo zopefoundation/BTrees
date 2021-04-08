@@ -105,6 +105,82 @@ class ISetMutable(IKeyed):
     def update(seq):
         """Add the items from the given sequence to the set."""
 
+    def __and__(other):
+        """
+        Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __iand__(other):
+        """
+        As for :meth:`set.intersection_update`: Update this object,
+        keeping only elements found in both it and other.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __or__(other):
+        """
+        Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __ior__(other):
+        """
+        As for :meth:`set.update`: Update this object, adding
+        elements from *other*.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __sub__(other):
+        """
+        Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference`
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __isub__(other):
+        """
+        As for :meth:`set.difference_update`: Update this object,
+        removing elements found in *other*.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def isdisjoint(other):
+        """
+        As for :meth:`set.isdisjoint`: Return True if the set has no
+        elements in common with other.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def discard(key):
+        """
+        As for :meth:`set.discard`: Remove the *key* from the set,
+        but only if it is present.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def pop():
+        """
+        As for :meth:`set.pop`: Remove and return an arbitrary element;
+        raise :exc:`KeyError` if the object is empty.
+
+        .. versionadded:: 4.8.0
+        """
+
+    def __ixor__(other):
+        """
+        As for :meth:`set.symmetric_difference_update`: Update this object,
+        keeping only elements found in either set but not in both.
+
+        .. versionadded:: 4.8.0
+        """
 
 class IKeySequence(IKeyed, ISized):
 
@@ -117,26 +193,14 @@ class IKeySequence(IKeyed, ISized):
 
 
 class ISet(ISetMutable, IKeySequence):
-    def __and__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
-
-    def __or__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
-
-    def __sub__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
-
+    """
+    A set of unique items stored in a single persistent object.
+    """
 
 class ITreeSet(ISetMutable):
-    def __and__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.intersection`"""
-
-    def __or__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.union`"""
-
-    def __sub__(other):
-        """Shortcut for :meth:`~BTrees.Interfaces.IMerge.difference"""
-
+    """
+    A set of unique items stored in a tree of persistent objects.
+    """
 
 
 class IMinimalDictionary(IKeyed, IMapping):
@@ -264,6 +328,14 @@ class IDictionaryIsh(IMinimalDictionary):
 
         If key is not found, d is returned if given, otherwise :class:`KeyError` is
         raised.
+        """
+
+    def popitem():
+        """
+        D.popitem() -> (k, v), remove and return some (key, value) pair
+        as a 2-tuple; but raise KeyError if D is empty.
+
+        .. versionadded:: 4.8.0
         """
 
 

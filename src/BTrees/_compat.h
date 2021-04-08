@@ -16,6 +16,11 @@
 #undef INT_CHECK
 #endif
 
+#ifndef Py_RETURN_NOTIMPLEMENTED
+#define Py_RETURN_NOTIMPLEMENTED \
+    return Py_INCREF(Py_NotImplemented), Py_NotImplemented
+#endif
+
 #if PY_MAJOR_VERSION >= 3
 
 #define PY3K

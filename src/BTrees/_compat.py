@@ -62,6 +62,13 @@ else: # pragma: no cover Python3
     def _ascii(x):
         return bytes(x, 'ascii')
 
+try:
+    from collections import abc
+except ImportError:
+    import collections as abc
+
+collections_abc = abc
+del abc
 
 def _c_optimizations_required():
     """

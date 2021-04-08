@@ -128,6 +128,7 @@ def populate_module(mod_globals,
                     interface, module=None):
     from . import Interfaces as interfaces
     from ._compat import import_c_extension
+    from ._compat import collections_abc
     from ._base import _fix_pickle
 
     module_name = mod_globals['__name__']
@@ -170,6 +171,23 @@ def populate_module(mod_globals,
     }.items():
         classImplements(mod_globals[cls_name], iface)
         classImplements(mod_globals[cls_name + 'Py'], iface)
+
+    for cls_name, abc in {
+            'BTree': collections_abc.MutableMapping,
+            'Bucket': collections_abc.MutableMapping,
+            'Set': collections_abc.MutableSet,
+            'TreeSet': collections_abc.MutableSet,
+    }.items():
+        abc.register(mod_globals[cls_name])
+        # Because of some quirks in the implementation of ABCMeta.__instancecheck__,
+        # and the shenanigans we currently do to make Python classes pickle without the
+        # 'Py' suffix, it's not actually necessary to register the Python version of the
+        # class. Specifically, ABCMeta asks for the object's ``__class__`` instead of
+        # using ``type()``, and our objects have a ``@property`` for ``__class__`` that returns
+        # the C version.
+        #
+        # That's too many coincidences to rely on though.
+        abc.register(mod_globals[cls_name + 'Py'])
 
 
 def create_module(prefix):

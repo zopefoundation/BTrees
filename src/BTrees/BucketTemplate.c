@@ -1465,6 +1465,41 @@ bucket_pop(Bucket *self, PyObject *args)
     return NULL;
 }
 
+static PyObject*
+bucket_popitem(Bucket* self, PyObject* args)
+{
+    PyObject* key = NULL;
+    PyObject* pop_args = NULL;
+    PyObject* result_val = NULL;
+    PyObject* result = NULL;
+
+    if (PyTuple_Size(args) != 0) {
+        PyErr_SetString(PyExc_TypeError, "popitem(): Takes no arguments.");
+        return NULL;
+    }
+
+    key = Bucket_minKey(self, args); /* reuse existing empty tuple. */
+    if (!key) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_KeyError, "popitem(): empty bucket.");
+        return NULL;
+    }
+
+    pop_args = PyTuple_Pack(1, key);
+    if (pop_args) {
+        result_val = bucket_pop(self, pop_args);
+        Py_DECREF(pop_args);
+        if (result_val) {
+            result = PyTuple_Pack(2, key, result_val);
+            Py_DECREF(result_val);
+        }
+    }
+
+    Py_DECREF(key);
+    return result_val;
+}
+
+
 /* Search bucket self for key.  This is the sq_contains slot of the
  * PySequenceMethods.
  *
@@ -1720,6 +1755,10 @@ static struct PyMethodDef Bucket_methods[] = {
      "D.pop(k[, d]) -> v, remove key and return the corresponding value.\n\n"
      "If key is not found, d is returned if given, otherwise KeyError\n"
      "is raised."},
+
+    {"popitem", (PyCFunction)bucket_popitem, METH_VARARGS,
+     "D.popitem() -> (k, v), remove and return some (key, value) pair\n"
+     "as a 2-tuple; but raise KeyError if D is empty."},
 
     {"iterkeys", (PyCFunction) Bucket_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
