@@ -508,6 +508,23 @@ static char *search_keywords[] = {"min", "max",
                                   "excludemin", "excludemax",
                                   0};
 
+/**
+ * Call this instead of using `PyErr_ExceptionMatches(PyExc_KeyError)`
+ * when you intend to suppress the KeyError.
+ *
+ * We want to match only exactly ``PyExc_KeyError``, and not subclasses
+ * such as ``ZODB.POSException.POSKeyError``.
+ */
+static int
+BTree_ShouldSuppressKeyError()
+{
+    PyObject* exc_type = PyErr_Occurred(); /* Returns borrowed reference. */
+    if (exc_type && exc_type == PyExc_KeyError) {
+        return 1;
+    }
+    return 0;
+}
+
 #include "BTreeItemsTemplate.c"
 #include "BucketTemplate.c"
 #include "SetTemplate.c"

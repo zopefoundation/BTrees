@@ -1169,6 +1169,40 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
                 # of twos complement binary integers
                 self.assertEqual(9, len(b))
 
+    @_skip_wo_ZODB
+    def testAccessRaisesPOSKeyErrorOnSelf(self):
+        # We don't hide a POSKeyError that happens when
+        # accessing the object itself in `get()`.
+        # See https://github.com/zopefoundation/BTrees/issues/161
+        from ZODB.POSException import POSKeyError
+        import transaction
+        transaction.begin()
+        m = self._makeOne()
+        root = self._getRoot()
+        root.m = m
+        transaction.commit()
+        conn = root._p_jar
+        # Ghost the object
+        conn.cacheMinimize()
+        self.assertEqual(m._p_status, "ghost")
+        # Remove the backing data
+        self.db._storage._data.clear()
+
+        transaction.begin()
+        try:
+            with self.assertRaises(POSKeyError):
+                m.get(1)
+
+            with self.assertRaises(POSKeyError):
+                m.setdefault(1, 1)
+
+            with self.assertRaises(POSKeyError):
+                _ = 1 in m
+
+            with self.assertRaises(POSKeyError):
+                m.pop(1)
+        finally:
+            self._closeRoot(root)
 
 class BTreeTests(MappingBase):
     # Tests common to all BTrees
@@ -1190,6 +1224,45 @@ class BTreeTests(MappingBase):
         from BTrees.check import check
         t._check()
         check(t)
+
+    @_skip_wo_ZODB
+    def testAccessRaisesPOSKeyErrorOnNested(self):
+        # We don't hide a POSKeyError that happens when
+        # accessing sub objects in `get()`.
+        # See https://github.com/zopefoundation/BTrees/issues/161
+        from ZODB.POSException import POSKeyError
+        import transaction
+        transaction.begin()
+        m = self._makeOne()
+        root = self._getRoot()
+        root.m = m
+        self._populate(m, 1000)
+        transaction.commit()
+        conn = root._p_jar
+        # Ghost the objects...
+        conn.cacheMinimize()
+        # ...but activate the tree itself, leaving the
+        # buckets ghosted
+        m._p_activate()
+
+        # Remove the backing data
+        self.db._storage._data.clear()
+
+        transaction.begin()
+        try:
+            with self.assertRaises(POSKeyError):
+                m.get(1)
+
+            with self.assertRaises(POSKeyError):
+                m.setdefault(1, 1)
+
+            with self.assertRaises(POSKeyError):
+                _ = 1 in m
+
+            with self.assertRaises(POSKeyError):
+                m.pop(1)
+        finally:
+            self._closeRoot(root)
 
     def testDeleteNoChildrenWorks(self):
         t = self._makeOne()

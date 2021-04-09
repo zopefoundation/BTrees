@@ -1205,8 +1205,7 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     }
 
     len = PyTuple_Size(items);
-    if (len < 0)
-        return -1;
+    ASSERT(len >= 0, "_BTree_setstate: items tuple has negative size", -1);
     len = (len + 1) / 2;
 
     assert(len > 0); /* If the BTree is empty, it's state is None. */
@@ -1975,7 +1974,7 @@ BTree_getm(BTree *self, PyObject *args)
         return NULL;
     if ((r=_BTree_get(self, key, 0, _BGET_REPLACE_TYPE_ERROR)))
         return r;
-    UNLESS (PyErr_ExceptionMatches(PyExc_KeyError))
+    UNLESS (BTree_ShouldSuppressKeyError())
         return NULL;
     PyErr_Clear();
     Py_INCREF(d);
@@ -1999,7 +1998,7 @@ BTree_setdefault(BTree *self, PyObject *args)
     /* The key isn't in the tree.  If that's not due to a KeyError exception,
     * pass back the unexpected exception.
     */
-    if (! PyErr_ExceptionMatches(PyExc_KeyError))
+    if (! BTree_ShouldSuppressKeyError())
         return NULL;
     PyErr_Clear();
 
@@ -2040,7 +2039,7 @@ BTree_pop(BTree *self, PyObject *args)
     /* The key isn't in the tree.  If that's not due to a KeyError exception,
     * pass back the unexpected exception.
     */
-    if (! PyErr_ExceptionMatches(PyExc_KeyError))
+    if (! BTree_ShouldSuppressKeyError())
         return NULL;
 
     if (failobj != NULL)
@@ -2078,7 +2077,7 @@ BTree_contains(BTree *self, PyObject *key)
         result = INT_AS_LONG(asobj) ? 1 : 0;
         Py_DECREF(asobj);
     }
-    else if (PyErr_ExceptionMatches(PyExc_KeyError))
+    else if (BTree_ShouldSuppressKeyError())
     {
         PyErr_Clear();
         result = 0;
