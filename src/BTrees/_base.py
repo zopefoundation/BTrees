@@ -617,7 +617,9 @@ class Bucket(_MutableMappingMixin, _BucketBase):
 class _MutableSetMixin(object):
     # Like _MutableMappingMixin, but for sets.
     def isdisjoint(self, other):
-        'Return True if two sets have a null intersection.'
+        """
+        Return True if two sets have a null intersection.
+        """
         for value in other:
             if value in self:
                 return False
