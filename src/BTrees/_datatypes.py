@@ -23,7 +23,7 @@ from struct import error as struct_error
 try:
     from abc import ABC
 except ImportError:
-    # Python < 3.4
+    # Python < 3.4 (specifically, Python 2)
     from abc import ABCMeta
     ABC = ABCMeta('ABC', (object,), {})
 
