@@ -90,7 +90,30 @@ class _Base(Persistent):
 
         _BTree_reduce_up_bound = _BTree_reduce_as
 
-class _BucketBase(_Base):
+class _ArithmeticMixin(object):
+    def __sub__(self, other):
+        return difference(self.__class__, self, other)
+
+    def __rsub__(self, other):
+        return difference(self._set_type, type(self)(other), self)
+
+    def __or__(self, other):
+        return union(self._set_type, self, other)
+
+    __ror__ = __or__
+
+    def __and__(self, other):
+        return intersection(self._set_type, self, other)
+
+    __rand__ = __and__
+
+    def __xor__(self, other):
+        return (self - other) | (other - self)
+
+    __rxor__ = __xor__
+
+
+class _BucketBase(_ArithmeticMixin, _Base):
 
     __slots__ = ('_keys',
                  '_next',
@@ -218,15 +241,6 @@ class _BucketBase(_Base):
         name = name[:-2] if name.endswith("Py") else name
         return "%s.%s(%r)" % (mod, name, items)
 
-    def __sub__(self, other):
-        return difference(self.__class__, self, other)
-
-    def __or__(self, other):
-        return union(self._set_type, self, other)
-
-    def __and__(self, other):
-        return intersection(self._set_type, self, other)
-
 
 class _SetIteration(object):
 
@@ -279,8 +293,26 @@ class _SetIteration(object):
 
         return self
 
+class _MutableMappingMixin(object):
+    # Methods defined in collections.abc.MutableMapping that
+    # Bucket and Tree should both implement and can implement
+    # the same. We don't want to extend that class though,
+    # as the C version cannot.
+    def popitem(self):
+        """
+        D.popitem() -> (k, v), remove and return some (key, value) pair
+        as a 2-tuple; but raise KeyError if D is empty.
+        """
+        try:
+            key = next(iter(self))
+        except StopIteration:
+            raise KeyError
+        value = self[key]
+        del self[key]
+        return key, value
 
-class Bucket(_BucketBase):
+
+class Bucket(_MutableMappingMixin, _BucketBase):
 
     __slots__ = ()
     _value_type = list
@@ -582,7 +614,70 @@ class Bucket(_BucketBase):
     def __repr__(self):
         return self._repr_helper(self.items())
 
-class Set(_BucketBase):
+class _MutableSetMixin(object):
+    # Like _MutableMappingMixin, but for sets.
+    def isdisjoint(self, other):
+        """
+        Return True if two sets have a null intersection.
+        """
+        for value in other:
+            if value in self:
+                return False
+        return True
+
+    def discard(self, key):
+        """
+        Remove an element from the set if it is a member.
+
+        If not, do nothing and raise no exception.
+        """
+        # Written this way to avoid catching and accidentally
+        # ignoring POSKeyError.
+        if key in self:
+            self.remove(key)
+
+    def pop(self):
+        """Return the popped value.  Raise KeyError if empty."""
+        # Get our iter first to avoid catching and accidentally
+        # ignoring POSKeyError
+        it = iter(self)
+        try:
+            value = next(it)
+        except StopIteration:
+            raise KeyError
+        self.discard(value)
+        return value
+
+    def __ior__(self, it):
+        self.update(it)
+        return self
+
+    def __iand__(self, it):
+        for value in (self - it):
+            self.discard(value)
+        return self
+
+    def __isub__(self, it):
+        if it is self:
+            self.clear()
+        else:
+            for value in it:
+                self.discard(value)
+        return self
+
+    def __ixor__(self, it):
+        if it is self:
+            self.clear()
+        else:
+            for value in it:
+                if value in self:
+                    self.discard(value)
+                else:
+                    self.add(value)
+        return self
+
+
+class Set(_MutableSetMixin, _BucketBase):
 
     __slots__ = ()
 
@@ -789,7 +884,7 @@ class _TreeItem(object):
         self.child = child
 
 
-class _Tree(_Base):
+class _Tree(_ArithmeticMixin, _Base):
 
     __slots__ = ('_data',
                  '_firstbucket',
@@ -1164,15 +1259,6 @@ class _Tree(_Base):
         r = r.replace('Py', '')
         return r
 
-    def __sub__(self, other):
-        return difference(self.__class__, self, other)
-
-    def __or__(self, other):
-        return union(self._set_type, self, other)
-
-    def __and__(self, other):
-        return intersection(self._set_type, self, other)
-
 
 def _get_simple_btree_bucket_state(state):
     if state is None:
@@ -1272,7 +1358,7 @@ class _TreeIterator(object):
         )
 
 
-class Tree(_Tree):
+class Tree(_MutableMappingMixin, _Tree):
 
     __slots__ = ()
 
@@ -1312,7 +1398,7 @@ class Tree(_Tree):
         return bool(self._set(key, value, True)[0])
 
 
-class TreeSet(_Tree):
+class TreeSet(_MutableSetMixin, _Tree):
 
     __slots__ = ()
 

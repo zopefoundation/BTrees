@@ -42,6 +42,20 @@
   of each module actually provide the interfaces defined in
   ``BTrees.Interfaces``. Previously, they provided no interfaces.
 
+- Make all the BTree and Bucket objects instances of
+  ``collections.abc.MutableMapping`` (that is, ``isinstance(btree,
+  MutableMapping)`` is now true; no actual inheritance has changed).
+  As part of this, they now provide the ``popitem()`` method.
+
+- Make all the TreeSet and Set objects instances of
+  ``collections.abc.MutableSet`` (that is, ``isinstance(tree_set,
+  MutableSet)`` is now true; no actual inheritance has changed).
+  As part of this, they now provide several more methods, including
+  ``isdisjoint``, ``discard``, and ``pop``, and support in-place
+  mutation operators such as ``tree_set |= other``, ``tree_set +=
+  other``, ``tree_set -= other`` and ``tree_set ^= other``. See `issue
+  121 <https://github.com/zopefoundation/BTrees/issues/121>`_.
+
 - Update the definitions of ``ISized`` and ``IReadSequence`` to simply
   be ``zope.interface.common.collections.ISized`` and
   ``zope.interface.common.sequence.IMinimalSequence`` respectively.

@@ -2058,6 +2058,43 @@ BTree_pop(BTree *self, PyObject *args)
     return NULL;
 }
 
+
+static PyObject*
+BTree_popitem(BTree* self, PyObject* args)
+{
+    PyObject* key = NULL;
+    PyObject* pop_args = NULL;
+    PyObject* result_val = NULL;
+    PyObject* result = NULL;
+
+    if (PyTuple_Size(args) != 0) {
+        PyErr_SetString(PyExc_TypeError, "popitem(): Takes no arguments.");
+        return NULL;
+    }
+
+    key = BTree_minKey(self, args); /* reuse existing empty tuple. */
+    if (!key) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_KeyError, "popitem(): empty BTree.");
+        return NULL;
+    }
+
+    pop_args = PyTuple_Pack(1, key);
+    if (pop_args) {
+        result_val = BTree_pop(self, pop_args);
+        Py_DECREF(pop_args);
+        if (result_val) {
+            result = PyTuple_Pack(2, key, result_val);
+            Py_DECREF(result_val);
+        }
+    }
+
+    Py_DECREF(key);
+    return result;
+}
+
+
+
 /* Search BTree self for key.  This is the sq_contains slot of the
  * PySequenceMethods.
  *
@@ -2229,6 +2266,10 @@ static struct PyMethodDef BTree_methods[] = {
      "D.pop(k[, d]) -> v, remove key and return the corresponding value.\n\n"
      "If key is not found, d is returned if given, otherwise KeyError\n"
      "is raised."},
+
+    {"popitem", (PyCFunction)BTree_popitem, METH_VARARGS,
+     "D.popitem() -> (k, v), remove and return some (key, value) pair\n"
+     "as a 2-tuple; but raise KeyError if D is empty."},
 
     {"maxKey", (PyCFunction) BTree_maxKey, METH_VARARGS,
      "maxKey([max]) -> key\n\n"

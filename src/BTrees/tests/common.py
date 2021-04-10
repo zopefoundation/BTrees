@@ -158,6 +158,43 @@ class Base(ZODBAccess, SignedMixin):
                 if type(seq) not in (tuple, list):
                     verifyObject(IMinimalSequence, seq)
 
+    def _getColectionsABC(self):
+        raise NotImplementedError("subclass should return the collection ABC")
+
+    def testIsinstanceCollectionsABC(self):
+        abc = self._getCollectionsABC()
+        t = self._makeOne()
+
+        self.assertIsInstance(t, abc)
+        # Now make sure that it actually has the required methods.
+        # First, get the required methods:
+        abc_attrs = set(dir(abc))
+        # If the method was None, that means it's not required;
+        # if it's not callable, it's not a method (None is not callable)
+        # If it's a private attribute (starting with only one _), it's
+        # an implementation detail to ignore.
+        abc_attrs -= set(x for x in abc_attrs
+                         if (x[0] == '_' and x[1] != '_')
+                         or not callable(getattr(abc, x, None)))
+        # Drop things from Python typing and zope.interface that may or may not
+        # be present.
+        abc_attrs -= {
+            '__provides__',
+            '__implemented__',
+            '__providedBy__',
+            '__metaclass__', # Python 2.7
+            '__class_getitem__', # Python 3.9
+            # Also the equality and comparison operators;
+            # we don't implement those methods, but the ABC does. On Python
+            # 3, we seem to inherit them from somewhere, but we don't on Python 3
+            '__lt__', '__le__', '__eq__', '__gt__', '__ge__', '__ne__',
+        }
+        btr_attrs = set(dir(type(t)))
+
+        missing_attrs = abc_attrs - btr_attrs
+        self.assertFalse(sorted(missing_attrs),
+                         "Class %r is missing these methods: %s" % (type(t), missing_attrs))
+
     def testPersistentSubclass(self):
         # Can we subclass this and Persistent?
         # https://github.com/zopefoundation/BTrees/issues/78
@@ -426,6 +463,27 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
         # Make some data
         for i in range(l):
             t[i] = i
+
+    def _getCollectionsABC(self):
+        from BTrees._compat import collections_abc
+        return collections_abc.MutableMapping
+
+    def test_popitem(self):
+        t = self._makeOne()
+        # Empty
+        with self.assertRaises(KeyError):
+            t.popitem()
+
+        self._populate(t, 2000)
+        self.assertEqual(len(t), 2000)
+        for i in range(2000):
+            self.assertEqual(t.popitem(), (i, i))
+            self.assertEqual(len(t), 2000 - i - 1)
+
+        # Back to empty
+        self.assertEqual(len(t), 0)
+        with self.assertRaises(KeyError):
+            t.popitem()
 
     def testShortRepr(self):
         # test the repr because buckets have a complex repr implementation
@@ -1740,9 +1798,149 @@ class BTreeTests(MappingBase):
 class NormalSetTests(Base):
     # Test common to all set types
 
+    def _getCollectionsABC(self):
+        from BTrees._compat import collections_abc
+        return collections_abc.MutableSet
+
     def _populate(self, t, l):
         # Make some data
         t.update(range(l))
+
+    def test_isdisjoint(self):
+        t = self._makeOne()
+        # The empty set is disjoint with itself
+        self.assertTrue(t.isdisjoint(t))
+        # Empty sequences
+        self.assertTrue(t.isdisjoint(()))
+        self.assertTrue(t.isdisjoint([]))
+        self.assertTrue(t.isdisjoint(set()))
+        # non-empty sequences but empty set
+        self.assertTrue(t.isdisjoint((1, 2)))
+        self.assertTrue(t.isdisjoint([1, 2]))
+        self.assertTrue(t.isdisjoint(set((1, 2))))
+        self.assertTrue(t.isdisjoint(range(10)))
+
+        # non-empty sequences and non-empty set, null intersection
+        self._populate(t, 2)
+        self.assertEqual(set(t), {0, 1})
+
+        self.assertTrue(t.isdisjoint((2, 3)))
+        self.assertTrue(t.isdisjoint([2, 3]))
+        self.assertTrue(t.isdisjoint(set((2, 3))))
+        self.assertTrue(t.isdisjoint(range(2, 10)))
+
+        # non-null intersection
+        self.assertFalse(t.isdisjoint(t))
+        self.assertFalse(t.isdisjoint((0,)))
+        self.assertFalse(t.isdisjoint((1,)))
+        self.assertFalse(t.isdisjoint([2, 3, 0]))
+        self.assertFalse(t.isdisjoint(set((2, 3, 1))))
+        self.assertFalse(t.isdisjoint(range(1, 10)))
+
+    def test_discard(self):
+        t = self._makeOne()
+        # empty set, raises no error, even if the key is
+        # of the wrong type
+        t.discard(1)
+        t.discard(object())
+        self.assertEqual(set(t), set())
+
+        # non-empty set, discarding absent key
+        self._populate(t, 2)
+        self.assertEqual(set(t), {0, 1})
+        t.discard(3)
+        t.discard(object())
+        self.assertEqual(set(t), {0, 1})
+
+        t.discard(1)
+        self.assertEqual(set(t), {0})
+        t.discard(0)
+        self.assertEqual(set(t), set())
+
+    def test_pop(self):
+        t = self._makeOne()
+        with self.assertRaises(KeyError):
+            t.pop()
+
+        self._populate(t, 2)
+        self.assertEqual(0, t.pop())
+        self.assertEqual(1, t.pop())
+        self.assertEqual(set(t), set())
+        with self.assertRaises(KeyError):
+            t.pop()
+
+    def test___ior__(self):
+        t = self._makeOne()
+        orig_t = t
+        t |= (1,)
+        t |= [2,]
+        t |= {1, 2, 3}
+        t |= range(10)
+        t |= t
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), set(range(10)))
+
+    def test___iand__(self):
+        t = self._makeOne()
+        orig_t = t
+        t &= (1,)
+        t &= [2,]
+        t &= {3, 4}
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), set())
+
+        self._populate(t, 10)
+        self.assertEqual(set(t), set(range(10)))
+
+        t &= (1, 2, 3)
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), {1, 2, 3})
+
+    def test___isub__(self):
+        t = self._makeOne()
+        orig_t = t
+        t -= (1,)
+        t -= [2,]
+        t -= {3, 4}
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), set())
+
+        self._populate(t, 10)
+        self.assertEqual(set(t), set(range(10)))
+
+        t -= (1, 2, 3)
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), {0, 4, 5, 6, 7, 8, 9})
+
+        t -= t
+        self.assertIs(t, orig_t)
+        self.assertEqual(set(t), set())
+
+    def test___ixor__(self):
+        t = self._makeOne()
+        orig_t = t
+        t ^= (1,)
+        self.assertEqual(set(t), {1,})
+        t ^= t
+        self.assertEqual(set(t), set())
+
+        t ^= (1, 2, 3)
+        self.assertEqual(set(t), {1, 2, 3})
+        t ^= [2, 3, 4]
+        self.assertEqual(set(t), {1, 4})
+
+    def test___xor__(self):
+        t = self._makeOne()
+        u = t ^ (1,)
+        self.assertEqual(set(u), {1,})
+        u = t ^ t
+        self.assertEqual(set(u), set())
+
+        u = t ^ (1, 2, 3)
+        self.assertEqual(set(u), {1, 2, 3})
+        t.update(u)
+        u = t ^ [2, 3, 4]
+        self.assertEqual(set(u), {1, 4})
 
     def testShortRepr(self):
         t = self._makeOne()

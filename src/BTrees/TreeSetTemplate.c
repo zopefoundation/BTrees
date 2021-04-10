@@ -21,10 +21,10 @@ TreeSet_insert(BTree *self, PyObject *args)
     PyObject *key;
     int i;
 
-    if (!PyArg_ParseTuple(args, "O:insert", &key)) 
+    if (!PyArg_ParseTuple(args, "O:insert", &key))
         return NULL;
     i = _BTree_set(self, key, Py_None, 1, 1);
-    if (i < 0) 
+    if (i < 0)
         return NULL;
     return INT_FROM_LONG(i);
 }
@@ -102,6 +102,126 @@ TreeSet_remove(BTree *self, PyObject *args)
 }
 
 static PyObject *
+TreeSet_discard(BTree *self, PyObject *args)
+{
+    PyObject *key;
+
+    UNLESS (PyArg_ParseTuple(args, "O", &key))
+        return NULL;
+
+    if (_BTree_set(self, key, NULL, 0, 1) < 0) {
+        /* XXX: After PR#162, this should change to
+           BTree_ShouldSuppressKeyError() */
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type == PyExc_KeyError) {
+            PyErr_Clear();
+        }
+        else if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* Failed to compare, so it can't be in the tree. */
+            PyErr_Clear();
+        }
+        else {
+            return NULL;
+        }
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject*
+TreeSet_pop(BTree* self, PyObject* args)
+{
+    PyObject* result = NULL;
+    PyObject* key = NULL;
+    PyObject* remove_args = NULL;
+    PyObject* remove_result = NULL;
+
+    if (PyTuple_Size(args) != 0) {
+        PyErr_SetString(PyExc_TypeError, "pop(): Takes no arguments.");
+        return NULL;
+    }
+
+    key = BTree_minKey(self, args); /* reuse existing empty tuple */
+    if (!key) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_KeyError, "pop(): empty tree.");
+        return NULL;
+    }
+
+    remove_args = PyTuple_Pack(1, key);
+    if (remove_args) {
+        remove_result = TreeSet_remove(self, remove_args);
+        Py_DECREF(remove_args);
+        if (remove_result) {
+            Py_INCREF(key);
+            result = key;
+            Py_DECREF(remove_result);
+        }
+    }
+
+    return result;
+}
+
+static PyObject*
+TreeSet_isdisjoint(BTree* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+    int contained = 0;
+
+    if (other == (PyObject*)self) {
+        if (self->len == 0) {
+            Py_RETURN_TRUE;
+        }
+        else {
+            Py_RETURN_FALSE;
+        }
+    }
+
+
+    iter = PyObject_GetIter(other);
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    while (1) {
+        if (result != NULL) {
+            break;
+        }
+
+        v = PyIter_Next(iter);
+        if (v == NULL) {
+            if (PyErr_Occurred()) {
+                goto err;
+            }
+            else {
+                break;
+            }
+        }
+        contained = BTree_contains(self, v);
+        if (contained == -1) {
+            goto err;
+        }
+        if (contained == 1) {
+            result = Py_False;
+        }
+        Py_DECREF(v);
+    }
+
+    if (result == NULL) {
+        result = Py_True;
+    }
+    Py_INCREF(result);
+
+err:
+    Py_DECREF(iter);
+    return result;
+}
+
+
+static PyObject *
 TreeSet_setstate(BTree *self, PyObject *args)
 {
     int r;
@@ -163,6 +283,13 @@ static struct PyMethodDef TreeSet_methods[] =
     {"remove", (PyCFunction)TreeSet_remove, METH_VARARGS,
      "remove(id) -- Remove a key from the set"},
 
+    {"discard", (PyCFunction)TreeSet_discard, METH_VARARGS,
+     "Remove an element from a set if it is a member.\n\n"
+     "If the element is not a member, do nothing."},
+
+    {"pop", (PyCFunction)TreeSet_pop, METH_VARARGS,
+     "pop() -- Remove and return a key from the set"},
+
     {"_check", (PyCFunction) BTree_check, METH_NOARGS,
      "Perform sanity check on TreeSet, and raise exception if flawed."},
 
@@ -175,6 +302,10 @@ static struct PyMethodDef TreeSet_methods[] =
      (PyCFunction) BTree__p_deactivate, METH_VARARGS | METH_KEYWORDS,
      "_p_deactivate()\n\nReinitialize from a newly created copy."},
 #endif
+
+    {"isdisjoint", (PyCFunction)TreeSet_isdisjoint, METH_O,
+     "Return True if two sets have a null intersection."},
+
     {NULL,        NULL}        /* sentinel */
 };
 
@@ -209,6 +340,267 @@ TreeSet_init(PyObject *self, PyObject *args, PyObject *kwds)
         return 0;
 }
 
+/*
+ * In-place operators.
+ * The implementation is identical with Set, with the only
+ * differences being the calls to insert/remove items and clear
+ * the object.
+ *
+ * This implementation is naive and matches the Python versions, accepting
+ * nearly any iterable.
+ */
+
+static PyObject*
+TreeSet_isub(BTree* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+
+    if (other == (PyObject*)self) {
+        v = BTree_clear(self);
+        if (v == NULL) {
+            goto err;
+        }
+        Py_DECREF(v);
+    }
+    else {
+        iter = PyObject_GetIter(other);
+        if (iter == NULL) {
+            PyErr_Clear();
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        while (1) {
+            v = PyIter_Next(iter);
+            if (v == NULL) {
+                if (PyErr_Occurred()) {
+                    goto err;
+                }
+                else {
+                    break;
+                }
+            }
+            if (_BTree_set(self, v, NULL, 0, 1) < 0) {
+                /* XXX: With PR#162 this can be changed to
+                   BTree_ShouldSuppressKeyError() */
+                PyObject* exc_type = PyErr_Occurred();
+                if (exc_type == PyExc_KeyError) {
+                    PyErr_Clear();
+                }
+                else {
+                    Py_DECREF(v);
+                    goto err;
+                }
+            }
+            Py_DECREF(v);
+        }
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_XDECREF(iter);
+    return result;
+}
+
+static PyObject*
+TreeSet_ior(BTree* self, PyObject* other)
+{
+    PyObject* update_args = NULL;
+    PyObject* result = NULL;
+
+    update_args = PyTuple_Pack(1, other);
+    if (!update_args) {
+        return NULL;
+    }
+
+    result = TreeSet_update(self, update_args);
+    Py_DECREF(update_args);
+    if (!result) {
+        return NULL;
+    }
+
+    Py_DECREF(result);
+    Py_INCREF(self);
+    return (PyObject*)self;
+}
+
+static PyObject*
+TreeSet_ixor(BTree* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+    int contained = 0;
+
+    if (other == (PyObject*)self) {
+        v = BTree_clear(self);
+        if (v == NULL) {
+            goto err;
+        }
+        Py_DECREF(v);
+    }
+    else {
+        iter = PyObject_GetIter(other);
+        if (iter == NULL) {
+            PyErr_Clear();
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        while (1) {
+            v = PyIter_Next(iter);
+            if (v == NULL) {
+                if (PyErr_Occurred()) {
+                    goto err;
+                }
+                else {
+                    break;
+                }
+            }
+            /* contained is also used as an error flag for the removal/addition */
+            contained = BTree_contains(self, v);
+            if (contained != -1) {
+                /* If not present (contained == 0), add it, otherwise remove it. */
+                contained = _BTree_set(self, v,
+                                       contained == 0 ? Py_None : NULL,
+                                       contained == 0 ? 1 : 0,
+                                       1);
+            }
+            Py_DECREF(v);
+            if (contained < 0) {
+                goto err;
+            }
+        }
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_XDECREF(iter);
+    return result;
+}
+
+static PyObject*
+TreeSet_iand(BTree* self, PyObject* other)
+{
+
+    PyObject* iter = NULL;
+    PyObject* v = NULL;
+    PyObject* result = NULL;
+    PyObject* tmp_list = NULL;
+    int contained = 0;
+
+    tmp_list = PyList_New(0);
+    if (tmp_list == NULL) {
+        return NULL;
+    }
+
+    iter = PyObject_GetIter(other);
+    if (iter == NULL) {
+        PyErr_Clear();
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    while (1) {
+        v = PyIter_Next(iter);
+        if (v == NULL) {
+            if (PyErr_Occurred()) {
+                goto err;
+            }
+            else {
+                break;
+            }
+        }
+        contained = BTree_contains(self, v);
+        if (contained == 1) {
+            /* Yay, we had it and get to keep it. */
+            if (PyList_Append(tmp_list, v) < 0) {
+                Py_DECREF(v);
+                goto err;
+            }
+        }
+        /* Done with the sequence value now
+           Either it was already in the set, which is fine,
+           or there was an error.
+        */
+        Py_DECREF(v);
+        if (contained == -1) {
+            goto err;
+        }
+    }
+
+    /* Replace our contents with the list of keys we built. */
+    v = BTree_clear(self);
+    if (v == NULL) {
+        goto err;
+    }
+    Py_DECREF(v);
+    if (_TreeSet_update(self, tmp_list) < 0) {
+        goto err;
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_DECREF(iter);
+    Py_DECREF(tmp_list);
+
+    return result;
+
+}
+
+
+static PyNumberMethods TreeSet_as_number = {
+    0,                                      /* nb_add */
+    bucket_sub,                             /* nb_subtract */
+    0,                                      /* nb_multiply */
+#ifndef PY3K
+    0,                                      /* nb_divide */
+#endif
+    0,                                      /* nb_remainder */
+    0,                                      /* nb_divmod */
+    0,                                      /* nb_power */
+    0,                                      /* nb_negative */
+    0,                                      /* nb_positive */
+    0,                                      /* nb_absolute */
+    (inquiry)BTree_nonzero,                 /* nb_nonzero */
+    (unaryfunc)0,                           /* nb_invert */
+    (binaryfunc)0,                          /* nb_lshift */
+    (binaryfunc)0,                          /* nb_rshift */
+    bucket_and,                             /* nb_and */
+    (binaryfunc)Generic_set_xor,            /* nb_xor */
+    bucket_or,                              /* nb_or */
+#ifdef PY3K
+     0,                                 /*nb_int*/
+     0,                                 /*nb_reserved*/
+     0,                                 /*nb_float*/
+#else
+     0,                                 /*nb_coerce*/
+     0,                                 /*nb_int*/
+     0,                                 /*nb_long*/
+     0,                                 /*nb_float*/
+     0,                                 /*nb_oct*/
+     0,                                 /*nb_hex*/
+#endif
+     0,                                 /*nb_inplace_add*/
+     (binaryfunc)TreeSet_isub,          /*nb_inplace_subtract*/
+     0,                                 /*nb_inplace_multiply*/
+#ifndef PY3K
+     0,                                 /*nb_inplace_divide*/
+#endif
+     0,                                 /*nb_inplace_remainder*/
+     0,                                 /*nb_inplace_power*/
+     0,                                 /*nb_inplace_lshift*/
+     0,                                 /*nb_inplace_rshift*/
+     (binaryfunc)TreeSet_iand,          /*nb_inplace_and*/
+     (binaryfunc)TreeSet_ixor,          /*nb_inplace_xor*/
+     (binaryfunc)TreeSet_ior,           /*nb_inplace_or*/
+};
+
 static PyTypeObject TreeSetType =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -221,7 +613,7 @@ static PyTypeObject TreeSetType =
     0,                                          /* tp_setattr */
     0,                                          /* tp_compare */
     0,                                          /* tp_repr */
-    &BTree_as_number_for_nonzero,               /* tp_as_number */
+    &TreeSet_as_number,                         /* tp_as_number */
     &TreeSet_as_sequence,                       /* tp_as_sequence */
     &TreeSet_as_mapping,                        /* tp_as_mapping */
     0,                                          /* tp_hash */

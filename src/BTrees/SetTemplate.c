@@ -97,6 +97,125 @@ Set_remove(Bucket *self, PyObject *args)
     return Py_None;
 }
 
+static PyObject*
+Set_discard(Bucket* self, PyObject* args)
+{
+    PyObject *key;
+
+    UNLESS (PyArg_ParseTuple(args, "O", &key))
+        return NULL;
+
+    if (_bucket_set(self, key, NULL, 0, 1, 0) < 0) {
+        /* XXX: After PR#162, this should change to
+           BTree_ShouldSuppressKeyError() */
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type == PyExc_KeyError) {
+            PyErr_Clear();
+        }
+        else if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* Failed to compare, so it can't be in the tree. */
+            PyErr_Clear();
+        }
+        else {
+            return NULL;
+        }
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject*
+Set_pop(Bucket* self, PyObject* args)
+{
+    PyObject* result = NULL;
+    PyObject* key = NULL;
+    PyObject* remove_args = NULL;
+    PyObject* remove_result = NULL;
+
+    if (PyTuple_Size(args) != 0) {
+        PyErr_SetString(PyExc_TypeError, "pop(): Takes no arguments.");
+        return NULL;
+    }
+
+    key = Bucket_minKey(self, args); /* reuse existing empty tuple */
+    if (!key) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_KeyError, "pop(): empty bucket.");
+        return NULL;
+    }
+
+    remove_args = PyTuple_Pack(1, key);
+    if (remove_args) {
+        remove_result = Set_remove(self, remove_args);
+        Py_DECREF(remove_args);
+        if (remove_result) {
+            Py_INCREF(key);
+            result = key;
+            Py_DECREF(remove_result);
+        }
+    }
+
+    return result;
+}
+
+static PyObject*
+Set_isdisjoint(Bucket* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+    int contained = 0;
+
+    if (other == (PyObject*)self) {
+        if (self->len == 0) {
+            Py_RETURN_TRUE;
+        }
+        else {
+            Py_RETURN_FALSE;
+        }
+    }
+
+
+    iter = PyObject_GetIter(other);
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    while (1) {
+        if (result != NULL) {
+            break;
+        }
+
+        v = PyIter_Next(iter);
+        if (v == NULL) {
+            if (PyErr_Occurred()) {
+                goto err;
+            }
+            else {
+                break;
+            }
+        }
+        contained = bucket_contains(self, v);
+        if (contained == -1) {
+            goto err;
+        }
+        if (contained == 1) {
+            result = Py_False;
+        }
+        Py_DECREF(v);
+    }
+
+    if (result == NULL) {
+        result = Py_True;
+    }
+    Py_INCREF(result);
+
+err:
+    Py_DECREF(iter);
+    return result;
+}
+
 static int
 _set_setstate(Bucket *self, PyObject *args)
 {
@@ -221,6 +340,16 @@ static struct PyMethodDef Set_methods[] = {
     {"remove",    (PyCFunction)Set_remove,    METH_VARARGS,
      "remove(id)\nRemove an id from the set"},
 
+    {"discard", (PyCFunction)Set_discard, METH_VARARGS,
+     "Remove an element from a set if it is a member.\n\n"
+     "If the element is not a member, do nothing."},
+
+    {"isdisjoint", (PyCFunction)Set_isdisjoint, METH_O,
+     "Return True if two sets have a null intersection."},
+
+    {"pop", (PyCFunction)Set_pop, METH_VARARGS,
+     "Remove and return an arbitrary item."},
+
     {NULL, NULL}        /* sentinel */
 };
 
@@ -291,6 +420,245 @@ set_item(Bucket *self, Py_ssize_t index)
     return r;
 }
 
+/*
+ * In-place operators.
+ * The implementation is identical with TreeSet, with the only
+ * differences being the calls to insert/remove items and clear
+ * the object.
+ *
+ * This implementation is naive and matches the Python versions, accepting
+ * nearly any iterable.
+ */
+
+static PyObject*
+set_isub(Bucket* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+
+    if (other == (PyObject*)self) {
+        v = bucket_clear(self, NULL);
+        if (v == NULL) {
+            goto err;
+        }
+        Py_DECREF(v);
+    }
+    else {
+        iter = PyObject_GetIter(other);
+        if (iter == NULL) {
+            PyErr_Clear();
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        while (1) {
+            v = PyIter_Next(iter);
+            if (v == NULL) {
+                if (PyErr_Occurred()) {
+                    goto err;
+                }
+                else {
+                    break;
+                }
+            }
+            if (_bucket_set(self, v, NULL, 0, 1, 0) < 0) {
+                /* XXX: With PR#162 this can be changed to
+                   BTree_ShouldSuppressKeyError() */
+                PyObject* exc_type = PyErr_Occurred();
+                if (exc_type == PyExc_KeyError) {
+                    PyErr_Clear();
+                }
+                else {
+                    Py_DECREF(v);
+                    goto err;
+                }
+            }
+            Py_DECREF(v);
+        }
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_XDECREF(iter);
+    return result;
+}
+
+static PyObject*
+set_ior(Bucket* self, PyObject* other)
+{
+    PyObject* update_args = NULL;
+    PyObject* result = NULL;
+
+    update_args = PyTuple_Pack(1, other);
+    if (!update_args) {
+        return NULL;
+    }
+
+    result = Set_update(self, update_args);
+    Py_DECREF(update_args);
+    if (!result) {
+        return NULL;
+    }
+
+    Py_DECREF(result);
+    Py_INCREF(self);
+    return (PyObject*)self;
+}
+
+static PyObject*
+set_ixor(Bucket* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* result = NULL;
+    PyObject* v = NULL;
+    int contained = 0;
+
+    if (other == (PyObject*)self) {
+        v = bucket_clear(self, NULL);
+        if (v == NULL) {
+            goto err;
+        }
+        Py_DECREF(v);
+    }
+    else {
+        iter = PyObject_GetIter(other);
+        if (iter == NULL) {
+            PyErr_Clear();
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+
+        while (1) {
+            v = PyIter_Next(iter);
+            if (v == NULL) {
+                if (PyErr_Occurred()) {
+                    goto err;
+                }
+                else {
+                    break;
+                }
+            }
+            /* contained is also used as an error flag for the removal/addition */
+            contained = bucket_contains(self, v);
+            if (contained != -1) {
+                /* If not present (contained == 0), add it, otherwise remove it. */
+                contained = _bucket_set(self, v,
+                                        contained == 0 ? Py_None : NULL,
+                                        contained == 0 ? 1 : 0,
+                                        1, 0);
+            }
+            Py_DECREF(v);
+            if (contained < 0) {
+                goto err;
+            }
+        }
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_XDECREF(iter);
+    return result;
+}
+
+static PyObject*
+Generic_set_xor(PyObject* self, PyObject* other)
+{
+    PyObject* set_self = NULL;
+    PyObject* set_other = NULL;
+    PyObject* set_xor = NULL;
+    PyObject* result = NULL;
+
+    set_self = PySet_New(self);
+    set_other = PySet_New(other);
+    if (set_self == NULL || set_other == NULL) {
+        goto err;
+    }
+
+    set_xor = PyNumber_Xor(set_self, set_other);
+    if (set_xor == NULL) {
+        goto err;
+    }
+
+    result = PyObject_CallFunctionObjArgs((PyObject*)Py_TYPE(self), set_xor, NULL);
+
+err:
+    Py_XDECREF(set_self);
+    Py_XDECREF(set_other);
+    Py_XDECREF(set_xor);
+    return result;
+}
+
+static PyObject*
+set_iand(Bucket* self, PyObject* other)
+{
+    PyObject* iter = NULL;
+    PyObject* v = NULL;
+    PyObject* result = NULL;
+    PyObject* tmp_list = NULL;
+    int contained = 0;
+
+    tmp_list = PyList_New(0);
+    if (tmp_list == NULL) {
+        return NULL;
+    }
+
+    iter = PyObject_GetIter(other);
+    if (iter == NULL) {
+        PyErr_Clear();
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    while (1) {
+        v = PyIter_Next(iter);
+        if (v == NULL) {
+            if (PyErr_Occurred()) {
+                goto err;
+            }
+            else {
+                break;
+            }
+        }
+        contained = bucket_contains(self, v);
+        if (contained == 1) {
+            /* Yay, we had it and get to keep it. */
+            if (PyList_Append(tmp_list, v) < 0) {
+                Py_DECREF(v);
+                goto err;
+            }
+        }
+        /* Done with the sequence value now
+           Either it was already in the set, which is fine,
+           or there was an error.
+        */
+        Py_DECREF(v);
+        if (contained == -1) {
+            goto err;
+        }
+    }
+
+    /* Replace our contents with the list of keys we built. */
+    v = bucket_clear(self, NULL);
+    if (v == NULL) {
+        goto err;
+    }
+    Py_DECREF(v);
+    if (_Set_update(self, tmp_list) < 0) {
+        goto err;
+    }
+
+    Py_INCREF(self);
+    result = (PyObject*)self;
+
+err:
+    Py_DECREF(iter);
+    Py_DECREF(tmp_list);
+
+    return result;
+}
+
 static PySequenceMethods set_as_sequence = {
     (lenfunc)set_length,                /* sq_length */
     (binaryfunc)0,                      /* sq_concat */
@@ -322,8 +690,33 @@ static PyNumberMethods set_as_number = {
      (binaryfunc)0,                     /* nb_lshift */
      (binaryfunc)0,                     /* nb_rshift */
      bucket_and,                        /* nb_and */
-     (binaryfunc)0,                     /* nb_xor */
+     (binaryfunc)Generic_set_xor,       /* nb_xor */
      bucket_or,                         /* nb_or */
+#ifdef PY3K
+     0,                                 /*nb_int*/
+     0,                                 /*nb_reserved*/
+     0,                                 /*nb_float*/
+#else
+     0,                                 /*nb_coerce*/
+     0,                                 /*nb_int*/
+     0,                                 /*nb_long*/
+     0,                                 /*nb_float*/
+     0,                                 /*nb_oct*/
+     0,                                 /*nb_hex*/
+#endif
+     0,                                 /*nb_inplace_add*/
+     (binaryfunc)set_isub,              /*nb_inplace_subtract*/
+     0,                                 /*nb_inplace_multiply*/
+#ifndef PY3K
+     0,                                 /*nb_inplace_divide*/
+#endif
+     0,                                 /*nb_inplace_remainder*/
+     0,                                 /*nb_inplace_power*/
+     0,                                 /*nb_inplace_lshift*/
+     0,                                 /*nb_inplace_rshift*/
+     (binaryfunc)set_iand,              /*nb_inplace_and*/
+     (binaryfunc)set_ixor,              /*nb_inplace_xor*/
+     (binaryfunc)set_ior,               /*nb_inplace_or*/
 };
 
 static PyTypeObject SetType = {
