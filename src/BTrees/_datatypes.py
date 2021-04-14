@@ -157,9 +157,17 @@ class Any(DataType):
 
 class _HasDefaultComparison(ABC):
     """
-    An ABC for checking whether an item has default comparison.
+    An `ABC <https://docs.python.org/3/library/abc.html>_` for
+    checking whether an item has default comparison.
 
-    This automatically gets us some caching.
+    All we have to do is override ``__subclasshook__`` to implement an
+    algorithm determining whether a class has default comparison.
+    Python and the ABC machinery will take care of translating
+    ``isinstance(thing, _HasDefaultComparison)`` into something like
+    ``_HasDefaultComparison.__subclasshook__(type(thing))``. The ABC
+    handles caching the answer (based on exact classes, no MRO), and
+    getting the type from ``thing`` (including mostly dealing with
+    old-style) classes on Python 2.
     """
 
     # Comparisons only use special methods defined on the
