@@ -20,6 +20,13 @@ from operator import index as object_to_index
 from struct import Struct
 from struct import error as struct_error
 
+try:
+    from abc import ABC
+except ImportError:
+    # Python < 3.4 (specifically, Python 2)
+    from abc import ABCMeta
+    ABC = ABCMeta('ABC', (object,), {})
+
 from ._compat import int_types
 from .utils import Lazy
 
@@ -147,6 +154,88 @@ class Any(DataType):
         return False
 
 
+
+class _HasDefaultComparison(ABC):
+    """
+    An `ABC <https://docs.python.org/3/library/abc.html>_` for
+    checking whether an item has default comparison.
+
+    All we have to do is override ``__subclasshook__`` to implement an
+    algorithm determining whether a class has default comparison.
+    Python and the ABC machinery will take care of translating
+    ``isinstance(thing, _HasDefaultComparison)`` into something like
+    ``_HasDefaultComparison.__subclasshook__(type(thing))``. The ABC
+    handles caching the answer (based on exact classes, no MRO), and
+    getting the type from ``thing`` (including mostly dealing with
+    old-style) classes on Python 2.
+    """
+
+    # Comparisons only use special methods defined on the
+    # type, not instance variables.
+
+    # On CPython 2, every subclass of object inherits __lt__
+    # (unless it overrides), and it has ``__objclass__`` of ``type``
+    # (of course it is also the same object as ``_object_lt`` at
+    # that point). Also, interestingly, CPython 2 classes inherit
+    # ``__lt__`` from ``type``, but *instances* do not.
+    #
+    # On CPython 3, classes inherit __lt__ with ``__objclass__`` of ``object``.
+    # On PyPy2, classes don't inherit any __lt__.
+    # On PyPy3, they do.
+    #
+    # Test these conditions at runtime and define the method variant
+    # appropriately.
+    #
+    # Remember the method is checking if the object has default comparison
+    assert '__lt__' not in DataType.__dict__
+    if hasattr(DataType, '__lt__'):
+        # CPython 2 or CPython 3 or PyPy3
+        if getattr(DataType.__lt__, '__objclass__', None) is object:
+            # CPython 3
+            @classmethod
+            def __subclasshook__(cls, C, _NoneType=type(None)):
+                if C is _NoneType:
+                    return False
+                defining_class = getattr(C.__lt__, '__objclass__', None)
+                if defining_class is None:
+                    # Implemented in Python
+                    return False
+                return C.__lt__.__objclass__ is object
+        elif getattr(DataType.__lt__, '__objclass__', None) is type:
+            # CPython 2
+            @classmethod
+            def __subclasshook__(cls, C, _NoneType=type(None)):
+                if C is _NoneType:
+                    return False
+                # If C is an old-style class, it may not even have __lt__
+                if isinstance(C, type):
+                    lt = C.__lt__
+                else:
+                    lt = getattr(C, '__lt__', None)
+                if lt is not None:
+                    defining_class = getattr(lt, '__objclass__', None)
+                    if defining_class is None:
+                        # Implemented in Python
+                        return False
+                    if defining_class is not type:
+                        return False
+                return not hasattr(C, '__cmp__')
+        else:
+            # PyPy3
+            @classmethod
+            def __subclasshook__(cls, C, _object_lt=object.__lt__, _NoneType=type(None)):
+                if C is _NoneType:
+                    return False
+                return C.__lt__ is _object_lt
+    else:
+        # PyPy2
+        @classmethod
+        def __subclasshook__(cls, C, _NoneType=type(None)):
+            if C is _NoneType:
+                return False
+            return not hasattr(C, '__lt__') and not hasattr(C, '__cmp__')
+
+
 class O(KeyDataType):
     """
     Arbitrary (sortable) Python objects.
@@ -161,58 +250,9 @@ class O(KeyDataType):
     def supports_value_union(self):
         return False
 
-    @staticmethod
-    def _check_default_comparison(
-            item,
-            # PyPy2 doesn't define __lt__ on object; PyPy3 and
-            # CPython 2 and 3 do.
-            _object_lt=getattr(object, '__lt__', object())
-    ):
-        # Enforce test that key has non-default comparison.
-        # (With the exception of None, because we define a sort order
-        # for it.)
-
-        if item is None:
-            return
-
-        if type(item) is object: # pylint:disable=unidiomatic-typecheck
-            raise TypeError("Can't use object() as keys")
-
-        # Now more complicated checks to be sure we didn't
-        # inherit default comparison on any version of Python.
-
-
-        # TODO: Using a custom ABC and doing ``isinstance(item, NoDefaultComparison)``
-        # would automatically gain us caching.
-
-        # XXX: Comparisons only use special methods defined on the
-        # type, not instance variables. So shouldn't this be getattr(type(key)...)?
-        # Note that changes some things below; for example, on CPython 2,
-        # every subclass of object inherits __lt__ (unless it overrides), and it
-        # has __objclass__ of ``type`` (of course it is also the same object
-        # as ``_object_lt`` at that point). Also, weirdly, CPython 2 classes inherit
-        # ``__lt__``, but *instances* do not.
-
-        lt = getattr(item, '__lt__', None)
-        if lt is not None:
-            # CPython 2 and 3 follow PEP 252, defining '__objclass__'
-            # for methods of builtin types like str; methods of
-            # classes defined in Python don't get it. ``__objclass__``
-            if getattr(lt, '__objclass__', None) is object:
-                lt = None  # pragma: no cover Py3k
-            # PyPy3 doesn't follow PEP 252, but defines '__func__'
-            elif getattr(lt, '__func__', None) is _object_lt:
-                lt = None  # pragma: no cover PyPy3
-
-        if (lt is None
-                # TODO: Shouldn't we only check __cmp__ on Python 2?
-                # Python 3 won't use it.
-                and getattr(item, '__cmp__', None) is None):
-            raise TypeError("Object has default comparison")
-
-
     def __call__(self, item):
-        self._check_default_comparison(item)
+        if isinstance(item, _HasDefaultComparison):
+            raise TypeError("Object of class %s has default comparison" % (type(item).__name__,))
         return item
 
 

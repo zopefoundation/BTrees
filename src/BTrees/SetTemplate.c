@@ -106,10 +106,7 @@ Set_discard(Bucket* self, PyObject* args)
         return NULL;
 
     if (_bucket_set(self, key, NULL, 0, 1, 0) < 0) {
-        /* XXX: After PR#162, this should change to
-           BTree_ShouldSuppressKeyError() */
-        PyObject* exc_type = PyErr_Occurred();
-        if (exc_type == PyExc_KeyError) {
+        if (BTree_ShouldSuppressKeyError()) {
             PyErr_Clear();
         }
         else if (PyErr_ExceptionMatches(PyExc_TypeError)) {
@@ -462,10 +459,7 @@ set_isub(Bucket* self, PyObject* other)
                 }
             }
             if (_bucket_set(self, v, NULL, 0, 1, 0) < 0) {
-                /* XXX: With PR#162 this can be changed to
-                   BTree_ShouldSuppressKeyError() */
-                PyObject* exc_type = PyErr_Occurred();
-                if (exc_type == PyExc_KeyError) {
+                if (BTree_ShouldSuppressKeyError()) {
                     PyErr_Clear();
                 }
                 else {
