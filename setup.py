@@ -25,7 +25,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
-version = '4.7.3.dev0'
+version = '4.8.0'
 
 def _read(fname):
     here = os.path.abspath(os.path.dirname(__file__))

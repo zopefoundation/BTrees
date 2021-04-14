@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.8.0 (unreleased)
+4.8.0 (2021-04-14)
 ==================
 
 - Make Python 2 forbid the use of type objects as keys (unless a
