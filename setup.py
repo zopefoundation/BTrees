@@ -222,7 +222,8 @@ setup(name='BTrees',
               'ZODB',
           ],
           'docs': [
-              'Sphinx',
+              # Sphinx 4 and r.s.autointerface 0.8 are incompatible.
+              'Sphinx < 4',
               'repoze.sphinx.autointerface',
               'sphinx_rtd_theme',
           ],
