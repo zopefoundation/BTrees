@@ -24,8 +24,8 @@
 
 #define MOD_NAME_PREFIX "OL"
 
-#define DEFAULT_MAX_BUCKET_SIZE 60
-#define DEFAULT_MAX_BTREE_SIZE 250
+
+
 
 #define ZODB_64BIT_INTS
 

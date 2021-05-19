@@ -59,8 +59,9 @@ def _create_classes(
             MERGE=MERGE,
             MERGE_WEIGHT=value_datatype.apply_weight,
             MERGE_DEFAULT=value_datatype.multiplication_identity,
-            max_leaf_size=key_datatype.bucket_size_for_value(value_datatype),
-            max_internal_size=key_datatype.tree_size,
+            # max_leaf_size and max_internal_size are set
+            # for BTree and TreeSet later, when we do the same thing
+            # for C.
         ))
         cls.__module__ = module_name
 
@@ -188,6 +189,16 @@ def populate_module(mod_globals,
         #
         # That's too many coincidences to rely on though.
         abc.register(mod_globals[cls_name + 'Py'])
+
+    # Set node sizes.
+    for cls_name in (
+            'BTree',
+            'TreeSet',
+    ):
+        for suffix in ('', 'Py'):
+            cls = mod_globals[cls_name + suffix]
+            cls.max_leaf_size = key_datatype.bucket_size_for_value(value_datatype)
+            cls.max_internal_size = key_datatype.tree_size
 
 
 def create_module(prefix):

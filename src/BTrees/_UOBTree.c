@@ -24,8 +24,8 @@
 
 #define MOD_NAME_PREFIX "UO"
 
-#define DEFAULT_MAX_BUCKET_SIZE 60
-#define DEFAULT_MAX_BTREE_SIZE 500
+
+
 #define ZODB_UNSIGNED_KEY_INTS
 #include "_compat.h"
 #include "intkeymacros.h"

@@ -1,6 +1,6 @@
-=====================
-Developer Information
-=====================
+=======================
+ Developer Information
+=======================
 
 This document provides information for developers who maintain or extend
 `BTrees`.
@@ -24,21 +24,6 @@ Configuration Macros
 
     A string (like "IO" or "OO") that provides the prefix used for the module.
     This gets used to generate type names and the internal module name string.
-
-``DEFAULT_MAX_BUCKET_SIZE``
-
-    An int giving the maximum bucket size (number of key/value pairs).  When a
-    bucket gets larger than this due to an insertion *into a BTREE*, it
-    splits.  Inserting into a bucket directly doesn't split, and functions
-    that produce a bucket output (e.g., ``union()``) also have no bound on how
-    large a bucket may get.  Someday this will be tunable on `BTree`.
-    instances.
-
-``DEFAULT_MAX_BTREE_SIZE``
-
-    An ``int`` giving the maximum size (number of children) of an internal
-    btree node.  Someday this will be tunable on ``BTree`` instances.
-
 
 Macros for Keys
 ---------------
@@ -193,6 +178,30 @@ Macros for Set Operations
     The value doesn't matter.  If defined, `SetOpTemplate.c` compiles code for
     a ``multiunion()`` function (compute a union of many input sets at high
     speed).  This currently makes sense only for structures with integer keys.
+
+Datatypes
+=========
+
+There are two tunable values exposed on BTree and TreeSet classes.
+Their default values are found in ``_datatypes.py`` and shared across
+C and Python.
+
+
+``max_leaf_size_str``
+
+    An int giving the maximum bucket size (number of key/value pairs).
+    When a bucket gets larger than this due to an insertion *into a
+    BTREE*, it splits. Inserting into a bucket directly doesn't split,
+    and functions that produce a bucket output (e.g., ``union()``)
+    also have no bound on how large a bucket may get. This used to
+    come from the C macro ``DEFAULT_MAX_BUCKET_SIZE``.
+
+
+``max_internal_size``
+
+    An ``int`` giving the maximum size (number of children) of an
+    internal btree node. This used to come from the C macro
+    ``DEFAULT_MAX_BTREE_SIZE``
 
 
 BTree Clues

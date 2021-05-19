@@ -20,12 +20,12 @@ _get_max_size(BTree *self, PyObject *name, long default_max)
 {
   PyObject *size;
   long isize;
-
   size = PyObject_GetAttr(OBJECT(OBJECT(self)->ob_type), name);
   if (size == NULL) {
-    PyErr_Clear();
-    return default_max;
+      PyErr_Clear();
+      return default_max;
   }
+
 #ifdef PY3K
   isize = PyLong_AsLong(size);
 #else
@@ -48,7 +48,7 @@ _max_internal_size(BTree *self)
   long isize;
 
   if (self->max_internal_size > 0) return self->max_internal_size;
-  isize = _get_max_size(self, max_internal_size_str, DEFAULT_MAX_BTREE_SIZE);
+  isize = _get_max_size(self, max_internal_size_str, -1);
   self->max_internal_size = isize;
   return isize;
 }
@@ -59,7 +59,7 @@ _max_leaf_size(BTree *self)
   long isize;
 
   if (self->max_leaf_size > 0) return self->max_leaf_size;
-  isize = _get_max_size(self, max_leaf_size_str, DEFAULT_MAX_BUCKET_SIZE);
+  isize = _get_max_size(self, max_leaf_size_str, -1);
   self->max_leaf_size = isize;
   return isize;
 }
@@ -1034,6 +1034,14 @@ BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
             return NULL;
         }
     }
+
+    /*
+      Always clear our node size cache, whether we're in a jar or not. It is
+      only read from the type anyway, and we'll do so on the next write after
+      we get activated.
+    */
+    self->max_internal_size = 0;
+    self->max_leaf_size = 0;
 
     if (self->jar && self->oid)
     {
@@ -2496,8 +2504,79 @@ static PyNumberMethods BTree_as_number_for_nonzero = {
     bucket_or,                              /* nb_or */
 };
 
-static PyTypeObject BTreeType = {
+static PyObject* BTreeType_setattro_allowed_names; /* initialized in module */
+
+static int
+BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
+{
+    /*
+      type.tp_setattro prohibits setting any attributes on a built-in type,
+      so we need to use our own (metaclass) type to handle it. The set of
+      allowable values needs to be carefully controlled.
+
+      Alternately, we could use heap-allocated types when they are supported
+      an all the versions we care about, because those do allow setting attributes.
+    */
+    int allowed;
+    allowed = PySequence_Contains(BTreeType_setattro_allowed_names, name);
+    if (allowed < 0) {
+        return -1;
+    }
+
+    if (allowed) {
+        PyDict_SetItem(type->tp_dict, name, value);
+        PyType_Modified(type);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+    PyErr_Format(
+        PyExc_TypeError,
+        /* distinguish the error message from what type would produce */
+        "BTree: can't set attributes of built-in/extension type '%s'",
+        type->tp_name);
+    return -1;
+}
+
+static PyTypeObject BTreeTypeType = {
     PyVarObject_HEAD_INIT(NULL, 0)
+    MODULE_NAME MOD_NAME_PREFIX "BTreeType",
+    0, /* tp_basicsize */
+    0, /* tp_itemsize */
+    0, /* tp_dealloc */
+    0, /* tp_print */
+    0, /* tp_getattr */
+    0, /* tp_setattr */
+    0, /* tp_compare */
+    0, /* tp_repr */
+    0, /* tp_as_number */
+    0, /* tp_as_sequence */
+    0, /* tp_as_mapping */
+    0, /* tp_hash */
+    0, /* tp_call */
+    0, /* tp_str */
+    0, /* tp_getattro */
+    (setattrofunc)BTreeType_setattro, /* tp_setattro */
+    0, /* tp_as_buffer */
+#ifndef PY3K
+    Py_TPFLAGS_CHECKTYPES |
+#endif
+    Py_TPFLAGS_DEFAULT |
+    Py_TPFLAGS_BASETYPE, /* tp_flags */
+    0, /* tp_doc */
+    0, /* tp_traverse */
+    0, /* tp_clear */
+    0, /* tp_richcompare */
+    0, /* tp_weaklistoffset */
+    0, /* tp_iter */
+    0, /* tp_iternext */
+    0, /* tp_methods */
+    0, /* tp_members */
+};
+
+static PyTypeObject BTreeType = {
+    PyVarObject_HEAD_INIT(&BTreeTypeType, 0)
     MODULE_NAME MOD_NAME_PREFIX "BTree",    /* tp_name */
     sizeof(BTree),                          /* tp_basicsize */
     0,                                      /* tp_itemsize */

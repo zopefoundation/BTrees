@@ -36,17 +36,40 @@ class SubclassTest(unittest.TestCase):
         t[0] = 0
         self.assertTrue(t._firstbucket.__class__ is B)
 
-    def testCustomNodeSizes(self):
+    def testCustomNodeSizes(self, TreeKind=S, BucketKind=B):
         # We override btree and bucket split sizes in BTree subclasses.
-        t = S()
+        t = TreeKind()
         for i in range(8):
             t[i] = i
+
         state = t.__getstate__()[0]
         self.assertEqual(len(state), 5)
         sub = state[0]
-        self.assertEqual(sub.__class__, S)
+        # __class__ is a property in the Python implementation, and
+        # if the C extension is available it returns the C version.
+        self.assertIsInstance(sub, TreeKind)
         sub = sub.__getstate__()[0]
         self.assertEqual(len(sub), 5)
         sub = sub[0]
-        self.assertEqual(sub.__class__, B)
+        self.assertIsInstance(sub, BucketKind)
         self.assertEqual(len(sub), 1)
+
+    def _checkReplaceNodeSizes(self, TreeKind, BucketKind):
+        # We can also change the node sizes globally.
+        orig_leaf = TreeKind.max_leaf_size
+        orig_internal = TreeKind.max_internal_size
+        TreeKind.max_leaf_size = T.max_leaf_size
+        TreeKind.max_internal_size = T.max_internal_size
+        try:
+            self.testCustomNodeSizes(TreeKind, BucketKind)
+        finally:
+            TreeKind.max_leaf_size = orig_leaf
+            TreeKind.max_internal_size = orig_internal
+
+    def testReplaceNodeSizesNative(self):
+        self._checkReplaceNodeSizes(OOBTree, OOBucket)
+
+    def testReplaceNodeSizesPython(self):
+        from BTrees.OOBTree import OOBTreePy
+        from BTrees.OOBTree import OOBucketPy
+        self._checkReplaceNodeSizes(OOBTreePy, OOBucketPy)
