@@ -187,7 +187,7 @@ Their default values are found in ``_datatypes.py`` and shared across
 C and Python.
 
 
-``max_leaf_size_str``
+``max_leaf_size``
 
     An int giving the maximum bucket size (number of key/value pairs).
     When a bucket gets larger than this due to an insertion *into a
@@ -229,7 +229,7 @@ More or less random bits of helpful info.
   toward only one key per bucket, and buckets at differing depths (all buckets
   are at the same depth in a classic BTree).
 
-+ ``DEFAULT_MAX_BUCKET_SIZE`` and ``DEFAULT_MAX_BTREE_SIZE`` are chosen mostly
++ ``max_leaf_size`` and ``max_internal_size`` are chosen mostly
   to "even out" pickle sizes in storage.  That's why, e.g., an `IIBTree` has
   larger values than an `OOBTree`: pickles store ints more efficiently than
   they can store arbitrary Python objects.

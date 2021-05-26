@@ -2512,7 +2512,8 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
     /*
       type.tp_setattro prohibits setting any attributes on a built-in type,
       so we need to use our own (metaclass) type to handle it. The set of
-      allowable values needs to be carefully controlled.
+      allowable values needs to be carefully controlled (e.g., setting methods
+      would be bad).
 
       Alternately, we could use heap-allocated types when they are supported
       an all the versions we care about, because those do allow setting attributes.
@@ -2533,9 +2534,18 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
     }
     PyErr_Format(
         PyExc_TypeError,
-        /* distinguish the error message from what type would produce */
-        "BTree: can't set attributes of built-in/extension type '%s'",
-        type->tp_name);
+#ifndef PY3K
+        /* Python 2 doesn't have %R. Both branches otherwise match */
+        /* what the standard type object would produce, distinguished  */
+        /* by the BTrees prefix. */
+        "BTrees: can't set attribute of built-in/extension type '%s'",
+        type->tp_name
+#else
+        "BTrees: cannot set attribute %R of immutable type '%s'",
+        name,
+        type->tp_name
+#endif
+        );
     return -1;
 }
 
