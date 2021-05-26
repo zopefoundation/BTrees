@@ -32,8 +32,8 @@ typedef unsigned char char6[6];
 
 #define MOD_NAME_PREFIX "fs"
 
-#define DEFAULT_MAX_BUCKET_SIZE 500
-#define DEFAULT_MAX_BTREE_SIZE 500
+
+
 
 #include "_compat.h"
 /*#include "intkeymacros.h"*/

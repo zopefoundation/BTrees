@@ -2,11 +2,20 @@
  BTrees Changelog
 ==================
 
-4.8.1 (unreleased)
+4.9.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix the C implementation to match the Python implementation and
+  allow setting custom node sizes for an entire application directly
+  by changing ``BTree.max_leaf_size`` and ``BTree.max_internal_size``
+  attributes, without having to create a new subclass. These
+  attributes can now also be read from the classes in the C
+  implementation. See `issue 166
+  <https://github.com/zopefoundation/BTrees/issues/166>`_.
 
+- Add various small performance improvements for storing
+  zope.interface attributes on ``BTree`` and ``TreeSet`` as well as
+  deactivating persistent objects from this package.
 
 4.8.0 (2021-04-14)
 ==================

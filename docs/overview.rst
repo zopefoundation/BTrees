@@ -462,6 +462,9 @@ values for ``max_leaf_size`` or ``max_internal_size`` in your subclass::
      ...     max_leaf_size = 500
      ...     max_internal_size = 1000
 
+As of version 4.9, you can also set these values directly on an
+existing BTree class if you wish to tune them across your entire application.
+
 ``max_leaf_size`` is used for leaf nodes in a BTree, either Buckets or
 Sets.  ``max_internal_size`` is used for internal nodes, either BTrees
 or TreeSets.

@@ -55,6 +55,7 @@
 
 static PyObject *sort_str, *reverse_str, *__setstate___str;
 static PyObject *_bucket_type_str, *max_internal_size_str, *max_leaf_size_str;
+static PyObject *__slotnames__str;
 static PyObject *ConflictError = NULL;
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
@@ -314,6 +315,7 @@ typedef struct BTree_s {
   long max_leaf_size;
 } BTree;
 
+static PyTypeObject BTreeTypeType;
 static PyTypeObject BTreeType;
 static PyTypeObject BucketType;
 
@@ -583,19 +585,50 @@ VALUEMACROS_H
 BTREEITEMSTEMPLATE_C
 ;
 
-int
-init_persist_type(PyTypeObject *type)
+static int
+init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base)
 {
+    int result;
+    PyObject* slotnames;
 #ifdef PY3K
-    ((PyObject*)type)->ob_type = &PyType_Type;
+    ((PyObject*)type)->ob_type = meta;
 #else
-    type->ob_type = &PyType_Type;
+    type->ob_type = meta;
 #endif
-    type->tp_base = cPersistenceCAPI->pertype;
+    type->tp_base = base;
 
     if (PyType_Ready(type) < 0)
         return 0;
+    /*
+      persistent looks for __slotnames__ in the dict at deactivation time,
+      and if it's not present, calls ``copyreg._slotnames``, which itself
+      looks in the dict again. Then it does some computation, and tries to
+      store the object in the dict --- which for built-in types, it can't.
+      So we can save some runtime if we store an empty slotnames for these classes.
+    */
+    slotnames = PyTuple_New(0);
+    if (!slotnames) {
+        return 0;
+    }
+    result = PyDict_SetItem(type->tp_dict, __slotnames__str, slotnames);
+    Py_DECREF(slotnames);
+    return result < 0 ? 0 : 1;
+}
 
+int /* why isn't this static? */
+init_persist_type(PyTypeObject* type)
+{
+    return init_type_with_meta_base(type, &PyType_Type, cPersistenceCAPI->pertype);
+}
+
+static int init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
+{
+    if (!init_type_with_meta_base(type, &BTreeTypeType, cPersistenceCAPI->pertype)) {
+        return 0;
+    }
+    if (PyDict_SetItem(type->tp_dict, _bucket_type_str, (PyObject*)bucket_type) < 0) {
+        return 0;
+    }
     return 1;
 }
 
@@ -644,6 +677,24 @@ module_init(void)
     max_leaf_size_str = INTERN("max_leaf_size");
     if (! max_leaf_size_str)
         return NULL;
+    __slotnames__str = INTERN("__slotnames__");
+    if (!__slotnames__str)
+        return NULL;
+
+    BTreeType_setattro_allowed_names = PyTuple_Pack(
+        5,
+        /* BTree attributes  */
+        max_internal_size_str,
+        max_leaf_size_str,
+        /* zope.interface attributes */
+        /*
+          Technically, INTERNING directly here leaks references,
+          but since we can't be unloaded, it's not a problem.
+        */
+        INTERN("__implemented__"),
+        INTERN("__providedBy__"),
+        INTERN("__provides__")
+    );
 
     /* Grab the ConflictError class */
     interfaces = PyImport_ImportModule("BTrees.Interfaces");
@@ -694,25 +745,22 @@ module_init(void)
     SetType.tp_new = PyType_GenericNew;
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
+
     if (!init_persist_type(&BucketType))
             return NULL;
-    if (!init_persist_type(&BTreeType))
-            return NULL;
-    if (!init_persist_type(&SetType))
-            return NULL;
-    if (!init_persist_type(&TreeSetType))
-            return NULL;
 
-    if (PyDict_SetItem(BTreeType.tp_dict, _bucket_type_str,
-                       (PyObject *)&BucketType) < 0)
-    {
-        fprintf(stderr, "btree failed\n");
+    if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type)) {
         return NULL;
     }
-    if (PyDict_SetItem(TreeSetType.tp_dict, _bucket_type_str,
-                       (PyObject *)&SetType) < 0)
-    {
-        fprintf(stderr, "bucket failed\n");
+
+    if (!init_tree_type(&BTreeType, &BucketType)) {
+        return NULL;
+    }
+
+    if (!init_persist_type(&SetType))
+        return NULL;
+
+    if (!init_tree_type(&TreeSetType, &SetType)) {
         return NULL;
     }
 
@@ -727,6 +775,7 @@ module_init(void)
 
     /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
+
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
                              (PyObject *)&BucketType) < 0)
         return NULL;

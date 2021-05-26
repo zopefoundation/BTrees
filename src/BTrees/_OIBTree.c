@@ -24,8 +24,8 @@
 
 #define MOD_NAME_PREFIX "OI"
 
-#define DEFAULT_MAX_BUCKET_SIZE 60
-#define DEFAULT_MAX_BTREE_SIZE 250
+
+
                                 
 #include "_compat.h"
 #include "objectkeymacros.h"

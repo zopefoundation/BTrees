@@ -14,11 +14,11 @@
 
 from unittest import TestCase
 
-from ..OOBTree import OOBTree, OOBTreePy
+from ..OOBTree import OOBTree
 from .common import _skip_wo_ZODB, ZODBAccess
 
 
-BUCKET_SIZE = OOBTreePy.max_leaf_size
+BUCKET_SIZE = OOBTree.max_leaf_size
 
 
 class TestPersistency(ZODBAccess, TestCase):
@@ -43,5 +43,3 @@ class TestPersistency(ZODBAccess, TestCase):
             tree._check()  # fails in case of bad persistency
         finally:
             self._closeRoot(root)
-
-            
