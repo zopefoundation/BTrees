@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.9.0 (unreleased)
+4.9.0 (2021-05-26)
 ==================
 
 - Fix the C implementation to match the Python implementation and
