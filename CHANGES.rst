@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.9.1 (unreleased)
+4.9.1 (2021-05-27)
 ==================
 
 - Fix setting unknown class attributes on subclasses of BTrees when
