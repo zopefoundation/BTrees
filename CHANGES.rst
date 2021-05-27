@@ -5,7 +5,10 @@
 4.9.1 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix setting unknown class attributes on subclasses of BTrees when
+  using the C extension. This prevented subclasses from being
+  decorated with ``@component.adapter()``. See `issue 168
+  <https://github.com/zopefoundation/BTrees/issues/168>`_.
 
 
 4.9.0 (2021-05-26)

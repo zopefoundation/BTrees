@@ -138,6 +138,22 @@ class Base(ZODBAccess, SignedMixin):
         super(Base, self).setUp()
         _skip_if_pure_py_and_py_test(self)
 
+    def testSubclassesCanHaveAttributes(self):
+        # https://github.com/zopefoundation/BTrees/issues/168
+        class Subclass(self._getTargetClass()):
+            pass
+        Subclass.foo = 1
+        self.assertIn('foo', Subclass.__dict__)
+        self.assertNotIn('foo', self._getTargetClass().__dict__)
+
+    @skipOnPurePython
+    def testCannotSetArbitraryAttributeOnBase(self):
+        if 'Py' in self._getTargetClass().__name__:
+            # pure-python classes can have arbitrary attributes
+            self.skipTest("No on Pure Python.")
+        with self.assertRaises(TypeError):
+            self._getTargetClass().foo = 1
+
     def testProvidesInterface(self):
         from zope.interface import providedBy
         from zope.interface.common.sequence import IMinimalSequence

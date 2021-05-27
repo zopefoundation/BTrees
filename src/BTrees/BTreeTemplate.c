@@ -2532,21 +2532,7 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
         }
         return 0;
     }
-    PyErr_Format(
-        PyExc_TypeError,
-#ifndef PY3K
-        /* Python 2 doesn't have %R. Both branches otherwise match */
-        /* what the standard type object would produce, distinguished  */
-        /* by the BTrees prefix. */
-        "BTrees: can't set attribute of built-in/extension type '%s'",
-        type->tp_name
-#else
-        "BTrees: cannot set attribute %R of immutable type '%s'",
-        name,
-        type->tp_name
-#endif
-        );
-    return -1;
+    return PyType_Type.tp_setattro((PyObject*)type, name, value);
 }
 
 static PyTypeObject BTreeTypeType = {
