@@ -12,6 +12,13 @@
   and be instances of the appropriate collection ABCs. This was done
   for the other modules in release 4.8.0.
 
+- Fix the ``multiunion``, ``union``, ``intersection``, and
+  ``difference`` functions when used with arbitrary iterables.
+  Previously, the iterable had to be pre-sorted, meaning only
+  sequences like ``list`` and ``tuple`` could reliably be used; this
+  was not documented though. If the iterable wasn't sorted, the
+  function would produce garbage output. Now, if the function detects
+  an arbitrary iterable, it automatically sorts a copy.
 
 4.9.1 (2021-05-27)
 ==================

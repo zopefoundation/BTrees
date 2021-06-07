@@ -170,10 +170,20 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
   else if (!useValues)
     {
         /* If we don't need keys and values, we can just use an iterator. */
+        /* Unfortunately, it can't be just any iterator, it must be sorted
+           for the set algorithms to work. So we must materialize a list and
+           sort it. If this raises a TypeError, let that propagate. */
         /* Error detection on types is moved to the next() call. */
-        /* This is slower, but very convenient. If it raises a TypeError, */
-        /* let that propagate. */
-        i->set = PyObject_GetIter(s); /* Return a new reference. */
+        /* This is slower, but very convenient.  */
+        PyObject* list = PySequence_List(s);
+        UNLESS(list) return -1;
+        if (PyList_Sort(list) == -1) {
+            Py_DECREF(list);
+            return -1;
+        }
+        /* The reference to the iterater will keep the list alive */
+        i->set = PyObject_GetIter(list);
+        Py_DECREF(list);
         UNLESS(i->set) return -1;
         i->next = nextGenericKeyIter;
     }

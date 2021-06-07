@@ -2823,13 +2823,6 @@ class SetResult(object):
         self.As = [makeset(rawAkeys) for makeset in self.builders()]
         self.Bs = [makeset(rawBkeys) for makeset in self.builders()]
         self.emptys = [makeset() for makeset in self.builders()]
-        for i in self.As:
-            if type(i).__name__.startswith('fs'):
-                # XXX: Broken for object keys if the secord argument isn't
-                # guaranteed to iterate in sorted order. See
-                # https://github.com/zopefoundation/BTrees/issues/171
-                self.skipTest("XXX: Known broken on fsBTree")
-
 
     # Slow but obviously correct Python implementations of basic ops.
     def _union(self, x, y):
@@ -2909,22 +2902,40 @@ class SetResult(object):
                 self.assertEqual(hasattr(C, "values"), hasattr(E, "values"))
                 self.assertEqual(list(C), [])
 
+    def _reversed(self, x):
+        x = list(x)
+        x.reverse()
+        return x
+
     def testUnion(self):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                for convert in lambda x: x, list, tuple, set:
-                    C = self.union(convert(A), convert(B))
+                for convert in lambda x: x, self._reversed, list, tuple, set:
+                    # For all of these tests, we need to be sure we have at least
+                    # one value that is *not* sorted relative to the other.
+                    # See https://github.com/zopefoundation/BTrees/issues/171
+                    a = convert(A)
+                    b = convert(B)
+                    if hasattr(b, 'reverse'):
+                        b.reverse()
+                    __traceback_info__ = a, b
+                    C = self.union(a, b)
                     self.assertTrue(not hasattr(C, "values"))
-                    self.assertEqual(list(C), self._union(A, B))
+                    self.assertEqual(list(C), self._union(a, b))
                     self.assertEqual(set(A) | set(B), set(A | B))
 
     def testIntersection(self):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                for convert in lambda x: x, list, tuple, set:
-                    C = self.intersection(convert(A), convert(B))
+                for convert in lambda x: x, self._reversed, list, tuple, set:
+                    a = convert(A)
+                    b = convert(B)
+                    if hasattr(b, 'reverse'):
+                        b.reverse()
+                    __traceback_info__ = a, b
+                    C = self.intersection(a, b)
                     self.assertTrue(not hasattr(C, "values"))
                     self.assertEqual(list(C), self._intersection(A, B))
                     self.assertEqual(set(A) & set(B), set(A & B))
@@ -2933,7 +2944,7 @@ class SetResult(object):
         inputs = self.As + self.Bs
         for A in inputs:
             for B in inputs:
-                for convert in lambda x: x, list, tuple, set:
+                for convert in lambda x: x, self._reversed, list, tuple, set:
                     # Difference is unlike the others: The first argument
                     # must be a BTree type, in both C and Python.
                     C = self.difference(A, convert(B))
@@ -2951,6 +2962,7 @@ class SetResult(object):
         from random import randint
         MAXSIZE = 200
         MAXVAL = 400
+        K = self.KEYS
         for i in range(3):
             n = randint(0, MAXSIZE)
             Akeys = [randint(1, MAXVAL) for j in range(n)]
@@ -2961,6 +2973,9 @@ class SetResult(object):
             Bkeys = [randint(1, MAXVAL) for j in range(n)]
             Bs = [makeset(Bkeys) for makeset in self.builders()]
             Bkeys = IISet(Bkeys)
+
+            Akeys = [K[k] for k in Akeys]
+            Bkeys = [K[k] for k in Bkeys]
 
             for op, simulator in ((self.union, self._union),
                                   (self.intersection, self._intersection),
