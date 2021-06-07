@@ -19,7 +19,7 @@ to_ob = _datatypes.Any()
 to_int = _datatypes.I()
 to_float = _datatypes.F()
 to_long = _datatypes.L()
-to_bytes = _datatypes.Bytes
+to_bytes = _datatypes._AbstractBytes
 
 class TestDatatypes(unittest.TestCase):
     def test_to_ob(self):

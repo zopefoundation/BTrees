@@ -49,6 +49,8 @@ _FAMILIES = (
     "OU", # 32-bit unsigned
     "OL", # 64-bit signed
     "OQ", # 64-bit unsigned
+    # Special purpose
+    'fs', # 2-byte -> 6-byte
 )
 
 # XXX: Do this without completely ruining
@@ -141,3 +143,9 @@ for _family in family32, family64:
             "UO", "UU", "UF", "UI",
     ):
         getattr(_family, _mod_name).family = _family
+
+# The IMergeBTreeModule interface specifies this attribute,
+# and fsBTree implements IIntegerObjectBTreeModule, which extends
+# that interface. But it makes no particular sense, so we arbitrarily
+# pick one.
+globals()['fsBTree'].family = family64

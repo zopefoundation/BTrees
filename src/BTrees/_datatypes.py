@@ -132,6 +132,14 @@ class DataType(object):
         """
         return None
 
+    def add_extra_methods(self, base_name, cls):
+        """
+        Called on the key type to add additional, non-standard methods, to
+        a class.
+
+        *base_name* will be a string with no prefix, such as 'Bucket' or 'BTree'.
+        """
+
 
 class KeyDataType(DataType):
     """
@@ -377,17 +385,18 @@ class Q(_AbstractUIntDataType):
     using64bits = True
 
 
-class Bytes(KeyDataType):
+class _AbstractBytes(KeyDataType):
     """
     An exact-length byte string type.
+
+    This must be subclassed to provide the actual byte length.
     """
     __slots__ = ()
-    prefix_code = 'fs'
     tree_size = 500
     default_bucket_size = 500
 
     def __init__(self, length):
-        super(Bytes, self).__init__()
+        super(_AbstractBytes, self).__init__()
         self._length = length
 
     def __call__(self, item):
@@ -399,7 +408,7 @@ class Bytes(KeyDataType):
         return False
 
 
-class f(Bytes):
+class f(_AbstractBytes):
     """
     The key type for an ``fs`` tree.
 
@@ -410,9 +419,10 @@ class f(Bytes):
     # Our keys are treated like integers; the module
     # implements IIntegerObjectBTreeModule
     long_name = 'Integer'
+    prefix_code = 'f'
 
     def __init__(self):
-        Bytes.__init__(self, 2)
+        _AbstractBytes.__init__(self, 2)
 
     def supports_value_union(self):
         # We don't implement 'multiunion' for fsBTree.
@@ -433,8 +443,33 @@ class f(Bytes):
             except struct_error as e:
                 raise TypeError(e)
 
+    def make_toString(self):
+        def toString(self):
+            return b''.join(self._keys) + b''.join(self._values)
+        return toString
 
-class s(Bytes):
+    def make_fromString(self):
+        def fromString(self, v):
+            length = len(v)
+            if length % 8 != 0:
+                raise ValueError()
+            count = length // 8
+            keys, values = v[:count*2], v[count*2:]
+            self.clear()
+            while keys and values:
+                key, keys = keys[:2], keys[2:]
+                value, values = values[:6], values[6:]
+                self._keys.append(key)
+                self._values.append(value)
+            return self
+        return fromString
+
+    def add_extra_methods(self, base_name, cls):
+        if base_name == 'Bucket':
+            cls.toString = self.make_toString()
+            cls.fromString = self.make_fromString()
+
+class s(_AbstractBytes):
     """
     The value type for an ``fs`` tree.
 
@@ -445,10 +480,11 @@ class s(Bytes):
     # Our values are treated like objects; the
     # module implements IIntegerObjectBTreeModule
     long_name = 'Object'
+    prefix_code = 's'
 
 
     def __init__(self):
-        Bytes.__init__(self, 6)
+        _AbstractBytes.__init__(self, 6)
 
     def supports_value_union(self):
         return False

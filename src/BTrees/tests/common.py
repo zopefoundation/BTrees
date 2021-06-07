@@ -166,9 +166,6 @@ class Base(ZODBAccess, SignedMixin):
             self._getTargetClass().foo = 1
 
     def testProvidesInterface(self):
-        if 'fs' in self._getTargetClass().__name__:
-            # XXX: Remove this when fsBtree uses module_builder.
-            self.skipTest("XXX: Not in fsBTree")
         from zope.interface import providedBy
         from zope.interface.common.sequence import IMinimalSequence
         from zope.interface.verify import verifyObject
@@ -192,9 +189,6 @@ class Base(ZODBAccess, SignedMixin):
         raise NotImplementedError("subclass should return the collection ABC")
 
     def testIsinstanceCollectionsABC(self):
-        if 'fs' in self._getTargetClass().__name__:
-            # XXX: Remove this when fsBtree uses module_builder.
-            self.skipTest("XXX: Not in fsBTree")
         abc = self._getCollectionsABC()
         t = self._makeOne()
 
@@ -2604,10 +2598,6 @@ class ModuleTest(object):
         self.assertEqual(klass.__module__, mod.__name__)
 
     def testModuleProvides(self):
-        if 'fsBTree' in self._getModule().__name__:
-            # XXX: Port fsBTree to module_builder
-            self.skipTest("XXX: Port fsBTree to module_builder")
-
         from zope.interface.verify import verifyObject
         verifyObject(self._getInterface(), self._getModule())
 
