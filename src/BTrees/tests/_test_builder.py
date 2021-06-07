@@ -27,7 +27,8 @@ from .common import SetConflictTestBase
 from .common import SetResult
 from .common import Weighted
 from .common import itemsToSet
-from .common import makeBuilder
+from .common import makeMapBuilder
+from .common import makeSetBuilder
 from .common import TestLongIntKeys
 from .common import TestLongIntValues
 
@@ -76,16 +77,28 @@ class ClassBuilder(object):
 
     def __init__(self, btree_module, btree_tests_base=BTreeTests):
         self.btree_module = btree_module
+        # These will be an instance of _datatypes.DataType
         self.key_type = btree_module.BTreePy._to_key
         self.value_type = btree_module.BTreePy._to_value
 
         class _BoundsMixin(object):
-            SUPPORTS_NEGATIVE_KEYS = self.key_type.get_lower_bound() != 0
+            # For test purposes, we can only support negative keys if they are ordered like
+            # integers. Our int -> 2 byte conversion for fsBTree doesn't do this.
+            # -1 is \xff\xff which is the largest possible key.
+            SUPPORTS_NEGATIVE_KEYS = (
+                self.key_type.get_lower_bound() != 0
+                and self.key_type.coerce(-1) < self.key_type.coerce(0)
+            )
             SUPPORTS_NEGATIVE_VALUES = self.value_type.get_lower_bound() != 0
             if SUPPORTS_NEGATIVE_KEYS:
                 KEY_RANDRANGE_ARGS = (-2000, 2001)
             else:
                 KEY_RANDRANGE_ARGS = (0, 4002)
+
+            coerce_to_key = self.key_type.coerce
+            coerce_to_value = self.value_type.coerce
+            KEYS = tuple(self.key_type.coerce(x) for x in range(2001))
+            VALUES = tuple(self.value_type.coerce(x) for x in range(2001))
 
         self.bounds_mixin = _BoundsMixin
 
@@ -195,10 +208,10 @@ class ClassBuilder(object):
 
             def builders(self):
                 return (
-                    btree_module.Set,
-                    btree_module.TreeSet,
-                    makeBuilder(btree_module.BTree),
-                    makeBuilder(btree_module.Bucket)
+                    makeSetBuilder(self, btree_module.Set),
+                    makeSetBuilder(self, btree_module.TreeSet),
+                    makeMapBuilder(self, btree_module.BTree),
+                    makeMapBuilder(self, btree_module.Bucket)
                 )
 
         self._fixup_and_store_class(btree_module, '', Test)
@@ -206,7 +219,6 @@ class ClassBuilder(object):
     def _create_module_test(self):
         from BTrees import Interfaces as interfaces
         mod = self.btree_module
-
         iface = getattr(interfaces, 'I' + self.key_type.long_name + self.value_type.long_name
                         + 'BTreeModule')
         class Test(ModuleTest, unittest.TestCase):

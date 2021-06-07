@@ -35,14 +35,15 @@ from ._base import set_operation as _set_operation
 from ._base import union as _union
 from ._base import _fix_pickle
 from ._compat import import_c_extension
-from ._datatypes import Bytes
+from ._datatypes import f
+from ._datatypes import s
 
 
 _BUCKET_SIZE = 500
 _TREE_SIZE = 500
 using64bits = False
-_to_key = Bytes(2)
-_to_value = Bytes(6)
+_to_key = f()
+_to_value = s()
 
 # XXX: Port this to use _module_builder.
 class fsBucketPy(Bucket):
@@ -66,9 +67,12 @@ class fsBucketPy(Bucket):
             self._values.append(value)
         return self
 
+BucketPy = fsBucketPy
 
 class fsSetPy(Set):
     _to_key = _to_key
+
+SetPy = fsSetPy
 
 
 class fsBTreePy(BTree):
@@ -77,12 +81,19 @@ class fsBTreePy(BTree):
     _to_key = _to_key
     _to_value = _to_value
 
+BTreePy = fsBTreePy
 
 class fsTreeSetPy(TreeSet):
     max_leaf_size = _BUCKET_SIZE
     max_internal_size = _TREE_SIZE
     _to_key = _to_key
 
+TreeSetPy = fsTreeSetPy
+
+class fsTreeIteratorPy(object):
+    "This is not actually used."
+
+TreeIteratorPy = fsTreeIteratorPy
 
 # Can't declare forward refs, so fix up afterwards:
 
@@ -104,6 +115,11 @@ unionPy = _set_operation(_union, fsSetPy)
 intersectionPy = _set_operation(_intersection, fsSetPy)
 
 import_c_extension(globals())
+
+BTree.max_leaf_size = 500
+BTree.max_internal_size = 500
+TreeSet.max_leaf_size = 500
+TreeSet.max_internal_size = 500
 
 _fix_pickle(globals(), __name__)
 

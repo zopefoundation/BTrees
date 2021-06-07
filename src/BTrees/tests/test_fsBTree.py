@@ -13,12 +13,13 @@
 ##############################################################################
 import unittest
 
+from BTrees import fsBTree
+from ._test_builder import update_module
 
 class fsBucketTests(unittest.TestCase):
 
     def _getTargetClass(self):
-        from BTrees.fsBTree import fsBucket
-        return fsBucket
+        return fsBTree.fsBucket
 
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
@@ -51,5 +52,20 @@ class fsBucketTests(unittest.TestCase):
 class fsBucketPyTests(fsBucketTests):
 
     def _getTargetClass(self):
-        from BTrees.fsBTree import fsBucketPy
-        return fsBucketPy
+        return fsBTree.fsBucketPy
+
+class fsTreeTests(unittest.TestCase):
+
+    def _check_sizes(self, cls):
+        self.assertEqual(cls.max_leaf_size, 500)
+        self.assertEqual(cls.max_internal_size, 500)
+
+    def test_BTree_sizes(self):
+        self._check_sizes(fsBTree.BTree)
+        self._check_sizes(fsBTree.BTreePy)
+
+    def test_TreeSet_sizes(self):
+        self._check_sizes(fsBTree.TreeSet)
+        self._check_sizes(fsBTree.TreeSetPy)
+
+update_module(globals(), fsBTree)

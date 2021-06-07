@@ -60,11 +60,29 @@ class DataType(object):
 
     def __call__(self, item):
         """
-        Convert *item* into the correct format and return it.
+        Verify *item* is in the correct format (or "close" enough)
+        and return the item or its suitable conversion.
 
         If this cannot be done, raise a :exc:`TypeError`.
+
+        The definition of "close" varies according to the datatypes.
+        For example, integer datatypes will accept anything that can
+        be converted into an integer using normal python coercion
+        rules (calling ``__index__``) and where the integer fits into
+        the required native type size (e.g., 4 bytes).
         """
         raise NotImplementedError
+
+    def coerce(self, item):
+        """
+        Coerce *item* into something that can be used with
+        ``__call__`` and return it.
+
+        The coercion rules will vary by datatype. This exists only
+        for test cases. The default is to perform the same validation
+        as ``__call__``.
+        """
+        return self(item)
 
     def apply_weight(self, item, weight): # pylint:disable=unused-argument
         """
@@ -266,7 +284,7 @@ class _AbstractNativeDataType(KeyDataType):
     _as_python_type = NotImplementedError
     _required_python_type = object
     _error_description = None
-    _as_packable = object_to_index
+    _as_packable = object_to_index # obj.__index__ -> produce integer
 
     @Lazy
     def _check_native(self):
@@ -365,6 +383,7 @@ class Bytes(KeyDataType):
     """
     __slots__ = ()
     prefix_code = 'fs'
+    tree_size = 500
     default_bucket_size = 500
 
     def __init__(self, length):
@@ -373,8 +392,86 @@ class Bytes(KeyDataType):
 
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
-            raise TypeError("%s-byte array expected" % self._length)
+            raise TypeError("%s-byte array expected, not %r" % (self._length, item))
         return item
 
     def supports_value_union(self):
         return False
+
+
+class f(Bytes):
+    """
+    The key type for an ``fs`` tree.
+
+    This is a two-byte prefix of an overall 8-byte value
+    like a ZODB object ID or transaction ID.
+    """
+
+    # Our keys are treated like integers; the module
+    # implements IIntegerObjectBTreeModule
+    long_name = 'Integer'
+
+    def __init__(self):
+        Bytes.__init__(self, 2)
+
+    def supports_value_union(self):
+        # We don't implement 'multiunion' for fsBTree.
+        return False
+
+    # Check it can be converted to a two-byte
+    # value. Note that even though we allow negative values
+    # that can break test assumptions: -1 < 0 < 1, but the byte
+    # values for those are \xff\xff > \x00\x00 < \x00\x01.
+    _as_2_bytes = Struct('>h').pack
+
+    def coerce(self, item):
+        try:
+            return self(item)
+        except TypeError:
+            try:
+                return self._as_2_bytes(object_to_index(item))
+            except struct_error as e:
+                raise TypeError(e)
+
+
+class s(Bytes):
+    """
+    The value type for an ``fs`` tree.
+
+    This is a 6-byte suffix of an overall 8-byte value
+    like a ZODB object ID or transaction ID.
+    """
+
+    # Our values are treated like objects; the
+    # module implements IIntegerObjectBTreeModule
+    long_name = 'Object'
+
+
+    def __init__(self):
+        Bytes.__init__(self, 6)
+
+    def supports_value_union(self):
+        return False
+
+    def get_lower_bound(self):
+        # Negative values have the high bit set, which is incompatible
+        # with our transformation.
+        return 0
+
+    # To coerce an integer, as used in tests, first convert to 8 bytes
+    # in big-endian order, then ensure the first two
+    # are 0 and cut them off.
+    _as_8_bytes = Struct('>q').pack
+
+    def coerce(self, item):
+        try:
+            return self(item)
+        except TypeError:
+            try:
+                as_bytes = self._as_8_bytes(object_to_index(item))
+            except struct_error as e:
+                raise TypeError(e)
+
+            if as_bytes[:2] != b'\x00\x00':
+                raise TypeError("Cannot convert %r to 6 bytes (%r)" % (item, as_bytes))
+            return as_bytes[2:]
