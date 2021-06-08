@@ -77,7 +77,7 @@ class ClassBuilder(object):
 
     def __init__(self, btree_module, btree_tests_base=BTreeTests):
         self.btree_module = btree_module
-        # These will be an instance of _datatypes.DataType
+        # These will be instances of _datatypes.DataType
         self.key_type = btree_module.BTreePy._to_key
         self.value_type = btree_module.BTreePy._to_value
 

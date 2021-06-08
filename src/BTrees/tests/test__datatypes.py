@@ -19,7 +19,8 @@ to_ob = _datatypes.Any()
 to_int = _datatypes.I()
 to_float = _datatypes.F()
 to_long = _datatypes.L()
-to_bytes = _datatypes._AbstractBytes
+to_2_bytes = _datatypes.f()
+to_6_bytes = _datatypes.s()
 
 class TestDatatypes(unittest.TestCase):
     def test_to_ob(self):
@@ -65,11 +66,29 @@ class TestDatatypes(unittest.TestCase):
     def test_to_long_w_invalid(self):
         self.assertRaises(TypeError, to_long, ())
 
-    def test_to_bytes_w_ok(self):
-        conv = to_bytes(3)
-        self.assertEqual(conv(b'abc'), b'abc')
+    def test_to_2_bytes_w_ok(self):
+        self.assertEqual(to_2_bytes(b'ab'), b'ab')
 
-    def test_to_bytes_w_invalid_length(self):
-        conv = to_bytes(3)
-        self.assertRaises(TypeError, conv, b'ab')
-        self.assertRaises(TypeError, conv, b'abcd')
+    def test_to_2_bytes_w_invalid_length(self):
+        self.assertRaises(TypeError, to_2_bytes, b'a')
+        self.assertRaises(TypeError, to_2_bytes, b'abcd')
+
+    def test_to_6_bytes_w_ok(self):
+        self.assertEqual(to_6_bytes(b'abcdef'), b'abcdef')
+
+    def test_to_6_bytes_w_invalid_length(self):
+        self.assertRaises(TypeError, to_6_bytes, b'a')
+        self.assertRaises(TypeError, to_6_bytes, b'abcd')
+
+    def test_coerce_to_6_bytes(self):
+        # correct input is passed through
+        self.assertEqual(to_6_bytes.coerce(b'abcdef'), b'abcdef')
+
+        # small positive integers are converted
+        self.assertEqual(to_6_bytes.coerce(1), b'\x00\x00\x00\x00\x00\x01')
+
+        # negative values are disallowed
+        self.assertRaises(TypeError, to_6_bytes.coerce, -1)
+
+        # values outside the bigger than 64-bits are disallowed
+        self.assertRaises(TypeError, to_6_bytes.coerce, 2 ** 64 + 1)

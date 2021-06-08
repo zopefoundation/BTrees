@@ -144,8 +144,8 @@ for _family in family32, family64:
     ):
         getattr(_family, _mod_name).family = _family
 
-# The IMergeBTreeModule interface specifies this attribute,
-# and fsBTree implements IIntegerObjectBTreeModule, which extends
-# that interface. But it makes no particular sense, so we arbitrarily
-# pick one.
+# The IMergeBTreeModule interface specifies the ``family`` attribute,
+# and fsBTree implements IIntegerObjectBTreeModule, which extends that
+# interface. But for fsBTrees, no family makes particular sense, so we
+# arbitrarily pick one.
 globals()['fsBTree'].family = family64

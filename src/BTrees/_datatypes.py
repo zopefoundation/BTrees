@@ -16,7 +16,7 @@ Descriptions of the datatypes supported by this package.
 """
 from __future__ import absolute_import
 
-from operator import index as object_to_index
+from operator import index as operator__index__
 from struct import Struct
 from struct import error as struct_error
 
@@ -30,6 +30,7 @@ except ImportError:
 from ._compat import int_types
 from .utils import Lazy
 
+# pylint:disable=raise-missing-from
 
 class DataType(object):
     """
@@ -134,10 +135,12 @@ class DataType(object):
 
     def add_extra_methods(self, base_name, cls):
         """
-        Called on the key type to add additional, non-standard methods, to
-        a class.
+        Hook method called on the key datatype to add zero or more
+        desired arbitrary additional, non-standard, methods to the
+        *cls* being constructed.
 
-        *base_name* will be a string with no prefix, such as 'Bucket' or 'BTree'.
+        *base_name* will be a string identifying the particular family
+        of class being constructed, such as 'Bucket' or 'BTree'.
         """
 
 
@@ -292,7 +295,7 @@ class _AbstractNativeDataType(KeyDataType):
     _as_python_type = NotImplementedError
     _required_python_type = object
     _error_description = None
-    _as_packable = object_to_index # obj.__index__ -> produce integer
+    _as_packable = operator__index__ # calls ``obj.__index__`` to yield integer
 
     @Lazy
     def _check_native(self):
@@ -391,13 +394,9 @@ class _AbstractBytes(KeyDataType):
 
     This must be subclassed to provide the actual byte length.
     """
-    __slots__ = ()
     tree_size = 500
     default_bucket_size = 500
-
-    def __init__(self, length):
-        super(_AbstractBytes, self).__init__()
-        self._length = length
+    _length = None
 
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
@@ -405,6 +404,7 @@ class _AbstractBytes(KeyDataType):
         return item
 
     def supports_value_union(self):
+        # We don't implement 'multiunion' for fsBTree.
         return False
 
 
@@ -420,13 +420,7 @@ class f(_AbstractBytes):
     # implements IIntegerObjectBTreeModule
     long_name = 'Integer'
     prefix_code = 'f'
-
-    def __init__(self):
-        _AbstractBytes.__init__(self, 2)
-
-    def supports_value_union(self):
-        # We don't implement 'multiunion' for fsBTree.
-        return False
+    _length = 2
 
     # Check it can be converted to a two-byte
     # value. Note that even though we allow negative values
@@ -439,16 +433,18 @@ class f(_AbstractBytes):
             return self(item)
         except TypeError:
             try:
-                return self._as_2_bytes(object_to_index(item))
+                return self._as_2_bytes(operator__index__(item))
             except struct_error as e:
                 raise TypeError(e)
 
-    def make_toString(self):
+    @staticmethod
+    def _make_Bucket_toString():
         def toString(self):
             return b''.join(self._keys) + b''.join(self._values)
         return toString
 
-    def make_fromString(self):
+    @staticmethod
+    def _make_Bucket_fromString():
         def fromString(self, v):
             length = len(v)
             if length % 8 != 0:
@@ -466,8 +462,8 @@ class f(_AbstractBytes):
 
     def add_extra_methods(self, base_name, cls):
         if base_name == 'Bucket':
-            cls.toString = self.make_toString()
-            cls.fromString = self.make_fromString()
+            cls.toString = self._make_Bucket_toString()
+            cls.fromString = self._make_Bucket_fromString()
 
 class s(_AbstractBytes):
     """
@@ -481,13 +477,7 @@ class s(_AbstractBytes):
     # module implements IIntegerObjectBTreeModule
     long_name = 'Object'
     prefix_code = 's'
-
-
-    def __init__(self):
-        _AbstractBytes.__init__(self, 6)
-
-    def supports_value_union(self):
-        return False
+    _length = 6
 
     def get_lower_bound(self):
         # Negative values have the high bit set, which is incompatible
@@ -504,7 +494,7 @@ class s(_AbstractBytes):
             return self(item)
         except TypeError:
             try:
-                as_bytes = self._as_8_bytes(object_to_index(item))
+                as_bytes = self._as_8_bytes(operator__index__(item))
             except struct_error as e:
                 raise TypeError(e)
 
