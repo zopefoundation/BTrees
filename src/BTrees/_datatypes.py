@@ -16,7 +16,7 @@ Descriptions of the datatypes supported by this package.
 """
 from __future__ import absolute_import
 
-from operator import index as object_to_index
+from operator import index as operator__index__
 from struct import Struct
 from struct import error as struct_error
 
@@ -30,6 +30,7 @@ except ImportError:
 from ._compat import int_types
 from .utils import Lazy
 
+# pylint:disable=raise-missing-from
 
 class DataType(object):
     """
@@ -60,11 +61,29 @@ class DataType(object):
 
     def __call__(self, item):
         """
-        Convert *item* into the correct format and return it.
+        Verify *item* is in the correct format (or "close" enough)
+        and return the item or its suitable conversion.
 
         If this cannot be done, raise a :exc:`TypeError`.
+
+        The definition of "close" varies according to the datatypes.
+        For example, integer datatypes will accept anything that can
+        be converted into an integer using normal python coercion
+        rules (calling ``__index__``) and where the integer fits into
+        the required native type size (e.g., 4 bytes).
         """
         raise NotImplementedError
+
+    def coerce(self, item):
+        """
+        Coerce *item* into something that can be used with
+        ``__call__`` and return it.
+
+        The coercion rules will vary by datatype. This exists only
+        for test cases. The default is to perform the same validation
+        as ``__call__``.
+        """
+        return self(item)
 
     def apply_weight(self, item, weight): # pylint:disable=unused-argument
         """
@@ -113,6 +132,16 @@ class DataType(object):
         Remarks are as for `get_lower_bound`.
         """
         return None
+
+    def add_extra_methods(self, base_name, cls):
+        """
+        Hook method called on the key datatype to add zero or more
+        desired arbitrary additional, non-standard, methods to the
+        *cls* being constructed.
+
+        *base_name* will be a string identifying the particular family
+        of class being constructed, such as 'Bucket' or 'BTree'.
+        """
 
 
 class KeyDataType(DataType):
@@ -266,7 +295,7 @@ class _AbstractNativeDataType(KeyDataType):
     _as_python_type = NotImplementedError
     _required_python_type = object
     _error_description = None
-    _as_packable = object_to_index
+    _as_packable = operator__index__ # calls ``obj.__index__`` to yield integer
 
     @Lazy
     def _check_native(self):
@@ -359,22 +388,116 @@ class Q(_AbstractUIntDataType):
     using64bits = True
 
 
-class Bytes(KeyDataType):
+class _AbstractBytes(KeyDataType):
     """
     An exact-length byte string type.
-    """
-    __slots__ = ()
-    prefix_code = 'fs'
-    default_bucket_size = 500
 
-    def __init__(self, length):
-        super(Bytes, self).__init__()
-        self._length = length
+    This must be subclassed to provide the actual byte length.
+    """
+    tree_size = 500
+    default_bucket_size = 500
+    _length = None
 
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
-            raise TypeError("%s-byte array expected" % self._length)
+            raise TypeError("%s-byte array expected, not %r" % (self._length, item))
         return item
 
     def supports_value_union(self):
+        # We don't implement 'multiunion' for fsBTree.
         return False
+
+
+class f(_AbstractBytes):
+    """
+    The key type for an ``fs`` tree.
+
+    This is a two-byte prefix of an overall 8-byte value
+    like a ZODB object ID or transaction ID.
+    """
+
+    # Our keys are treated like integers; the module
+    # implements IIntegerObjectBTreeModule
+    long_name = 'Integer'
+    prefix_code = 'f'
+    _length = 2
+
+    # Check it can be converted to a two-byte
+    # value. Note that even though we allow negative values
+    # that can break test assumptions: -1 < 0 < 1, but the byte
+    # values for those are \xff\xff > \x00\x00 < \x00\x01.
+    _as_2_bytes = Struct('>h').pack
+
+    def coerce(self, item):
+        try:
+            return self(item)
+        except TypeError:
+            try:
+                return self._as_2_bytes(operator__index__(item))
+            except struct_error as e:
+                raise TypeError(e)
+
+    @staticmethod
+    def _make_Bucket_toString():
+        def toString(self):
+            return b''.join(self._keys) + b''.join(self._values)
+        return toString
+
+    @staticmethod
+    def _make_Bucket_fromString():
+        def fromString(self, v):
+            length = len(v)
+            if length % 8 != 0:
+                raise ValueError()
+            count = length // 8
+            keys, values = v[:count*2], v[count*2:]
+            self.clear()
+            while keys and values:
+                key, keys = keys[:2], keys[2:]
+                value, values = values[:6], values[6:]
+                self._keys.append(key)
+                self._values.append(value)
+            return self
+        return fromString
+
+    def add_extra_methods(self, base_name, cls):
+        if base_name == 'Bucket':
+            cls.toString = self._make_Bucket_toString()
+            cls.fromString = self._make_Bucket_fromString()
+
+class s(_AbstractBytes):
+    """
+    The value type for an ``fs`` tree.
+
+    This is a 6-byte suffix of an overall 8-byte value
+    like a ZODB object ID or transaction ID.
+    """
+
+    # Our values are treated like objects; the
+    # module implements IIntegerObjectBTreeModule
+    long_name = 'Object'
+    prefix_code = 's'
+    _length = 6
+
+    def get_lower_bound(self):
+        # Negative values have the high bit set, which is incompatible
+        # with our transformation.
+        return 0
+
+    # To coerce an integer, as used in tests, first convert to 8 bytes
+    # in big-endian order, then ensure the first two
+    # are 0 and cut them off.
+    _as_8_bytes = Struct('>q').pack
+
+    def coerce(self, item):
+        try:
+            return self(item)
+        except TypeError:
+            try:
+                as_bytes = self._as_8_bytes(operator__index__(item))
+            except struct_error as e:
+                raise TypeError(e)
+
+            if as_bytes[:2] != b'\x00\x00':
+                raise TypeError("Cannot convert %r to 6 bytes (%r)" % (item, as_bytes))
+            return as_bytes[2:]

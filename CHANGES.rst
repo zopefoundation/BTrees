@@ -5,7 +5,12 @@
 4.9.2 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix ``fsBTree.TreeSet`` and ``fsBTree.BTree`` raising
+  ``SystemError``. See `issue 170 <https://github.com/zopefoundation/BTrees/issues/170>`_.
+
+- Fix all the ``fsBTree`` objects to provide the correct interfaces
+  and be instances of the appropriate collection ABCs. This was done
+  for the other modules in release 4.8.0.
 
 
 4.9.1 (2021-05-27)

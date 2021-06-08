@@ -84,6 +84,9 @@ from BTrees.OUBTree import OUBTreePy, OUBucketPy, OUSetPy, OUTreeSetPy
 from BTrees.OQBTree import OQBTree, OQBucket, OQSet, OQTreeSet
 from BTrees.OQBTree import OQBTreePy, OQBucketPy, OQSetPy, OQTreeSetPy
 
+from BTrees.fsBTree import fsBTree, fsBucket, fsSet, fsTreeSet
+from BTrees.fsBTree import fsBTreePy, fsBucketPy, fsSetPy, fsTreeSetPy
+
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr
 
@@ -98,7 +101,7 @@ _FAMILIES = (
     'LL', 'LO', 'LF', 'LQ',
     'UU', 'UO', 'UF', 'UI',
     'QQ', 'QO', 'QF', 'QL',
-    # Note that fs is missing from this list.
+    'fs',
 )
 for kv in _FAMILIES:
     for name, kind in (

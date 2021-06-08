@@ -64,6 +64,7 @@ def _create_classes(
             # for C.
         ))
         cls.__module__ = module_name
+        key_datatype.add_extra_methods(base_name, cls)
 
         classes[cls.__name__] = cls
         # Importing the C extension does this for the non-py
