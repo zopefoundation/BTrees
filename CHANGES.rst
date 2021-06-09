@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.9.2 (unreleased)
+4.9.2 (2021-06-09)
 ==================
 
 - Fix ``fsBTree.TreeSet`` and ``fsBTree.BTree`` raising
