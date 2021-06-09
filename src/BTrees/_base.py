@@ -254,10 +254,19 @@ class _SetIteration(object):
                 )
 
 
-    def __init__(self, to_iterate, useValues=False, default=None):
+    def __init__(self, to_iterate, useValues=False, default=None, sort=False):
         if to_iterate is None:
             to_iterate = ()
         self.to_iterate = to_iterate
+        if sort:
+            # Sorting is required for arbitrary iterables in the
+            # set functions like difference/union/intersection
+            assert not useValues
+            if not isinstance(to_iterate, _Base):
+                # We know _Base (Set, Bucket, Tree, TreeSet) will all
+                # iterate in sorted order. Other than that, we have no guarantee.
+                self.to_iterate = to_iterate = sorted(self.to_iterate)
+
         if useValues:
             try:
                 itmeth = to_iterate.iteritems
@@ -1446,7 +1455,7 @@ def difference(set_type, o1, o2):
     if o1 is None or o2 is None:
         return o1
     i1 = _SetIteration(o1, True, 0)
-    i2 = _SetIteration(o2, False, 0)
+    i2 = _SetIteration(o2, False, 0, True)
     if i1.useValues:
         result = o1._mapping_type()
         def copy(i):
@@ -1476,8 +1485,8 @@ def union(set_type, o1, o2):
         return o2
     if o2 is None:
         return o1
-    i1 = _SetIteration(o1, False, 0)
-    i2 = _SetIteration(o2, False, 0)
+    i1 = _SetIteration(o1, False, 0, True)
+    i2 = _SetIteration(o2, False, 0, True)
     result = set_type()
     def copy(i):
         result._keys.append(i.key)
@@ -1506,8 +1515,8 @@ def intersection(set_type, o1, o2):
         return o2
     if o2 is None:
         return o1
-    i1 = _SetIteration(o1, False, 0)
-    i2 = _SetIteration(o2, False, 0)
+    i1 = _SetIteration(o1, False, 0, True)
+    i2 = _SetIteration(o2, False, 0, True)
     result = set_type()
     def copy(i):
         result._keys.append(i.key)
