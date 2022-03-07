@@ -63,6 +63,7 @@ for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/pip" install -e .[test]
               "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'
               "${PYBIN}/python" -m unittest discover -s src
+          fi
         fi
         rm -rf /io/build /io/*.egg-info
     fi
