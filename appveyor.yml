@@ -1,7 +1,8 @@
-# Currently the builds use @mgedmin's Appveyor account.  The PyPI token belongs
-# to zope.wheelbuilder, which is managed by @mgedmin and @dataflake.
-
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/c-code
 environment:
+  # Currently the builds use @mgedmin's Appveyor account.  The PyPI token belongs
+  # to zope.wheelbuilder, which is managed by @mgedmin and @dataflake.
   global:
     TWINE_USERNAME: __token__
     TWINE_PASSWORD:
@@ -20,8 +21,11 @@ environment:
     - python: 38-x64
     - python: 39
     - python: 39-x64
+    - python: 310
+    - python: 310-x64
 
 install:
+  - "SET PYTHONVERSION=%PYTHON%"
   - "SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%"
   - ps: |
       $env:PYTHON = "C:\\Python${env:PYTHON}"
@@ -31,21 +35,23 @@ install:
       }
   - ps: if (-not (Test-Path $env:PYTHON)) { throw "No $env:PYTHON" }
   - echo "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 > "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\amd64\vcvars64.bat"
-  - pip install -e .[test,ZODB]
+  - python -m pip install -U pip
+  - pip install -U setuptools wheel
+  - pip install -U -e .[test]
+
+matrix:
+  fast_finish: true
 
 build_script:
-  - python -m pip install -U pip
-  - pip install wheel
   - python -W ignore setup.py -q bdist_wheel
 
 test_script:
   - zope-testrunner --test-path=src
-
 artifacts:
   - path: 'dist\*.whl'
     name: wheel
 
 deploy_script:
-  - ps: if ($env:APPVEYOR_REPO_TAG -eq $TRUE) { pip install twine; twine upload --skip-existing dist/* }
+  - ps: if ($env:APPVEYOR_REPO_TAG -eq $TRUE) { pip install twine; twine upload --skip-existing dist\*.whl }
 
 deploy: on

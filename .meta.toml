@@ -1,0 +1,95 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/c-code
+[meta]
+template = "c-code"
+commit-id = "1b2a5eb60d5b2b3fcee16692b0a9a6a26172c06a"
+
+[python]
+with-appveyor = true
+with-windows = false
+with-pypy = true
+with-future-python = false
+with-legacy-python = true
+with-docs = true
+with-sphinx-doctests = true
+
+[tox]
+use-flake8 = false
+additional-envlist = [
+    "w_zodb",
+    "w_zodb-pure",
+    ]
+testenv-setenv = [
+    "PYTHONFAULTHANDLER=1",
+    "PYTHONDEVMODE=1",
+    "ZOPE_INTERFACE_STRICT_IRO=1",
+    "ZOPE_INTERFACE_LOG_CHANGED_IRO=1",
+    ]
+testenv-additional = [
+    "",
+    "[testenv:w_zodb]",
+    "basepython = python2.7",
+    "deps = ZODB",
+    "",
+    "[testenv:w_zodb-pure]",
+    "basepython = python2.7",
+    "deps = ZODB",
+    ]
+
+[coverage]
+fail-under = 93
+
+[manifest]
+additional-rules = [
+    "include *.sh",
+    "recursive-include docs *.bat",
+    "recursive-include docs *.css",
+    "recursive-include src *.c",
+    "recursive-include src *.h",
+    ]
+
+[check-manifest]
+additional-ignores = [
+    "docs/_build/html/_static/*",
+    "docs/_build/html/_static/*/*",
+    ]
+
+[appveyor]
+global-env-vars = [
+    "# Currently the builds use @mgedmin's Appveyor account.  The PyPI token belongs",
+    "# to zope.wheelbuilder, which is managed by @mgedmin and @dataflake.",
+    "global:",
+    "  TWINE_USERNAME: __token__",
+    "  TWINE_PASSWORD:",
+    "    secure: aoZC/+rvJKg8B5GMGIxd1a+XrG6uK7c37/wnoeA74KlRM9aqyayAnJxNyzyAAsCNzdLl7gz6wEC7lq/oYd3Rcb8mcK+K2U1mqbeG3SeIigCWLKtTnAK9EUiuaVGKVrKvywY7Ckp1uBh5To7PQn5ZS6QEe7YvJODljrGc8O2Z3TjofUzwE28L7P89BgZwCr+/3oOXsY3DHZXUGGYcIjkczLXoDsZ+X9/1WWbVdoTkgeXZmVQbl/a9nYilXILOh2NQtJLn0cInPZyPLfdGw88ZWw==",
+    ]
+
+[c-code]
+manylinux-install-setup = [
+    "export CFLAGS=\"-pipe\"",
+    "if [ `uname -m` == 'aarch64' ]; then",
+    "    # Compiling with -Ofast on the arm emulator takes hours. The default settings have -O3,",
+    "    # and adding -Os doesn't help much; -O1 seems too.",
+    "    echo \"Compiling with -O1\"",
+    "    export CFLAGS=\"-O1 $CFLAGS\"",
+    "else",
+    "    echo \"Compiling with -Ofast\"",
+    "    export CFLAGS=\"-Ofast $CFLAGS\"",
+    "fi",
+    "",
+    "export PURE_PYTHON=0",
+    ]
+manylinux-aarch64-tests = [
+    "# Running the test suite takes forever in",
+    "# emulation; an early run (using tox, which is also slow)",
+    "# took over an hour to build and then run the 2.7 tests and move on",
+    "# to the 3.5 tests. We still want to run tests, though!",
+    "# We don't want to distribute wheels for a platform that's",
+    "# completely untested. Consequently, we limit it to running",
+    "# in just one interpreter, the newest one on the list (which in principle",
+    "# should be the fastest), and we don't install the ZODB extra.",
+    "if [[ \"${PYBIN}\" == *\"cp39\"* ]]; then",
+    "    \"${PYBIN}/pip\" install -e .[test]",
+    "    \"${PYBIN}/python\" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'",
+    "    \"${PYBIN}/python\" -m unittest discover -s src",
+    ]
