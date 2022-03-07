@@ -60,9 +60,11 @@ for PYBIN in /opt/python/*/bin; do
           # in just one interpreter, the newest one on the list (which in principle
           # should be the fastest), and we don't install the ZODB extra.
           if [[ "${PYBIN}" == *"cp39"* ]]; then
+              cd /io/
               "${PYBIN}/pip" install -e .[test]
               "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'
               "${PYBIN}/python" -m unittest discover -s src
+              cd ..
           fi
         fi
         rm -rf /io/build /io/*.egg-info
