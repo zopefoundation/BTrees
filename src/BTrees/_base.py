@@ -996,7 +996,7 @@ class _Tree(_ArithmeticMixin, _Base):
         if index < 0:
             return False
         r = self._data[index].child.has_key(key)
-        return r and r + 1
+        return bool(r and r + 1)
 
     def keys(self, min=_marker, max=_marker,
              excludemin=False, excludemax=False,

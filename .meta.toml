@@ -28,11 +28,11 @@ testenv-setenv = [
 testenv-additional = [
     "",
     "[testenv:w_zodb]",
-    "basepython = python2.7",
+    "basepython = python3.9",
     "deps = ZODB",
     "",
     "[testenv:w_zodb-pure]",
-    "basepython = python2.7",
+    "basepython = python3.9",
     "deps = ZODB",
     ]
 
