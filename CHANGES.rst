@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.10.0 (unreleased)
+4.10.0 (2022-03-09)
 ===================
 
 - Add support for Python 3.10.
