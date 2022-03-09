@@ -1,7 +1,9 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/c-code
 ###
 # Initially copied from
 # https://github.com/actions/starter-workflows/blob/main/ci/python-package.yml
-# And later based on the version I (jamadden) updated at
+# And later based on the version jamadden updated at
 # gevent/gevent, and then at zodb/relstorage and zodb/perfmetrics
 #
 # Original comment follows.
@@ -35,14 +37,14 @@
 name: tests
 
 
-# Triggers the workflow on push or pull request events
-on: [push, pull_request, workflow_dispatch]
-# Limiting to particular branches might be helpful to conserve minutes.
-#on:
-  # push:
-  #   branches: [ $default-branch ]
-  # pull_request:
-  #   branches: [ $default-branch ]
+# Triggers the workflow on push or pull request events and periodically
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 12 * * 0'  # run once a week on Sunday
+  # Allow to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 env:
   # Weirdly, this has to be a top-level key, not ``defaults.env``
@@ -52,12 +54,6 @@ env:
   PYTHONDEVMODE: 1
   PYTHONFAULTHANDLER: 1
   ZOPE_INTERFACE_STRICT_IRO: 1
-  ZOPE_INTERFACE_LOG_CHANGED_IRO: 1
-  # Require C extensions; this will be disabled later for
-  # PyPy because zope.interface through at least 5.3
-  # tries to import its C module even on PyPy with this, but
-  # the wheels tend not to have it.
-  PURE_PYTHON: 0
 
   PIP_UPGRADE_STRATEGY: eager
   # Don't get warnings about Python 2 support being deprecated. We
@@ -74,9 +70,8 @@ env:
 
   ###
   # caching
-  # This is where we'd set up ccache
+  # This is where we'd set up ccache, but this compiles so fast its not worth it.
   ###
-
 
 
 jobs:
@@ -92,21 +87,31 @@ jobs:
   # This division is time-saving for projects that take awhile to
   # build, but somewhat less of a clear-cut win given how quick this
   # is to compile (at least at this writing).
-  build-BTrees:
+  build-package:
     # Sigh. Note that the matrix must be kept in sync
     # with `test`, and `docs` must use a subset.
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [2.7, pypy-2.7, pypy-3.6, 3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version:
+          - "2.7"
+          - "3.5"
+          - "pypy-2.7"
+          - "pypy-3.7"
+          - "3.6"
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
         os: [ubuntu-20.04, macos-latest]
         exclude:
           - os: macos-latest
-            python-version: pypy-2.7
+            python-version: "pypy-2.7"
           - os: macos-latest
-            python-version: pypy-3.6
+            python-version: "pypy-3.7"
           - os: macos-latest
-            python-version: 3.5
+            python-version: "3.5"
 
     steps:
       - name: checkout
@@ -137,13 +142,7 @@ jobs:
       - name: Install Build Dependencies
         run: |
           pip install -U pip
-          pip install -U setuptools wheel twine
-          pip install -U coveralls coverage persistent
-
-      - name: Set pure Python
-        if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: |
-          echo PURE_PYTHON=1 >> $GITHUB_ENV
+          pip install -U setuptools wheel twine cffi
 
       - name: Build BTrees
         run: |
@@ -152,9 +151,8 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
           # Also install it, so that we get dependencies in the (pip) cache.
-          pip install -U coverage
           pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
-          pip install .[test,ZODB]
+          pip install .[test]
 
       - name: Check BTrees build
         run: |
@@ -169,26 +167,40 @@ jobs:
         # We cannot 'uses: pypa/gh-action-pypi-publish@v1.4.1' because
         # that's apparently a container action, and those don't run on
         # the Mac.
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && startsWith(runner.os, 'Mac')
+        if: >
+          github.event_name == 'push'
+          && startsWith(github.ref, 'refs/tags')
+          && startsWith(runner.os, 'Mac')
+          && !startsWith(matrix.python-version, 'pypy')
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           twine upload --skip-existing dist/*
 
   test:
-    needs: build-BTrees
+    needs: build-package
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [2.7, pypy-2.7, pypy-3.6, 3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version:
+          - "2.7"
+          - "3.5"
+          - "pypy-2.7"
+          - "pypy-3.7"
+          - "3.6"
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
         os: [ubuntu-20.04, macos-latest]
         exclude:
           - os: macos-latest
-            python-version: pypy-2.7
+            python-version: "pypy-2.7"
           - os: macos-latest
-            python-version: pypy-3.6
+            python-version: "pypy-3.7"
           - os: macos-latest
-            python-version: 3.5
+            python-version: "3.5"
 
     steps:
       - name: checkout
@@ -197,6 +209,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      ###
+      # Caching.
+      # This actually *restores* a cache and schedules a cleanup action
+      # to save the cache. So it must come before the thing we want to use
+      # the cache.
+      ###
       - name: Get pip cache dir
         id: pip-cache
         run: |
@@ -209,10 +227,6 @@ jobs:
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - name: Set pure Python
-        if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: |
-          echo PURE_PYTHON=1 >> $GITHUB_ENV
 
       - name: Download BTrees wheel
         uses: actions/download-artifact@v2
@@ -220,45 +234,27 @@ jobs:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
       - name: Install BTrees
-        # ``python -m unittest discover`` only works with editable
-        # installs, so we have to duplicate some work and can't
-        # install the built wheel. (zope.testrunner
-        # works fine with non-editable installs.)
         run: |
-          ls -l dist
-          ls -l .
-          pip install -U wheel
+          pip install -U wheel setuptools
           pip install -U coverage
           pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
           unzip -n dist/BTrees-*whl -d src
-          pip install -U -e .[test,ZODB]
-      - name: Set coverage status
-        # coverage is too slow on PyPy. We can't submit it from macOS (see that action),
-        # so don't bother taking the speed hit there either.
-        if: ${{ !startsWith(matrix.python-version, 'pypy') && startsWith(runner.os, 'Linux') }}
+          pip install -U -e .[test]
+      - name: Run tests with C extensions
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: |
-          echo WITH_COVERAGE=1 >> $GITHUB_ENV
-      - name: Run native tests
-        # Here, run natively just once. Only run PURE_PYTHON
-        # again once, because these tests take awhile, and PURE_PYTHON
-        # runs once under PyPy anyway (but with coverage takes forever).
+          python -m coverage run -p -m zope.testrunner --test-path=src --auto-color --auto-progress
+      - name: Run tests without C extensions
+        run:
+          # coverage makes PyPy run about 3x slower!
+          PURE_PYTHON=1 python -m coverage run -p -m zope.testrunner --test-path=src --auto-color --auto-progress
+      - name: Report Coverage
         run: |
-          if [[ "$WITH_COVERAGE" == "1" ]]; then
-              coverage run -p -m unittest discover -s src
-          else
-              python -m unittest discover -s src
-          fi
-      - name: Run PURE_PYTHON tests
-        if: (matrix.python-version == 2.7 || matrix.python-version == 3.9) && startsWith(runner.os, 'Linux')
-        run: |
-          PURE_PYTHON=1 coverage run -p -m unittest discover -s src
-      - name: Report coverage
-        run: |
-          coverage combine || true
-          coverage report -i || true
+          coverage combine
+          coverage report -i
       - name: Submit to Coveralls
         # This is a container action, which only runs on Linux.
         if: ${{ startsWith(runner.os, 'Linux') }}
@@ -276,11 +272,11 @@ jobs:
         parallel-finished: true
 
   docs:
-    needs: build-BTrees
+    needs: build-package
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: ["3.9"]
         os: [ubuntu-20.04]
 
     steps:
@@ -290,6 +286,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      ###
+      # Caching.
+      # This actually *restores* a cache and schedules a cleanup action
+      # to save the cache. So it must come before the thing we want to use
+      # the cache.
+      ###
       - name: Get pip cache dir
         id: pip-cache
         run: |
@@ -312,22 +314,20 @@ jobs:
         run: |
           pip install -U wheel
           pip install -U coverage
-          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install -U  "`ls dist/BTrees-*.whl`[docs]"
       - name: Build docs
         env:
-          ZOPE_INTERFACE_STRICT_IRO: 0
+          ZOPE_INTERFACE_STRICT_IRO: 1
         run: |
           sphinx-build -b html -d docs/_build/doctrees docs docs/_build/html
           sphinx-build -b doctest -d docs/_build/doctrees docs docs/_build/doctest
 
-
   lint:
-    needs: build-BTrees
+    needs: build-package
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: ["3.9"]
         os: [ubuntu-20.04]
 
     steps:
@@ -337,7 +337,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-
+      ###
+      # Caching.
+      # This actually *restores* a cache and schedules a cleanup action
+      # to save the cache. So it must come before the thing we want to use
+      # the cache.
+      ###
       - name: Get pip cache dir
         id: pip-cache
         run: |
@@ -360,7 +365,7 @@ jobs:
         run: |
           pip install -U pip
           pip install -U wheel
-          pip install -U `ls dist/BTrees-*`[test,ZODB]
+          pip install -U `ls dist/BTrees-*`[test]
       - name: Lint
         # We only need to do this on one version, and it should be Python 3, because
         # pylint has stopped updating for Python 2.
@@ -374,7 +379,7 @@ jobs:
     # We use a regular Python matrix entry to share as much code as possible.
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: ["3.9"]
         image: [manylinux2010_x86_64, manylinux2010_i686, manylinux2014_aarch64]
 
     steps:
@@ -384,6 +389,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      ###
+      # Caching.
+      # This actually *restores* a cache and schedules a cleanup action
+      # to save the cache. So it must come before the thing we want to use
+      # the cache.
+      ###
       - name: Get pip cache dir
         id: pip-cache
         run: |
@@ -407,13 +418,13 @@ jobs:
         # The 2010 image is the most recent spec that comes with Python 2.7,
         # and only up through the tag 2021-02-06-3d322a5
         env:
-          DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}:2021-02-06-3d322a5
+          DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
         run: |
           bash .manylinux.sh
       - name: Build BTrees (i686)
         if: matrix.image == 'manylinux2010_i686'
         env:
-          DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}:2021-02-06-3d322a5
+          DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
           PRE_CMD: linux32
         run: |
           bash .manylinux.sh
@@ -435,22 +446,11 @@ jobs:
         run: sudo chown -R $(whoami) ${{ steps.pip-cache.outputs.dir }}
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@v1.4.1
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        if: >
+          github.event_name == 'push'
+          && startsWith(github.ref, 'refs/tags')
         with:
           user: __token__
           password: ${{ secrets.TWINE_PASSWORD }}
           skip_existing: true
           packages_dir: wheelhouse/
-
-# TODO:
-# * Use YAML syntax to share snippets, like the old .travis.yml did
-# Sadly, as of 2021-02-01, Github Actions does not support anchors at
-# all. Just having an anchor results in an error:
-#
-#   The workflow is not valid. .github/workflows/tests.yml: Anchors
-#   are not currently supported. Remove the anchor 'an-strategy'
-#
-# The alternative of using composite actions doesn't work either,
-# because composite actions are limited to running shell scripts.
-# Steps in them can't call other actions with `uses:`, and nor can
-# they be conditional with `if:`.

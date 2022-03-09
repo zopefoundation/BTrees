@@ -1,22 +1,21 @@
-include pyproject.toml
-
-include *.txt
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/c-code
+include *.md
 include *.rst
-include *.py
+include *.txt
 include buildout.cfg
 include tox.ini
+include appveyor.yml
 include .coveragerc
 
-recursive-include docs *
-recursive-include src *
-recursive-include .github *
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
 
-global-exclude *.dll
-global-exclude *.pyc
-global-exclude *.pyo
-global-exclude *.so
-global-exclude *~
-global-exclude *\#
-global-exclude coverage.xml
-
-prune docs/_build
+recursive-include src *.py
+include *.sh
+recursive-include docs *.bat
+recursive-include docs *.css
+recursive-include src *.c
+recursive-include src *.h

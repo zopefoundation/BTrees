@@ -25,7 +25,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
-version = '4.9.3.dev0'
+version = '4.10.0.dev0'
 
 def _read(fname):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -197,6 +197,7 @@ setup(name='BTrees',
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
           "Programming Language :: Python :: 3.9",
+          "Programming Language :: Python :: 3.10",
           "Programming Language :: Python :: Implementation :: CPython",
           "Programming Language :: Python :: Implementation :: PyPy",
           "Framework :: ZODB",
@@ -222,8 +223,7 @@ setup(name='BTrees',
               'ZODB',
           ],
           'docs': [
-              # Sphinx 4 and r.s.autointerface 0.8 are incompatible.
-              'Sphinx < 4',
+              'Sphinx',
               'repoze.sphinx.autointerface',
               'sphinx_rtd_theme',
           ],

@@ -141,7 +141,7 @@ exclusive of the range's endpoints.
    'green'
    >>> s = t.keys() # this is a "lazy" sequence object
    >>> s
-   <OOBTreeItems object at ...>
+   <...TreeItems object at ...>
    >>> len(s)  # it acts like a Python list
    4
    >>> s[-2]
@@ -260,9 +260,10 @@ example, lists supply a total ordering, and then
    >>> L2[0] = 5                # horrible -- the set is insane now
    >>> s.has_key([3])           # for example, it's insane this way
    False
-   >>> s
-   OOSet([[1], [5], [3]])
-   >>>
+   >>> s.__class__
+   <class 'BTrees.OOBTree.OOSet'>
+   >>> list(s)
+   [[1], [5], [3]]
 
 Key lookup relies on that the keys remain in sorted order (an efficient form of
 binary search is used).  By mutating key L2 after inserting it, we destroyed the
