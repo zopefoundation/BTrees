@@ -31,7 +31,7 @@ if [ `uname -m` == 'aarch64' ]; then
     export CFLAGS="-O1 $CFLAGS"
 else
     echo "Compiling with -Ofast"
-    export CFLAGS="-Ofast $CFLAGS"
+    export CFLAGS="-Ofast -fno-unsafe-math-optimizations $CFLAGS"
 fi
 
 export PURE_PYTHON=0
