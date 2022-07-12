@@ -35,10 +35,6 @@ else
 fi
 
 export PURE_PYTHON=0
-# https://wiki.centos.org/yum-errors suggests this might help against yum
-# errors:
-yum clean all
-rm -rf /var/cache/yum/*
 # We need some libraries because we build wheels from scratch:
 yum -y install libffi-devel
 
