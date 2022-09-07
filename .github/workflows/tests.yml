@@ -61,8 +61,8 @@ env:
   PIP_NO_PYTHON_VERSION_WARNING: 1
   PIP_NO_WARN_SCRIPT_LOCATION: 1
 
-  CFLAGS: -Ofast -pipe
-  CXXFLAGS: -Ofast -pipe
+  CFLAGS: -Ofast -pipe -fno-unsafe-math-optimizations
+  CXXFLAGS: -Ofast -pipe -fno-unsafe-math-optimizations
   # Uploading built wheels for releases.
   # TWINE_PASSWORD is encrypted and stored directly in the
   # github repo settings.
@@ -91,6 +91,7 @@ jobs:
     # Sigh. Note that the matrix must be kept in sync
     # with `test`, and `docs` must use a subset.
     runs-on: ${{ matrix.os }}
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     strategy:
       fail-fast: false
       matrix:

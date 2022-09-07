@@ -38,6 +38,19 @@ export PURE_PYTHON=0
 # We need some libraries because we build wheels from scratch:
 yum -y install libffi-devel
 
+tox_env_map() {
+    case $1 in
+        *"cp27"*) echo 'py27';;
+        *"cp35"*) echo 'py35';;
+        *"cp36"*) echo 'py36';;
+        *"cp37"*) echo 'py37';;
+        *"cp38"*) echo 'py38';;
+        *"cp39"*) echo 'py39';;
+        *"cp310"*) echo 'py310';;
+        *) echo 'py';;
+    esac
+}
+
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if \
