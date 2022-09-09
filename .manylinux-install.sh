@@ -25,10 +25,10 @@ ls -ld /cache/pip
 
 export CFLAGS="-pipe"
 if [ `uname -m` == 'aarch64' ]; then
-    # Compiling with -Ofast on the arm emulator takes hours. The default settings have -O3,
+    # Compiling with -O3 on the arm emulator takes hours. The default settings have -O3,
     # and adding -Os doesn't help much; -O1 seems too.
     echo "Compiling with -O1"
-    export CFLAGS="-O1 $CFLAGS"
+    export CFLAGS="$CFLAGS -O1"
 else
     echo "Compiling with -O3"
     export CFLAGS="-O3 $CFLAGS"
