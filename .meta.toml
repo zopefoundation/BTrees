@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "558b77be0423418b11124d8fae651c4b127b62d6"
+commit-id = "2adc2ca49c4cf738bda9628e3f3bc1b90d6cee32"
 
 [python]
 with-appveyor = true
@@ -73,8 +73,8 @@ manylinux-install-setup = [
     "    echo \"Compiling with -O1\"",
     "    export CFLAGS=\"-O1 $CFLAGS\"",
     "else",
-    "    echo \"Compiling with -Ofast\"",
-    "    export CFLAGS=\"-Ofast $CFLAGS\"",
+    "    echo \"Compiling with -O3\"",
+    "    export CFLAGS=\"-O3 $CFLAGS\"",
     "fi",
     "",
     "export PURE_PYTHON=0",

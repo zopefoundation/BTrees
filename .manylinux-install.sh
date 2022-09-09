@@ -30,8 +30,8 @@ if [ `uname -m` == 'aarch64' ]; then
     echo "Compiling with -O1"
     export CFLAGS="-O1 $CFLAGS"
 else
-    echo "Compiling with -Ofast"
-    export CFLAGS="-Ofast $CFLAGS"
+    echo "Compiling with -O3"
+    export CFLAGS="-O3 $CFLAGS"
 fi
 
 export PURE_PYTHON=0
