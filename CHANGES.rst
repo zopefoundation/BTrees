@@ -5,7 +5,8 @@
 4.10.1 (unreleased)
 ===================
 
-- Nothing changed yet.
+- Disable unsafe math optimizations in C code.
+  (`#184 <https://github.com/zopefoundation/BTrees/pull/184>`_)
 
 
 4.10.0 (2022-03-09)
