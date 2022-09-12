@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.10.1 (unreleased)
+4.10.1 (2022-09-12)
 ===================
 
 - Disable unsafe math optimizations in C code.
