@@ -47,6 +47,7 @@ tox_env_map() {
         *"cp38"*) echo 'py38';;
         *"cp39"*) echo 'py39';;
         *"cp310"*) echo 'py310';;
+        *"cp311"*) echo 'py311';;
         *) echo 'py';;
     esac
 }
@@ -56,6 +57,7 @@ for PYBIN in /opt/python/*/bin; do
     if \
        [[ "${PYBIN}" == *"cp27"* ]] || \
        [[ "${PYBIN}" == *"cp35"* ]] || \
+       [[ "${PYBIN}" == *"cp311"* ]] || \
        [[ "${PYBIN}" == *"cp36"* ]] || \
        [[ "${PYBIN}" == *"cp37"* ]] || \
        [[ "${PYBIN}" == *"cp38"* ]] || \
