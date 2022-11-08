@@ -173,8 +173,8 @@ jobs:
       - name: Build BTrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
-          || !startsWith(matrix.python-version, '3.10')
-          || !startsWith(matrix.python-version, '3.11')
+          || !(startsWith(matrix.python-version, '3.10')
+               || startsWith(matrix.python-version, '3.11'))
         run: |
           # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
           # output (pip install uses a random temporary directory, making this difficult).
