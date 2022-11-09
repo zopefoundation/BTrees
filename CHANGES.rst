@@ -2,8 +2,12 @@
  BTrees Changelog
 ==================
 
-4.11.1 (unreleased)
+4.11.1 (2022-11-09)
 ===================
+
+- Fix macOS wheel build issues on GitHub Actions
+
+- We no longer provide 32bit wheels for the Windows platform, only x86_64.
 
 
 4.11.0 (2022-11-03)

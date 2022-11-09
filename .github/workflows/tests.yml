@@ -117,9 +117,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -134,7 +134,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -189,7 +189,7 @@ jobs:
           ls -l dist
           twine check dist/*
       - name: Upload BTrees wheel
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*whl
@@ -235,9 +235,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -252,7 +252,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -260,7 +260,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -312,9 +312,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -329,7 +329,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -337,7 +337,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -363,9 +363,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -380,7 +380,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -388,7 +388,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -416,9 +416,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -433,7 +433,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip_manylinux-${{ matrix.image }}-${{ matrix.python-version }}
@@ -470,14 +470,14 @@ jobs:
           bash .manylinux.sh
 
       - name: Upload BTrees wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*whl
           name: manylinux_${{ matrix.image }}_wheels.zip
       - name: Restore pip cache permissions
         run: sudo chown -R $(whoami) ${{ steps.pip-cache.outputs.dir }}
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.4.1
+        uses: pypa/gh-action-pypi-publish@release/v1
         if: >
           github.event_name == 'push'
           && startsWith(github.ref, 'refs/tags')
