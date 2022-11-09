@@ -154,10 +154,11 @@ jobs:
           pip install -U pip
           pip install -U setuptools wheel twine cffi
 
-      - name: Build BTrees (Python 3.10 on MacOS)
+      - name: Build BTrees (Python 3.10 and 3.11 on MacOS)
         if: >
           startsWith(runner.os, 'Mac')
-          && startsWith(matrix.python-version, '3.10')
+          && (startsWith(matrix.python-version, '3.10')
+              || startsWith(matrix.python-version, '3.11'))
         env:
           _PYTHON_HOST_PLATFORM: macosx-11-x86_64
         run: |
@@ -172,7 +173,8 @@ jobs:
       - name: Build BTrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
-          || !startsWith(matrix.python-version, '3.10')
+          || !(startsWith(matrix.python-version, '3.10')
+               || startsWith(matrix.python-version, '3.11'))
         run: |
           # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
           # output (pip install uses a random temporary directory, making this difficult).
