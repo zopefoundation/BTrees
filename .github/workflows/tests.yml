@@ -160,7 +160,9 @@ jobs:
           && (startsWith(matrix.python-version, '3.10')
               || startsWith(matrix.python-version, '3.11'))
         env:
-          _PYTHON_HOST_PLATFORM: macosx-11-x86_64
+          MACOSX_DEPLOYMENT_TARGET: 10.9
+          _PYTHON_HOST_PLATFORM: macosx-10.9-x86_64
+          ARCHFLAGS: -arch x86_64
         run: |
           # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
           # output (pip install uses a random temporary directory, making this difficult).
