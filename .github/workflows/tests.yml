@@ -153,6 +153,7 @@ jobs:
         run: |
           pip install -U pip
           pip install -U setuptools wheel twine cffi
+          pip install -U persistent
 
       - name: Build BTrees (Python 3.10 and 3.11 on MacOS)
         if: >

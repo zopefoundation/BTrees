@@ -54,6 +54,11 @@ additional-ignores = [
     "docs/_build/html/_static/*/*",
     ]
 
+[github-actions]
+additional-build-dependencies = [
+    "persistent",
+    ]
+
 [appveyor]
 global-env-vars = [
     "# Currently the builds use @mgedmin's Appveyor account.  The PyPI token belongs",
