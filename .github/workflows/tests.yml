@@ -147,6 +147,7 @@ jobs:
         run: |
           pip install -U pip
           pip install -U setuptools wheel twine "cffi != 1.15.1"
+          pip install -U persistent
       - name: Install Build Dependencies (other Python versions)
         if: >
           !startsWith(matrix.python-version, 'pypy-2.7')
