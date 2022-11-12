@@ -169,9 +169,14 @@ jobs:
           _PYTHON_HOST_PLATFORM: macosx-10.9-x86_64
           ARCHFLAGS: -arch x86_64
         run: |
+          # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
+          # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
+          # Also install it, so that we get dependencies in the (pip) cache.
+          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install .[test]
+
       - name: Build BTrees (macOS arm64, Python 3.8+)
         if: >
           startsWith(runner.os, 'Mac')
@@ -185,9 +190,14 @@ jobs:
           _PYTHON_HOST_PLATFORM: macosx-11.0-arm64
           ARCHFLAGS: -arch arm64
         run: |
+          # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
+          # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
+          # Also install it, so that we get dependencies in the (pip) cache.
+          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install .[test]
+
       - name: Build BTrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
@@ -210,9 +220,6 @@ jobs:
           ls -l dist
           twine check dist/*
       - name: Upload BTrees wheel (macOS x86_64)
-        # The x86_64 wheel is the only one that can be tested on the macOS GHA
-        # runner, so it receives the "default" name for the platform/Python
-        # combination and gets picked up by the testing step later.
         if: >
           startsWith(runner.os, 'Mac')
         uses: actions/upload-artifact@v3
@@ -220,9 +227,6 @@ jobs:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*x86_64.whl
       - name: Upload BTrees wheel (macOS arm64)
-        # The arm64 wheel is uploaded with a different name just so it can be
-        # manually downloaded when desired. The wheel itself *cannot* be tested
-        # on the GHA runner, which uses x86_64 architecture.
         if: >
           startsWith(runner.os, 'Mac')
           && !(startsWith(matrix.python-version, 'pypy')
@@ -232,6 +236,9 @@ jobs:
                || matrix.python-version == '3.7')
         uses: actions/upload-artifact@v3
         with:
+          # The arm64 wheel is uploaded with a different name just so it can be
+          # manually downloaded when desired. The wheel itself *cannot* be tested
+          # on the GHA runner, which uses x86_64 architecture.
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-arm64.whl
           path: dist/*arm64.whl
       - name: Upload BTrees wheel (all other platforms)
