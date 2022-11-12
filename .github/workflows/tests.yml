@@ -160,7 +160,10 @@ jobs:
         if: >
           startsWith(runner.os, 'Mac')
           && !(startsWith(matrix.python-version, 'pypy')
-               || contains(('2.7', '3.5', '3.6', '3.7'), matrix.python-version))
+               || matrix.python-version == '2.7'
+               || matrix.python-version == '3.5'
+               || matrix.python-version == '3.6'
+               || matrix.python-version == '3.7')
         env:
           MACOSX_DEPLOYMENT_TARGET: 10.9
           _PYTHON_HOST_PLATFORM: macosx-10.9-x86_64
@@ -173,7 +176,10 @@ jobs:
         if: >
           startsWith(runner.os, 'Mac')
           && !(startsWith(matrix.python-version, 'pypy')
-               || contains(('2.7', '3.5', '3.6', '3.7'), matrix.python-version))
+               || matrix.python-version == '2.7'
+               || matrix.python-version == '3.5'
+               || matrix.python-version == '3.6'
+               || matrix.python-version == '3.7')
         env:
           MACOSX_DEPLOYMENT_TARGET: 11.0
           _PYTHON_HOST_PLATFORM: macosx-11.0-arm64
@@ -186,7 +192,10 @@ jobs:
         if: >
           !startsWith(runner.os, 'Mac')
           || startsWith(matrix.python-version, 'pypy')
-          || contains(('2.7', '3.5', '3.6', '3.7'), matrix.python-version)
+          || matrix.python-version == '2.7'
+          || matrix.python-version == '3.5'
+          || matrix.python-version == '3.6'
+          || matrix.python-version == '3.7'
         run: |
           # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
           # output (pip install uses a random temporary directory, making this difficult).
@@ -217,7 +226,10 @@ jobs:
         if: >
           startsWith(runner.os, 'Mac')
           && !(startsWith(matrix.python-version, 'pypy')
-               || contains(('2.7', '3.5', '3.6', '3.7'), matrix.python-version))
+               || matrix.python-version == '2.7'
+               || matrix.python-version == '3.5'
+               || matrix.python-version == '3.6'
+               || matrix.python-version == '3.7')
         uses: actions/upload-artifact@v3
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-arm64.whl
