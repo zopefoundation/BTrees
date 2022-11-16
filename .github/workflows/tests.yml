@@ -173,10 +173,6 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-          # Also install it, so that we get dependencies in the (pip) cache.
-          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
-          pip install .[test]
-
       - name: Build BTrees (macOS arm64, Python 3.8+)
         if: >
           startsWith(runner.os, 'Mac')
@@ -194,10 +190,23 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-          # Also install it, so that we get dependencies in the (pip) cache.
-          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
-          pip install .[test]
-
+      - name: Build BTrees (macOS universal2, Python 3.8+)
+        if: >
+          startsWith(runner.os, 'Mac')
+          && !(startsWith(matrix.python-version, 'pypy')
+               || matrix.python-version == '2.7'
+               || matrix.python-version == '3.5'
+               || matrix.python-version == '3.6'
+               || matrix.python-version == '3.7')
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 10.9
+          _PYTHON_HOST_PLATFORM: macosx-10.9-universal2
+          ARCHFLAGS: -arch arm64 -arch x86_64
+        run: |
+          # Next, build the wheel *in place*. This helps ccache, and also lets us cache the configure
+          # output (pip install uses a random temporary directory, making this difficult).
+          python setup.py build_ext -i
+          python setup.py bdist_wheel
       - name: Build BTrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
@@ -211,7 +220,10 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-          # Also install it, so that we get dependencies in the (pip) cache.
+
+      - name: Install BTrees and dependencies
+        run: |
+          # Install to collect dependencies into the (pip) cache.
           pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install .[test]
 
@@ -241,6 +253,20 @@ jobs:
           # on the GHA runner, which uses x86_64 architecture.
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-arm64.whl
           path: dist/*arm64.whl
+      - name: Upload BTrees wheel (macOS universal2)
+        if: >
+          startsWith(runner.os, 'Mac')
+          && !(startsWith(matrix.python-version, 'pypy')
+               || matrix.python-version == '2.7'
+               || matrix.python-version == '3.5'
+               || matrix.python-version == '3.6'
+               || matrix.python-version == '3.7')
+        uses: actions/upload-artifact@v3
+        with:
+          # The universal2 wheel is uploaded with a different name just so it
+          # can be manually downloaded when desired.
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-universal2.whl
+          path: dist/*universal2.whl
       - name: Upload BTrees wheel (all other platforms)
         if: >
           !startsWith(runner.os, 'Mac')
@@ -324,6 +350,7 @@ jobs:
           pip install -U wheel setuptools
           pip install -U coverage
           pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
+          pip install -U 'cffi; platform_python_implementation == "CPython"'
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?

@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.11.2 (unreleased)
+4.11.2 (2022-11-16)
 ===================
 
 - Add support for building arm64 wheels on macOS.

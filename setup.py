@@ -25,7 +25,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
-version = '4.11.2.dev0'
+version = '4.11.2'
 
 def _read(fname):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -210,6 +210,11 @@ setup(name='BTrees',
       author="Zope Foundation",
       author_email="zodb-dev@zope.org",
       url="https://github.com/zopefoundation/BTrees",
+      project_urls={
+        'Documentation': 'https://btrees.readthedocs.io',
+        'Issue Tracker': 'https://github.com/zopefoundation/BTrees/issues',
+        'Sources': 'https://github.com/zopefoundation/BTrees',
+      },
       license="ZPL 2.1",
       platforms=["any"],
       packages=find_packages('src'),
@@ -231,6 +236,7 @@ setup(name='BTrees',
       },
       test_suite="BTrees.tests",
       tests_require=TESTS_REQUIRE,
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
       install_requires=REQUIRES,
       cmdclass={
           'build_ext': optional_build_ext,

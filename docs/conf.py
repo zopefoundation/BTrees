@@ -276,6 +276,6 @@ texinfo_documents = [
 intersphinx_mapping = {
     'https://docs.python.org/3/': None,
     'https://persistent.readthedocs.io/en/latest/': None,
-    "https://zodb.readthedocs.io/en/latest/": None,
+    "https://zodb.org/en/latest/": None,
     "https://zopeinterface.readthedocs.io/en/latest/": None,
 }
