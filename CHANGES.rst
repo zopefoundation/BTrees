@@ -2,8 +2,10 @@
  BTrees Changelog
 ==================
 
-4.11.3 (unreleased)
+4.11.3 (2022-11-17)
 ===================
+
+- point release to rebuild full set of wheels
 
 
 4.11.2 (2022-11-16)
