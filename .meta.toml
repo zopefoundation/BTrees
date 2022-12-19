@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "342271a70d886e753e5cc629e8a81b3cfab692ac"
+commit-id = "d6240444ec6c9e203f2fd9f62c3e6038f9189e96"
 
 [python]
 with-appveyor = true
@@ -35,6 +35,9 @@ testenv-additional = [
     "[testenv:w_zodb-pure]",
     "basepython = python3.9",
     "deps = ZODB",
+    ]
+testenv-deps = [
+    "zope.testrunner",
     ]
 
 [coverage]
