@@ -2,14 +2,13 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "342271a70d886e753e5cc629e8a81b3cfab692ac"
+commit-id = "be727608"
 
 [python]
 with-appveyor = true
 with-windows = false
 with-pypy = true
 with-future-python = false
-with-legacy-python = true
 with-docs = true
 with-sphinx-doctests = true
 with-macos = false
@@ -29,11 +28,11 @@ testenv-setenv = [
 testenv-additional = [
     "",
     "[testenv:w_zodb]",
-    "basepython = python3.9",
+    "basepython = python3.11",
     "deps = ZODB",
     "",
     "[testenv:w_zodb-pure]",
-    "basepython = python3.9",
+    "basepython = python3.11",
     "deps = ZODB",
     ]
 
@@ -88,13 +87,13 @@ manylinux-install-setup = [
 manylinux-aarch64-tests = [
     "# Running the test suite takes forever in",
     "# emulation; an early run (using tox, which is also slow)",
-    "# took over an hour to build and then run the 2.7 tests and move on",
-    "# to the 3.5 tests. We still want to run tests, though!",
+    "# took over an hour to build and then run the tests sequentially",
+    "# for the Python versions. We still want to run tests, though!",
     "# We don't want to distribute wheels for a platform that's",
     "# completely untested. Consequently, we limit it to running",
     "# in just one interpreter, the newest one on the list (which in principle",
     "# should be the fastest), and we don't install the ZODB extra.",
-    "if [[ \"${PYBIN}\" == *\"cp39\"* ]]; then",
+    "if [[ \"${PYBIN}\" == *\"cp311\"* ]]; then",
     "    cd /io/",
     "    \"${PYBIN}/pip\" install -e .[test]",
     "    \"${PYBIN}/python\" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'",
