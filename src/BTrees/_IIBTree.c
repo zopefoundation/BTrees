@@ -33,9 +33,5 @@
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__IIBTree
-#else
-#define INITMODULE init_IIBTree
-#endif
 #include "BTreeModuleTemplate.c"

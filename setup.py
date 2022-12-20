@@ -11,7 +11,6 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-from __future__ import print_function
 
 import os
 import sys
@@ -71,7 +70,7 @@ class optional_build_ext(build_ext):
 # to local headers in the include sub-directory
 
 
-class ModuleHeaderDir(object):
+class ModuleHeaderDir:
 
     def __init__(self, require_spec, where='..'):
         # By default, assume top-level pkg has the same name as the dist.
@@ -189,11 +188,7 @@ setup(name='BTrees',
           "Development Status :: 6 - Mature",
           "License :: OSI Approved :: Zope Public License",
           "Programming Language :: Python",
-          "Programming Language :: Python :: 2",
-          "Programming Language :: Python :: 2.7",
           "Programming Language :: Python :: 3",
-          "Programming Language :: Python :: 3.5",
-          "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
           "Programming Language :: Python :: 3.9",
@@ -236,7 +231,7 @@ setup(name='BTrees',
       },
       test_suite="BTrees.tests",
       tests_require=TESTS_REQUIRE,
-      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+      python_requires='>=3.7',
       install_requires=REQUIRES,
       cmdclass={
           'build_ext': optional_build_ext,

@@ -33,7 +33,7 @@ from .common import TestLongIntKeys
 from .common import TestLongIntValues
 
 
-class _FilteredModuleProxy(object):
+class _FilteredModuleProxy:
     """
     Accesses either ``<name>`` or ``<name>Py`` from a module.
 
@@ -63,14 +63,13 @@ def _flattened(*args):
     def f(tuple_or_klass):
         if isinstance(tuple_or_klass, tuple):
             for x in tuple_or_klass:
-                for c in f(x):
-                    yield c
+                yield from f(x)
         else:
             yield tuple_or_klass
 
     return tuple(f(args))
 
-class ClassBuilder(object):
+class ClassBuilder:
 
     # Use TestAuto as a prefix to avoid clashing with manual tests
     TESTCASE_PREFIX = 'TestAuto'
@@ -81,7 +80,7 @@ class ClassBuilder(object):
         self.key_type = btree_module.BTreePy._to_key
         self.value_type = btree_module.BTreePy._to_value
 
-        class _BoundsMixin(object):
+        class _BoundsMixin:
             # For test purposes, we can only support negative keys if they are ordered like
             # integers. Our int -> 2 byte conversion for fsBTree doesn't do this.
             # -1 is \xff\xff which is the largest possible key.

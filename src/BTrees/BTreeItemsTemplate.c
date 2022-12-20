@@ -426,11 +426,7 @@ BTreeItems_subscript(BTreeItems *self, PyObject* subscript)
     {
         Py_ssize_t start, stop, step, slicelength;
 
-#ifdef PY3K
 #define SLICEOBJ(x) (x)
-#else
-#define SLICEOBJ(x) (PySliceObject*)(x)
-#endif
 
         if (PySlice_GetIndicesEx(SLICEOBJ(subscript), len,
                                  &start, &stop, &step, &slicelength) < 0)
@@ -463,10 +459,6 @@ static PySequenceMethods BTreeItems_as_sequence =
     (binaryfunc)0,                          /* sq_concat */
     (ssizeargfunc)0,                        /* sq_repeat */
     (ssizeargfunc) BTreeItems_item,         /* sq_item */
-#ifndef PY3K
-    /* Py3K doesn't honor this slot */
-    (ssizessizeargfunc) BTreeItems_slice,   /* sq_slice */
-#endif
 };
 
 /* Number Method items (just for nb_nonzero!) */
@@ -481,9 +473,6 @@ static PyNumberMethods BTreeItems_as_number_for_nonzero = {
     0,                                      /* nb_add */
     0,                                      /* nb_subtract */
     0,                                      /* nb_multiply */
-#ifndef PY3K
-    0,                                      /* nb_divide */
-#endif
     0,                                      /* nb_remainder */
     0,                                      /* nb_divmod */
     0,                                      /* nb_power */
@@ -646,7 +635,7 @@ nextTreeSetItems(SetIteration *i)
     return 0;
 }
 
-/* Support for the iteration protocol new in Python 2.2. */
+/* Support for the iteration protocol */
 
 static PyTypeObject BTreeIter_Type;
 

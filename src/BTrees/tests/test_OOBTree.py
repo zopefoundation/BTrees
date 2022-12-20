@@ -34,17 +34,16 @@ class OOBTreeTest(BTreeTests):
         # used in a function that's used in lots of places.
         # Otherwise, there are many permutations that would have to be
         # checked.
-        from .._compat import PY2
         t = self._makeOne()
 
         class OldStyle:
             pass
 
-        if self._getTargetClass() is OOBTree.OOBTreePy or not PY2:
+        if self._getTargetClass() is OOBTree.OOBTreePy:
             with self.assertRaises(TypeError):
                 t[OldStyle()] = 1
 
-        class C(object):
+        class C:
             pass
 
         with self.assertRaises(TypeError) as raising:
@@ -54,17 +53,7 @@ class OOBTreeTest(BTreeTests):
             raising.exception.args[0],
             "Object of class C has default comparison")
 
-        if PY2: # we only check for __cmp__ on Python2
-
-            class With___cmp__(object):
-                def __cmp__(*args):
-                    return 1
-            c = With___cmp__()
-            t[c] = 1
-
-            t.clear()
-
-        class With___lt__(object):
+        class With___lt__:
             def __lt__(*args):
                 return 1
 
@@ -84,7 +73,7 @@ class OOBTreeTest(BTreeTests):
     def testAcceptDefaultComparisonOnGet(self):
         # Issue #42
         t = self._makeOne()
-        class C(object):
+        class C:
             pass
 
         self.assertEqual(t.get(C(), 42), 42)
@@ -158,7 +147,7 @@ class OOBTreeTest(BTreeTests):
         from functools import total_ordering
 
         @total_ordering
-        class Bad(object):
+        class Bad:
             def __eq__(self, other):
                 return False
 

@@ -11,7 +11,6 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-from __future__ import division
 
 import sys
 import functools
@@ -19,8 +18,6 @@ import unittest
 import platform
 from unittest import skip
 
-
-from BTrees._compat import PY3
 from BTrees._compat import _c_optimizations_ignored
 from BTrees._compat import PYPY
 from BTrees._base   import _tp_name
@@ -34,11 +31,6 @@ except ImportError:
     _skip_wo_ZODB = skip('ZODB not available')
 else:
     _skip_wo_ZODB = _no_op
-
-if PY3:
-    _skip_under_Py3k = skip("Not on Python 3")
-else:
-    _skip_under_Py3k = _no_op
 
 if platform.architecture()[0] == '32bit':
     _skip_on_32_bits = skip("32-bit platform")
@@ -83,7 +75,7 @@ def uses_negative_keys_and_values(func):
             func(self)
     return test
 
-class SignedMixin(object):
+class SignedMixin:
     SUPPORTS_NEGATIVE_KEYS = True
     SUPPORTS_NEGATIVE_VALUES = True
     #: The values to pass to ``random.randrange()`` to generate
@@ -91,7 +83,7 @@ class SignedMixin(object):
     KEY_RANDRANGE_ARGS = (-2000, 2001)
 
 
-class ZODBAccess(object):
+class ZODBAccess:
 
     db = None
 
@@ -135,7 +127,7 @@ class Base(ZODBAccess, SignedMixin):
         return self._getTargetClass()()
 
     def setUp(self):
-        super(Base, self).setUp()
+        super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
     def coerce_to_key(self, item):
@@ -200,27 +192,25 @@ class Base(ZODBAccess, SignedMixin):
         # if it's not callable, it's not a method (None is not callable)
         # If it's a private attribute (starting with only one _), it's
         # an implementation detail to ignore.
-        abc_attrs -= set(x for x in abc_attrs
+        abc_attrs -= {x for x in abc_attrs
                          if (x[0] == '_' and x[1] != '_')
-                         or not callable(getattr(abc, x, None)))
+                         or not callable(getattr(abc, x, None))}
         # Drop things from Python typing and zope.interface that may or may not
         # be present.
         abc_attrs -= {
             '__provides__',
             '__implemented__',
             '__providedBy__',
-            '__metaclass__', # Python 2.7
-            '__class_getitem__', # Python 3.9
+            '__class_getitem__', # Python 3.9+
             # Also the equality and comparison operators;
-            # we don't implement those methods, but the ABC does. On Python
-            # 3, we seem to inherit them from somewhere, but we don't on Python 3
+            # we don't implement those methods, but the ABC does.
             '__lt__', '__le__', '__eq__', '__gt__', '__ge__', '__ne__',
         }
         btr_attrs = set(dir(type(t)))
 
         missing_attrs = abc_attrs - btr_attrs
         self.assertFalse(sorted(missing_attrs),
-                         "Class %r is missing these methods: %s" % (type(t), missing_attrs))
+                         "Class {!r} is missing these methods: {}".format(type(t), missing_attrs))
 
     def testPersistentSubclass(self):
         # Can we subclass this and Persistent?
@@ -483,7 +473,7 @@ class Base(ZODBAccess, SignedMixin):
             self.assertFalse(issubclass(t.__class__, type(t)))
 
 
-        class NonSub(object):
+        class NonSub:
             pass
 
         self.assertFalse(issubclass(NonSub, type(t)))
@@ -501,8 +491,8 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
             t[to_key(i)] = to_value(i)
 
     def _getCollectionsABC(self):
-        from BTrees._compat import collections_abc
-        return collections_abc.MutableMapping
+        import collections.abc
+        return collections.abc.MutableMapping
 
     def test_popitem(self):
         t = self._makeOne()
@@ -900,7 +890,6 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
         # This tests fixes to several bugs in this area, starting with
         # http://collector.zope.org/Zope/419,
         # "BTreeItems slice contains 1 too many elements".
-        from .._compat import xrange
         t = self._makeOne()
         val_multiplier = -2 if self.SUPPORTS_NEGATIVE_VALUES else 2
         K = self.KEYS
@@ -970,7 +959,7 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
 
         # The specific test case from Zope collector 419.
         t.clear()
-        for i in xrange(100):
+        for i in range(100):
             t[K[i]] = self.VALUES[1]
         tslice = t.items()[20:80]
         self.assertEqual(len(tslice), 60)
@@ -1247,19 +1236,19 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
 
     def testNewStyleClassAsKeyNotAllowed(self):
         m = self._makeOne()
-        class New(object):
+        class New:
             pass
 
         with self.assertRaises(TypeError):
             m[New] = self.getTwoValues()[0]
 
-    def testOldStyleClassAsKeyNotALlowed(self):
+    def testClassAsKeyNotAllowed(self):
         m = self._makeOne()
-        class Old: # Python 2: Old style class
+        class Cls:
             pass
 
         with self.assertRaises(TypeError):
-            m[Old] = self.getTwoValues()[0]
+            m[Cls] = self.getTwoValues()[0]
 
     def testNewStyleClassWithCustomMetaClassNotAllowed(self):
 
@@ -1273,11 +1262,10 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
 
     def testEmptyFirstBucketReportedByGuido(self):
         # This was for Integer keys
-        from .._compat import xrange
         b = self._makeOne()
-        for i in xrange(29972): # reduce to 29971 and it works
+        for i in range(29972): # reduce to 29971 and it works
             b[self.coerce_to_key(i)] = self.coerce_to_value(i)
-        for i in xrange(30): # reduce to 29 and it works
+        for i in range(30): # reduce to 29 and it works
             del b[self.coerce_to_key(i)]
             try:
                 big_key = self.coerce_to_key(i + 40000)
@@ -1854,7 +1842,7 @@ class BTreeTests(MappingBase):
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
         t._p_oid = b'\0\0\0\0\0'
-        class Jar(object):
+        class Jar:
             def __init__(self):
                 self._cache = self
                 self.registered = None
@@ -1908,7 +1896,7 @@ class BTreeTests(MappingBase):
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
         t._p_oid = b'\0\0\0\0\0'
-        class Jar(object):
+        class Jar:
             def __init__(self):
                 self._cache = self
                 self.registered = None
@@ -2005,8 +1993,8 @@ class NormalSetTests(Base):
     # Test common to all set types
 
     def _getCollectionsABC(self):
-        from BTrees._compat import collections_abc
-        return collections_abc.MutableSet
+        import collections.abc
+        return collections.abc.MutableSet
 
     def _populate(self, t, l):
         # Make some data
@@ -2024,7 +2012,7 @@ class NormalSetTests(Base):
         # non-empty sequences but empty set
         self.assertTrue(t.isdisjoint((K[1], K[2])))
         self.assertTrue(t.isdisjoint([K[1], K[2]]))
-        self.assertTrue(t.isdisjoint(set((K[1], K[2]))))
+        self.assertTrue(t.isdisjoint({K[1], K[2]}))
         self.assertTrue(t.isdisjoint(K[k] for k in range(10)))
 
         # non-empty sequences and non-empty set, null intersection
@@ -2033,7 +2021,7 @@ class NormalSetTests(Base):
 
         self.assertTrue(t.isdisjoint((K[2], K[3])))
         self.assertTrue(t.isdisjoint([K[2], K[3]]))
-        self.assertTrue(t.isdisjoint(set((K[2], K[3]))))
+        self.assertTrue(t.isdisjoint({K[2], K[3]}))
         self.assertTrue(t.isdisjoint(K[k] for k in range(2, 10)))
 
         # non-null intersection
@@ -2041,7 +2029,7 @@ class NormalSetTests(Base):
         self.assertFalse(t.isdisjoint((K[0],)))
         self.assertFalse(t.isdisjoint((K[1],)))
         self.assertFalse(t.isdisjoint([K[2], K[3], K[0]]))
-        self.assertFalse(t.isdisjoint(set((K[2], K[3], K[1]))))
+        self.assertFalse(t.isdisjoint({K[2], K[3], K[1]}))
         self.assertFalse(t.isdisjoint(K[k] for k in range(1, 10)))
 
     def test_discard(self):
@@ -2088,7 +2076,7 @@ class NormalSetTests(Base):
         t |= (K[k] for k in range(10))
         t |= t
         self.assertIs(t, orig_t)
-        self.assertEqual(set(t), set(K[k] for k in range(10)))
+        self.assertEqual(set(t), {K[k] for k in range(10)})
 
     def test___iand__(self):
         t = self._makeOne()
@@ -2101,7 +2089,7 @@ class NormalSetTests(Base):
         self.assertEqual(set(t), set())
 
         self._populate(t, 10)
-        self.assertEqual(set(t), set(K[k] for k in range(10)))
+        self.assertEqual(set(t), {K[k] for k in range(10)})
 
         t &= (K[1], K[2], K[3])
         self.assertIs(t, orig_t)
@@ -2118,7 +2106,7 @@ class NormalSetTests(Base):
         self.assertEqual(set(t), set())
 
         self._populate(t, 10)
-        self.assertEqual(set(t), set(K[k] for k in range(10)))
+        self.assertEqual(set(t), {K[k] for k in range(10)})
 
         t -= (K[1], K[2], K[3])
         self.assertIs(t, orig_t)
@@ -2194,33 +2182,25 @@ class NormalSetTests(Base):
         self.assertEqual(t.add(k), 0)
 
     def testInsert(self):
-        from .._compat import PY2
         t = self._makeOne()
         K = self.KEYS
         t.insert(K[1])
-        if PY2:
-            self.assertTrue(t.has_key(K[1]))
         self.assertTrue(K[1] in t)
         self.assertTrue(K[2] not in t)
 
     def testBigInsert(self):
-        from .._compat import PY2
-        from .._compat import xrange
         t = self._makeOne()
-        r = xrange(10000)
+        r = range(10000)
         to_key = self.coerce_to_key
         for x in r:
             t.insert(to_key(x))
         for x in r:
             x = to_key(x)
-            if PY2:
-                self.assertTrue(t.has_key(x))
             self.assertTrue(x in t)
 
     def testRemoveSucceeds(self):
-        from .._compat import xrange
         t = self._makeOne()
-        r = xrange(10000)
+        r = range(10000)
         to_key = self.coerce_to_key
         for x in r:
             t.insert(to_key(x))
@@ -2234,16 +2214,12 @@ class NormalSetTests(Base):
         self._makeOne().remove(self.KEYS[1])
 
     def testHasKeyFails(self):
-        from .._compat import PY2
         t = self._makeOne()
-        if PY2:
-            self.assertTrue(not t.has_key(1))
         self.assertTrue(1 not in t)
 
     def testKeys(self):
-        from .._compat import xrange
         t = self._makeOne()
-        r = [self.KEYS[x] for x in xrange(1000)]
+        r = [self.KEYS[x] for x in range(1000)]
         for x in r:
             t.insert(x)
         diff = lsubtract(t.keys(), r)
@@ -2253,9 +2229,8 @@ class NormalSetTests(Base):
 
 
     def testClear(self):
-        from .._compat import xrange
         t = self._makeOne()
-        r = xrange(1000)
+        r = range(1000)
         K = self.KEYS
         for x in r:
             t.insert(K[x])
@@ -2415,7 +2390,7 @@ class NormalSetTests(Base):
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
         t._p_oid = b'\0\0\0\0\0'
-        class Jar(object):
+        class Jar:
             def __init__(self):
                 self._cache = self
                 self.registered = None
@@ -2446,7 +2421,7 @@ class NormalSetTests(Base):
         # Note that for the property to actually hold, we have to fake a
         # _p_jar and _p_oid
         t._p_oid = b'\0\0\0\0\0'
-        class Jar(object):
+        class Jar:
             def __init__(self):
                 self._cache = self
                 self.registered = None
@@ -2470,18 +2445,16 @@ class NormalSetTests(Base):
 class ExtendedSetTests(NormalSetTests):
 
     def testLen(self):
-        from .._compat import xrange
         t = self._makeOne()
-        r = xrange(10000)
+        r = range(10000)
         to_key = self.coerce_to_key
         for x in r:
             t.insert(to_key(x))
         self.assertEqual(len(t), 10000, len(t))
 
     def testGetItem(self):
-        from .._compat import xrange
         t = self._makeOne()
-        r = xrange(10000)
+        r = range(10000)
         to_key = self.coerce_to_key
         for x in r:
             t.insert(to_key(x))
@@ -2491,7 +2464,7 @@ class ExtendedSetTests(NormalSetTests):
 class KeyCoercionFailed(Exception):
     """Raised when we use a static key that we expect to be able to fit."""
 
-class InternalKeysMappingTest(object):
+class InternalKeysMappingTest:
     # There must not be any internal keys not in the BTree
 
     def _makeOne(self):
@@ -2572,7 +2545,7 @@ class InternalKeysMappingTest(object):
         db.close()
 
 
-class ModuleTest(object):
+class ModuleTest:
     # test for presence of generic names in module
     prefix = ''
     key_type = None
@@ -2636,10 +2609,10 @@ class ModuleTest(object):
         self._check_union_presence(self.key_type, 'multiunion')
 
 
-class I_SetsBase(object):
+class I_SetsBase:
 
     def setUp(self):
-        super(I_SetsBase, self).setUp()
+        super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
     def _getTargetClass(self):
@@ -2688,7 +2661,7 @@ SMALLEST_POSITIVE_65_BITS = LARGEST_64_BITS + 1
 LARGEST_NEGATIVE_65_BITS = SMALLEST_64_BITS - 1
 
 
-class TestLongIntSupport(object):
+class TestLongIntSupport:
 
     def getTwoValues(self):
         # Return two distinct values; these must compare as un-equal.
@@ -2811,9 +2784,9 @@ def makeSetBuilder(self, setbuilder):
 #     builders() - function returning functions to build inputs,
 #     each returned callable takes an optional keys arg
 #     intersection, union, difference - set to the type-correct versions
-class SetResult(object):
+class SetResult:
     def setUp(self):
-        super(SetResult, self).setUp()
+        super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
         rawAkeys = [1,    3,    5, 6] # pylint:disable=bad-whitespace
@@ -3135,7 +3108,7 @@ def isaset(thing):
 class MultiUnion(SignedMixin):
 
     def setUp(self):
-        super(MultiUnion, self).setUp()
+        super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
     def testEmpty(self):
@@ -3175,8 +3148,7 @@ class MultiUnion(SignedMixin):
 
     def testOneGenerator(self):
         def generator(seq):
-            for i in seq:
-                yield i
+            yield from seq
 
         self._testOne(generator)
 
@@ -3224,8 +3196,7 @@ class MultiUnion(SignedMixin):
             pass
 
         def gen():
-            for i in range(3):
-                yield i
+            yield from range(3)
             raise MyException
 
         with self.assertRaises(MyException):
@@ -3279,14 +3250,14 @@ class MultiUnion(SignedMixin):
         self.assertEqual(list(fast), list(range(N)))
 
 
-class ConflictTestBase(SignedMixin, object):
+class ConflictTestBase(SignedMixin):
     # Tests common to all types: sets, buckets, and BTrees
 
     storage = None
     db = None
 
     def setUp(self):
-        super(ConflictTestBase, self).setUp()
+        super().setUp()
         _skip_if_pure_py_and_py_test(self)
         def identity(x):
             return x

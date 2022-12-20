@@ -130,7 +130,7 @@ def populate_module(mod_globals,
                     interface, module=None):
     from . import Interfaces as interfaces
     from ._compat import import_c_extension
-    from ._compat import collections_abc
+    import collections.abc
     from ._base import _fix_pickle
 
     module_name = mod_globals['__name__']
@@ -175,10 +175,10 @@ def populate_module(mod_globals,
         classImplements(mod_globals[cls_name + 'Py'], iface)
 
     for cls_name, abc in {
-            'BTree': collections_abc.MutableMapping,
-            'Bucket': collections_abc.MutableMapping,
-            'Set': collections_abc.MutableSet,
-            'TreeSet': collections_abc.MutableSet,
+            'BTree': collections.abc.MutableMapping,
+            'Bucket': collections.abc.MutableMapping,
+            'Set': collections.abc.MutableSet,
+            'TreeSet': collections.abc.MutableSet,
     }.items():
         abc.register(mod_globals[cls_name])
         # Because of some quirks in the implementation of ABCMeta.__instancecheck__,

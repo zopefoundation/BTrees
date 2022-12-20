@@ -36,9 +36,5 @@
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__QLBTree
-#else
-#define INITMODULE init_QLBTree
-#endif
 #include "BTreeModuleTemplate.c"

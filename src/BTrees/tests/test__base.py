@@ -476,7 +476,7 @@ class BucketTests(unittest.TestCase):
 
     def test_update_value_w_items(self):
         bucket = self._makeOne()
-        class Foo(object):
+        class Foo:
             def items(self):
                 return [('a', 'b')]
         bucket.update(Foo())
@@ -485,7 +485,7 @@ class BucketTests(unittest.TestCase):
 
     def test_update_value_w_invalid_items(self):
         bucket = self._makeOne()
-        class Foo(object):
+        class Foo:
             def items(self):
                 return ('a', 'b', 'c')
         self.assertRaises(TypeError, bucket.update, Foo())
@@ -1520,7 +1520,7 @@ class Test_Tree(unittest.TestCase):
 
     def test_update_value_w_items(self):
         tree = self._makeOne()
-        class Foo(object):
+        class Foo:
             def items(self):
                 return [('a', 'b')]
         tree.update(Foo())
@@ -1528,7 +1528,7 @@ class Test_Tree(unittest.TestCase):
 
     def test_update_value_w_invalid_items(self):
         tree = self._makeOne()
-        class Foo(object):
+        class Foo:
             def items(self):
                 return ('a', 'b', 'c')
         self.assertRaises(TypeError, tree.update, Foo())
@@ -1926,7 +1926,7 @@ class Test_Tree(unittest.TestCase):
         self.assertRaises(KeyError, tree._del, 'nonesuch')
 
     def test__del_fixes_up_node_key(self):
-        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        SOURCE = {'%05d' % i: i for i in range(1000)}
         tree = self._makeOne(SOURCE)
         before = tree._data[1].key
         del tree[before]
@@ -1934,7 +1934,7 @@ class Test_Tree(unittest.TestCase):
         self.assertTrue(after > before)
 
     def test__del_empties_first_bucket_not_zeroth_item(self):
-        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        SOURCE = {'%05d' % i: i for i in range(1000)}
         tree = self._makeOne(SOURCE)
         bucket = tree._data[1].child._firstbucket
         next_b = bucket._next
@@ -1943,7 +1943,7 @@ class Test_Tree(unittest.TestCase):
         self.assertTrue(tree._data[1].child._firstbucket is next_b)
 
     def test__del_empties_first_bucket_zeroth_item(self):
-        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        SOURCE = {'%05d' % i: i for i in range(1000)}
         tree = self._makeOne(SOURCE)
         bucket = tree._data[0].child._firstbucket
         next_b = bucket._next
@@ -1953,7 +1953,7 @@ class Test_Tree(unittest.TestCase):
         self.assertTrue(tree._firstbucket is next_b)
 
     def test__del_empties_other_bucket_not_zeroth_item(self):
-        SOURCE = dict([('%05d' % i, i) for i in range(1000)])
+        SOURCE = {'%05d' % i: i for i in range(1000)}
         tree = self._makeOne(SOURCE)
         bucket = tree._data[1].child._firstbucket._next
         next_b = bucket._next
@@ -2048,7 +2048,7 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(str(e), "BTree has NULL child")
 
     def test__check_nonempty_w_heterogenous_child(self):
-        class Other(object):
+        class Other:
             pass
         tree = self._makeOne({'a': 'b'})
         tree._data.append(tree._data[0].__class__('c', Other()))
@@ -2073,7 +2073,7 @@ class Test_Tree(unittest.TestCase):
                                  "its first child's firstbucket")
 
     def test__check_nonempty_w_invalid_child(self):
-        class Invalid(object):
+        class Invalid:
             size = 2
         tree = self._makeOne({'a': 'b'})
         tree._data[0].child = Invalid()
@@ -2479,7 +2479,7 @@ class TreeSetTests(unittest.TestCase):
     def test_update_mppaing(self):
         _set = self._makeOne()
         LETTERS = 'abcdefghijklmnopqrstuvwxyz'
-        a_dict = dict([(y, x) for x, y in enumerate(LETTERS)])
+        a_dict = {y: x for x, y in enumerate(LETTERS)}
         _set.update(a_dict)
         self.assertEqual(len(_set), len(LETTERS))
         for letter in LETTERS:
@@ -2498,7 +2498,7 @@ class Test_set_operation(unittest.TestCase):
         return self._getTargetClass()(func, set_type)
 
     def test_it(self):
-        class _SetType(object):
+        class _SetType:
             pass
         _called_with = []
         def _func(*args, **kw):
@@ -2508,7 +2508,7 @@ class Test_set_operation(unittest.TestCase):
         self.assertEqual(_called_with, [((_SetType, 'a',), {'b': 1})])
 
 
-class _SetObBase(object):
+class _SetObBase:
 
     def _makeSet(self, *args):
         return  _Set(*args)
@@ -2928,14 +2928,14 @@ class Test_helpers(unittest.TestCase):
         self.assertEqual(MERGE_WEIGHT_numeric(faux_self, 7, 1), 7)
 
 
-class _Cache(object):
+class _Cache:
     def __init__(self):
         self._mru = []
     def mru(self, oid):
         self._mru.append(oid)
 
 
-class _Jar(object):
+class _Jar:
     def __init__(self):
         self._current = set()
         self._cache = _Cache()
@@ -2945,7 +2945,7 @@ class _Jar(object):
         pass
 
 
-class _Set(object):
+class _Set:
     def __init__(self, *args, **kw):
         if len(args) == 1 and isinstance(args[0], tuple):
             keys = args[0]
@@ -2976,8 +2976,7 @@ class _Mapping(dict):
     def MERGE(self, v1, w1, v2, w2):
         return v1 * w1 + v2 * w2
     def iteritems(self):
-        for k, v in zip(self._keys, self._values):
-            yield k,v
+        yield from zip(self._keys, self._values)
     def __iter__(self):
         return iter(self._keys)
     def __getitem__(self, key):

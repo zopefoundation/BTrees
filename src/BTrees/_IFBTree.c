@@ -33,9 +33,5 @@
 #include "intkeymacros.h"
 #include "floatvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__IFBTree
-#else
-#define INITMODULE init_IFBTree
-#endif
 #include "BTreeModuleTemplate.c"

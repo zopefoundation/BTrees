@@ -14,25 +14,18 @@
 """
 Descriptions of the datatypes supported by this package.
 """
-from __future__ import absolute_import
 
 from operator import index as operator__index__
 from struct import Struct
 from struct import error as struct_error
 
-try:
-    from abc import ABC
-except ImportError:
-    # Python < 3.4 (specifically, Python 2)
-    from abc import ABCMeta
-    ABC = ABCMeta('ABC', (object,), {})
+from abc import ABC
 
-from ._compat import int_types
 from .utils import Lazy
 
 # pylint:disable=raise-missing-from
 
-class DataType(object):
+class DataType:
     """
     Describes a data type used as a value.
 
@@ -202,14 +195,7 @@ class _HasDefaultComparison(ABC):
     # Comparisons only use special methods defined on the
     # type, not instance variables.
 
-    # On CPython 2, every subclass of object inherits __lt__
-    # (unless it overrides), and it has ``__objclass__`` of ``type``
-    # (of course it is also the same object as ``_object_lt`` at
-    # that point). Also, interestingly, CPython 2 classes inherit
-    # ``__lt__`` from ``type``, but *instances* do not.
-    #
     # On CPython 3, classes inherit __lt__ with ``__objclass__`` of ``object``.
-    # On PyPy2, classes don't inherit any __lt__.
     # On PyPy3, they do.
     #
     # Test these conditions at runtime and define the method variant
@@ -217,52 +203,24 @@ class _HasDefaultComparison(ABC):
     #
     # Remember the method is checking if the object has default comparison
     assert '__lt__' not in DataType.__dict__
-    if hasattr(DataType, '__lt__'):
-        # CPython 2 or CPython 3 or PyPy3
-        if getattr(DataType.__lt__, '__objclass__', None) is object:
-            # CPython 3
-            @classmethod
-            def __subclasshook__(cls, C, _NoneType=type(None)):
-                if C is _NoneType:
-                    return False
-                defining_class = getattr(C.__lt__, '__objclass__', None)
-                if defining_class is None:
-                    # Implemented in Python
-                    return False
-                return C.__lt__.__objclass__ is object
-        elif getattr(DataType.__lt__, '__objclass__', None) is type:
-            # CPython 2
-            @classmethod
-            def __subclasshook__(cls, C, _NoneType=type(None)):
-                if C is _NoneType:
-                    return False
-                # If C is an old-style class, it may not even have __lt__
-                if isinstance(C, type):
-                    lt = C.__lt__
-                else:
-                    lt = getattr(C, '__lt__', None)
-                if lt is not None:
-                    defining_class = getattr(lt, '__objclass__', None)
-                    if defining_class is None:
-                        # Implemented in Python
-                        return False
-                    if defining_class is not type:
-                        return False
-                return not hasattr(C, '__cmp__')
-        else:
-            # PyPy3
-            @classmethod
-            def __subclasshook__(cls, C, _object_lt=object.__lt__, _NoneType=type(None)):
-                if C is _NoneType:
-                    return False
-                return C.__lt__ is _object_lt
-    else:
-        # PyPy2
+    if getattr(DataType.__lt__, '__objclass__', None) is object:
+        # CPython 3
         @classmethod
         def __subclasshook__(cls, C, _NoneType=type(None)):
             if C is _NoneType:
                 return False
-            return not hasattr(C, '__lt__') and not hasattr(C, '__cmp__')
+            defining_class = getattr(C.__lt__, '__objclass__', None)
+            if defining_class is None:
+                # Implemented in Python
+                return False
+            return C.__lt__.__objclass__ is object
+    else:
+        # PyPy3
+        @classmethod
+        def __subclasshook__(cls, C, _object_lt=object.__lt__, _NoneType=type(None)):
+            if C is _NoneType:
+                return False
+            return C.__lt__ is _object_lt
 
 
 class O(KeyDataType):
@@ -281,7 +239,7 @@ class O(KeyDataType):
 
     def __call__(self, item):
         if isinstance(item, _HasDefaultComparison):
-            raise TypeError("Object of class %s has default comparison" % (type(item).__name__,))
+            raise TypeError("Object of class {} has default comparison".format(type(item).__name__))
         return item
 
 
@@ -307,7 +265,7 @@ class _AbstractNativeDataType(KeyDataType):
         except (struct_error, TypeError, ValueError):
             # PyPy can raise ValueError converting a negative number to a
             # unsigned value.
-            if isinstance(item, int_types):
+            if isinstance(item, int):
                 raise TypeError("Value out of range", item)
             raise TypeError(self._error_description)
 
@@ -321,18 +279,13 @@ class _AbstractNativeDataType(KeyDataType):
 
 class _AbstractIntDataType(_AbstractNativeDataType):
     _as_python_type = int
-    _required_python_type = int_types
+    _required_python_type = int
     multiplication_identity = 1
     long_name = "Integer"
 
     def getTwoExamples(self):
         return 1, 2
 
-    # On Python 2, it's important for these values to be actual `int`
-    # values, not `long` when they fit; passing a value that's too big
-    # to `int` will still result in it being a `long`. For some reason
-    # on Windows, even the 32-bit values somehow wind up as longs
-    # unless we do the conversion.
     def get_lower_bound(self):
         exp = 64 if self.using64bits else 32
         exp -= 1
@@ -400,7 +353,7 @@ class _AbstractBytes(KeyDataType):
 
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
-            raise TypeError("%s-byte array expected, not %r" % (self._length, item))
+            raise TypeError("{}-byte array expected, not {!r}".format(self._length, item))
         return item
 
     def supports_value_union(self):
@@ -499,5 +452,5 @@ class s(_AbstractBytes):
                 raise TypeError(e)
 
             if as_bytes[:2] != b'\x00\x00':
-                raise TypeError("Cannot convert %r to 6 bytes (%r)" % (item, as_bytes))
+                raise TypeError("Cannot convert {!r} to 6 bytes ({!r})".format(item, as_bytes))
             return as_bytes[2:]

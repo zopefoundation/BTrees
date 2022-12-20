@@ -29,7 +29,7 @@ class Test_classify(unittest.TestCase):
         return classify(obj)
 
     def test_classify_w_unknown(self):
-        class NotClassified(object):
+        class NotClassified:
             pass
         self.assertRaises(KeyError, self._callFUT, NotClassified())
 
@@ -70,7 +70,7 @@ class Test_crack_btree(unittest.TestCase):
 
     def test_w_empty_tree(self):
         from BTrees.check import BTREE_EMPTY
-        class Empty(object):
+        class Empty:
             def __getstate__(self):
                 return None
         kind, keys, kids = self._callFUT(Empty(), True)
@@ -80,7 +80,7 @@ class Test_crack_btree(unittest.TestCase):
 
     def test_w_degenerate_tree(self):
         from BTrees.check import BTREE_ONE
-        class Degenerate(object):
+        class Degenerate:
             def __getstate__(self):
                 return ((('a', 1, 'b', 2),),)
         kind, keys, kids = self._callFUT(Degenerate(), True)
@@ -92,7 +92,7 @@ class Test_crack_btree(unittest.TestCase):
         from BTrees.check import BTREE_NORMAL
         first_bucket = [object()] * 8
         second_bucket = [object()] * 8
-        class Normal(object):
+        class Normal:
             def __getstate__(self):
                 return ((first_bucket, 'b', second_bucket), first_bucket)
         kind, keys, kids = self._callFUT(Normal(), True)
@@ -108,7 +108,7 @@ class Test_crack_bucket(unittest.TestCase):
         return crack_bucket(obj, is_mapping)
 
     def test_w_empty_set(self):
-        class EmptySet(object):
+        class EmptySet:
             def __getstate__(self):
                 return ([],)
         keys, values = self._callFUT(EmptySet(), False)
@@ -116,7 +116,7 @@ class Test_crack_bucket(unittest.TestCase):
         self.assertEqual(values, [])
 
     def test_w_non_empty_set(self):
-        class NonEmptySet(object):
+        class NonEmptySet:
             def __getstate__(self):
                 return (['a', 'b', 'c'],)
         keys, values = self._callFUT(NonEmptySet(), False)
@@ -124,7 +124,7 @@ class Test_crack_bucket(unittest.TestCase):
         self.assertEqual(values, [])
 
     def test_w_empty_mapping(self):
-        class EmptyMapping(object):
+        class EmptyMapping:
             def __getstate__(self):
                 return ([], object())
         keys, values = self._callFUT(EmptyMapping(), True)
@@ -132,7 +132,7 @@ class Test_crack_bucket(unittest.TestCase):
         self.assertEqual(values, [])
 
     def test_w_non_empty_mapping(self):
-        class NonEmptyMapping(object):
+        class NonEmptyMapping:
             def __getstate__(self):
                 return (['a', 1, 'b', 2, 'c', 3], object())
         keys, values = self._callFUT(NonEmptyMapping(), True)
@@ -148,14 +148,14 @@ class Test_type_and_adr(unittest.TestCase):
 
     def test_type_and_adr_w_oid(self):
         from BTrees.utils import oid_repr
-        class WithOid(object):
+        class WithOid:
             _p_oid = b'DEADBEEF'
         t_and_a = self._callFUT(WithOid())
         self.assertTrue(t_and_a.startswith('WithOid (0x'))
         self.assertTrue(t_and_a.endswith('oid=%s)' % oid_repr(b'DEADBEEF')))
 
     def test_type_and_adr_wo_oid(self):
-        class WithoutOid(object):
+        class WithoutOid:
             pass
         t_and_a = self._callFUT(WithoutOid())
         self.assertTrue(t_and_a.startswith('WithoutOid (0x'))

@@ -14,14 +14,10 @@
 """Python BTree implementation
 """
 
-
-
 from persistent import Persistent
 
 from .Interfaces import BTreesConflictError
-from ._compat import PY3
 from ._compat import compare
-from ._compat import xrange
 
 # XXX: Fix these. These ignores are temporary to
 # reduce the noise and help find specific issues during
@@ -90,7 +86,7 @@ class _Base(Persistent):
 
         _BTree_reduce_up_bound = _BTree_reduce_as
 
-class _ArithmeticMixin(object):
+class _ArithmeticMixin:
     def __sub__(self, other):
         return difference(self.__class__, self, other)
 
@@ -218,7 +214,7 @@ class _BucketBase(_ArithmeticMixin, _Base):
         if not (args or kw):
             return iter(self._keys)
         keys = self._keys
-        return (keys[i] for i in xrange(*self._range(*args, **kw)))
+        return (keys[i] for i in range(*self._range(*args, **kw)))
 
     def __iter__(self):
         return iter(self._keys)
@@ -239,10 +235,10 @@ class _BucketBase(_ArithmeticMixin, _Base):
         mod = type_self.__module__
         name = type_self.__name__
         name = name[:-2] if name.endswith("Py") else name
-        return "%s.%s(%r)" % (mod, name, items)
+        return "{}.{}({!r})".format(mod, name, items)
 
 
-class _SetIteration(object):
+class _SetIteration:
 
     __slots__ = ('to_iterate',
                  'useValues',
@@ -271,7 +267,7 @@ class _SetIteration(object):
             try:
                 itmeth = to_iterate.iteritems
             except AttributeError:
-                if PY3 and isinstance(to_iterate, dict): #pragma no cover Py3k
+                if isinstance(to_iterate, dict):
                     itmeth = to_iterate.items().__iter__
                 else:
                     itmeth = to_iterate.__iter__
@@ -302,7 +298,7 @@ class _SetIteration(object):
 
         return self
 
-class _MutableMappingMixin(object):
+class _MutableMappingMixin:
     # Methods defined in collections.abc.MutableMapping that
     # Bucket and Tree should both implement and can implement
     # the same. We don't want to extend that class though,
@@ -440,19 +436,19 @@ class Bucket(_MutableMappingMixin, _BucketBase):
 
     def itervalues(self, *args, **kw):
         values = self._values
-        return (values[i] for i in xrange(*self._range(*args, **kw)))
+        return (values[i] for i in range(*self._range(*args, **kw)))
 
     def items(self, *args, **kw):
         keys = self._keys
         values = self._values
         return [(keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw))]
+                    for i in range(*self._range(*args, **kw))]
 
     def iteritems(self, *args, **kw):
         keys = self._keys
         values = self._values
         return ((keys[i], values[i])
-                    for i in xrange(*self._range(*args, **kw)))
+                    for i in range(*self._range(*args, **kw)))
 
     def __getstate__(self):
         keys = self._keys
@@ -623,7 +619,7 @@ class Bucket(_MutableMappingMixin, _BucketBase):
     def __repr__(self):
         return self._repr_helper(self.items())
 
-class _MutableSetMixin(object):
+class _MutableSetMixin:
     # Like _MutableMappingMixin, but for sets.
     def isdisjoint(self, other):
         """
@@ -882,7 +878,7 @@ class Set(_MutableSetMixin, _BucketBase):
     def __repr__(self):
         return self._repr_helper(self._keys)
 
-class _TreeItem(object):
+class _TreeItem:
 
     __slots__ = ('key',
                  'child',
@@ -941,9 +937,8 @@ class _Tree(_ArithmeticMixin, _Base):
             self._data = []
         self._firstbucket = None
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._data)
-    __bool__ = __nonzero__ #Py3k rename
 
     def __len__(self):
         l = 0
@@ -1263,7 +1258,7 @@ class _Tree(_ArithmeticMixin, _Base):
             self._bucket_type()._p_resolveConflict(s_old, s_com, s_new), ), )
 
     def __repr__(self):
-        r = super(_Tree, self).__repr__()
+        r = super().__repr__()
         r = r.replace('Py', '')
         return r
 
@@ -1288,7 +1283,7 @@ def _get_simple_btree_bucket_state(state):
     return state
 
 
-class _TreeItems(object):
+class _TreeItems:
 
     __slots__ = ('firstbucket',
                  'itertype',
@@ -1354,7 +1349,7 @@ class _TreeItems(object):
             done = 1
 
 
-class _TreeIterator(object):
+class _TreeIterator:
     """ Faux implementation for BBB only.
     """
     def __init__(self, items): #pragma: no cover
@@ -1426,7 +1421,7 @@ class TreeSet(_MutableSetMixin, _Tree):
     _p_resolveConflict = _Tree._p_resolveConflict
 
 
-class set_operation(object):
+class set_operation:
 
     __slots__ = (
         'func',

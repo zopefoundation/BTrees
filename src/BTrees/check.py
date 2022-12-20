@@ -252,7 +252,7 @@ def type_and_adr(obj):
         oid = oid_repr(obj._p_oid)
     else:
         oid = 'None'
-    return "%s (0x%x oid=%s)" % (type(obj).__name__, positive_id(obj), oid)
+    return "{} (0x{:x} oid={})".format(type(obj).__name__, positive_id(obj), oid)
 
 # Walker implements a depth-first search of a BTree (or TreeSet or Set or
 # Bucket).  Subclasses must implement the visit_btree() and visit_bucket()
@@ -401,7 +401,7 @@ class Checker(Walker):
             i += 1
 
     def complain(self, msg, obj, path):
-        s = "%s, in %s, path from root %s" % (
+        s = "{}, in {}, path from root {}".format(
                 msg,
                 type_and_adr(obj),
                 ".".join(map(str, path)))
@@ -440,7 +440,7 @@ class Printer(Walker): # pragma: no cover
         for i in range(n):
             print("%skey %d: %r" % (indent, i, keys[i]),)
             if is_mapping:
-                print("value %r" % (values[i],))
+                print("value {!r}".format(values[i]))
 
 def check(btree):
     """Check internal value-based invariants in a BTree or TreeSet.

@@ -29,7 +29,7 @@ class TestPersistency(ZODBAccess, TestCase):
         try:
             # tree with 3 buckets (internal implementation details)
             tree = OOBTree(
-                dict((i, i) for i in range(3 * BUCKET_SIZE // 2 + 2)))
+                {i: i for i in range(3 * BUCKET_SIZE // 2 + 2)})
             root["tree"] = tree
             commit()
             # almost clear the second bucket keeping the last element

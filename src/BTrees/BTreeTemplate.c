@@ -26,11 +26,7 @@ _get_max_size(BTree *self, PyObject *name, long default_max)
       return default_max;
   }
 
-#ifdef PY3K
   isize = PyLong_AsLong(size);
-#else
-  isize = PyInt_AsLong(size);
-#endif
 
   Py_DECREF(size);
   if (isize <= 0 && ! PyErr_Occurred()) {
@@ -2486,9 +2482,6 @@ static PyNumberMethods BTree_as_number_for_nonzero = {
     0,                                      /* nb_add */
     bucket_sub,                             /* nb_subtract */
     0,                                      /* nb_multiply */
-#ifndef PY3K
-    0,                                      /* nb_divide */
-#endif
     0,                                      /* nb_remainder */
     0,                                      /* nb_divmod */
     0,                                      /* nb_power */
@@ -2555,9 +2548,6 @@ static PyTypeObject BTreeTypeType = {
     0, /* tp_getattro */
     (setattrofunc)BTreeType_setattro, /* tp_setattro */
     0, /* tp_as_buffer */
-#ifndef PY3K
-    Py_TPFLAGS_CHECKTYPES |
-#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_BASETYPE, /* tp_flags */
     0, /* tp_doc */
@@ -2591,9 +2581,6 @@ static PyTypeObject BTreeType = {
     0,                                      /* tp_getattro */
     0,                                      /* tp_setattro */
     0,                                      /* tp_as_buffer */
-#ifndef PY3K
-    Py_TPFLAGS_CHECKTYPES |
-#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                    /* tp_flags */

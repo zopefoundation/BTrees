@@ -35,9 +35,5 @@
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__UUBTree
-#else
-#define INITMODULE init_UUBTree
-#endif
 #include "BTreeModuleTemplate.c"

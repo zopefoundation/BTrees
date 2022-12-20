@@ -511,14 +511,8 @@ update_from_seq(PyObject *map, PyObject *seq)
      * returns true for a PeristentMapping or PersistentDict, and we
      * want to use items() in those cases too.
      */
-#ifdef PY3K
-#define ITERITEMS "items"
-#else
-#define ITERITEMS "iteritems"
-#endif
     if (!PySequence_Check(seq) || /* or it "looks like a dict" */
-        PyObject_HasAttrString(seq, ITERITEMS))
-#undef ITERITEMS
+        PyObject_HasAttrString(seq, "items"))
     {
         PyObject *items;
         items = PyObject_GetAttrString(seq, "items");
@@ -1910,9 +1904,6 @@ static PyNumberMethods Bucket_as_number = {
      (binaryfunc)0,                     /* nb_add */
      bucket_sub,                        /* nb_subtract */
      (binaryfunc)0,                     /* nb_multiply */
-#ifndef PY3K
-     0,                                 /* nb_divide */
-#endif
      (binaryfunc)0,                     /* nb_remainder */
      (binaryfunc)0,                     /* nb_divmod */
      (ternaryfunc)0,                    /* nb_power */
@@ -1933,53 +1924,15 @@ static PyObject *
 bucket_repr(Bucket *self)
 {
     PyObject *i, *r;
-#ifndef PY3K
-    char repr[10000];
-    int rv;
-#endif
 
     i = bucket_items(self, NULL, NULL);
     if (!i)
     {
         return NULL;
     }
-#ifdef PY3K
     r = PyUnicode_FromFormat("%s(%R)", Py_TYPE(self)->tp_name, i);
     Py_DECREF(i);
     return r;
-#else
-    r = PyObject_Repr(i);
-    Py_DECREF(i);
-    if (!r)
-    {
-        return NULL;
-    }
-    rv = PyOS_snprintf(repr, sizeof(repr),
-                       "%s(%s)", Py_TYPE(self)->tp_name,
-                       PyBytes_AS_STRING(r));
-    if (rv > 0 && (size_t)rv < sizeof(repr))
-    {
-        Py_DECREF(r);
-        return PyBytes_FromStringAndSize(repr, strlen(repr));
-    }
-    else
-    {
-        /* The static buffer wasn't big enough */
-        int size;
-        PyObject *s;
-        /* 3 for the parens and the null byte */
-        size = strlen(Py_TYPE(self)->tp_name) + PyBytes_GET_SIZE(r) + 3;
-        s = PyBytes_FromStringAndSize(NULL, size);
-        if (!s) {
-            Py_DECREF(r);
-            return r;
-        }
-        PyOS_snprintf(PyBytes_AS_STRING(s), size,
-                    "%s(%s)", Py_TYPE(self)->tp_name, PyBytes_AS_STRING(r));
-        Py_DECREF(r);
-        return s;
-    }
-#endif
 }
 
 static PyTypeObject BucketType = {
@@ -2002,9 +1955,6 @@ static PyTypeObject BucketType = {
     0,                                      /* tp_getattro */
     0,                                      /* tp_setattro */
     0,                                      /* tp_as_buffer */
-#ifndef PY3K
-    Py_TPFLAGS_CHECKTYPES |
-#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                    /* tp_flags */

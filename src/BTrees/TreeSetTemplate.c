@@ -552,9 +552,6 @@ static PyNumberMethods TreeSet_as_number = {
     0,                                      /* nb_add */
     bucket_sub,                             /* nb_subtract */
     0,                                      /* nb_multiply */
-#ifndef PY3K
-    0,                                      /* nb_divide */
-#endif
     0,                                      /* nb_remainder */
     0,                                      /* nb_divmod */
     0,                                      /* nb_power */
@@ -568,24 +565,12 @@ static PyNumberMethods TreeSet_as_number = {
     bucket_and,                             /* nb_and */
     (binaryfunc)Generic_set_xor,            /* nb_xor */
     bucket_or,                              /* nb_or */
-#ifdef PY3K
      0,                                 /*nb_int*/
      0,                                 /*nb_reserved*/
      0,                                 /*nb_float*/
-#else
-     0,                                 /*nb_coerce*/
-     0,                                 /*nb_int*/
-     0,                                 /*nb_long*/
-     0,                                 /*nb_float*/
-     0,                                 /*nb_oct*/
-     0,                                 /*nb_hex*/
-#endif
      0,                                 /*nb_inplace_add*/
      (binaryfunc)TreeSet_isub,          /*nb_inplace_subtract*/
      0,                                 /*nb_inplace_multiply*/
-#ifndef PY3K
-     0,                                 /*nb_inplace_divide*/
-#endif
      0,                                 /*nb_inplace_remainder*/
      0,                                 /*nb_inplace_power*/
      0,                                 /*nb_inplace_lshift*/
@@ -616,9 +601,6 @@ static PyTypeObject TreeSetType =
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-#ifndef PY3K
-    Py_TPFLAGS_CHECKTYPES |
-#endif
     Py_TPFLAGS_DEFAULT |
     Py_TPFLAGS_HAVE_GC |
     Py_TPFLAGS_BASETYPE,                        /* tp_flags */
