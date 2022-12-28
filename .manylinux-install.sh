@@ -40,9 +40,6 @@ yum -y install libffi-devel
 
 tox_env_map() {
     case $1 in
-        *"cp27"*) echo 'py27';;
-        *"cp35"*) echo 'py35';;
-        *"cp36"*) echo 'py36';;
         *"cp37"*) echo 'py37';;
         *"cp38"*) echo 'py38';;
         *"cp39"*) echo 'py39';;
@@ -55,10 +52,7 @@ tox_env_map() {
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if \
-       [[ "${PYBIN}" == *"cp27"* ]] || \
-       [[ "${PYBIN}" == *"cp35"* ]] || \
        [[ "${PYBIN}" == *"cp311"* ]] || \
-       [[ "${PYBIN}" == *"cp36"* ]] || \
        [[ "${PYBIN}" == *"cp37"* ]] || \
        [[ "${PYBIN}" == *"cp38"* ]] || \
        [[ "${PYBIN}" == *"cp39"* ]] || \
@@ -68,13 +62,13 @@ for PYBIN in /opt/python/*/bin; do
         if [ `uname -m` == 'aarch64' ]; then
           # Running the test suite takes forever in
           # emulation; an early run (using tox, which is also slow)
-          # took over an hour to build and then run the 2.7 tests and move on
-          # to the 3.5 tests. We still want to run tests, though!
+          # took over an hour to build and then run the tests sequentially
+          # for the Python versions. We still want to run tests, though!
           # We don't want to distribute wheels for a platform that's
           # completely untested. Consequently, we limit it to running
           # in just one interpreter, the newest one on the list (which in principle
           # should be the fastest), and we don't install the ZODB extra.
-          if [[ "${PYBIN}" == *"cp39"* ]]; then
+          if [[ "${PYBIN}" == *"cp311"* ]]; then
               cd /io/
               "${PYBIN}/pip" install -e .[test]
               "${PYBIN}/python" -c 'import BTrees.OOBTree; print(BTrees.OOBTree.BTree, BTrees.OOBTree.BTreePy)'

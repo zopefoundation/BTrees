@@ -26,14 +26,10 @@
 
 
 
-                                
+
 #include "_compat.h"
 #include "objectkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__OIBTree
-#else
-#define INITMODULE init_OIBTree
-#endif
 #include "BTreeModuleTemplate.c"

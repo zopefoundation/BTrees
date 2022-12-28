@@ -20,18 +20,7 @@ check_argument_cmp(PyObject *arg)
     }
 
 
-#ifdef PY3K
     if (Py_TYPE(arg)->tp_richcompare == Py_TYPE(object_)->tp_richcompare)
-#else
-    if ((Py_TYPE(arg)->tp_richcompare == NULL
-	 && Py_TYPE(arg)->tp_compare == Py_TYPE(object_)->tp_compare)
-	/* Also exclude new-style classes. On Python 2, they can be compared,
-	   but order by address, making them not suitable for BTrees. */
-	|| PyType_CheckExact(arg)
-	/* But let classes with a meta class that implements comparison through. */
-	|| (PyType_Check(arg) && Py_TYPE(arg)->tp_richcompare == PyType_Type.tp_richcompare)
-	)
-#endif
     {
         PyErr_Format(PyExc_TypeError,
 		     "Object of class %s has default comparison",

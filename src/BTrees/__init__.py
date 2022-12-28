@@ -64,7 +64,7 @@ for family in _FAMILIES:
 
 
 @zope.interface.implementer(BTrees.Interfaces.IBTreeFamily)
-class _Family(object):
+class _Family:
     from BTrees import OOBTree as OO
     _BITSIZE = 0
     minint = maxint = maxuint = None

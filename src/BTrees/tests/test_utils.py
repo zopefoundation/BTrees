@@ -32,13 +32,6 @@ class Test_non_negative(unittest.TestCase):
     def test_w_positive(self):
         self.assertEqual(self._callFUT(1), 1)
 
-    def test_w_big_positive(self):
-        import sys
-        try:
-            self.assertEqual(self._callFUT(sys.maxint), sys.maxint)
-        except AttributeError: # pragma: no cover Py3k
-            pass
-
 
 class Test_oid_repr(unittest.TestCase):
 

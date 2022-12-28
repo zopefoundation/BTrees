@@ -193,7 +193,7 @@ class DegenerateBTree(unittest.TestCase):
 LP294788_ids = {}
 
 
-class ToBeDeleted(object):
+class ToBeDeleted:
     def __init__(self, id):
         assert isinstance(id, int) #we don't want to store any object ref here
         self.id = id
@@ -309,7 +309,7 @@ class TestBugFixes(unittest.TestCase):
                     id = trandom.randint(0, 1000000)
 
                 ids[id] = 1
-                t[id] = (id, ToBeDeleted(id), u'somename')
+                t[id] = (id, ToBeDeleted(id), 'somename')
             else:
                 #del
                 keys = list(ids.keys())
@@ -378,7 +378,7 @@ class TestBugFixes(unittest.TestCase):
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
-                    id = (id, ToBeDeleted(id), u'somename')
+                    id = (id, ToBeDeleted(id), 'somename')
 
                 ids[id] = 1
                 t[id] = 1

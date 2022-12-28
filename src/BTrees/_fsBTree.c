@@ -85,11 +85,7 @@ static PyObject *bucket_fromBytes(PyObject *self, PyObject *state);
     {"fromString", (PyCFunction) bucket_fromBytes,	METH_O, \
      "fromString(s) -- Deprecated alias for 'fromBytes'"}, \
 
-#ifdef PY3K
 #define INITMODULE PyInit__fsBTree
-#else
-#define INITMODULE init_fsBTree
-#endif
 #include "BTreeModuleTemplate.c"
 
 static PyObject *
@@ -108,10 +104,10 @@ bucket_toBytes(PyObject *oself)
     goto err;
   memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
   memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
-  
+
   PER_UNUSE(self);
   return items;
-  
+
  err:
   PER_UNUSE(self);
   Py_XDECREF(items);
@@ -129,7 +125,7 @@ bucket_fromBytes(PyObject *oself, PyObject *state)
   len = PyBytes_Size(state);
   if (len < 0)
     return NULL;
-  
+
   if (len%8)
     {
       PyErr_SetString(PyExc_ValueError, "state string of wrong size");

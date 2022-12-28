@@ -84,8 +84,8 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
     if (overflow)
     {
         PyErr_Clear();
-        /* Python 3 tends to have an exception already set, Python 2 not so
-           much. We want to consistently raise a TypeError.
+        /* Python 3 tends to have an exception already set.
+           We want to consistently raise a TypeError.
         */
         PyErr_SetString(PyExc_TypeError, "couldn't convert integer to C long long");
         return 0;
@@ -103,19 +103,6 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
 static int
 ulonglong_check(PyObject *ob)
 {
-#ifndef PY3K
-    if (PyInt_Check(ob))
-    {
-        long tmp;
-        tmp = PyInt_AS_LONG(ob);
-        if (tmp < 0) {
-            PyErr_SetString(PyExc_TypeError, "unsigned value less than 0");
-            return 0;
-        }
-        return 1;
-    }
-#endif
-
     if (!PyLong_Check(ob))
     {
         return 0;
@@ -132,12 +119,6 @@ ulonglong_check(PyObject *ob)
 static int
 longlong_check(PyObject *ob)
 {
-#ifndef PY3K
-    /* Python's small integers can always fit into a long long. */
-    if (PyInt_Check(ob))
-        return 1;
-#endif
-
     if (PyLong_Check(ob)) {
         int overflow;
         PY_LONG_LONG result;
@@ -162,20 +143,6 @@ static int
 ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
 {
     unsigned PY_LONG_LONG val;
-
-#ifndef PY3K
-    if (PyInt_Check(ob))
-    {
-        long tmp;
-        tmp = PyInt_AS_LONG(ob);
-        if (tmp < 0) {
-            PyErr_SetString(PyExc_TypeError, "unsigned value less than 0");
-            return 0;
-        }
-        (*value) = (unsigned PY_LONG_LONG)tmp;
-        return 1;
-    }
-#endif
 
     if (!PyLong_Check(ob))
     {
@@ -211,13 +178,6 @@ longlong_convert(PyObject *ob, PY_LONG_LONG *value)
 {
     PY_LONG_LONG val;
     int overflow;
-#ifndef PY3K
-    if (PyInt_Check(ob))
-    {
-        (*value) = (PY_LONG_LONG)PyInt_AS_LONG(ob);
-        return 1;
-    }
-#endif
 
     if (!PyLong_Check(ob))
     {
@@ -590,11 +550,7 @@ init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* b
 {
     int result;
     PyObject* slotnames;
-#ifdef PY3K
     ((PyObject*)type)->ob_type = meta;
-#else
-    type->ob_type = meta;
-#endif
     type->tp_base = base;
 
     if (PyType_Ready(type) < 0)
@@ -632,7 +588,6 @@ static int init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
     return 1;
 }
 
-#ifdef PY3K
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_" MOD_NAME_PREFIX "BTree",    /* m_name */
@@ -644,8 +599,6 @@ static struct PyModuleDef moduledef = {
         NULL,                           /* m_clear */
         NULL,                           /* m_free */
     };
-
-#endif
 
 static PyObject*
 module_init(void)
@@ -713,13 +666,8 @@ module_init(void)
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-#ifdef PY3K
     cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCapsule_Import(
                 "persistent.cPersistence.CAPI", 0);
-#else
-    cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCObject_Import(
-                "persistent.cPersistence", "CAPI");
-#endif
     if (cPersistenceCAPI == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
         * walk down to the specified attribute using getattr. If the C
@@ -733,11 +681,7 @@ module_init(void)
         return NULL;
    }
 
-#ifdef PY3K
 #define _SET_TYPE(typ) ((PyObject*)(&typ))->ob_type = &PyType_Type
-#else
-#define _SET_TYPE(typ) (typ).ob_type = &PyType_Type
-#endif
     _SET_TYPE(BTreeItemsType);
     _SET_TYPE(BTreeIter_Type);
     BTreeIter_Type.tp_getattro = PyObject_GenericGetAttr;
@@ -765,13 +709,7 @@ module_init(void)
     }
 
     /* Create the module and add the functions */
-#ifdef PY3K
     module = PyModule_Create(&moduledef);
-#else
-    module = Py_InitModule4("_" MOD_NAME_PREFIX "BTree",
-                       module_methods, BTree_module_documentation,
-                       (PyObject *)NULL, PYTHON_API_VERSION);
-#endif
 
     /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
@@ -821,14 +759,7 @@ module_init(void)
     return module;
 }
 
-#ifdef PY3K
 PyMODINIT_FUNC INITMODULE(void)
 {
     return module_init();
 }
-#else
-PyMODINIT_FUNC INITMODULE(void)
-{
-    module_init();
-}
-#endif

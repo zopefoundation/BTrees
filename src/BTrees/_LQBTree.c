@@ -36,9 +36,5 @@
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__LQBTree
-#else
-#define INITMODULE init_LQBTree
-#endif
 #include "BTreeModuleTemplate.c"

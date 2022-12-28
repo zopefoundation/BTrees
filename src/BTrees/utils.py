@@ -15,7 +15,6 @@
 
 from binascii import hexlify
 
-from ._compat import _bytes
 
 def non_negative(int_val):
     if int_val < 0:
@@ -30,7 +29,7 @@ def positive_id(obj): # pragma: no cover
 
 
 def oid_repr(oid):
-    if isinstance(oid, _bytes) and len(oid) == 8:
+    if isinstance(oid, bytes) and len(oid) == 8:
         # Convert to hex and strip leading zeroes.
         as_hex = hexlify(oid).lstrip(b'0')
         # Ensure two characters per input byte.
@@ -45,7 +44,7 @@ def oid_repr(oid):
         return repr(oid)
 
 
-class Lazy(object):
+class Lazy:
     """
     A simple version of ``Lazy`` from ``zope.cachedescriptors``
     """

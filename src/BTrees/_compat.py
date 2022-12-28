@@ -16,59 +16,19 @@ import sys
 
 PYPY = hasattr(sys, 'pypy_version_info')
 
-
-if sys.version_info[0] < 3: # pragma: no cover Python2
-
-    PY2 = True
-    PY3 = False
-
-    int_types = int, long
-    xrange = xrange
-    def compare(x, y):
-        if x is None:
-            if y is None:
-                return 0
-            else:
-                return -1
-        elif y is None:
-            return 1
+def compare(x, y):
+    if x is None:
+        if y is None:
+            return 0
         else:
-            return cmp(x, y)
+            return -1
+    elif y is None:
+        return 1
+    else:
+        return (x > y) - (y > x)
 
-    _bytes = str
-    def _ascii(x):
-        return bytes(x)
-
-else: # pragma: no cover Python3
-
-    PY2 = False
-    PY3 = True
-
-    int_types = int,
-    xrange = range
-
-    def compare(x, y):
-        if x is None:
-            if y is None:
-                return 0
-            else:
-                return -1
-        elif y is None:
-            return 1
-        else:
-            return (x > y) - (y > x)
-
-    _bytes = bytes
-    def _ascii(x):
-        return bytes(x, 'ascii')
-
-try:
-    from collections import abc
-except ImportError:
-    import collections as abc
-
-collections_abc = abc
-del abc
+def _ascii(x):
+    return bytes(x, 'ascii')
 
 def _c_optimizations_required():
     """

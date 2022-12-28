@@ -33,9 +33,5 @@
 #include "objectkeymacros.h"
 #include "intvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__OUBTree
-#else
-#define INITMODULE init_OUBTree
-#endif
 #include "BTreeModuleTemplate.c"

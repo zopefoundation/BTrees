@@ -36,9 +36,5 @@
 #include "intkeymacros.h"
 #include "floatvaluemacros.h"
 
-#ifdef PY3K
 #define INITMODULE PyInit__QFBTree
-#else
-#define INITMODULE init_QFBTree
-#endif
 #include "BTreeModuleTemplate.c"

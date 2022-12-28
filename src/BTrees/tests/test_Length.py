@@ -63,33 +63,6 @@ class TestLength(unittest.TestCase):
         length.change(-3)
         self.assertEqual(length.value, -3)
 
-    def test_change_overflows_to_long(self):
-        import sys
-        try:
-            length = self._makeOne(sys.maxint)
-        except AttributeError: # pragma: no cover Py3k
-            return
-        else: # pragma: no cover Py2
-            self.assertEqual(length(), sys.maxint)
-            self.assertTrue(type(length()) is int)
-            length.change(+1)
-            self.assertEqual(length(), sys.maxint + 1)
-            self.assertTrue(type(length()) is long)
-
-    def test_change_underflows_to_long(self):
-        import sys
-        try:
-            minint = (-sys.maxint) - 1
-        except AttributeError: # pragma: no cover Py3k
-            return
-        else: # pragma: no cover Py2
-            length = self._makeOne(minint)
-            self.assertEqual(length(), minint)
-            self.assertTrue(type(length()) is int)
-            length.change(-1)
-            self.assertEqual(length(), minint - 1)
-            self.assertTrue(type(length()) is long)
-
     def test___call___no_args(self):
         length = self._makeOne(42)
         self.assertEqual(length(), 42)
