@@ -52,7 +52,6 @@ env:
   PYTHONUNBUFFERED: 1
   PYTHONDONTWRITEBYTECODE: 1
   PYTHONDEVMODE: 1
-  PYTHONFAULTHANDLER: 1
   ZOPE_INTERFACE_STRICT_IRO: 1
 
   PIP_UPGRADE_STRATEGY: eager
@@ -207,7 +206,6 @@ jobs:
       - name: Install BTrees and dependencies
         run: |
           # Install to collect dependencies into the (pip) cache.
-          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install .[test]
 
       - name: Check BTrees build
@@ -318,7 +316,6 @@ jobs:
         run: |
           pip install -U wheel setuptools
           pip install -U coverage
-          pip install -U 'faulthandler; python_version == "2.7" and platform_python_implementation == "CPython"'
           pip install -U 'cffi; platform_python_implementation == "CPython"'
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
