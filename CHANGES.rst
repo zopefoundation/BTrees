@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-5.0 (unreleased)
+5.0 (2023-02-10)
 ================
 
 - Build Linux binary wheels for Python 3.11.
