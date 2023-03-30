@@ -96,16 +96,17 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "pypy-3.7"
+          - "pypy-3.9"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12.0-alpha.6"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
-            python-version: "pypy-3.7"
+            python-version: "pypy-3.9"
 
     steps:
       - name: checkout
@@ -178,7 +179,15 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
+      - name: Install BTrees and dependencies (3.12.0-alpha.6)
+        if: matrix.python-version == '3.12.0-alpha.6'
+        run: |
+          # Install to collect dependencies into the (pip) cache.
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          pip install --pre .[test]
       - name: Install BTrees and dependencies
+        if: matrix.python-version != '3.12.0-alpha.6'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install .[test]
@@ -222,6 +231,7 @@ jobs:
           && startsWith(github.ref, 'refs/tags')
           && startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
+          && !startsWith(matrix.python-version, '3.12.0-alpha.6')
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
@@ -234,16 +244,17 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "pypy-3.7"
+          - "pypy-3.9"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12.0-alpha.6"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
-            python-version: "pypy-3.7"
+            python-version: "pypy-3.9"
 
     steps:
       - name: checkout
@@ -276,7 +287,22 @@ jobs:
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
+      - name: Install BTrees 3.12.0-alpha.6
+        if: ${{ startsWith(matrix.python-version, '3.12.0-alpha.6') }}
+        run: |
+          pip install -U wheel setuptools
+          # coverage has a wheel on PyPI for a future python version which is
+          # not ABI compatible with the current one, so build it from sdist:
+          pip install -U --no-binary :all: coverage
+          # Unzip into src/ so that testrunner can find the .so files
+          # when we ask it to load tests from that directory. This
+          # might also save some build time?
+          unzip -n dist/BTrees-*whl -d src
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          pip install --pre -U -e .[test]
       - name: Install BTrees
+        if: ${{ !startsWith(matrix.python-version, '3.12.0-alpha.6') }}
         run: |
           pip install -U wheel setuptools
           pip install -U coverage
