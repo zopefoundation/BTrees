@@ -65,31 +65,6 @@ class optional_build_ext(build_ext):
             # pip will then go ahead and run 'setup.py install' directly.
             raise
 
-# Include directories for C extensions
-# Sniff the location of the headers in 'persistent' or fall back
-# to local headers in the include sub-directory
-
-
-class ModuleHeaderDir:
-
-    def __init__(self, require_spec, where='..'):
-        # By default, assume top-level pkg has the same name as the dist.
-        # Also assume that headers are located in the package dir, and
-        # are meant to be included as follows:
-        #    #include "module/header_name.h"
-        self._require_spec = require_spec
-        self._where = where
-
-    def __str__(self):
-        from pkg_resources import require
-        from pkg_resources import resource_filename
-        require(self._require_spec)
-        path = resource_filename(self._require_spec, self._where)
-        return os.path.abspath(path)
-
-
-include = [ModuleHeaderDir('persistent')]
-
 # Set up dependencies for the BTrees package
 base_btrees_depends = [
     "src/BTrees/BTreeItemsTemplate.c",
@@ -151,7 +126,7 @@ def BTreeExtension(family):
     value = family[1]
     name = "BTrees._%sBTree" % family
     sources = ["src/BTrees/_%sBTree.c" % family]
-    kwargs = {"include_dirs": include}
+    kwargs = {"include_dirs": [os.path.join('include', 'persistent')]}
     if family != "fs":
         kwargs["depends"] = (base_btrees_depends + [KEY_H % FLAVORS[key],
                                                     VALUE_H % FLAVORS[value]])
@@ -217,7 +192,6 @@ setup(name='BTrees',
       include_package_data=True,
       zip_safe=False,
       ext_modules=ext_modules,
-      setup_requires=['persistent'],
       extras_require={
           'test': TESTS_REQUIRE,
           'ZODB': [

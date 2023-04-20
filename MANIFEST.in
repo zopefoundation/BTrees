@@ -17,5 +17,6 @@ recursive-include src *.py
 include *.sh
 recursive-include docs *.bat
 recursive-include docs *.css
+recursive-include include/persistent *.h
 recursive-include src *.c
 recursive-include src *.h
