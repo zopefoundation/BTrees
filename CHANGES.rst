@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-4.7.3 (unreleased)
+4.7.3 (2023-05-02)
 ==================
 
 - Drop using ``setup_requires`` to be able to install this package using
