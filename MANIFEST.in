@@ -11,6 +11,7 @@ include .coveragerc
 
 recursive-include docs *
 recursive-include BTrees *
+recursive-include include/persistent *.h
 
 global-exclude *.dll
 global-exclude *.pyc

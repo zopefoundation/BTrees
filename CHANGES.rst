@@ -5,7 +5,8 @@
 4.7.3 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Drop using ``setup_requires`` to be able to install this package using
+  ``zc.buildout`` on Python 2.
 
 
 4.7.2 (2020-04-07)
