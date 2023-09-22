@@ -102,7 +102,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
-          - "3.12.0-alpha.7"
+          - "3.12.0-rc.3"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
@@ -179,15 +179,15 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
-      - name: Install BTrees and dependencies (3.12.0-alpha.7)
-        if: matrix.python-version == '3.12.0-alpha.7'
+      - name: Install BTrees and dependencies (3.12.0-rc.3)
+        if: matrix.python-version == '3.12.0-rc.3'
         run: |
           # Install to collect dependencies into the (pip) cache.
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
           pip install --pre .[test]
       - name: Install BTrees and dependencies
-        if: matrix.python-version != '3.12.0-alpha.7'
+        if: matrix.python-version != '3.12.0-rc.3'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install .[test]
@@ -231,7 +231,7 @@ jobs:
           && startsWith(github.ref, 'refs/tags')
           && startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
-          && !startsWith(matrix.python-version, '3.12.0-alpha.7')
+          && !startsWith(matrix.python-version, '3.12.0-rc.3')
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
@@ -250,7 +250,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
-          - "3.12.0-alpha.7"
+          - "3.12.0-rc.3"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
@@ -287,8 +287,8 @@ jobs:
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install BTrees 3.12.0-alpha.7
-        if: ${{ startsWith(matrix.python-version, '3.12.0-alpha.7') }}
+      - name: Install BTrees 3.12.0-rc.3
+        if: ${{ startsWith(matrix.python-version, '3.12.0-rc.3') }}
         run: |
           pip install -U wheel setuptools
           # coverage has a wheel on PyPI for a future python version which is
@@ -302,7 +302,7 @@ jobs:
           # Python release may only be available as pre-releases
           pip install --pre -U -e .[test]
       - name: Install BTrees
-        if: ${{ !startsWith(matrix.python-version, '3.12.0-alpha.7') }}
+        if: ${{ !startsWith(matrix.python-version, '3.12.0-rc.3') }}
         run: |
           pip install -U wheel setuptools
           pip install -U coverage
