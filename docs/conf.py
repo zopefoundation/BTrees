@@ -14,11 +14,11 @@
 #import sys, os
 import sys
 import os
-import pkg_resources
 # We actually have slightly better results by documenting the
 # C objects right now.
 # os.environ['PURE_PYTHON'] = '1'
-sys.path.append(os.path.abspath('../'))
+sys.path.append(os.path.abspath("../src"))
+import pkg_resources
 rqmt = pkg_resources.require('BTrees')[0]
 
 # If extensions (or modules to document with autodoc) are in another directory,
