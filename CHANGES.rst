@@ -7,7 +7,7 @@
 
 - Drop using ``setup_requires`` due to constant problems on GHA.
 
-- Add preliminary support for Python 3.12a7.
+- Add preliminary support for Python 3.12rc3.
 
 
 5.0 (2023-02-10)
