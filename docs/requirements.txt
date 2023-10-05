@@ -1,2 +1,4 @@
 Sphinx
 repoze.sphinx.autointerface
+docutils < 0.19
+sphinx_rtd_theme > 1
