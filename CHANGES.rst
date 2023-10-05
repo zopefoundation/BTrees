@@ -2,12 +2,12 @@
  BTrees Changelog
 ==================
 
-5.1 (unreleased)
+5.1 (2023-10-05)
 ================
 
 - Drop using ``setup_requires`` due to constant problems on GHA.
 
-- Add preliminary support for Python 3.12rc3.
+- Add support for Python 3.12.
 
 
 5.0 (2023-02-10)
