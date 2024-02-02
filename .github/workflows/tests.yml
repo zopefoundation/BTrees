@@ -317,7 +317,7 @@ jobs:
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
-          unzip -n dist/zope.index-*whl -d src
+          unzip -n dist/BTrees-*whl -d src
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
           PIP_CONSTRAINT=cffi_constraint.txt pip install --pre -U -e .[test]
