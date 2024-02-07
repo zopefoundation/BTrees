@@ -96,23 +96,24 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "pypy-3.9"
+          - "pypy-3.10"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13.0-alpha - 3.13.0"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
-            python-version: "pypy-3.9"
+            python-version: "pypy-3.10"
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -127,14 +128,26 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Install Build Dependencies (3.13.0-alpha - 3.13.0)
+        if: matrix.python-version == '3.13.0-alpha - 3.13.0'
+        run: |
+          pip install -U pip
+          pip install -U setuptools wheel twine
+          # cffi will probably have no public release until a Python 3.13 beta
+          # or even RC release, see https://github.com/python-cffi/cffi/issues/23
+          echo "cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58" > cffi_constraint.txt
+          PIP_CONSTRAINT=cffi_constraint.txt pip install cffi
+          # twine has no release for 3.13, yet, see https://github.com/pypa/twine/issues/1030
+          pip install -U "git+https://github.com/pypa/twine.git#egg=twine"
       - name: Install Build Dependencies
+        if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
           pip install -U pip
           pip install -U setuptools wheel twine cffi
@@ -179,7 +192,18 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
+      - name: Install BTrees and dependencies (3.13.0-alpha - 3.13.0)
+        if: matrix.python-version == '3.13.0-alpha - 3.13.0'
+        run: |
+          # Install to collect dependencies into the (pip) cache.
+          # cffi will probably have no public release until a Python 3.13 beta
+          # or even RC release, see https://github.com/python-cffi/cffi/issues/23
+          echo "cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58" > cffi_constraint.txt
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          PIP_CONSTRAINT=cffi_constraint.txt pip install --pre .[test]
       - name: Install BTrees and dependencies
+        if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install .[test]
@@ -191,7 +215,7 @@ jobs:
       - name: Upload BTrees wheel (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*x86_64.whl
@@ -200,7 +224,7 @@ jobs:
           startsWith(runner.os, 'Mac')
           && !(startsWith(matrix.python-version, 'pypy')
                || matrix.python-version == '3.7')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           # The arm64 wheel is uploaded with a different name just so it can be
           # manually downloaded when desired. The wheel itself *cannot* be tested
@@ -210,7 +234,7 @@ jobs:
       - name: Upload BTrees wheel (all other platforms)
         if: >
           !startsWith(runner.os, 'Mac')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*whl
@@ -223,6 +247,7 @@ jobs:
           && startsWith(github.ref, 'refs/tags')
           && startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
+          && !startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0')
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
@@ -235,23 +260,24 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "pypy-3.9"
+          - "pypy-3.10"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13.0-alpha - 3.13.0"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
-            python-version: "pypy-3.9"
+            python-version: "pypy-3.10"
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -266,7 +292,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -274,11 +300,29 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
+      - name: Install BTrees 3.13.0-alpha - 3.13.0
+        if: ${{ startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0') }}
+        run: |
+          pip install -U wheel setuptools
+          # cffi will probably have no public release until a beta or even RC
+          # version of Python 3.13, see https://github.com/python-cffi/cffi/issues/23
+          echo 'cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58 ; platform_python_implementation == "CPython"' > cffi_constraint.txt
+          # coverage has a wheel on PyPI for a future python version which is
+          # not ABI compatible with the current one, so build it from sdist:
+          pip install -U --no-binary :all: coverage
+          # Unzip into src/ so that testrunner can find the .so files
+          # when we ask it to load tests from that directory. This
+          # might also save some build time?
+          unzip -n dist/BTrees-*whl -d src
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          PIP_CONSTRAINT=cffi_constraint.txt pip install --pre -U -e .[test]
       - name: Install BTrees
+        if: ${{ !startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0') }}
         run: |
           pip install -U wheel setuptools
           pip install -U coverage
@@ -326,9 +370,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -343,7 +387,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -351,7 +395,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -377,9 +421,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -394,7 +438,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
@@ -402,7 +446,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -430,9 +474,9 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       ###
@@ -447,7 +491,7 @@ jobs:
           echo "dir=$(pip cache dir)" >>$GITHUB_OUTPUT
 
       - name: pip cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip_manylinux-${{ matrix.image }}-${{ matrix.python-version }}
@@ -482,7 +526,7 @@ jobs:
           bash .manylinux.sh
 
       - name: Upload BTrees wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*whl
           name: manylinux_${{ matrix.image }}_wheels.zip
