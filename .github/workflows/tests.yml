@@ -143,9 +143,7 @@ jobs:
           # cffi will probably have no public release until a Python 3.13 beta
           # or even RC release, see https://github.com/python-cffi/cffi/issues/23
           echo "cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58" > cffi_constraint.txt
-          PIP_CONSTRAINT=cffi_constraint.txt pip install cffi
-          # twine has no release for 3.13, yet, see https://github.com/pypa/twine/issues/1030
-          pip install -U "git+https://github.com/pypa/twine.git#egg=twine"
+          PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install cffi
       - name: Install Build Dependencies
         if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
@@ -201,7 +199,7 @@ jobs:
           echo "cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58" > cffi_constraint.txt
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
-          PIP_CONSTRAINT=cffi_constraint.txt pip install --pre .[test]
+          PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install --pre .[test]
       - name: Install BTrees and dependencies
         if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
@@ -320,7 +318,7 @@ jobs:
           unzip -n dist/BTrees-*whl -d src
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
-          PIP_CONSTRAINT=cffi_constraint.txt pip install --pre -U -e .[test]
+          PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install --pre -U -e .[test]
       - name: Install BTrees
         if: ${{ !startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0') }}
         run: |
