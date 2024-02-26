@@ -15,13 +15,13 @@
 Descriptions of the datatypes supported by this package.
 """
 
+from abc import ABC
 from operator import index as operator__index__
 from struct import Struct
 from struct import error as struct_error
 
-from abc import ABC
-
 from .utils import Lazy
+
 
 # pylint:disable=raise-missing-from
 

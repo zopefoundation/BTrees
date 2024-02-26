@@ -34,29 +34,29 @@ class Test_classify(unittest.TestCase):
         self.assertRaises(KeyError, self._callFUT, NotClassified())
 
     def test_classify_w_bucket(self):
-        from BTrees.OOBTree import OOBucketPy
         from BTrees.check import TYPE_BUCKET
+        from BTrees.OOBTree import OOBucketPy
         kind, is_mapping = self._callFUT(OOBucketPy())
         self.assertEqual(kind, TYPE_BUCKET)
         self.assertTrue(is_mapping)
 
     def test_classify_w_set(self):
-        from BTrees.OOBTree import OOSetPy
         from BTrees.check import TYPE_BUCKET
+        from BTrees.OOBTree import OOSetPy
         kind, is_mapping = self._callFUT(OOSetPy())
         self.assertEqual(kind, TYPE_BUCKET)
         self.assertFalse(is_mapping)
 
     def test_classify_w_tree(self):
-        from BTrees.OOBTree import OOBTreePy
         from BTrees.check import TYPE_BTREE
+        from BTrees.OOBTree import OOBTreePy
         kind, is_mapping = self._callFUT(OOBTreePy())
         self.assertEqual(kind, TYPE_BTREE)
         self.assertTrue(is_mapping)
 
     def test_classify_w_treeset(self):
-        from BTrees.OOBTree import OOTreeSetPy
         from BTrees.check import TYPE_BTREE
+        from BTrees.OOBTree import OOTreeSetPy
         kind, is_mapping = self._callFUT(OOTreeSetPy())
         self.assertEqual(kind, TYPE_BTREE)
         self.assertFalse(is_mapping)

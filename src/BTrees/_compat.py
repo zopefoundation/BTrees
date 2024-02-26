@@ -14,6 +14,7 @@
 import os
 import sys
 
+
 PYPY = hasattr(sys, 'pypy_version_info')
 
 def compare(x, y):

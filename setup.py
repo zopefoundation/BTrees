@@ -14,7 +14,6 @@
 
 import os
 import sys
-
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsExecError
 from distutils.errors import DistutilsPlatformError
@@ -23,6 +22,7 @@ from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
+
 
 version = '5.3.dev0'
 

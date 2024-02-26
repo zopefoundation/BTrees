@@ -14,7 +14,9 @@
 import unittest
 
 from BTrees import fsBTree
+
 from ._test_builder import update_module
+
 
 class fsBucketTests(unittest.TestCase):
 

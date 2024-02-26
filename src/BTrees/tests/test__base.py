@@ -1465,8 +1465,8 @@ class Test_Tree(unittest.TestCase):
 
     def _makeOne(self, items=None, bucket_type=None):
         from .._base import Bucket
-        from .._datatypes import O
         from .._datatypes import Any
+        from .._datatypes import O
         if bucket_type is None:
             class _Bucket(Bucket):
                 _to_key = O()

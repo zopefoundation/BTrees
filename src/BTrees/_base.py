@@ -16,8 +16,9 @@
 
 from persistent import Persistent
 
-from .Interfaces import BTreesConflictError
 from ._compat import compare
+from .Interfaces import BTreesConflictError
+
 
 # XXX: Fix these. These ignores are temporary to
 # reduce the noise and help find specific issues during

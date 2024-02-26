@@ -13,8 +13,9 @@
 ##############################################################################
 from BTrees import OOBTree
 
-from .common import BTreeTests
 from ._test_builder import update_module
+from .common import BTreeTests
+
 
 class OOBTreeTest(BTreeTests):
 
@@ -111,7 +112,9 @@ class OOBTreeTest(BTreeTests):
 
         if 'Py' in self.__class__.__name__:
             return
-        from BTrees.OOBTree import difference, union, intersection
+        from BTrees.OOBTree import difference
+        from BTrees.OOBTree import intersection
+        from BTrees.OOBTree import union
         self.assertEqual(list(difference(t2, t).items()), [(None, -2)])
         self.assertEqual(list(union(t, t2)), list(t2))
         self.assertEqual(list(intersection(t, t2)), list(t))

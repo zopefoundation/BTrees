@@ -13,7 +13,9 @@
 ##############################################################################
 
 import unittest
+
 from BTrees import _datatypes
+
 
 to_ob = _datatypes.Any()
 to_int = _datatypes.I()
