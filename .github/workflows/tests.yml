@@ -103,7 +103,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          - "3.13.0-alpha - 3.13.0"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
@@ -145,7 +144,6 @@ jobs:
           echo "cffi @ git+https://github.com/python-cffi/cffi.git@954cab4f889fb019a7f90df153ee1be501495f58" > cffi_constraint.txt
           PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install cffi
       - name: Install Build Dependencies
-        if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
           pip install -U pip
           pip install -U setuptools wheel twine cffi
@@ -201,7 +199,6 @@ jobs:
           # Python release may only be available as pre-releases
           PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install --pre .[test]
       - name: Install BTrees and dependencies
-        if: matrix.python-version != '3.13.0-alpha - 3.13.0'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install .[test]
@@ -245,7 +242,6 @@ jobs:
           && startsWith(github.ref, 'refs/tags')
           && startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
-          && !startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0')
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
@@ -265,7 +261,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          - "3.13.0-alpha - 3.13.0"
         os: [ubuntu-20.04, macos-11]
         exclude:
           - os: macos-11
@@ -320,7 +315,6 @@ jobs:
           # Python release may only be available as pre-releases
           PIP_CONSTRAINT=$PWD/cffi_constraint.txt pip install --pre -U -e .[test]
       - name: Install BTrees
-        if: ${{ !startsWith(matrix.python-version, '3.13.0-alpha - 3.13.0') }}
         run: |
           pip install -U wheel setuptools
           pip install -U coverage
