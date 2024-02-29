@@ -13,7 +13,9 @@
 ##############################################################################
 import unittest
 
-from BTrees.OOBTree import OOBTree, OOBucket
+from BTrees.OOBTree import OOBTree
+from BTrees.OOBTree import OOBucket
+
 
 class B(OOBucket):
     pass

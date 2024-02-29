@@ -15,7 +15,8 @@
 from unittest import TestCase
 
 from ..OOBTree import OOBTree
-from .common import _skip_wo_ZODB, ZODBAccess
+from .common import ZODBAccess
+from .common import _skip_wo_ZODB
 
 
 BUCKET_SIZE = OOBTree.max_leaf_size

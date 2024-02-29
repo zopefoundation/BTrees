@@ -13,9 +13,13 @@
 #############################################################################
 
 import sys
+
 import zope.interface
+
 import BTrees.Interfaces
+
 from ._module_builder import create_module
+
 
 __all__ = [
     'family32',
@@ -88,14 +92,12 @@ class _Family:
 
 class _Family32(_Family):
     _BITSIZE = 32
-    from BTrees import OIBTree as OI
-    from BTrees import OUBTree as OU
-
     from BTrees import IFBTree as IF
     from BTrees import IIBTree as II
     from BTrees import IOBTree as IO
     from BTrees import IUBTree as IU
-
+    from BTrees import OIBTree as OI
+    from BTrees import OUBTree as OU
     from BTrees import UFBTree as UF
     from BTrees import UIBTree as UI
     from BTrees import UOBTree as UO
@@ -106,14 +108,12 @@ class _Family32(_Family):
 
 class _Family64(_Family):
     _BITSIZE = 64
-    from BTrees import OLBTree as OI
-    from BTrees import OQBTree as OU
-
     from BTrees import LFBTree as IF
     from BTrees import LLBTree as II
     from BTrees import LOBTree as IO
     from BTrees import LQBTree as IU
-
+    from BTrees import OLBTree as OI
+    from BTrees import OQBTree as OU
     from BTrees import QFBTree as UF
     from BTrees import QLBTree as UI
     from BTrees import QOBTree as UO

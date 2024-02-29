@@ -14,6 +14,7 @@
 
 import persistent
 
+
 class Length(persistent.Persistent):
     """BTree lengths are often too expensive to compute.
 

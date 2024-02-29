@@ -25,12 +25,12 @@ from .common import MultiUnion
 from .common import NormalSetTests
 from .common import SetConflictTestBase
 from .common import SetResult
+from .common import TestLongIntKeys
+from .common import TestLongIntValues
 from .common import Weighted
 from .common import itemsToSet
 from .common import makeMapBuilder
 from .common import makeSetBuilder
-from .common import TestLongIntKeys
-from .common import TestLongIntValues
 
 
 class _FilteredModuleProxy:

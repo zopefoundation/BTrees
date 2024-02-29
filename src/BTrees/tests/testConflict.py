@@ -13,8 +13,8 @@
 ##############################################################################
 import unittest
 
-from .common import _skip_wo_ZODB
 from .common import ConflictTestBase
+from .common import _skip_wo_ZODB
 
 
 class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
@@ -38,7 +38,8 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # serialization (ordering) of the datamanager, and the fact that these tests are
         # single-threaded.
         import threading
-        from ZODB.tests.MVCCMappingStorage  import MVCCMappingStorage
+
+        from ZODB.tests.MVCCMappingStorage import MVCCMappingStorage
         class _MVCCMappingStorage(MVCCMappingStorage):
             def new_instance(self):
                 inst = MVCCMappingStorage.new_instance(self)

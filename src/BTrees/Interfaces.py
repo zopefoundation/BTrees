@@ -12,10 +12,12 @@
 #
 ##############################################################################
 
-from zope.interface import Interface, Attribute
+from zope.interface import Attribute
+from zope.interface import Interface
+from zope.interface.common.collections import IMapping
 from zope.interface.common.collections import ISized
 from zope.interface.common.sequence import IMinimalSequence
-from zope.interface.common.collections import IMapping
+
 
 # pylint:disable=inherit-non-class,no-method-argument,no-self-argument
 # pylint:disable=unexpected-special-method-signature

@@ -11,6 +11,7 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+# isort: skip_file
 """
 Utilities for working with BTrees (TreeSets, Buckets, and Sets) at a low
 level.

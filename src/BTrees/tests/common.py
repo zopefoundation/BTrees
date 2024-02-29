@@ -12,15 +12,16 @@
 #
 ##############################################################################
 
-import sys
 import functools
-import unittest
 import platform
+import sys
+import unittest
 from unittest import skip
 
-from BTrees._compat import _c_optimizations_ignored
+from BTrees._base import _tp_name
 from BTrees._compat import PYPY
-from BTrees._base   import _tp_name
+from BTrees._compat import _c_optimizations_ignored
+
 
 def _no_op(test_method):
     return test_method
@@ -107,6 +108,7 @@ class ZODBAccess:
 
     def _closeRoot(self, root):
         import transaction
+
         # If we don't commit/abort the transaction, then
         # closing the Connection tends to fail with
         # "Cannot close connection joined to transaction"
@@ -1355,8 +1357,8 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
         # We don't hide a POSKeyError that happens when
         # accessing the object itself in `get()`.
         # See https://github.com/zopefoundation/BTrees/issues/161
-        from ZODB.POSException import POSKeyError
         import transaction
+        from ZODB.POSException import POSKeyError
         transaction.begin()
         m = self._makeOne()
         root = self._getRoot()
@@ -1413,8 +1415,8 @@ class BTreeTests(MappingBase):
         # We don't hide a POSKeyError that happens when
         # accessing sub objects in `get()`.
         # See https://github.com/zopefoundation/BTrees/issues/161
-        from ZODB.POSException import POSKeyError
         import transaction
+        from ZODB.POSException import POSKeyError
         transaction.begin()
         m = self._makeOne()
         root = self._getRoot()
@@ -2931,8 +2933,9 @@ class SetResult:
                     self.assertEqual(set(A) - set(B), set(A - B))
 
     def testLargerInputs(self): # pylint:disable=too-many-locals
-        from BTrees.IIBTree import IISet # pylint:disable=no-name-in-module
         from random import randint
+
+        from BTrees.IIBTree import IISet  # pylint:disable=no-name-in-module
         MAXSIZE = 200
         MAXVAL = 400
         K = self.KEYS
@@ -3277,8 +3280,9 @@ class ConflictTestBase(SignedMixin):
 
     def openDB(self):
         import os
-        from ZODB.FileStorage import FileStorage
+
         from ZODB.DB import DB
+        from ZODB.FileStorage import FileStorage
         n = 'fs_tmp__%s' % os.getpid()
         self.storage = FileStorage(n)
         self.db = DB(self.storage)

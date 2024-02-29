@@ -16,21 +16,22 @@ Support functions to eliminate the boilerplate involved in defining
 BTree modules.
 """
 import sys
-from zope.interface import directlyProvides
+
 from zope.interface import classImplements
+from zope.interface import directlyProvides
 
 
 def _create_classes(
         module_name, key_datatype, value_datatype,
 ):
+    from ._base import MERGE  # Won't always want this.
     from ._base import Bucket
-    from ._base import MERGE # Won't always want this.
     from ._base import Set
     from ._base import Tree
     from ._base import TreeSet
+    from ._base import _fix_pickle
     from ._base import _TreeItems as TreeItems
     from ._base import _TreeIterator
-    from ._base import _fix_pickle
 
     classes = {}
 
@@ -84,11 +85,10 @@ def _create_classes(
     return classes
 
 def _create_set_operations(module_name, key_type, value_type, set_type):
-    from ._base import set_operation
-
     from ._base import difference
     from ._base import intersection
     from ._base import multiunion
+    from ._base import set_operation
     from ._base import union
     from ._base import weightedIntersection
     from ._base import weightedUnion
@@ -128,10 +128,11 @@ def _create_globals(module_name, key_datatype, value_datatype):
 def populate_module(mod_globals,
                     key_datatype, value_datatype,
                     interface, module=None):
-    from . import Interfaces as interfaces
-    from ._compat import import_c_extension
     import collections.abc
+
+    from . import Interfaces as interfaces
     from ._base import _fix_pickle
+    from ._compat import import_c_extension
 
     module_name = mod_globals['__name__']
     # Define the Python implementations
@@ -204,8 +205,9 @@ def populate_module(mod_globals,
 
 def create_module(prefix):
     import types
-    from . import _datatypes as datatypes
+
     from . import Interfaces
+    from . import _datatypes as datatypes
 
     mod = types.ModuleType('BTrees.' + prefix + 'BTree')
 

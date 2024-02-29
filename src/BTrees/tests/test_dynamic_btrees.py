@@ -17,14 +17,15 @@ all expected BTree families that do not have their own test file on disk.
 """
 
 
-import unittest
 import importlib
 import sys
 import types
+import unittest
 
 from BTrees import _FAMILIES
 
 from ._test_builder import update_module
+
 
 # If there is no .py file on disk, create the module in memory.
 # This is helpful during early development. However, it

@@ -58,9 +58,9 @@ class DegenerateBTree(unittest.TestCase):
 
     def _build_degenerate_tree(self):
         # Build the buckets and chain them together.
+        from BTrees.check import check
         from BTrees.IIBTree import IISet
         from BTrees.IIBTree import IITreeSet
-        from BTrees.check import check
         bucket11 = IISet([11])
 
         bucket7 = IISet()
@@ -255,6 +255,7 @@ class TestBugFixes(unittest.TestCase):
         # To simulate real life, some random data is used to exercise the tree
         import gc
         import random
+
         from BTrees.OOBTree import OOBTree
 
         t = OOBTree()
@@ -431,6 +432,7 @@ class TestCmpError(unittest.TestCase):
 class FamilyTest(unittest.TestCase):
     def test32(self):
         from zope.interface.verify import verifyObject
+
         import BTrees
         from BTrees.IOBTree import IOTreeSet
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family32)
@@ -473,6 +475,7 @@ class FamilyTest(unittest.TestCase):
 
     def test64(self):
         from zope.interface.verify import verifyObject
+
         import BTrees
         from BTrees.LOBTree import LOTreeSet
         verifyObject(BTrees.Interfaces.IBTreeFamily, BTrees.family64)
