@@ -40,6 +40,7 @@ yum -y install libffi-devel
 
 tox_env_map() {
     case $1 in
+        *"cp313"*) echo 'py313';;
         *"cp37"*) echo 'py37';;
         *"cp38"*) echo 'py38';;
         *"cp39"*) echo 'py39';;
@@ -53,14 +54,20 @@ tox_env_map() {
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if \
+       [[ "${PYBIN}" == *"cp313"* ]] || \
        [[ "${PYBIN}" == *"cp311"* ]] || \
        [[ "${PYBIN}" == *"cp312"* ]] || \
        [[ "${PYBIN}" == *"cp37"* ]] || \
        [[ "${PYBIN}" == *"cp38"* ]] || \
        [[ "${PYBIN}" == *"cp39"* ]] || \
        [[ "${PYBIN}" == *"cp310"* ]] ; then
-        "${PYBIN}/pip" install -e /io/
-        "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+        if [[ "${PYBIN}" == *"cp313"* ]] ; then
+            "${PYBIN}/pip" install --pre -e /io/
+            "${PYBIN}/pip" wheel /io/ --pre -w wheelhouse/
+        else
+            "${PYBIN}/pip" install -e /io/
+            "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+        fi
         if [ `uname -m` == 'aarch64' ]; then
           # Running the test suite takes forever in
           # emulation; an early run (using tox, which is also slow)
