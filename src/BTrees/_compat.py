@@ -17,6 +17,7 @@ import sys
 
 PYPY = hasattr(sys, 'pypy_version_info')
 
+
 def compare(x, y):
     if x is None:
         if y is None:
@@ -28,14 +29,15 @@ def compare(x, y):
     else:
         return (x > y) - (y > x)
 
+
 def _ascii(x):
     return bytes(x, 'ascii')
 
-def _c_optimizations_required():
-    """
-    Return a true value if the C optimizations are required.
 
-    This uses the ``PURE_PYTHON`` variable as documented in `import_c_extension`.
+def _c_optimizations_required():
+    """Return a true value if the C optimizations are required.
+
+    Uses the ``PURE_PYTHON`` variable as documented in `import_c_extension`.
     """
     pure_env = os.environ.get('PURE_PYTHON')
     require_c = pure_env == "0"
@@ -56,7 +58,7 @@ def _c_optimizations_available(module_name):
     catch = () if _c_optimizations_required() else (ImportError,)
     try:
         return importlib.import_module('BTrees._' + module_name)
-    except catch: # pragma: no cover
+    except catch:  # pragma: no cover
         return False
 
 

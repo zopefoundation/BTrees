@@ -24,6 +24,7 @@ to_long = _datatypes.L()
 to_2_bytes = _datatypes.f()
 to_6_bytes = _datatypes.s()
 
+
 class TestDatatypes(unittest.TestCase):
     def test_to_ob(self):
         for thing in "abc", 0, 1.3, (), frozenset((1, 2)), object():
@@ -31,12 +32,6 @@ class TestDatatypes(unittest.TestCase):
 
     def test_to_int_w_int(self):
         self.assertEqual(to_int(3), 3)
-
-    def test_to_int_w_long_in_range(self):
-        try:
-            self.assertEqual(to_int(long(3)), 3)
-        except NameError: #Python3
-            pass
 
     def test_to_int_w_overflow(self):
         self.assertRaises(TypeError, to_int, 2**64)
@@ -55,12 +50,6 @@ class TestDatatypes(unittest.TestCase):
 
     def test_to_long_w_int(self):
         self.assertEqual(to_long(3), 3)
-
-    def test_to_long_w_long_in_range(self):
-        try:
-            self.assertEqual(to_long(long(3)), 3)
-        except NameError: #Python3
-            pass
 
     def test_to_long_w_overflow(self):
         self.assertRaises(TypeError, to_long, 2**64)

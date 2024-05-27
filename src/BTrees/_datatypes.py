@@ -15,10 +15,9 @@
 Descriptions of the datatypes supported by this package.
 """
 
-from abc import ABC
-from operator import index as operator__index__
-from struct import Struct
-from struct import error as struct_error
+import abc
+import operator
+import struct
 
 from .utils import Lazy
 
@@ -174,10 +173,9 @@ class Any(DataType):
         return False
 
 
-
-class _HasDefaultComparison(ABC):
+class _HasDefaultComparison(abc.ABC):
     """
-    An `ABC <https://docs.python.org/3/library/abc.html>_` for
+    An `abc.ABC <https://docs.python.org/3/library/abc.html>_` for
     checking whether an item has default comparison.
 
     All we have to do is override ``__subclasshook__`` to implement an
@@ -215,13 +213,15 @@ class _HasDefaultComparison(ABC):
     else:
         # PyPy3
         @classmethod
-        def __subclasshook__(cls, C, _object_lt=object.__lt__, _NoneType=type(None)):
+        def __subclasshook__(
+            cls, C, _object_lt=object.__lt__, _NoneType=type(None)
+        ):
             if C is _NoneType:
                 return False
             return C.__lt__ is _object_lt
 
 
-class O(KeyDataType):
+class O(KeyDataType):  # noqa E742
     """
     Arbitrary (sortable) Python objects.
     """
@@ -237,7 +237,11 @@ class O(KeyDataType):
 
     def __call__(self, item):
         if isinstance(item, _HasDefaultComparison):
-            raise TypeError("Object of class {} has default comparison".format(type(item).__name__))
+            raise TypeError(
+                "Object of class {} has default comparison".format(
+                    type(item).__name__
+                )
+            )
         return item
 
 
@@ -251,16 +255,16 @@ class _AbstractNativeDataType(KeyDataType):
     _as_python_type = NotImplementedError
     _required_python_type = object
     _error_description = None
-    _as_packable = operator__index__ # calls ``obj.__index__`` to yield integer
+    _as_packable = operator.index
 
     @Lazy
     def _check_native(self):
-        return Struct(self._struct_format).pack
+        return struct.Struct(self._struct_format).pack
 
     def __call__(self, item):
         try:
             self._check_native(self._as_packable(item))
-        except (struct_error, TypeError, ValueError):
+        except (struct.error, TypeError, ValueError):
             # PyPy can raise ValueError converting a negative number to a
             # unsigned value.
             if isinstance(item, int):
@@ -274,6 +278,7 @@ class _AbstractNativeDataType(KeyDataType):
 
     def supports_value_union(self):
         return True
+
 
 class _AbstractIntDataType(_AbstractNativeDataType):
     _as_python_type = int
@@ -306,7 +311,7 @@ class _AbstractUIntDataType(_AbstractIntDataType):
         return int(2 ** exp - 1)
 
 
-class I(_AbstractIntDataType):
+class I(_AbstractIntDataType):  # noqa E742
     _struct_format = 'i'
     _error_description = "32-bit integer expected"
 
@@ -320,12 +325,15 @@ class F(_AbstractNativeDataType):
     _struct_format = 'f'
     _as_python_type = float
     _error_description = 'float expected'
-    _as_packable = lambda self, k: k # identity
     multiplication_identity = 1.0
     long_name = 'Float'
 
+    def _as_packable(self, k):  # identity
+        return k
+
     def getTwoExamples(self):
         return 0.5, 1.5
+
 
 class L(_AbstractIntDataType):
     _struct_format = 'q'
@@ -351,7 +359,9 @@ class _AbstractBytes(KeyDataType):
 
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
-            raise TypeError("{}-byte array expected, not {!r}".format(self._length, item))
+            raise TypeError(
+                "{}-byte array expected, not {!r}".format(self._length, item)
+            )
         return item
 
     def supports_value_union(self):
@@ -377,15 +387,15 @@ class f(_AbstractBytes):
     # value. Note that even though we allow negative values
     # that can break test assumptions: -1 < 0 < 1, but the byte
     # values for those are \xff\xff > \x00\x00 < \x00\x01.
-    _as_2_bytes = Struct('>h').pack
+    _as_2_bytes = struct.Struct('>h').pack
 
     def coerce(self, item):
         try:
             return self(item)
         except TypeError:
             try:
-                return self._as_2_bytes(operator__index__(item))
-            except struct_error as e:
+                return self._as_2_bytes(operator.index(item))
+            except struct.error as e:
                 raise TypeError(e)
 
     @staticmethod
@@ -416,6 +426,7 @@ class f(_AbstractBytes):
             cls.toString = self._make_Bucket_toString()
             cls.fromString = self._make_Bucket_fromString()
 
+
 class s(_AbstractBytes):
     """
     The value type for an ``fs`` tree.
@@ -438,17 +449,21 @@ class s(_AbstractBytes):
     # To coerce an integer, as used in tests, first convert to 8 bytes
     # in big-endian order, then ensure the first two
     # are 0 and cut them off.
-    _as_8_bytes = Struct('>q').pack
+    _as_8_bytes = struct.Struct('>q').pack
 
     def coerce(self, item):
         try:
             return self(item)
         except TypeError:
             try:
-                as_bytes = self._as_8_bytes(operator__index__(item))
-            except struct_error as e:
+                as_bytes = self._as_8_bytes(operator.index(item))
+            except struct.error as e:
                 raise TypeError(e)
 
             if as_bytes[:2] != b'\x00\x00':
-                raise TypeError("Cannot convert {!r} to 6 bytes ({!r})".format(item, as_bytes))
+                raise TypeError(
+                    "Cannot convert {!r} to 6 bytes ({!r})".format(
+                        item, as_bytes
+                    )
+                )
             return as_bytes[2:]

@@ -195,7 +195,7 @@ LP294788_ids = {}
 
 class ToBeDeleted:
     def __init__(self, id):
-        assert isinstance(id, int) #we don't want to store any object ref here
+        assert isinstance(id, int)  # don't want to store any object ref here
         self.id = id
 
         global LP294788_ids
@@ -204,9 +204,6 @@ class ToBeDeleted:
     def __del__(self):
         global LP294788_ids
         LP294788_ids.pop(self.id, None)
-
-    def __cmp__(self, other):
-        return cmp(self.id, other.id)
 
     def __le__(self, other):
         return self.id <= other.id
@@ -269,7 +266,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
@@ -277,7 +274,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = ToBeDeleted(id)
             else:
-                #del
+                # del
                 keys = list(ids.keys())
                 if keys:
                     id = trandom.choice(list(ids.keys()))
@@ -290,10 +287,10 @@ class TestBugFixes(unittest.TestCase):
             del t[id]
         ids = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
@@ -304,7 +301,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
@@ -312,7 +309,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = (id, ToBeDeleted(id), 'somename')
             else:
-                #del
+                # del
                 keys = list(ids.keys())
                 if keys:
                     id = trandom.choice(keys)
@@ -325,15 +322,14 @@ class TestBugFixes(unittest.TestCase):
             del t[id]
         ids = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
         # \\\
-
 
         # /// BTree keys are objects, value is an int
         t = OOBTree()
@@ -341,7 +337,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = ToBeDeleted(trandom.randint(0, 1000000))
@@ -349,7 +345,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = 1
             else:
-                #del
+                # del
                 id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
@@ -358,13 +354,13 @@ class TestBugFixes(unittest.TestCase):
         trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
-        #release all refs
+        # release all refs
         ids = id = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
@@ -375,7 +371,7 @@ class TestBugFixes(unittest.TestCase):
         ids = {}
         for i in range(1024):
             if trandom.random() > 0.1 or not ids:
-                #add
+                # add
                 id = None
                 while id is None or id in ids:
                     id = trandom.randint(0, 1000000)
@@ -384,7 +380,7 @@ class TestBugFixes(unittest.TestCase):
                 ids[id] = 1
                 t[id] = 1
             else:
-                #del
+                # del
                 id = trandom.choice(list(ids.keys()))
                 del ids[id]
                 del t[id]
@@ -393,26 +389,28 @@ class TestBugFixes(unittest.TestCase):
         trandom.shuffle(list(ids))
         for id in ids:
             del t[id]
-        #release all refs
-        ids = id = key = None
+        # release all refs
+        ids = id = None
 
-        #to be on the safe side run a full GC
+        # to be on the safe side run a full GC
         gc.collect()
 
-        #print LP294788_ids
+        # print LP294788_ids
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
 
 
-# cmp error propagation tests
+# comparison error propagation tests
 
 
 class DoesntLikeBeingCompared:
 
-    def __cmp__(self, other):
+    def _cmp(self, other):
         raise ValueError('incomparable')
-    __lt__ = __le__ = __eq__ = __ne__ = __ge__ = __gt__ = __cmp__
+
+    __lt__ = __le__ = __eq__ = __ne__ = __ge__ = __gt__ = _cmp
+
 
 class TestCmpError(unittest.TestCase):
 
@@ -506,9 +504,14 @@ class FamilyTest(unittest.TestCase):
         s.insert(BTrees.family64.minint)
         self.assertTrue(BTrees.family64.minint in s)
         s = LOTreeSet()
+
         # XXX why oh why do we expect ValueError here, but TypeError in test32?
-        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.maxint + 1)
-        self.assertRaises((TypeError, OverflowError), s.insert, BTrees.family64.minint - 1)
+        with self.assertRaises((TypeError, OverflowError)):
+            s.insert(BTrees.family64.maxint + 1)
+
+        with self.assertRaises((TypeError, OverflowError)):
+            s.insert(BTrees.family64.minint - 1)
+
         self.check_pickling(BTrees.family64)
 
     def check_pickling(self, family):

@@ -11,12 +11,8 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-"""
-This module dynamically creates test modules and suites for
-all expected BTree families that do not have their own test file on disk.
-"""
-
-
+# Dynamically creates test modules and suites for expected BTree families
+# that do not have their own test file on disk.
 import importlib
 import sys
 import types
@@ -43,9 +39,11 @@ for family in _FAMILIES:
         globals()[mod_qname.split('.', 1)[1]] = mod
         _suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
 
+
 def test_suite():
     # zope.testrunner protocol
     return _suite
+
 
 def load_tests(loader, standard_tests, pattern):
     # Pure unittest protocol.

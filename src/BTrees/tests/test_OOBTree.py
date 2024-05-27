@@ -74,13 +74,13 @@ class OOBTreeTest(BTreeTests):
     def testAcceptDefaultComparisonOnGet(self):
         # Issue #42
         t = self._makeOne()
+
         class C:
             pass
 
         self.assertEqual(t.get(C(), 42), 42)
         self.assertRaises(KeyError, t.__getitem__, C())
         self.assertFalse(C() in t)
-
 
     def testNewStyleClassWithCustomMetaClassAllowed(self):
         class Meta(type):
@@ -93,10 +93,10 @@ class OOBTreeTest(BTreeTests):
 
     def test_None_is_smallest(self):
         t = self._makeOne()
-        for i in range(999): # Make sure we multiple buckets
+        for i in range(999):  # Make sure we multiple buckets
             t[i] = i*i
         t[None] = -1
-        for i in range(-99, 0): # Make sure we multiple buckets
+        for i in range(-99, 0):  # Make sure we multiple buckets
             t[i] = i*i
         self.assertEqual(list(t), [None] + list(range(-99, 999)))
         self.assertEqual(list(t.values()),
@@ -137,9 +137,14 @@ class OOBTreeTest(BTreeTests):
         # data that looks like this: {None: 42}, even though None
         # is unorderable..
         # This pickle was captured in BTree/ZODB3 3.10.7
-        data = b'ccopy_reg\n__newobj__\np0\n(cBTrees.OOBTree\nOOBTree\np1\ntp2\nRp3\n((((NI42\ntp4\ntp5\ntp6\ntp7\nb.'
-
         import pickle
+
+        data = (
+            b'ccopy_reg\n__newobj__\np0\n('
+            b'cBTrees.OOBTree\nOOBTree\np1\ntp2\nRp3\n('
+            b'(((NI42\ntp4\ntp5\ntp6\ntp7\nb.'
+        )
+
         t = pickle.loads(data)
         keys = list(t)
         self.assertEqual([None], keys)

@@ -16,6 +16,7 @@ import unittest
 
 _marker = object()
 
+
 class TestLength(unittest.TestCase):
 
     def _getTargetClass(self):

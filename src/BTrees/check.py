@@ -17,8 +17,8 @@ Utilities for working with BTrees (TreeSets, Buckets, and Sets) at a low
 level.
 
 The primary function is check(btree), which performs value-based consistency
-checks of a kind ``BTree._Tree._check()`` does not perform.  See the function docstring
-for details.
+checks of a kind ``BTree._Tree._check()`` does not perform.  See the function
+docstring for details.
 
 display(btree) displays the internal structure of a BTree (TreeSet, etc) to
 stdout.
@@ -90,10 +90,9 @@ from BTrees.fsBTree import fsBTreePy, fsBucketPy, fsSetPy, fsTreeSetPy
 
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr
+from BTrees._compat import compare
 
 TYPE_UNKNOWN, TYPE_BTREE, TYPE_BUCKET = range(3)
-
-from ._compat import compare
 
 _type2kind = {}
 _FAMILIES = (
@@ -115,15 +114,18 @@ for kv in _FAMILIES:
         py = kv + name + 'Py'
         _type2kind[globals()[py]] = kind
 
+
 # Return pair
 #
 #     TYPE_BTREE or TYPE_BUCKET, is_mapping
+
 
 def classify(obj):
     return _type2kind[type(obj)]
 
 
 BTREE_EMPTY, BTREE_ONE, BTREE_NORMAL = range(3)
+
 
 # If the BTree is empty, returns
 #
@@ -228,6 +230,7 @@ def crack_btree(t, is_mapping):
 #          <self->next iff non-NULL>
 #     )
 
+
 def crack_bucket(b, is_mapping):
     state = b.__getstate__()
     assert isinstance(state, tuple)
@@ -248,20 +251,24 @@ def crack_bucket(b, is_mapping):
         i += 1
     return keys, values
 
+
 def type_and_adr(obj):
     if hasattr(obj, '_p_oid'):
         oid = oid_repr(obj._p_oid)
     else:
         oid = 'None'
-    return "{} (0x{:x} oid={})".format(type(obj).__name__, positive_id(obj), oid)
+    return "{} (0x{:x} oid={})".format(
+        type(obj).__name__, positive_id(obj), oid
+    )
 
-# Walker implements a depth-first search of a BTree (or TreeSet or Set or
-# Bucket).  Subclasses must implement the visit_btree() and visit_bucket()
-# methods, and arrange to call the walk() method.  walk() calls the
-# visit_XYZ() methods once for each node in the tree, in depth-first
-# left-to-right order.
 
 class Walker:
+    # Walker implements a depth-first search of a BTree (or TreeSet or Set or
+    # Bucket).  Subclasses must implement the visit_btree() and visit_bucket()
+    # methods, and arrange to call the walk() method.  walk() calls the
+    # visit_XYZ() methods once for each node in the tree, in depth-first
+    # left-to-right order.
+
     def __init__(self, obj):
         self.obj = obj
 
@@ -330,8 +337,7 @@ class Walker:
                     # Yuck.  There isn't a bucket object to pass on, as
                     # the bucket state is embedded directly in the BTree
                     # state.  Synthesize a bucket.
-                    assert kids is None   # and "keys" is really the bucket
-                                          # state
+                    assert kids is None  # "keys" is really the bucket state
                     bucket = _btree2bucket[type(obj)]()
                     bucket.__setstate__(keys)
                     stack.append((bucket,
@@ -408,7 +414,8 @@ class Checker(Walker):
                 ".".join(map(str, path)))
         self.errors.append(s)
 
-class Printer(Walker): # pragma: no cover
+
+class Printer(Walker):  # pragma: no cover
     def __init__(self, obj):
         Walker.__init__(self, obj)
 
@@ -443,25 +450,27 @@ class Printer(Walker): # pragma: no cover
             if is_mapping:
                 print("value {!r}".format(values[i]))
 
+
 def check(btree):
     """Check internal value-based invariants in a BTree or TreeSet.
 
-    The ``BTrees._base._Tree._check`` method checks internal C-level pointer consistency.
-    The :func:`~BTrees.check.check` function here checks value-based invariants:  whether the
-    keys in leaf bucket and internal nodes are in strictly increasing order,
-    and whether they all lie in their expected range.  The latter is a subtle
-    invariant that can't be checked locally -- it requires propagating
-    range info down from the root of the tree, and modifying it at each
-    level for each child.
+    The ``BTrees._base._Tree._check`` method checks internal C-level pointer
+    consistency.  The :func:`~BTrees.check.check` function here checks
+    value-based invariants:  whether the keys in leaf bucket and internal nodes
+    are in strictly increasing order, and whether they all lie in their
+    expected range.  The latter is a subtle invariant that can't be checked
+    locally -- it requires propagating range info down from the root of the
+    tree, and modifying it at each level for each child.
 
     Raises :class:`AssertionError` if anything is wrong, with a string detail
     explaining the problems.  The entire tree is checked before
-    :class:`AssertionError` is raised, and the string detail may be large (depending
-    on how much went wrong).
+    :class:`AssertionError` is raised, and the string detail may be large
+    (depending on how much went wrong).
     """
 
     Checker(btree).check()
 
-def display(btree): # pragma: no cover
+
+def display(btree):  # pragma: no cover
     "Display the internal structure of a BTree, Bucket, TreeSet or Set."
     Printer(btree).display()

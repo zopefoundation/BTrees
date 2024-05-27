@@ -29,7 +29,6 @@ def _create_classes(
     from ._base import Set
     from ._base import Tree
     from ._base import TreeSet
-    from ._base import _fix_pickle
     from ._base import _TreeItems as TreeItems
     from ._base import _TreeIterator
 
@@ -84,6 +83,7 @@ def _create_classes(
 
     return classes
 
+
 def _create_set_operations(module_name, key_type, value_type, set_type):
     from ._base import difference
     from ._base import intersection
@@ -116,10 +116,13 @@ def _create_set_operations(module_name, key_type, value_type, set_type):
     # TODO: Pickling. These things should be looked up by name.
     return ops
 
+
 def _create_globals(module_name, key_datatype, value_datatype):
     classes = _create_classes(module_name, key_datatype, value_datatype)
     set_type = classes['SetPy']
-    set_ops = _create_set_operations(module_name, key_datatype, value_datatype, set_type)
+    set_ops = _create_set_operations(
+        module_name, key_datatype, value_datatype, set_type,
+    )
 
     classes.update(set_ops)
     return classes
@@ -136,11 +139,13 @@ def populate_module(mod_globals,
 
     module_name = mod_globals['__name__']
     # Define the Python implementations
-    mod_globals.update(_create_globals(module_name, key_datatype, value_datatype))
+    mod_globals.update(
+        _create_globals(module_name, key_datatype, value_datatype)
+    )
     # Import the C versions, if possible. Whether or not this is possible,
-    # this currently makes the non-`Py' suffixed names available. This should change
-    # if we start defining the Python classes with their natural name, only aliased
-    # to the 'Py` suffix (which simplifies pickling)
+    # this currently makes the non-`Py' suffixed names available. This should
+    # change if we start defining the Python classes with their natural name,
+    # only aliased to the 'Py` suffix (which simplifies pickling)
     import_c_extension(mod_globals)
 
     # Next, define __all__ after all the name aliasing is done.
@@ -156,7 +161,9 @@ def populate_module(mod_globals,
 
     mod_globals['__all__'] = tuple(c for c in mod_all if c in mod_globals)
 
-    mod_globals['using64bits'] = key_datatype.using64bits or value_datatype.using64bits
+    mod_globals['using64bits'] = (
+        key_datatype.using64bits or value_datatype.using64bits
+    )
 
     # XXX: We can probably do better than fix_pickle now;
     # we can know if we're going to be renaming classes
@@ -182,24 +189,25 @@ def populate_module(mod_globals,
             'TreeSet': collections.abc.MutableSet,
     }.items():
         abc.register(mod_globals[cls_name])
-        # Because of some quirks in the implementation of ABCMeta.__instancecheck__,
-        # and the shenanigans we currently do to make Python classes pickle without the
-        # 'Py' suffix, it's not actually necessary to register the Python version of the
-        # class. Specifically, ABCMeta asks for the object's ``__class__`` instead of
-        # using ``type()``, and our objects have a ``@property`` for ``__class__`` that returns
-        # the C version.
+        # Because of some quirks in the implementation of
+        # ABCMeta.__instancecheck__, and the shenanigans we currently do to
+        # make Python classes pickle without the 'Py' suffix, it's not actually
+        # necessary to register the Python version of the class. Specifically,
+        # ABCMeta asks for the object's ``__class__`` instead of using
+        # ``type()``, and our objects have a ``@property`` for ``__class__``
+        # that returns the C version.
         #
         # That's too many coincidences to rely on though.
         abc.register(mod_globals[cls_name + 'Py'])
 
     # Set node sizes.
-    for cls_name in (
-            'BTree',
-            'TreeSet',
-    ):
+    for cls_name in ('BTree', 'TreeSet'):
+
         for suffix in ('', 'Py'):
             cls = mod_globals[cls_name + suffix]
-            cls.max_leaf_size = key_datatype.bucket_size_for_value(value_datatype)
+            cls.max_leaf_size = key_datatype.bucket_size_for_value(
+                value_datatype
+            )
             cls.max_internal_size = key_datatype.tree_size
 
 
