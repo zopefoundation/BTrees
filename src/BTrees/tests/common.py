@@ -50,10 +50,6 @@ def _skip_if_pure_py_and_py_test(self):
         # one normal/C and one with Py in the name for the Py test.
         raise unittest.SkipTest("Redundant with the C test")
 
-# pylint:disable=too-many-lines
-# pylint:disable=no-member,protected-access,unused-variable,import-error
-# pylint:disable=line-too-long,unidiomatic-typecheck,abstract-method
-# pylint:disable=redefined-builtin
 
 #: The exceptions that can be raised by failed
 #: unsigned conversions. The OverflowError is raised
@@ -203,7 +199,7 @@ class Base(ZODBAccess, SignedMixin):
             '__provides__',
             '__implemented__',
             '__providedBy__',
-            '__class_getitem__', # Python 3.9+
+            '__class_getitem__',  # Python 3.9+
             # Also the equality and comparison operators;
             # we don't implement those methods, but the ABC does.
             '__lt__', '__le__', '__eq__', '__gt__', '__ge__', '__ne__',
@@ -481,7 +477,7 @@ class Base(ZODBAccess, SignedMixin):
         self.assertFalse(issubclass(NonSub, type(t)))
         self.assertFalse(isinstance(NonSub(), type(t)))
 
-class MappingBase(Base): # pylint:disable=too-many-public-methods
+class MappingBase(Base):
     # Tests common to mappings (buckets, btrees)
     SUPPORTS_NEGATIVE_VALUES = True
 
@@ -886,7 +882,7 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
         self.assertEqual(list(keys), [])
         self.assertEqual(list(t.iterkeys(max=fifty, min=two_hundred)), [])
 
-    def testSlicing(self): # pylint:disable=too-many-locals
+    def testSlicing(self):
         # Test that slicing of .keys()/.values()/.items() works exactly the
         # same way as slicing a Python list with the same contents.
         # This tests fixes to several bugs in this area, starting with
@@ -1002,7 +998,7 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
             self.assertEqual(list(t.iteritems()), list(t.items()))
 
     @uses_negative_keys_and_values
-    def testRangedIterators(self): # pylint:disable=too-many-locals
+    def testRangedIterators(self):
         t = self._makeOne()
 
         for keys in [], [-2], [1, 4], list(range(-170, 2000, 13)):
@@ -1192,7 +1188,7 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
     def __test_key_or_value_type(self, k, v, to_test, kvtype):
         try:
             kvtype(to_test)
-        except Exception as e: # pylint:disable=broad-except
+        except Exception as e:
             with self.assertRaises(type(e)):
                 self._makeOne()[k] = self.coerce_to_value(v)
         else:
@@ -1265,9 +1261,9 @@ class MappingBase(Base): # pylint:disable=too-many-public-methods
     def testEmptyFirstBucketReportedByGuido(self):
         # This was for Integer keys
         b = self._makeOne()
-        for i in range(29972): # reduce to 29971 and it works
+        for i in range(29972):  # reduce to 29971 and it works
             b[self.coerce_to_key(i)] = self.coerce_to_value(i)
-        for i in range(30): # reduce to 29 and it works
+        for i in range(30):  # reduce to 29 and it works
             del b[self.coerce_to_key(i)]
             try:
                 big_key = self.coerce_to_key(i + 40000)
@@ -1402,7 +1398,7 @@ class BTreeTests(MappingBase):
             return type(self._makeOne())
         raise NotImplementedError()
 
-    def _makeOne(self, *args): # pylint:disable=arguments-differ
+    def _makeOne(self, *args):
         return self._getTargetClass()(*args)
 
     def _checkIt(self, t):
@@ -1974,7 +1970,7 @@ class BTreeTests(MappingBase):
         with self.assertRaises(TypeError) as exc:
             t.__setstate__(
                 (
-                    (xchild,), # child0 is neither tree nor bucket
+                    (xchild,),  # child0 is neither tree nor bucket
                     b
                 )
             )
@@ -2634,7 +2630,7 @@ class I_SetsBase:
     def __test_key(self, k):
         try:
             self.key_type(k)
-        except Exception as e: # pylint:disable=broad-except
+        except Exception as e:
             with self.assertRaises(type(e)):
                 self._makeOne().insert(k)
         else:
@@ -2656,7 +2652,7 @@ SMALLEST_32_BITS = -LARGEST_32_BITS - 1
 SMALLEST_POSITIVE_33_BITS = LARGEST_32_BITS + 1
 LARGEST_NEGATIVE_33_BITS = SMALLEST_32_BITS - 1
 
-LARGEST_64_BITS = 0x7fffffffffffffff # Signed. 2**63 - 1
+LARGEST_64_BITS = 0x7fffffffffffffff  # Signed. 2**63 - 1
 SMALLEST_64_BITS = -LARGEST_64_BITS - 1
 
 SMALLEST_POSITIVE_65_BITS = LARGEST_64_BITS + 1
@@ -2680,7 +2676,7 @@ class TestLongIntSupport:
     def _skip_if_not_64bit(self):
         mod = sys.modules[self._getTargetClass().__module__]
         if not mod.using64bits:
-            self.skipTest("Needs 64 bit support.") # pragma: no cover
+            self.skipTest("Needs 64 bit support.")  # pragma: no cover
 
 class TestLongIntKeys(TestLongIntSupport):
     SUPPORTS_NEGATIVE_KEYS = True
@@ -2688,7 +2684,7 @@ class TestLongIntKeys(TestLongIntSupport):
     def _makeLong(self, v):
         try:
             return long(v)
-        except NameError: # pragma: no cover
+        except NameError:  # pragma: no cover
             return int(v)
 
     def testLongIntKeysWork(self):
@@ -2791,8 +2787,8 @@ class SetResult:
         super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
-        rawAkeys = [1,    3,    5, 6] # pylint:disable=bad-whitespace
-        rawBkeys = [   2, 3, 4,    6, 7] # pylint:disable=bad-whitespace
+        rawAkeys = [1,    3,    5, 6]
+        rawBkeys = [   2, 3, 4,    6, 7]
         self.Akeys = [self.KEYS[k] for k in rawAkeys]
         self.Bkeys = [self.KEYS[k] for k in rawBkeys]
         self.As = [makeset(rawAkeys) for makeset in self.builders()]
@@ -2932,10 +2928,10 @@ class SetResult:
                         self.assertEqual(list(C), want)
                     self.assertEqual(set(A) - set(B), set(A - B))
 
-    def testLargerInputs(self): # pylint:disable=too-many-locals
+    def testLargerInputs(self):
         from random import randint
 
-        from BTrees.IIBTree import IISet  # pylint:disable=no-name-in-module
+        from BTrees.IIBTree import IISet
         MAXSIZE = 200
         MAXVAL = 400
         K = self.KEYS
@@ -3246,7 +3242,7 @@ class MultiUnion(SignedMixin):
         slow = mkset()
         for i in range(N):
             slow = union(slow, mkset([i]))
-        fast = self.multiunion(list(range(N))) # like N distinct singleton sets
+        fast = self.multiunion(list(range(N)))  # ~ N distinct singleton sets
         self.assertEqual(len(slow), N)
         self.assertEqual(len(fast), N)
         self.assertEqual(list(slow), list(fast))

@@ -20,16 +20,6 @@ from ._compat import compare
 from .Interfaces import BTreesConflictError
 
 
-# XXX: Fix these. These ignores are temporary to
-# reduce the noise and help find specific issues during
-# refactoring
-# pylint:disable=too-many-lines,fixme,protected-access
-# pylint:disable=attribute-defined-outside-init,redefined-builtin,no-else-return
-# pylint:disable=redefined-outer-name,bad-continuation,unused-variable
-# pylint:disable=too-many-branches,too-many-statements,arguments-differ,assigning-non-slot
-# pylint:disable=superfluous-parens,inconsistent-return-statements,unidiomatic-typecheck
-# pylint:disable=deprecated-method,consider-using-enumerate
-
 _marker = object()
 
 

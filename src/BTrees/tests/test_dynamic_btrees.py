@@ -47,6 +47,6 @@ def test_suite():
     # zope.testrunner protocol
     return _suite
 
-def load_tests(loader, standard_tests, pattern): # pylint:disable=unused-argument
+def load_tests(loader, standard_tests, pattern):
     # Pure unittest protocol.
     return test_suite()

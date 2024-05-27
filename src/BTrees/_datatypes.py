@@ -23,8 +23,6 @@ from struct import error as struct_error
 from .utils import Lazy
 
 
-# pylint:disable=raise-missing-from
-
 class DataType:
     """
     Describes a data type used as a value.
@@ -78,7 +76,7 @@ class DataType:
         """
         return self(item)
 
-    def apply_weight(self, item, weight): # pylint:disable=unused-argument
+    def apply_weight(self, item, weight):
         """
         Apply a *weight* multiplier to *item*.
 
@@ -261,7 +259,7 @@ class _AbstractNativeDataType(KeyDataType):
 
     def __call__(self, item):
         try:
-            self._check_native(self._as_packable(item)) # pylint:disable=too-many-function-args
+            self._check_native(self._as_packable(item))
         except (struct_error, TypeError, ValueError):
             # PyPy can raise ValueError converting a negative number to a
             # unsigned value.

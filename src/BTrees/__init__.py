@@ -57,8 +57,7 @@ _FAMILIES = (
     'fs', # 2-byte -> 6-byte
 )
 
-# XXX: Do this without completely ruining
-# pylint and other static analysis.
+# XXX: Do this without completely ruining static analysis.
 for family in _FAMILIES:
     mod = create_module(family)
     name = vars(mod)['__name__']

@@ -19,9 +19,6 @@ from zope.interface.common.collections import ISized
 from zope.interface.common.sequence import IMinimalSequence
 
 
-# pylint:disable=inherit-non-class,no-method-argument,no-self-argument
-# pylint:disable=unexpected-special-method-signature
-
 class ICollection(Interface):
     """
     A collection of zero or more objects.
