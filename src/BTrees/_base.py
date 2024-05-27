@@ -20,16 +20,6 @@ from ._compat import compare
 from .Interfaces import BTreesConflictError
 
 
-# XXX: Fix these. These ignores are temporary to
-# reduce the noise and help find specific issues during
-# refactoring
-# pylint:disable=too-many-lines,fixme,protected-access
-# pylint:disable=attribute-defined-outside-init,redefined-builtin,no-else-return
-# pylint:disable=redefined-outer-name,bad-continuation,unused-variable
-# pylint:disable=too-many-branches,too-many-statements,arguments-differ,assigning-non-slot
-# pylint:disable=superfluous-parens,inconsistent-return-statements,unidiomatic-typecheck
-# pylint:disable=deprecated-method,consider-using-enumerate
-
 _marker = object()
 
 
@@ -64,8 +54,8 @@ class _Base(Persistent):
             # Swap out the type constructor for the C version, if present.
             func, typ_gna, state = Persistent.__reduce__(self)
             # We ignore the returned type altogether in favor of
-            # our calculated class (which allows subclasses but replaces our exact
-            # type with the C equivalent)
+            # our calculated class (which allows subclasses but replaces our
+            # exact type with the C equivalent)
             typ = self.__class__
             gna = typ_gna[1:]
             return (func, (typ,) + gna, state)
@@ -73,7 +63,11 @@ class _Base(Persistent):
         @property
         def __class__(self):
             type_self = type(self)
-            return type_self._BTree_reduce_as if type_self._BTree_reduce_up_bound is type_self else type_self
+            return (
+                type_self._BTree_reduce_as
+                if type_self._BTree_reduce_up_bound is type_self
+                else type_self
+            )
 
         @property
         def _BTree_reduce_as(self):
@@ -87,7 +81,9 @@ class _Base(Persistent):
 
         _BTree_reduce_up_bound = _BTree_reduce_as
 
+
 class _ArithmeticMixin:
+
     def __sub__(self, other):
         return difference(self.__class__, self, other)
 
@@ -112,10 +108,7 @@ class _ArithmeticMixin:
 
 class _BucketBase(_ArithmeticMixin, _Base):
 
-    __slots__ = ('_keys',
-                 '_next',
-                 '_to_key',
-                )
+    __slots__ = ('_keys', '_next', '_to_key')
 
     def clear(self):
         self._keys = self._key_type()
@@ -241,15 +234,15 @@ class _BucketBase(_ArithmeticMixin, _Base):
 
 class _SetIteration:
 
-    __slots__ = ('to_iterate',
-                 'useValues',
-                 '_iter',
-                 'active',
-                 'position',
-                 'key',
-                 'value',
-                )
-
+    __slots__ = (
+        'to_iterate',
+        'useValues',
+        '_iter',
+        'active',
+        'position',
+        'key',
+        'value',
+    )
 
     def __init__(self, to_iterate, useValues=False, default=None, sort=False):
         if to_iterate is None:
@@ -260,8 +253,8 @@ class _SetIteration:
             # set functions like difference/union/intersection
             assert not useValues
             if not isinstance(to_iterate, _Base):
-                # We know _Base (Set, Bucket, Tree, TreeSet) will all
-                # iterate in sorted order. Other than that, we have no guarantee.
+                # We know _Base (Set, Bucket, Tree, TreeSet) will all iterate
+                # in sorted order. Other than that, we have no guarantee.
                 self.to_iterate = to_iterate = sorted(self.to_iterate)
 
         if useValues:
@@ -299,6 +292,7 @@ class _SetIteration:
 
         return self
 
+
 class _MutableMappingMixin:
     # Methods defined in collections.abc.MutableMapping that
     # Bucket and Tree should both implement and can implement
@@ -322,8 +316,10 @@ class Bucket(_MutableMappingMixin, _BucketBase):
 
     __slots__ = ()
     _value_type = list
-    _to_value = lambda self, x: x
     VALUE_SAME_CHECK = False
+
+    def _to_value(self, x):
+        return x
 
     def setdefault(self, key, value):
         key, value = self._to_key(key), self._to_value(value)
@@ -397,9 +393,10 @@ class Bucket(_MutableMappingMixin, _BucketBase):
         """
         index = self._search(key)
         if index >= 0:
-            if (ifunset or
+            if (
+                ifunset or
                 self.VALUE_SAME_CHECK and value == self._values[index]
-                ):
+            ):
                 return None, self._values[index]
             self._p_changed = True
             self._values[index] = value
@@ -442,14 +439,18 @@ class Bucket(_MutableMappingMixin, _BucketBase):
     def items(self, *args, **kw):
         keys = self._keys
         values = self._values
-        return [(keys[i], values[i])
-                    for i in range(*self._range(*args, **kw))]
+        return [
+            (keys[i], values[i])
+            for i in range(*self._range(*args, **kw))
+        ]
 
     def iteritems(self, *args, **kw):
         keys = self._keys
         values = self._values
-        return ((keys[i], values[i])
-                    for i in range(*self._range(*args, **kw)))
+        return (
+            (keys[i], values[i])
+            for i in range(*self._range(*args, **kw))
+        )
 
     def __getstate__(self):
         keys = self._keys
@@ -491,8 +492,10 @@ class Bucket(_MutableMappingMixin, _BucketBase):
         b_new = type(self)()
         if s_new is not None:
             b_new.__setstate__(s_new)
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next):
+        if (
+            b_com._next != b_old._next or
+            b_new._next != b_old._next
+        ):
             raise BTreesConflictError(-1, -1, -1, 0)
 
         if not b_com or not b_new:
@@ -527,9 +530,9 @@ class Bucket(_MutableMappingMixin, _BucketBase):
                     i_old.advance()
                     i_com.advance()
                     i_new.advance()
-                elif (cmpON > 0): # insert in new
+                elif (cmpON > 0):  # insert in new
                     merge_output(i_new)
-                elif i_old.value == i_com.value: # deleted new
+                elif i_old.value == i_com.value:  # deleted new
                     if i_new.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -540,9 +543,9 @@ class Bucket(_MutableMappingMixin, _BucketBase):
                 else:
                     raise merge_error(2)
             elif cmpON == 0:
-                if cmpOC > 0: # insert committed
+                if cmpOC > 0:  # insert committed
                     merge_output(i_com)
-                elif i_old.value == i_new.value: # delete committed
+                elif i_old.value == i_new.value:  # delete committed
                     if i_com.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -552,52 +555,52 @@ class Bucket(_MutableMappingMixin, _BucketBase):
                     i_new.advance()
                 else:
                     raise merge_error(3)
-            else: # both keys changed
+            else:  # both keys changed
                 cmpCN = compare(i_com.key, i_new.key)
-                if cmpCN == 0: # dueling insert
+                if cmpCN == 0:  # dueling insert
                     raise merge_error(4)
-                if cmpOC > 0: # insert committed
-                    if cmpCN > 0: # insert i_new first
+                if cmpOC > 0:  # insert committed
+                    if cmpCN > 0:  # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmpON > 0: # insert i_new
+                elif cmpON > 0:  # insert i_new
                     merge_output(i_new)
                 else:
-                    raise merge_error(5) # both deleted same key
+                    raise merge_error(5)  # both deleted same key
 
-        while i_com.active and i_new.active: # new inserts
+        while i_com.active and i_new.active:  # new inserts
             cmpCN = compare(i_com.key, i_new.key)
             if cmpCN == 0:
-                raise merge_error(6) # dueling insert
-            if cmpCN > 0: # insert new
+                raise merge_error(6)  # dueling insert
+            if cmpCN > 0:  # insert new
                 merge_output(i_new)
-            else: # insert committed
+            else:  # insert committed
                 merge_output(i_com)
 
-        while i_old.active and i_com.active: # new deletes rest of original
+        while i_old.active and i_com.active:  # new deletes rest of original
             cmpOC = compare(i_old.key, i_com.key)
-            if cmpOC > 0: # insert committed
+            if cmpOC > 0:  # insert committed
                 merge_output(i_com)
-            elif cmpOC == 0 and (i_old.value == i_com.value): # del in new
+            elif cmpOC == 0 and (i_old.value == i_com.value):  # del in new
                 i_old.advance()
                 i_com.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(7)
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
             cmpON = compare(i_old.key, i_new.key)
-            if cmpON > 0: # insert new
+            if cmpON > 0:  # insert new
                 merge_output(i_new)
             elif cmpON == 0 and (i_old.value == i_new.value):
                 # deleted in committed
                 i_old.advance()
                 i_new.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(8)
 
-        if i_old.active: # dueling deletes
+        if i_old.active:  # dueling deletes
             raise merge_error(9)
 
         while i_com.active:
@@ -606,7 +609,7 @@ class Bucket(_MutableMappingMixin, _BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma: no cover
+        if len(result._keys) == 0:  # pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -619,6 +622,7 @@ class Bucket(_MutableMappingMixin, _BucketBase):
 
     def __repr__(self):
         return self._repr_helper(self.items())
+
 
 class _MutableSetMixin:
     # Like _MutableMappingMixin, but for sets.
@@ -719,7 +723,6 @@ class Set(_MutableSetMixin, _BucketBase):
 
         self._keys.extend(state)
 
-
     def _set(self, key, value=None, ifunset=False):
         index = self._search(key)
         if index < 0:
@@ -762,11 +765,13 @@ class Set(_MutableSetMixin, _BucketBase):
         if s_new is not None:
             b_new.__setstate__(s_new)
 
-        if (b_com._next != b_old._next or
-            b_new._next != b_old._next): # conflict: com or new changed _next
+        if (
+            b_com._next != b_old._next or
+            b_new._next != b_old._next
+        ):  # conflict: com or new changed _next
             raise BTreesConflictError(-1, -1, -1, 0)
 
-        if not b_com or not b_new: # conflict: com or new empty
+        if not b_com or not b_new:  # conflict: com or new empty
             raise BTreesConflictError(-1, -1, -1, 12)
 
         i_old = _SetIteration(b_old, True)
@@ -787,13 +792,13 @@ class Set(_MutableSetMixin, _BucketBase):
             cmpOC = compare(i_old.key, i_com.key)
             cmpON = compare(i_old.key, i_new.key)
             if cmpOC == 0:
-                if cmpON == 0: # all match
+                if cmpON == 0:  # all match
                     merge_output(i_old)
                     i_com.advance()
                     i_new.advance()
-                elif cmpON > 0: # insert in new
+                elif cmpON > 0:  # insert in new
                     merge_output(i_new)
-                else: # deleted new
+                else:  # deleted new
                     if i_new.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -802,9 +807,9 @@ class Set(_MutableSetMixin, _BucketBase):
                     i_old.advance()
                     i_com.advance()
             elif cmpON == 0:
-                if cmpOC > 0: # insert committed
+                if cmpOC > 0:  # insert committed
                     merge_output(i_com)
-                else: # delete committed
+                else:  # delete committed
                     if i_com.position == 1:
                         # Deleted the first item.  This will modify the
                         # parent node, so we don't know if merging will be
@@ -812,51 +817,51 @@ class Set(_MutableSetMixin, _BucketBase):
                         raise merge_error(13)
                     i_old.advance()
                     i_new.advance()
-            else: # both com and new keys changed
+            else:  # both com and new keys changed
                 cmpCN = compare(i_com.key, i_new.key)
-                if cmpCN == 0: # both inserted same key
+                if cmpCN == 0:  # both inserted same key
                     raise merge_error(4)
-                if cmpOC > 0: # insert committed
-                    if cmpCN > 0: # insert i_new first
+                if cmpOC > 0:  # insert committed
+                    if cmpCN > 0:  # insert i_new first
                         merge_output(i_new)
                     else:
                         merge_output(i_com)
-                elif cmpON > 0: # insert i_new
+                elif cmpON > 0:  # insert i_new
                     merge_output(i_new)
-                else: # both com and new deleted same key
+                else:  # both com and new deleted same key
                     raise merge_error(5)
 
-        while i_com.active and i_new.active: # new inserts
+        while i_com.active and i_new.active:  # new inserts
             cmpCN = compare(i_com.key, i_new.key)
-            if cmpCN == 0: # dueling insert
+            if cmpCN == 0:  # dueling insert
                 raise merge_error(6)
-            if cmpCN > 0: # insert new
+            if cmpCN > 0:  # insert new
                 merge_output(i_new)
-            else: # insert committed
+            else:  # insert committed
                 merge_output(i_com)
 
-        while i_old.active and i_com.active: # new deletes rest of original
+        while i_old.active and i_com.active:  # new deletes rest of original
             cmpOC = compare(i_old.key, i_com.key)
-            if cmpOC > 0: # insert committed
+            if cmpOC > 0:  # insert committed
                 merge_output(i_com)
-            elif cmpOC == 0: # del in new
+            elif cmpOC == 0:  # del in new
                 i_old.advance()
                 i_com.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(7)
 
         while i_old.active and i_new.active:
             # committed deletes rest of original
             cmpON = compare(i_old.key, i_new.key)
-            if cmpON > 0: # insert new
+            if cmpON > 0:  # insert new
                 merge_output(i_new)
-            elif cmpON == 0: # deleted in committed
+            elif cmpON == 0:  # deleted in committed
                 i_old.advance()
                 i_new.advance()
-            else: # dueling deletes or delete and change
+            else:  # dueling deletes or delete and change
                 raise merge_error(8)
 
-        if i_old.active: # dueling deletes
+        if i_old.active:  # dueling deletes
             raise merge_error(9)
 
         while i_com.active:
@@ -865,7 +870,7 @@ class Set(_MutableSetMixin, _BucketBase):
         while i_new.active:
             merge_output(i_new)
 
-        if len(result._keys) == 0: #pragma: no cover
+        if len(result._keys) == 0:  # pragma: no cover
             # If the output bucket is empty, conflict resolution doesn't have
             # enough info to unlink it from its containing BTree correctly.
             #
@@ -879,11 +884,10 @@ class Set(_MutableSetMixin, _BucketBase):
     def __repr__(self):
         return self._repr_helper(self._keys)
 
+
 class _TreeItem:
 
-    __slots__ = ('key',
-                 'child',
-                )
+    __slots__ = ('key', 'child')
 
     def __init__(self, key, child):
         self.key = key
@@ -892,9 +896,7 @@ class _TreeItem:
 
 class _Tree(_ArithmeticMixin, _Base):
 
-    __slots__ = ('_data',
-                 '_firstbucket',
-                )
+    __slots__ = ('_data', '_firstbucket')
 
     def __new__(cls, *args):
         value = _Base.__new__(cls, *args)
@@ -942,12 +944,12 @@ class _Tree(_ArithmeticMixin, _Base):
         return bool(self._data)
 
     def __len__(self):
-        l = 0
+        accumulated = 0
         bucket = self._firstbucket
         while bucket is not None:
-            l += len(bucket._keys)
+            accumulated += len(bucket._keys)
             bucket = bucket._next
-        return l
+        return accumulated
 
     @property
     def size(self):
@@ -1036,14 +1038,15 @@ class _Tree(_ArithmeticMixin, _Base):
         max = self._to_key(max)
         index = self._search(max)
         if index and compare(data[index].child.minKey(), max) > 0:
-            index -= 1 #pragma: no cover  no idea how to provoke this
+            index -= 1  # pragma: no cover  no idea how to provoke this
         return data[index].child.maxKey(max)
 
-
     def _set(self, key, value=None, ifunset=False):
-        if (self._p_jar is not None and
+        if (
+            self._p_jar is not None and
             self._p_oid is not None and
-            self._p_serial is not None):
+            self._p_serial is not None
+        ):
             self._p_jar.readCurrent(self)
         data = self._data
         if data:
@@ -1070,10 +1073,12 @@ class _Tree(_ArithmeticMixin, _Base):
         # an oid of its own.  So if we have a single oid-less bucket that
         # changed, it's *our* oid that should be marked as changed -- the
         # bucket doesn't have one.
-        if (grew is not None and
+        if (
+            grew is not None and
             type(child) is self._bucket_type and
             len(data) == 1 and
-            child._p_oid is None):
+            child._p_oid is None
+        ):
             self._p_changed = 1
         return result
 
@@ -1101,7 +1106,7 @@ class _Tree(_ArithmeticMixin, _Base):
         first = data[index]
         del data[index:]
         if len(data) == 0:
-            self._firstbucket = None # lost our bucket, can't buy no beer
+            self._firstbucket = None  # lost our bucket, can't buy no beer
         if isinstance(first.child, type(self)):
             next._firstbucket = first.child._firstbucket
         else:
@@ -1109,9 +1114,11 @@ class _Tree(_ArithmeticMixin, _Base):
         return next
 
     def _del(self, key):
-        if (self._p_jar is not None and
+        if (
+            self._p_jar is not None and
             self._p_oid is not None and
-            self._p_serial is not None):
+            self._p_serial is not None
+        ):
             self._p_jar.readCurrent(self)
 
         data = self._data
@@ -1124,9 +1131,11 @@ class _Tree(_ArithmeticMixin, _Base):
         removed_first_bucket, value = child._del(key)
 
         # See comment in _set about small trees
-        if (len(data) == 1 and
+        if (
+            len(data) == 1 and
             type(child) is self._bucket_type and
-            child._p_oid is None):
+            child._p_oid is None
+        ):
             self._p_changed = True
 
         # fix up the node key, but not for the 0'th one.
@@ -1137,7 +1146,7 @@ class _Tree(_ArithmeticMixin, _Base):
         if removed_first_bucket:
             if index:
                 data[index-1].child._deleteNextBucket()
-                removed_first_bucket = False # clear flag
+                removed_first_bucket = False  # clear flag
             else:
                 self._firstbucket = child._firstbucket
 
@@ -1164,12 +1173,12 @@ class _Tree(_ArithmeticMixin, _Base):
             # to not be called on unpickling
             return None
 
-        if (len(data) == 1 and
+        if (
+            len(data) == 1 and
             type(data[0].child) is not type(self) and
             data[0].child._p_oid is None
-            ):
+        ):
             return ((data[0].child.__getstate__(), ), )
-
 
         data = iter(data)
         sdata = [next(data).child]
@@ -1233,21 +1242,28 @@ class _Tree(_ArithmeticMixin, _Base):
             assert_(i.child.size, "Bucket length < 1")
 
         if child_class is type(self):
-            assert_(self._firstbucket is data[0].child._firstbucket,
-                    "BTree has firstbucket different than "
-                    "its first child's firstbucket")
+            assert_(
+                self._firstbucket is data[0].child._firstbucket,
+                "BTree has firstbucket different than "
+                "its first child's firstbucket"
+            )
             for i in range(len(data)-1):
                 data[i].child._check(data[i+1].child._firstbucket)
             data[-1].child._check(nextbucket)
         elif child_class is self._bucket_type:
-            assert_(self._firstbucket is data[0].child,
-                    "Bottom-level BTree node has inconsistent firstbucket "
-                    "belief")
+            assert_(
+                self._firstbucket is data[0].child,
+                "Bottom-level BTree node has inconsistent firstbucket belief"
+            )
             for i in range(len(data)-1):
-                assert_(data[i].child._next is data[i+1].child,
-                       "Bucket next pointer is damaged")
-            assert_(data[-1].child._next is nextbucket,
-                    "Bucket next pointer is damaged")
+                assert_(
+                    data[i].child._next is data[i+1].child,
+                    "Bucket next pointer is damaged"
+                )
+            assert_(
+                data[-1].child._next is nextbucket,
+                "Bucket next pointer is damaged"
+            )
         else:
             assert_(False, "Incorrect child type")
 
@@ -1269,7 +1285,7 @@ def _get_simple_btree_bucket_state(state):
         return state
     if not isinstance(state, tuple):
         raise TypeError("_p_resolveConflict: expected tuple or None for state")
-    if len(state) == 2: # non-degenerate BTree, can't resolve
+    if len(state) == 2:  # non-degenerate BTree, can't resolve
         raise BTreesConflictError(-1, -1, -1, 11)
     # Peel away wrapper to get to only-bucket state.
     if len(state) != 1:
@@ -1286,14 +1302,15 @@ def _get_simple_btree_bucket_state(state):
 
 class _TreeItems:
 
-    __slots__ = ('firstbucket',
-                 'itertype',
-                 'iterargs',
-                 'index',
-                 'it',
-                 'v',
-                 '_len',
-                )
+    __slots__ = (
+        'firstbucket',
+        'itertype',
+        'iterargs',
+        'index',
+        'it',
+        'v',
+        '_len',
+    )
 
     def __init__(self, firstbucket, itertype, iterargs):
         self.firstbucket = firstbucket
@@ -1353,7 +1370,7 @@ class _TreeItems:
 class _TreeIterator:
     """ Faux implementation for BBB only.
     """
-    def __init__(self, items): #pragma: no cover
+    def __init__(self, items):  # pragma: no cover
         raise TypeError(
             "TreeIterators are private implementation details "
             "of the C-based BTrees.\n\n"
@@ -1453,13 +1470,17 @@ def difference(set_type, o1, o2):
     i2 = _SetIteration(o2, False, 0, True)
     if i1.useValues:
         result = o1._mapping_type()
+
         def copy(i):
             result._keys.append(i.key)
             result._values.append(i.value)
+
     else:
         result = o1._set_type()
+
         def copy(i):
             result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1475,6 +1496,7 @@ def difference(set_type, o1, o2):
         i1.advance()
     return result
 
+
 def union(set_type, o1, o2):
     if o1 is None:
         return o2
@@ -1483,8 +1505,10 @@ def union(set_type, o1, o2):
     i1 = _SetIteration(o1, False, 0, True)
     i2 = _SetIteration(o2, False, 0, True)
     result = set_type()
+
     def copy(i):
         result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1505,6 +1529,7 @@ def union(set_type, o1, o2):
         i2.advance()
     return result
 
+
 def intersection(set_type, o1, o2):
     if o1 is None:
         return o2
@@ -1513,8 +1538,10 @@ def intersection(set_type, o1, o2):
     i1 = _SetIteration(o1, False, 0, True)
     i2 = _SetIteration(o2, False, 0, True)
     result = set_type()
+
     def copy(i):
         result._keys.append(i.key)
+
     while i1.active and i2.active:
         cmp_ = compare(i1.key, i2.key)
         if cmp_ < 0:
@@ -1527,6 +1554,7 @@ def intersection(set_type, o1, o2):
             i2.advance()
     return result
 
+
 def _prepMergeIterators(o1, o2):
     MERGE_DEFAULT = getattr(o1, 'MERGE_DEFAULT', None)
     if MERGE_DEFAULT is None:
@@ -1534,6 +1562,7 @@ def _prepMergeIterators(o1, o2):
     i1 = _SetIteration(o1, True, MERGE_DEFAULT)
     i2 = _SetIteration(o2, True, MERGE_DEFAULT)
     return i1, i2
+
 
 def weightedUnion(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
@@ -1551,13 +1580,17 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         i1, i2 = i2, i1
         w1, w2 = w2, w1
     _merging = i1.useValues or i2.useValues
+
     if _merging:
         result = o1._mapping_type()
+
         def copy(i, w):
             result._keys.append(i.key)
             result._values.append(MERGE_WEIGHT(i.value, w))
+
     else:
         result = o1._set_type()
+
         def copy(i, w):
             result._keys.append(i.key)
 
@@ -1582,6 +1615,7 @@ def weightedUnion(set_type, o1, o2, w1=1, w2=1):
         copy(i2, w2)
         i2.advance()
     return 1, result
+
 
 def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
     if o1 is None:
@@ -1618,6 +1652,7 @@ def weightedIntersection(set_type, o1, o2, w1=1, w2=1):
         return w1 + w2, result
     return 1, result
 
+
 def multiunion(set_type, seqs):
     # XXX simple/slow implementation. Goal is just to get tests to pass.
     result = set_type()
@@ -1633,11 +1668,14 @@ def multiunion(set_type, seqs):
 def MERGE(self, value1, weight1, value2, weight2):
     return (value1 * weight1) + (value2 * weight2)
 
+
 def MERGE_WEIGHT_default(self, value, weight):
     return value
 
+
 def MERGE_WEIGHT_numeric(self, value, weight):
     return value * weight
+
 
 def _fix_pickle(mod_dict, mod_name):
     # Make the pure-Python objects pickle with the same
@@ -1649,7 +1687,7 @@ def _fix_pickle(mod_dict, mod_name):
     # Each module must call this as `_fix_pickle(globals(), __name__)`
     # at the bottom.
 
-    mod_prefix = mod_name.split('.')[-1][:2] # BTrees.OOBTree -> 'OO'
+    mod_prefix = mod_name.split('.')[-1][:2]  # BTrees.OOBTree -> 'OO'
     bucket_name = mod_prefix + 'Bucket'
     py_bucket_name = bucket_name + 'Py'
 
@@ -1665,7 +1703,7 @@ def _fix_pickle(mod_dict, mod_name):
                 # Optional
                 continue
             raise  # pragma: no cover
-        raw_type = mod_dict[raw_name] # Could be C or Python
+        raw_type = mod_dict[raw_name]  # Could be C or Python
 
         py_type._BTree_reduce_as = raw_type
         py_type._BTree_reduce_up_bound = py_type
@@ -1678,7 +1716,7 @@ def _fix_pickle(mod_dict, mod_name):
             # On the other hand (no C extension) this makes our
             # Python pickle match the C version by default
             py_type.__name__ = raw_name
-            py_type.__qualname__ = raw_name # Py 3.3+
+            py_type.__qualname__ = raw_name  # Py 3.3+
 
 
 # tp_name returns full name of a type in the same way as how it is provided by

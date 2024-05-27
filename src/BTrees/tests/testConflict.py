@@ -32,24 +32,28 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         # "Duplicate tpc_begin calls for same transaction" on commit;
         # thus we use a MVCCMappingStorage for these tests, ensuring each
         # connection has its own storage.
+        #
         # Unfortunately, it wants to acquire the identically same
-        # non-recursive lock in each of its *its* tpc_* methods, which deadlocks.
+        # non-recursive lock in each of its *its* tpc_* methods, which
+        # deadlocks.
+        #
         # The solution is to give each instance its own lock, and trust in the
-        # serialization (ordering) of the datamanager, and the fact that these tests are
-        # single-threaded.
+        # serialization (ordering) of the datamanager, and the fact that these
+        # tests are single-threaded.
         import threading
 
+        from ZODB.DB import DB
         from ZODB.tests.MVCCMappingStorage import MVCCMappingStorage
+
         class _MVCCMappingStorage(MVCCMappingStorage):
             def new_instance(self):
                 inst = MVCCMappingStorage.new_instance(self)
                 inst._commit_lock = threading.Lock()
                 return inst
-        from ZODB.DB import DB
+
         self.storage = _MVCCMappingStorage()
         self.db = DB(self.storage)
         return self.db
-
 
     @_skip_wo_ZODB
     def testSimpleConflict(self):
@@ -68,10 +72,10 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         self.assertEqual(t._p_serial, copy._p_serial)
 
-        t.update({1:2, 2:3})
+        t.update({1: 2, 2: 3})
         transaction.commit()
 
-        copy.update({3:4})
+        copy.update({3: 4})
         transaction.commit()
 
     # This tests a problem that cropped up while trying to write
@@ -112,10 +116,10 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         self.assertEqual(b._p_serial, copy._p_serial)
 
-        b.update({1:2, 2:3})
+        b.update({1: 2, 2: 3})
         transaction.commit()
 
-        copy.update({3:4})
+        copy.update({3: 4})
         transaction.commit()  # if this doesn't blow up
         list(copy.values())         # and this doesn't either, then fine
 
@@ -174,7 +178,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state = b.__getstate__()
         # Looks like:  ((b0, 60, b1, 75, b2, 120, b3), firstbucket)
         # The next block is still verifying preconditions.
-        self.assertEqual(len(state) , 2)
+        self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 7)
         self.assertEqual(state[0][1], 60)
         self.assertEqual(state[0][3], 75)
@@ -248,7 +252,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         state = b.__getstate__()
         # Looks like:  ((bucket0, 60, bucket1, 120, bucket2), firstbucket)
         # The next block is still verifying preconditions.
-        self.assertEqual(len(state) , 2)
+        self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 5)
         self.assertEqual(state[0][1], 92)
         self.assertEqual(state[0][3], 120)
@@ -552,7 +556,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
 
         t[k+1] = k+1
         del conn2.root.t[k]
-        for i in range(200,300):
+        for i in range(200, 300):
             conn2.root.t[i] = i
 
         tm1.commit()

@@ -28,7 +28,7 @@ class fsBucketTests(unittest.TestCase):
 
     def _makeBytesItems(self):
         from .._compat import _ascii
-        return[(_ascii(c*2), _ascii(c*6)) for c in 'abcdef']
+        return [(_ascii(c*2), _ascii(c*6)) for c in 'abcdef']
 
     def test_toString(self):
         bucket = self._makeOne(self._makeBytesItems())
@@ -50,11 +50,11 @@ class fsBucketTests(unittest.TestCase):
         self.assertRaises(ValueError, bucket.fromString, b'xxx')
 
 
-
 class fsBucketPyTests(fsBucketTests):
 
     def _getTargetClass(self):
         return fsBTree.fsBucketPy
+
 
 class fsTreeTests(unittest.TestCase):
 
@@ -69,5 +69,6 @@ class fsTreeTests(unittest.TestCase):
     def test_TreeSet_sizes(self):
         self._check_sizes(fsBTree.TreeSet)
         self._check_sizes(fsBTree.TreeSetPy)
+
 
 update_module(globals(), fsBTree)

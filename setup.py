@@ -26,6 +26,7 @@ from setuptools.command.build_ext import build_ext
 
 version = '5.3.dev0'
 
+
 def _read(fname):
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, fname)) as f:
@@ -65,6 +66,7 @@ class optional_build_ext(build_ext):
             # pip will then go ahead and run 'setup.py install' directly.
             raise
 
+
 # Set up dependencies for the BTrees package
 base_btrees_depends = [
     "src/BTrees/BTreeItemsTemplate.c",
@@ -81,39 +83,39 @@ base_btrees_depends = [
 FLAVORS = {
     "O": "object",
     "F": "float",
-    "I": "int", # Signed 32-bit
-    "L": "int", # Signed 64-bit
-    "U": "int", # Unsigned 32-bit
+    "I": "int",  # Signed 32-bit
+    "L": "int",  # Signed 64-bit
+    "U": "int",  # Unsigned 32-bit
     "Q": "int"  # Unsigned 64-bit (from the printf "q" modifier for quad_t)
 }
 # XXX should 'fs' be in ZODB instead?
 FAMILIES = (
     # Signed 32-bit keys
-    "IO", # object value
-    "II", # self value
-    "IF", # float value
-    "IU", # opposite sign value
+    "IO",  # object value
+    "II",  # self value
+    "IF",  # float value
+    "IU",  # opposite sign value
     # Unsigned 32-bit keys
-    "UO", # object value
-    "UU", # self value
-    "UF", # float value
-    "UI", # opposite sign value
+    "UO",  # object value
+    "UU",  # self value
+    "UF",  # float value
+    "UI",  # opposite sign value
     # Signed 64-bit keys
-    "LO", # object value
-    "LL", # self value
-    "LF", # float value
-    "LQ", # opposite sign value
+    "LO",  # object value
+    "LL",  # self value
+    "LF",  # float value
+    "LQ",  # opposite sign value
     # Unsigned 64-bit keys
-    "QO", # object value
-    "QQ", # self value
-    "QF", # float value
-    "QL", # opposite sign value
+    "QO",  # object value
+    "QQ",  # self value
+    "QF",  # float value
+    "QL",  # opposite sign value
     # Object keys
-    "OO", # object
-    "OI", # 32-bit signed
-    "OU", # 32-bit unsigned
-    "OL", # 64-bit signed
-    "OQ", # 64-bit unsigned
+    "OO",  # object
+    "OI",  # 32-bit signed
+    "OU",  # 32-bit unsigned
+    "OL",  # 64-bit signed
+    "OQ",  # 64-bit unsigned
     "fs",
 )
 
@@ -155,62 +157,63 @@ TESTS_REQUIRE = [
     'zope.testrunner',
 ]
 
-setup(name='BTrees',
-      version=version,
-      description='Scalable persistent object containers',
-      long_description=README,
-      classifiers=[
-          "Development Status :: 6 - Mature",
-          "License :: OSI Approved :: Zope Public License",
-          "Programming Language :: Python",
-          "Programming Language :: Python :: 3",
-          "Programming Language :: Python :: 3.7",
-          "Programming Language :: Python :: 3.8",
-          "Programming Language :: Python :: 3.9",
-          "Programming Language :: Python :: 3.10",
-          "Programming Language :: Python :: 3.11",
-          "Programming Language :: Python :: 3.12",
-          "Programming Language :: Python :: Implementation :: CPython",
-          "Programming Language :: Python :: Implementation :: PyPy",
-          "Framework :: ZODB",
-          "Topic :: Database",
-          "Topic :: Software Development :: Libraries :: Python Modules",
-          "Operating System :: Microsoft :: Windows",
-          "Operating System :: Unix",
-      ],
-      author="Zope Foundation",
-      author_email="zodb-dev@zope.org",
-      url="https://github.com/zopefoundation/BTrees",
-      project_urls={
+setup(
+    name='BTrees',
+    version=version,
+    description='Scalable persistent object containers',
+    long_description=README,
+    classifiers=[
+        "Development Status :: 6 - Mature",
+        "License :: OSI Approved :: Zope Public License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
+        "Framework :: ZODB",
+        "Topic :: Database",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: Unix",
+    ],
+    author="Zope Foundation",
+    author_email="zodb-dev@zope.org",
+    url="https://github.com/zopefoundation/BTrees",
+    project_urls={
         'Documentation': 'https://btrees.readthedocs.io',
         'Issue Tracker': 'https://github.com/zopefoundation/BTrees/issues',
         'Sources': 'https://github.com/zopefoundation/BTrees',
-      },
-      license="ZPL 2.1",
-      platforms=["any"],
-      packages=find_packages('src'),
-      package_dir={'': 'src'},
-      include_package_data=True,
-      zip_safe=False,
-      ext_modules=ext_modules,
-      extras_require={
-          'test': TESTS_REQUIRE,
-          'ZODB': [
-              'ZODB',
-          ],
-          'docs': [
-              'Sphinx',
-              'repoze.sphinx.autointerface',
-              'sphinx_rtd_theme',
-          ],
-      },
-      test_suite="BTrees.tests",
-      tests_require=TESTS_REQUIRE,
-      python_requires='>=3.7',
-      install_requires=REQUIRES,
-      cmdclass={
-          'build_ext': optional_build_ext,
-      },
-      entry_points="""\
-      """
+    },
+    license="ZPL 2.1",
+    platforms=["any"],
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
+    include_package_data=True,
+    zip_safe=False,
+    ext_modules=ext_modules,
+    extras_require={
+        'test': TESTS_REQUIRE,
+        'ZODB': [
+            'ZODB',
+        ],
+        'docs': [
+            'Sphinx',
+            'repoze.sphinx.autointerface',
+            'sphinx_rtd_theme',
+        ],
+    },
+    test_suite="BTrees.tests",
+    tests_require=TESTS_REQUIRE,
+    python_requires='>=3.7',
+    install_requires=REQUIRES,
+    cmdclass={
+        'build_ext': optional_build_ext,
+    },
+    entry_points="""\
+    """
 )

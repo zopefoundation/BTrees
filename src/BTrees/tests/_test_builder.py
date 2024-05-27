@@ -69,6 +69,7 @@ def _flattened(*args):
 
     return tuple(f(args))
 
+
 class ClassBuilder:
 
     # Use TestAuto as a prefix to avoid clashing with manual tests
@@ -81,8 +82,10 @@ class ClassBuilder:
         self.value_type = btree_module.BTreePy._to_value
 
         class _BoundsMixin:
-            # For test purposes, we can only support negative keys if they are ordered like
-            # integers. Our int -> 2 byte conversion for fsBTree doesn't do this.
+            # For test purposes, we can only support negative keys if they are
+            # ordered like integers. Our int -> 2 byte conversion for fsBTree
+            # doesn't do this.
+            #
             # -1 is \xff\xff which is the largest possible key.
             SUPPORTS_NEGATIVE_KEYS = (
                 self.key_type.get_lower_bound() != 0
@@ -101,7 +104,6 @@ class ClassBuilder:
 
         self.bounds_mixin = _BoundsMixin
 
-
         self.btree_tests_base = btree_tests_base
 
         self.prefix = btree_module.__name__.split('.', )[-1][:2]
@@ -113,7 +115,7 @@ class ClassBuilder:
         self.tested_classes = set()
 
     def _store_class(self, test_cls):
-        assert test_cls.__name__ not in self.test_classes, (test_cls, self.test_classes)
+        assert test_cls.__name__ not in self.test_classes
         assert isinstance(test_cls, type)
         assert issubclass(test_cls, unittest.TestCase)
         self.test_classes[test_cls.__name__] = test_cls
@@ -176,7 +178,6 @@ class ClassBuilder:
                 weightedUnion = btree_module.def_weightedUnion
                 weightedIntersection = btree_module.def_weightedIntersection
 
-
             # These are specific to MultiUnion, and may not exist
             # in key types that don't support unions (``'O'``)
             multiunion = getattr(btree_module, 'multiunion', None)
@@ -218,17 +219,26 @@ class ClassBuilder:
     def _create_module_test(self):
         from BTrees import Interfaces as interfaces
         mod = self.btree_module
-        iface = getattr(interfaces, 'I' + self.key_type.long_name + self.value_type.long_name
-                        + 'BTreeModule')
+        iface_name = (
+            f'I{self.key_type.long_name}{self.value_type.long_name}'
+            f'BTreeModule'
+        )
+        iface = getattr(interfaces, iface_name)
+
         class Test(ModuleTest, unittest.TestCase):
             prefix = self.prefix
             key_type = self.key_type
             value_type = self.value_type
 
-            _getModule = lambda self: mod
-            _getInterface = lambda self: iface
+            def _getModule(self):
+                return mod
 
-        self._fixup_and_store_class(_FilteredModuleProxy(self.btree_module, ''), '', Test)
+            def _getInterface(self):
+                return iface
+
+        self._fixup_and_store_class(
+            _FilteredModuleProxy(self.btree_module, ''), '', Test
+        )
 
     def _create_type_tests(self, btree_module, type_name, test_bases):
         from BTrees import Interfaces as interfaces
@@ -289,7 +299,6 @@ class ClassBuilder:
                                  SetConflictTestBase,))
             ):
                 self._create_type_tests(btree_module, type_name, test_bases)
-
 
             for test_base in set_ops:
                 self._create_set_op_test(btree_module, test_base)
