@@ -36,6 +36,7 @@ class ICollection(Interface):
 # Docs deprecated only in docs/api.rst.
 IReadSequence = IMinimalSequence
 
+
 class IKeyed(ICollection):
 
     def has_key(key):
@@ -181,6 +182,7 @@ class ISetMutable(IKeyed):
         .. versionadded:: 4.8.0
         """
 
+
 class IKeySequence(IKeyed, ISized):
 
     def __getitem__(index):
@@ -195,6 +197,7 @@ class ISet(ISetMutable, IKeySequence):
     """
     A set of unique items stored in a single persistent object.
     """
+
 
 class ITreeSet(ISetMutable):
     """
@@ -213,15 +216,15 @@ class IMinimalDictionary(IKeyed, IMapping):
     def get(key, default):
         """Get the value associated with the given key.
 
-        Return the default if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
-        with the given key.
+        Return the default if :meth:`~BTrees.Interfaces.IKeyed.has_key` is
+        false with the given key.
         """
 
     def __getitem__(key):
         """Get the value associated with the given key.
 
-        Raise :class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
-        with the given key.
+        Raise :class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key`
+        is false with the given key.
         """
 
     def __setitem__(key, value):
@@ -230,14 +233,16 @@ class IMinimalDictionary(IKeyed, IMapping):
     def __delitem__(key):
         """Delete the value associated with the given key.
 
-        Raise class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key` is false
-        with the given key.
+        Raise class:`KeyError` if :meth:`~BTrees.Interfaces.IKeyed.has_key` is
+        false with the given key.
         """
 
     def values(min=None, max=None, excludemin=False, excludemax=False):
-        """
-        Return an :mod:`IMinimalSequence <zope.interface.common.sequence.IMinimalSequence>`
-        containing the values in the collection.
+        """ Return a minimal sequence containing the values in the collection.
+
+        Return value is an
+        :mod:`IMinimalSequence
+        <zope.interface.common.sequence.IMinimalSequence>`.
 
         The type of the ``IMinimalSequence`` is not specified. It
         could be a `list` or a `tuple` or some other type.
@@ -292,6 +297,7 @@ class IMinimalDictionary(IKeyed, IMapping):
         excluded.
         """
 
+
 class IDictionaryIsh(IMinimalDictionary):
 
     def update(collection):
@@ -313,8 +319,10 @@ class IDictionaryIsh(IMinimalDictionary):
     def setdefault(key, d):
         """D.setdefault(k, d) -> D.get(k, d), also set D[k]=d if k not in D.
 
-        Return the value like :meth:`~BTrees.Interfaces.IMinimalDictionary.get` except that if key is missing, d is both
-        returned and inserted into the dictionary as the value of k.
+        Return the value like
+        :meth:`~BTrees.Interfaces.IMinimalDictionary.get` except that if key
+        is missing, d is both returned and inserted into the dictionary as the
+        value of k.
 
         Note that, unlike as for Python's :meth:`dict.setdefault`, d is not
         optional.  Python defaults d to None, but that doesn't make sense
@@ -325,8 +333,8 @@ class IDictionaryIsh(IMinimalDictionary):
     def pop(key, d):
         """D.pop(k[, d]) -> v, remove key and return the corresponding value.
 
-        If key is not found, d is returned if given, otherwise :class:`KeyError` is
-        raised.
+        If key is not found, d is returned if given, otherwise
+        :class:`KeyError` is raised.
         """
 
     def popitem():
@@ -375,17 +383,21 @@ class IMerge(Interface):
     These methods are supplied in modules that define collection
     classes with particular key and value types. The operations apply
     only to collections from the same module.  For example, the
-    :meth:`BTrees.IIBTree.IIBTree.union` can only be used with :class:`~BTrees.IIBTree.IIBTree`,
-    :class:`~BTrees.IIBTree.IIBucket`, :class:`~BTrees.IIBTree.IISet`, and :class:`~BTrees.IIBTree.IITreeSet`.
+    :meth:`BTrees.IIBTree.IIBTree.union` can only be used with
+    :class:`~BTrees.IIBTree.IIBTree`, :class:`~BTrees.IIBTree.IIBucket`,
+    :class:`~BTrees.IIBTree.IISet`, and :class:`~BTrees.IIBTree.IITreeSet`.
 
-    The number protocols methods ``__and__``, ``__or__`` and ``__sub__`` are provided
-    by all the data structures. They are shortcuts for :meth:`~BTrees.Interfaces.IMerge.intersection`,
-    :meth:`~BTrees.Interfaces.IMerge.union` and :meth:`~BTrees.Interfaces.IMerge.difference`.
+    The number protocols methods ``__and__``, ``__or__`` and ``__sub__`` are
+    provided by all the data structures. They are shortcuts for
+    :meth:`~BTrees.Interfaces.IMerge.intersection`,
+    :meth:`~BTrees.Interfaces.IMerge.union` and
+    :meth:`~BTrees.Interfaces.IMerge.difference`.
 
-    The implementing module has a value type. The :class:`~BTrees.IOBTree.IOBTree` and :class:`~BTrees.OOBTree.OOBTree`
-    modules have object value type. The :class:`~BTrees.IIBTree.IIBTree` and :class:`~BTrees.OIBTree.OIBTree` modules
-    have integer value types. Other modules may be defined in the
-    future that have other value types.
+    The implementing module has a value type. The
+    :class:`~BTrees.IOBTree.IOBTree` and :class:`~BTrees.OOBTree.OOBTree`
+    modules have object value type. The :class:`~BTrees.IIBTree.IIBTree` and
+    :class:`~BTrees.OIBTree.OIBTree` modules have integer value types. Other
+    modules may be defined in the future that have other value types.
 
     The individual types are classified into set (Set and TreeSet) and
     mapping (Bucket and BTree) types.
@@ -546,7 +558,8 @@ class IIMerge(IMerge):
 class IMergeIntegerKey(IMerge):
     """:class:`~BTrees.Interfaces.IMerge`-able objects with integer keys.
 
-    Concretely, this means the types in :class:`~BTree.IOBTree.IOBTree` and :class:`~BTrees.IIBTree.IIBTree`.
+    Concretely, this means the types in :class:`~BTree.IOBTree.IOBTree` and
+    :class:`~BTrees.IIBTree.IIBTree`.
     """
 
     def multiunion(seq):
@@ -558,28 +571,32 @@ class IMergeIntegerKey(IMerge):
         + An integer, which is added to the union.
 
         + A Set or TreeSet from the same module (for example, an
-          :class:`BTrees.IIBTree.TreeSet` for :meth:`BTrees.IIBTree.multiunion`).  The elements of the
-          set are added to the union.
+          :class:`BTrees.IIBTree.TreeSet` for
+          :meth:`BTrees.IIBTree.multiunion`).  The elements of the set are
+          added to the union.
 
         + A Bucket or BTree from the same module (for example, an
-          :class:`BTrees.IOBTree.IOBTree` for :meth:`BTrees.IOBTree.multiunion`).  The keys of the
-          mapping are added to the union.
+          :class:`BTrees.IOBTree.IOBTree` for
+          :meth:`BTrees.IOBTree.multiunion`).  The keys of the mapping are
+          added to the union.
 
         + Any iterable Python object that iterates across integers. This
           will be slower than the above types.
 
         The union is returned as a Set from the same module (for example,
-        :meth:`BTrees.IIBTree.multiunion` returns an :class:`BTrees.IIBTree.IISet`).
+        :meth:`BTrees.IIBTree.multiunion` returns an
+        :class:`BTrees.IIBTree.IISet`).
 
-        The point to this method is that it can run much faster than
-        doing a sequence of two-input :meth:`~BTrees.Interfaces.IMerge.union` calls.  Under the covers,
-        all the integers in all the inputs are sorted via a single
-        linear-time radix sort, then duplicates are removed in a second
+        The point to this method is that it can run much faster than doing a
+        sequence of two-input :meth:`~BTrees.Interfaces.IMerge.union` calls.
+        Under the covers, all the integers in all the inputs are sorted via a
+        single linear-time radix sort, then duplicates are removed in a second
         linear-time pass.
 
         .. versionchanged:: 4.8.0
            Add support for arbitrary iterables of integers.
         """
+
 
 class IBTreeFamily(Interface):
     """the 64-bit or 32-bit family"""
@@ -607,76 +624,91 @@ class _IMergeBTreeModule(IBTreeModule, IMerge):
 
 
 class IIntegerObjectBTreeModule(_IMergeBTreeModule):
-    """keys, or set values, are signed integers; values are objects.
+    """Keys, or set values, are signed ints; values are objects.
 
-    describes IOBTree and LOBTree"""
+    Describes IOBTree and LOBTree.
+    """
 
 
 class IUnsignedObjectBTreeModule(_IMergeBTreeModule):
-    """
-    As for :class:`~BTrees.Interfaces.IIntegerObjectBTreeModule` with unsigned integers.
+    """Keys, or set values, are unsigned ints; values are objects.
+
+    Describes UOBTree and QOBTree.
     """
 
 
 class IObjectIntegerBTreeModule(_IMergeBTreeModule):
-    """keys, or set values, are objects; values are signed integers.
+    """Keys, or set values, are objects; values are signed ints.
 
     Object keys (and set values) must sort reliably (for instance, *not* on
     object id)!  Homogenous key types recommended.
 
-    describes OIBTree and LOBTree"""
+    Describes OIBTree and OLBTree.
+    """
 
 
 class IObjectUnsignedBTreeModule(_IMergeBTreeModule):
-    """
-    As for `IObjectIntegerBTreeModule` with unsigned integers.
+    """Keys, or set values, are objects; values are signed ints.
+
+    Object keys (and set values) must sort reliably (for instance, *not* on
+    object id)!  Homogenous key types recommended.
+
+    Describes OUBTree and OQBTree.
     """
 
 
 class IIntegerIntegerBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
-    """keys, or set values, are signed integers; values are also signed integers.
+    """Keys, or set values, are signed integers; values are signed integers.
 
-    describes IIBTree and LLBTree"""
+    Describes IIBTree and LLBTree
+    """
 
 
 class IUnsignedUnsignedBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
-    """
-    As for `IIntegerIntegerBTreeModule` with unsigned integers.
+    """Keys, or set values, are unsigned ints; values are unsigned ints.
+
+    Describes UUBTree and QQBTree
     """
 
 
 class IUnsignedIntegerBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
-    """
-    As for `IIntegerIntegerBTreeModule` with unsigned integers for keys only.
+    """Keys, or set values, are unsigned ints; values are signed ints.
+
+    Describes UIBTree and QLBTree
     """
 
 
 class IIntegerUnsignedBTreeModule(_IMergeBTreeModule, IMergeIntegerKey):
-    """
-    As for `IIntegerIntegerBTreeModule` with unsigned integers for values only.
+    """Keys, or set values, are signed ints; values are unsigned ints.
+
+    Describes IUBTree and LQBTree
     """
 
 
 class IObjectObjectBTreeModule(IBTreeModule, IMerge):
-    """keys, or set values, are objects; values are also objects.
+    """Keys, or set values, are objects; values are also objects.
 
     Object keys (and set values) must sort reliably (for instance, *not* on
     object id)!  Homogenous key types recommended.
 
-    describes OOBTree"""
+    Note that there's no ``family`` attribute; all families include
+    the OO flavor of BTrees.
 
-    # Note that there's no ``family`` attribute; all families include
-    # the OO flavor of BTrees.
+    Describes OOBTree
+    """
 
 
 class IIntegerFloatBTreeModule(_IMergeBTreeModule):
-    """keys, or set values, are signed integers; values are floats.
+    """Keys, or set values, are signed ints; values are floats.
 
-    describes IFBTree and LFBTree"""
+    Describes IFBTree and LFBTree
+    """
+
 
 class IUnsignedFloatBTreeModule(_IMergeBTreeModule):
-    """
-    As for `IIntegerFloatBTreeModule` with unsigned integers.
+    """Keys, or set values, are unsigned ints; values are floats.
+
+    Describes UFBTree and QFBTree
     """
 
 
