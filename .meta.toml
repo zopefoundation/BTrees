@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "4dc0484e"
+commit-id = "8d837c89"
 
 [python]
 with-appveyor = false
@@ -14,7 +14,7 @@ with-sphinx-doctests = true
 with-macos = false
 
 [tox]
-use-flake8 = false
+use-flake8 = true
 additional-envlist = [
     "w_zodb",
     "w_zodb-pure",
