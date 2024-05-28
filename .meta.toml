@@ -39,6 +39,12 @@ testenv-additional = [
 [coverage]
 fail-under = 93
 
+[flake8]
+additional-config = [
+    "per-file-ignores =",
+    "   src/BTrees/check.py: F401",
+]
+
 [manifest]
 additional-rules = [
     "include *.yaml",
