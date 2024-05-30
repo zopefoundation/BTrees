@@ -5,9 +5,6 @@
 .. image:: https://github.com/zopefoundation/BTrees/actions/workflows/tests.yml/badge.svg
     :target: https://github.com/zopefoundation/BTrees/actions/workflows/tests.yml
 
-.. image:: https://ci.appveyor.com/api/projects/status/github/zopefoundation/BTrees?branch=master&svg=true
-    :target: https://ci.appveyor.com/project/mgedmin/BTrees
-
 .. image:: https://coveralls.io/repos/github/zopefoundation/BTrees/badge.svg?branch=master
     :target: https://coveralls.io/github/zopefoundation/BTrees?branch=master
 
