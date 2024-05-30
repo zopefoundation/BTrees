@@ -24,7 +24,7 @@ from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
 
-version = '5.3.dev0'
+version = '6.0'
 
 
 def _read(fname):
@@ -172,6 +172,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Framework :: ZODB",
