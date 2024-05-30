@@ -156,9 +156,8 @@ jobs:
         if: matrix.python-version == '3.13'
         run: |
           pip install -U pip
+          pip install -U --pre cffi
           pip install -U "setuptools<69" wheel twine
-          # Remove this hack once 'cffi' has a release supporting Python 3.13.
-          pip install -e "git+https://github.com/python-cffi/cffi.git#egg=cffi"
       - name: Install Build Dependencies
         if: matrix.python-version != '3.13'
         run: |
@@ -328,12 +327,11 @@ jobs:
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install BTrees 3.13 ${{ matrix.python-version }}
+      - name: Install BTrees ${{ matrix.python-version }}
         if: matrix.python-version == '3.13'
         run: |
+          pip install -U --pre cffi
           pip install -U wheel "setuptools<69"
-          # Remove this hack once 'cffi' has a release supporting Python 3.13.
-          pip install -e "git+https://github.com/python-cffi/cffi.git#egg=cffi"
           # coverage might have a wheel on PyPI for a future python version which is
           # not ABI compatible with the current one, so build it from sdist:
           pip install -U --no-binary :all: coverage
