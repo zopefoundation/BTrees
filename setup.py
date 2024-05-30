@@ -24,7 +24,7 @@ from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
 
-version = '6.1.dev0'
+version = '6.0'
 
 
 def _read(fname):
