@@ -18,8 +18,16 @@
 #include "bytesobject.h"
 
 #ifdef PERSISTENT
+
+/* We'll define the static ourselves, until we remove it.*/
+#define DONT_USE_CPERSISTENCECAPI
 #include "persistent/cPersistence.h"
+#undef DONT_USE_CPERSISTENCECAPI
+
+static cPersistenceCAPIstruct *cPersistenceCAPI;
+
 #else
+
 #define PER_USE_OR_RETURN(self, NULL)
 #define PER_ALLOW_DEACTIVATION(self)
 #define PER_PREVENT_DEACTIVATION(self)
