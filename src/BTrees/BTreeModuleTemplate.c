@@ -78,6 +78,8 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #error "PY_LONG_LONG required but not defined"
 #endif
 
+#if defined(NEED_LONG_LONG_CHECK) || defined(NEED_LONG_LONG_CONVERT)
+
 static int
 longlong_handle_overflow(PY_LONG_LONG result, int overflow)
 {
@@ -87,7 +89,8 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
         /* Python 3 tends to have an exception already set.
            We want to consistently raise a TypeError.
         */
-        PyErr_SetString(PyExc_TypeError, "couldn't convert integer to C long long");
+        PyErr_SetString(
+            PyExc_TypeError, "couldn't convert integer to C long long");
         return 0;
     }
     else if (result == -1 && PyErr_Occurred())
@@ -96,10 +99,64 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
     return 1;
 }
 
+#endif /*defined(NEED_LONG_LONG_CONVERT) || defined(NEED_LONG_LONG_AS_OBJECT)*/
 
-#ifdef NEED_LONG_LONG_KEYS
 
-#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
+#if defined(NEED_LONG_LONG_CHECK)
+
+static int
+longlong_check(PyObject *ob)
+{
+    if (PyLong_Check(ob)) {
+        int overflow;
+        PY_LONG_LONG result;
+        result = PyLong_AsLongLongAndOverflow(ob, &overflow);
+        return longlong_handle_overflow(result, overflow);
+    }
+    return 0;
+}
+
+#endif /* defined(NEED_LONG_LONG_CHECK) */
+
+#if defined(NEED_LONG_LONG_AS_OBJECT)
+
+static PyObject *
+longlong_as_object(PY_LONG_LONG val)
+{
+    if ((val > LONG_MAX) || (val < LONG_MIN))
+        return PyLong_FromLongLong(val);
+    return INT_FROM_LONG((long)val);
+}
+
+#endif /* defined(NEED_LONG_LONG_AS_OBJECT) */
+
+#if defined(NEED_LONG_LONG_CONVERT)
+
+static int
+longlong_convert(PyObject *ob, PY_LONG_LONG *value)
+{
+    PY_LONG_LONG val;
+    int overflow;
+
+    if (!PyLong_Check(ob))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected integer key");
+        return 0;
+    }
+    val = PyLong_AsLongLongAndOverflow(ob, &overflow);
+    if (!longlong_handle_overflow(val, overflow))
+    {
+        return 0;
+    }
+    (*value) = val;
+    return 1;
+}
+
+#endif /* defined(NEED_LONG_LONG_CONVERT) */
+
+
+#if defined(NEED_ULONG_LONG_CHECK)
+
 static int
 ulonglong_check(PyObject *ob)
 {
@@ -114,23 +171,11 @@ ulonglong_check(PyObject *ob)
     }
     return 1;
 }
-#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
 
-static int
-longlong_check(PyObject *ob)
-{
-    if (PyLong_Check(ob)) {
-        int overflow;
-        PY_LONG_LONG result;
-        result = PyLong_AsLongLongAndOverflow(ob, &overflow);
-        return longlong_handle_overflow(result, overflow);
-    }
-    return 0;
-}
+#endif /* defined(NEED_ULONG_LONG_CHECK) */
 
-#endif
+#if defined(NEED_ULONG_LONG_AS_OBJECT)
 
-#if defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS)
 static PyObject *
 ulonglong_as_object(unsigned PY_LONG_LONG val)
 {
@@ -138,6 +183,10 @@ ulonglong_as_object(unsigned PY_LONG_LONG val)
         return PyLong_FromUnsignedLongLong(val);
     return UINT_FROM_LONG((unsigned long)val);
 }
+
+#endif /* defined(NEED_ULONG_LONG_AS_OBJECT) */
+
+#if defined(NEED_ULONG_LONG_CONVERT)
 
 static int
 ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
@@ -163,35 +212,8 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
     (*value) = val;
     return 1;
 }
-#endif /* defined(ZODB_UNSIGNED_VALUE_INTS) || defined(ZODB_UNSIGNED_KEY_INTS) */
 
-static PyObject *
-longlong_as_object(PY_LONG_LONG val)
-{
-    if ((val > LONG_MAX) || (val < LONG_MIN))
-        return PyLong_FromLongLong(val);
-    return INT_FROM_LONG((long)val);
-}
-
-static int
-longlong_convert(PyObject *ob, PY_LONG_LONG *value)
-{
-    PY_LONG_LONG val;
-    int overflow;
-
-    if (!PyLong_Check(ob))
-    {
-        PyErr_SetString(PyExc_TypeError, "expected integer key");
-        return 0;
-    }
-    val = PyLong_AsLongLongAndOverflow(ob, &overflow);
-    if (!longlong_handle_overflow(val, overflow))
-    {
-        return 0;
-    }
-    (*value) = val;
-    return 1;
-}
+#endif /* defined(NEED_ULONG_LONG_CONVERT) */
 
 #endif  /* NEED_LONG_LONG_SUPPORT */
 

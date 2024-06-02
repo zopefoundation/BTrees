@@ -15,7 +15,11 @@
 #define NEED_LONG_LONG_SUPPORT
 #define VALUE_TYPE PY_LONG_LONG
 #define VALUE_PARSE "L"
+
+#define NEED_LONG_LONG_AS_OBJECT
 #define COPY_VALUE_TO_OBJECT(O, K) O=longlong_as_object(K)
+
+#define NEED_LONG_LONG_CONVERT
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
     if (!longlong_convert((ARG), &TARGET)) \
     { \
@@ -53,7 +57,11 @@
 #define NEED_LONG_LONG_SUPPORT
 #define VALUE_TYPE unsigned PY_LONG_LONG
 #define VALUE_PARSE "K"
+
+#define NEED_ULONG_LONG_AS_OBJECT
 #define COPY_VALUE_TO_OBJECT(O, K) O=ulonglong_as_object(K)
+
+#define NEED_ULONG_LONG_CONVERT
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
     if (!ulonglong_convert((ARG), &TARGET)) \
     { \
