@@ -648,15 +648,6 @@ module_init(void)
     PyObject *interfaces;
     PyObject *conflicterr;
 
-#ifdef KEY_TYPE_IS_PYOBJECT
-    /* global static:  declared in ``objectkeymacros``.
-     * TODO:  move to module state, add helper
-     * */
-    object_ = PyTuple_GetItem(Py_TYPE(Py_None)->tp_bases, 0);
-    if (object_ == NULL)
-      return NULL;
-#endif
-
     sort_str = PyUnicode_InternFromString("sort");
     if (!sort_str)
         return NULL;
