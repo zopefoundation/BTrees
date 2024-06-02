@@ -29,7 +29,7 @@
 
 
 
-#include "_compat.h"
+#include "Python.h"
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 

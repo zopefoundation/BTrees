@@ -27,7 +27,7 @@
 
 
 
-#include "_compat.h"
+#include "Python.h"
 #include "objectkeymacros.h"
 #include "intvaluemacros.h"
 

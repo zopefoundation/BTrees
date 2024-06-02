@@ -11,7 +11,7 @@
   FOR A PARTICULAR PURPOSE
 
  ****************************************************************************/
-#include "_compat.h"
+#include "Python.h"
 
 #define SETTEMPLATE_C "$Id$\n"
 
@@ -25,7 +25,7 @@ Set_insert(Bucket *self, PyObject *args)
         return NULL;
     if ( (i=_bucket_set(self, key, Py_None, 1, 1, 0)) < 0)
         return NULL;
-    return INT_FROM_LONG(i);
+    return PyLong_FromLong(i);
 }
 
 /* _Set_update and _TreeSet_update are identical except for the
@@ -80,7 +80,7 @@ Set_update(Bucket *self, PyObject *args)
             return NULL;
     }
 
-    return INT_FROM_LONG(n);
+    return PyLong_FromLong(n);
 }
 
 static PyObject *
@@ -373,14 +373,14 @@ set_repr(Bucket *self)
     PyObject *r, *t;
 
     if (!format)
-        format = TEXT_FROM_STRING(MOD_NAME_PREFIX "Set(%s)");
+        format = PyUnicode_FromString(MOD_NAME_PREFIX "Set(%s)");
     UNLESS (t = PyTuple_New(1))
         return NULL;
     UNLESS (r = bucket_keys(self, NULL, NULL))
         goto err;
     PyTuple_SET_ITEM(t, 0, r);
     r = t;
-    ASSIGN(r, TEXT_FORMAT(format, r));
+    ASSIGN(r, PyUnicode_Format(format, r));
     return r;
 err:
     Py_DECREF(t);
@@ -445,7 +445,8 @@ set_isub(Bucket* self, PyObject* other)
         iter = PyObject_GetIter(other);
         if (iter == NULL) {
             PyErr_Clear();
-            Py_RETURN_NOTIMPLEMENTED;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
 
         while (1) {
@@ -520,7 +521,8 @@ set_ixor(Bucket* self, PyObject* other)
         iter = PyObject_GetIter(other);
         if (iter == NULL) {
             PyErr_Clear();
-            Py_RETURN_NOTIMPLEMENTED;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
 
         while (1) {
@@ -602,7 +604,8 @@ set_iand(Bucket* self, PyObject* other)
     iter = PyObject_GetIter(other);
     if (iter == NULL) {
         PyErr_Clear();
-        Py_RETURN_NOTIMPLEMENTED;
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     while (1) {

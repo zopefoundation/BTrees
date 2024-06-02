@@ -28,11 +28,11 @@
 #else
 #define VALUE_TYPE int
 #define VALUE_PARSE "i"
-#define COPY_VALUE_TO_OBJECT(O, K) O=INT_FROM_LONG(K)
+#define COPY_VALUE_TO_OBJECT(O, K) O=PyLong_FromLong(K)
 
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
-  if (INT_CHECK(ARG)) {                                         \
-      long vcopy = INT_AS_LONG(ARG);                            \
+  if (PyLong_Check(ARG)) {                                         \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
@@ -71,20 +71,23 @@
 /* unsigned, 32-bit values */
 #define VALUE_TYPE unsigned int
 #define VALUE_PARSE "I"
-#define COPY_VALUE_TO_OBJECT(O, K) O=UINT_FROM_LONG(K)
+#define COPY_VALUE_TO_OBJECT(O, K) O=PyLong_FromUnsignedLongLong(K)
 
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
-  if (INT_CHECK(ARG)) {                                           \
-      long vcopy = INT_AS_LONG(ARG);                              \
+  if (PyLong_Check(ARG)) {                                        \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
-            PyErr_SetString(PyExc_TypeError, "integer out of range"); \
+            PyErr_SetString(                                      \
+                PyExc_TypeError, "integer out of range");         \
         }                                                         \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if (vcopy < 0) {                                       \
-        PyErr_SetString(PyExc_TypeError, "can't convert negative value to unsigned int"); \
+        PyErr_SetString(                                          \
+            PyExc_TypeError,                                      \
+            "can't convert negative value to unsigned int");      \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if ((unsigned int)vcopy != vcopy) {                    \

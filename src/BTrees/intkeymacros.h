@@ -29,11 +29,11 @@
 /* C int as key */
 
 #define KEY_TYPE int
-#define KEY_CHECK INT_CHECK
-#define COPY_KEY_TO_OBJECT(O, K) O=INT_FROM_LONG(K)
+#define KEY_CHECK PyLong_Check
+#define COPY_KEY_TO_OBJECT(O, K) O=PyLong_FromLong(K)
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)                    \
-  if (INT_CHECK(ARG)) {                                           \
-      long vcopy = INT_AS_LONG(ARG);                              \
+  if (PyLong_Check(ARG)) {                                        \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
@@ -69,33 +69,37 @@
 #define COPY_KEY_TO_OBJECT(O, K) O=ulonglong_as_object(K)
 
 #define NEED_ULONG_LONG_CONVERT
-#define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS) \
-    if (!ulonglong_convert((ARG), &TARGET)) \
-    { \
-        (STATUS)=0; (TARGET)=0; \
+#define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)  \
+    if (!ulonglong_convert((ARG), &TARGET))     \
+    {                                           \
+        (STATUS)=0; (TARGET)=0;                 \
     }
 
 #else /* !defined(ZODB_64BIT_INTS) */
 /* C int as key */
 
 #define KEY_TYPE unsigned int
-#define KEY_CHECK INT_CHECK
-#define COPY_KEY_TO_OBJECT(O, K) O=UINT_FROM_LONG(K)
+#define KEY_CHECK PyLong_Check
+#define COPY_KEY_TO_OBJECT(O, K) O=PyLong_FromUnsignedLongLong(K)
+
 #define COPY_KEY_FROM_ARG(TARGET, ARG, STATUS)                    \
-  if (INT_CHECK(ARG)) {                                           \
-      long vcopy = INT_AS_LONG(ARG);                     \
+  if (PyLong_Check(ARG)) {                                        \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
-            PyErr_SetString(PyExc_TypeError, "integer out of range"); \
+            PyErr_SetString(                                      \
+                PyExc_TypeError, "integer out of range");         \
         }                                                         \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if (vcopy < 0) {                                       \
-        PyErr_SetString(PyExc_TypeError, "can't convert negative value to unsigned int"); \
+        PyErr_SetString(                                          \
+            PyExc_TypeError,                                      \
+            "can't convert negative value to unsigned int");      \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
-      else if ((unsigned int)vcopy != vcopy) {                     \
+      else if ((unsigned int)vcopy != vcopy) {                    \
         PyErr_SetString(PyExc_TypeError, "integer out of range"); \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \

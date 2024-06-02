@@ -11,7 +11,7 @@
   FOR A PARTICULAR PURPOSE
 
  ****************************************************************************/
-#include "_compat.h"
+#include "Python.h"
 
 #define TREESETTEMPLATE_C "$Id$\n"
 
@@ -26,7 +26,7 @@ TreeSet_insert(BTree *self, PyObject *args)
     i = _BTree_set(self, key, Py_None, 1, 1);
     if (i < 0)
         return NULL;
-    return INT_FROM_LONG(i);
+    return PyLong_FromLong(i);
 }
 
 /* _Set_update and _TreeSet_update are identical except for the
@@ -84,7 +84,7 @@ TreeSet_update(BTree *self, PyObject *args)
             return NULL;
     }
 
-    return INT_FROM_LONG(n);
+    return PyLong_FromLong(n);
 }
 
 
@@ -365,7 +365,8 @@ TreeSet_isub(BTree* self, PyObject* other)
         iter = PyObject_GetIter(other);
         if (iter == NULL) {
             PyErr_Clear();
-            Py_RETURN_NOTIMPLEMENTED;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
 
         while (1) {
@@ -440,7 +441,8 @@ TreeSet_ixor(BTree* self, PyObject* other)
         iter = PyObject_GetIter(other);
         if (iter == NULL) {
             PyErr_Clear();
-            Py_RETURN_NOTIMPLEMENTED;
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
         }
 
         while (1) {
@@ -495,7 +497,8 @@ TreeSet_iand(BTree* self, PyObject* other)
     iter = PyObject_GetIter(other);
     if (iter == NULL) {
         PyErr_Clear();
-        Py_RETURN_NOTIMPLEMENTED;
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     while (1) {

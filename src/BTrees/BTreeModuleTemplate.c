@@ -28,8 +28,6 @@
 #define PER_ACCESSED(O) 1
 #endif
 
-#include "_compat.h"
-
 /* So sue me.  This pair gets used all over the place, so much so that it
  * interferes with understanding non-persistence parts of algorithms.
  * PER_UNUSE can be used after a successul PER_USE or PER_USE_OR_RETURN.
@@ -125,7 +123,7 @@ longlong_as_object(PY_LONG_LONG val)
 {
     if ((val > LONG_MAX) || (val < LONG_MIN))
         return PyLong_FromLongLong(val);
-    return INT_FROM_LONG((long)val);
+    return PyLong_FromLong((long)val);
 }
 
 #endif /* defined(NEED_LONG_LONG_AS_OBJECT) */
@@ -181,7 +179,7 @@ ulonglong_as_object(unsigned PY_LONG_LONG val)
 {
     if ((val > LONG_MAX))
         return PyLong_FromUnsignedLongLong(val);
-    return UINT_FROM_LONG((unsigned long)val);
+    return PyLong_FromUnsignedLongLong((unsigned long)val);
 }
 
 #endif /* defined(NEED_ULONG_LONG_AS_OBJECT) */
@@ -403,7 +401,7 @@ IndexError(int i)
 {
     PyObject *v;
 
-    v = INT_FROM_LONG(i);
+    v = PyLong_FromLong(i);
     if (!v) {
         v = Py_None;
         Py_INCREF(v);
@@ -633,26 +631,26 @@ module_init(void)
       return NULL;
 #endif
 
-    sort_str = INTERN("sort");
+    sort_str = PyUnicode_InternFromString("sort");
     if (!sort_str)
         return NULL;
-    reverse_str = INTERN("reverse");
+    reverse_str = PyUnicode_InternFromString("reverse");
     if (!reverse_str)
         return NULL;
-    __setstate___str = INTERN("__setstate__");
+    __setstate___str = PyUnicode_InternFromString("__setstate__");
     if (!__setstate___str)
         return NULL;
-    _bucket_type_str = INTERN("_bucket_type");
+    _bucket_type_str = PyUnicode_InternFromString("_bucket_type");
     if (!_bucket_type_str)
         return NULL;
 
-    max_internal_size_str = INTERN("max_internal_size");
+    max_internal_size_str = PyUnicode_InternFromString("max_internal_size");
     if (! max_internal_size_str)
         return NULL;
-    max_leaf_size_str = INTERN("max_leaf_size");
+    max_leaf_size_str = PyUnicode_InternFromString("max_leaf_size");
     if (! max_leaf_size_str)
         return NULL;
-    __slotnames__str = INTERN("__slotnames__");
+    __slotnames__str = PyUnicode_InternFromString("__slotnames__");
     if (!__slotnames__str)
         return NULL;
 
@@ -666,9 +664,9 @@ module_init(void)
           Technically, INTERNING directly here leaks references,
           but since we can't be unloaded, it's not a problem.
         */
-        INTERN("__implemented__"),
-        INTERN("__providedBy__"),
-        INTERN("__provides__")
+        PyUnicode_InternFromString("__implemented__"),
+        PyUnicode_InternFromString("__providedBy__"),
+        PyUnicode_InternFromString("__provides__")
     );
 
     /* Grab the ConflictError class */

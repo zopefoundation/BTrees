@@ -30,7 +30,7 @@
 
 #define ZODB_UNSIGNED_KEY_INTS
 
-#include "_compat.h"
+#include "Python.h"
 #include "intkeymacros.h"
 #include "intvaluemacros.h"
 
