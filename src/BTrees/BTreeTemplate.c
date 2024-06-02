@@ -44,7 +44,7 @@ _max_internal_size(BTree *self)
   long isize;
 
   if (self->max_internal_size > 0) return self->max_internal_size;
-  isize = _get_max_size(self, max_internal_size_str, -1);
+  isize = _get_max_size(self, str_max_internal_size, -1);
   self->max_internal_size = isize;
   return isize;
 }
@@ -55,7 +55,7 @@ _max_leaf_size(BTree *self)
   long isize;
 
   if (self->max_leaf_size > 0) return self->max_leaf_size;
-  isize = _get_max_size(self, max_leaf_size_str, -1);
+  isize = _get_max_size(self, str_max_leaf_size, -1);
   self->max_leaf_size = isize;
   return isize;
 }
@@ -317,8 +317,8 @@ BTree_newBucket(BTree *self)
     PyObject *factory;
     Sized *result;
 
-    /* _bucket_type_str defined in BTreeModuleTemplate.c */
-    factory = PyObject_GetAttr((PyObject *)Py_TYPE(self), _bucket_type_str);
+    /* str__bucket_type defined in BTreeModuleTemplate.c */
+    factory = PyObject_GetAttr((PyObject *)Py_TYPE(self), str__bucket_type);
     if (factory == NULL)
         return NULL;
     /* TODO: Should we check that the factory actually returns something
@@ -1948,13 +1948,13 @@ BTree_byValue(BTree *self, PyObject *omin)
             goto err;
     }
 
-    item=PyObject_GetAttr(r,sort_str);
+    item=PyObject_GetAttr(r, str_sort);
     UNLESS (item)
         goto err;
     ASSIGN(item, PyObject_CallObject(item, NULL));
     UNLESS (item)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, reverse_str));
+    ASSIGN(item, PyObject_GetAttr(r, str_reverse));
     UNLESS (item)
         goto err;
     ASSIGN(item, PyObject_CallObject(item, NULL));

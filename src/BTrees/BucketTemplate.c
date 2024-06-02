@@ -1062,13 +1062,13 @@ bucket_byValue(Bucket *self, PyObject *omin)
         item = 0;
     }
 
-    item=PyObject_GetAttr(r,sort_str);
+    item=PyObject_GetAttr(r, str_sort);
     UNLESS (item)
         goto err;
     ASSIGN(item, PyObject_CallObject(item, NULL));
     UNLESS (item)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, reverse_str));
+    ASSIGN(item, PyObject_GetAttr(r, str_reverse));
     UNLESS (item)
         goto err;
     ASSIGN(item, PyObject_CallObject(item, NULL));
@@ -1644,7 +1644,7 @@ _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
             goto Done;
         if (s[i] == Py_None) /* None is equivalent to empty, for BTrees */
             continue;
-        meth = PyObject_GetAttr((PyObject *)b[i], __setstate___str);
+        meth = PyObject_GetAttr((PyObject *)b[i], str___setstate__);
         if (meth == NULL)
             goto Done;
         a = PyTuple_New(1);
