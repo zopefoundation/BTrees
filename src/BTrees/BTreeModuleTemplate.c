@@ -36,6 +36,11 @@ static cPersistenceCAPIstruct *cPersistenceCAPI;
 #define PER_ACCESSED(O) 1
 #endif
 
+#define USE_STATIC_MODULE_INIT 1
+#define USE_MULTIPHASE_MODULE_INIT 0
+#define USE_STATIC_TYPES 1
+#define USE_HEAP_ALLOCATED_TYPES 0
+
 /* So sue me.  This pair gets used all over the place, so much so that it
  * interferes with understanding non-persistence parts of algorithms.
  * PER_UNUSE can be used after a successul PER_USE or PER_USE_OR_RETURN.
