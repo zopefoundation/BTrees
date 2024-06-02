@@ -51,13 +51,32 @@
  */
 #define MODULE_NAME "BTrees." MOD_NAME_PREFIX "BTree."
 
-static PyObject *sort_str;
-static PyObject *reverse_str;
-static PyObject *__setstate___str;
-static PyObject *_bucket_type_str;
-static PyObject *max_internal_size_str;
-static PyObject *max_leaf_size_str;
-static PyObject *__slotnames__str;
+static PyObject *str_sort;
+static PyObject *str_reverse;
+static PyObject *str___setstate__;
+static PyObject *str__bucket_type;
+static PyObject *str_max_internal_size;
+static PyObject *str_max_leaf_size;
+static PyObject *str___slotnames__;
+
+static int
+intern_strings()
+{
+#define INIT_STRING(S)                                  \
+  if (!(str_ ## S = PyUnicode_InternFromString(#S)))    \
+    return -1;
+
+    INIT_STRING(sort);
+    INIT_STRING(reverse);
+    INIT_STRING(__setstate__);
+    INIT_STRING(_bucket_type);
+    INIT_STRING(max_internal_size);
+    INIT_STRING(max_leaf_size);
+    INIT_STRING(__slotnames__);
+
+#undef INIT_STRING
+    return 0;
+}
 
 static PyObject *ConflictError = NULL;
 
@@ -599,7 +618,7 @@ init_type_with_meta_base(
     if (!slotnames) {
         return 0;
     }
-    result = PyDict_SetItem(type->tp_dict, __slotnames__str, slotnames);
+    result = PyDict_SetItem(type->tp_dict, str___slotnames__, slotnames);
     Py_DECREF(slotnames);
     return result < 0 ? 0 : 1;
 }
@@ -621,7 +640,7 @@ init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
         return 0;
     }
     if (PyDict_SetItem(
-            type->tp_dict, _bucket_type_str, (PyObject*)bucket_type) < 0
+            type->tp_dict, str__bucket_type, (PyObject*)bucket_type) < 0
     ) {
         return 0;
     }
@@ -648,33 +667,14 @@ module_init(void)
     PyObject *interfaces;
     PyObject *conflicterr;
 
-    sort_str = PyUnicode_InternFromString("sort");
-    if (!sort_str)
-        return NULL;
-    reverse_str = PyUnicode_InternFromString("reverse");
-    if (!reverse_str)
-        return NULL;
-    __setstate___str = PyUnicode_InternFromString("__setstate__");
-    if (!__setstate___str)
-        return NULL;
-    _bucket_type_str = PyUnicode_InternFromString("_bucket_type");
-    if (!_bucket_type_str)
-        return NULL;
-    max_internal_size_str = PyUnicode_InternFromString("max_internal_size");
-    if (! max_internal_size_str)
-        return NULL;
-    max_leaf_size_str = PyUnicode_InternFromString("max_leaf_size");
-    if (! max_leaf_size_str)
-        return NULL;
-    __slotnames__str = PyUnicode_InternFromString("__slotnames__");
-    if (!__slotnames__str)
+    if (intern_strings() < 0 )
         return NULL;
 
     BTreeType_setattro_allowed_names = PyTuple_Pack(
         5,
         /* BTree attributes  */
-        max_internal_size_str,
-        max_leaf_size_str,
+        str_max_internal_size,
+        str_max_leaf_size,
         /* zope.interface attributes */
         /*
           Technically, INTERNING directly here leaks references,
