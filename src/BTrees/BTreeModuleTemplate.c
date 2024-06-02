@@ -51,9 +51,14 @@
  */
 #define MODULE_NAME "BTrees." MOD_NAME_PREFIX "BTree."
 
-static PyObject *sort_str, *reverse_str, *__setstate___str;
-static PyObject *_bucket_type_str, *max_internal_size_str, *max_leaf_size_str;
+static PyObject *sort_str;
+static PyObject *reverse_str;
+static PyObject *__setstate___str;
+static PyObject *_bucket_type_str;
+static PyObject *max_internal_size_str;
+static PyObject *max_leaf_size_str;
 static PyObject *__slotnames__str;
+
 static PyObject *ConflictError = NULL;
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
@@ -97,7 +102,7 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
     return 1;
 }
 
-#endif /*defined(NEED_LONG_LONG_CONVERT) || defined(NEED_LONG_LONG_AS_OBJECT)*/
+#endif /*defined(NEED_LONG_LONG_CONVERT)||defined(NEED_LONG_LONG_AS_OBJECT)*/
 
 
 #if defined(NEED_LONG_LONG_CHECK)
@@ -163,7 +168,10 @@ ulonglong_check(PyObject *ob)
         return 0;
     }
 
-    if (PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 && PyErr_Occurred())
+    if (
+        PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 &&
+        PyErr_Occurred()
+    )
     {
         return 0;
     }
@@ -203,7 +211,9 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
         if (PyErr_ExceptionMatches(PyExc_OverflowError))
         {
             PyErr_Clear();
-            PyErr_SetString(PyExc_TypeError, "overflow error converting int to C long long");
+            PyErr_SetString(
+                PyExc_TypeError,
+                "overflow error converting int to C long long");
         }
         return 0;
     }
@@ -566,7 +576,9 @@ BTREEITEMSTEMPLATE_C
 ;
 
 static int
-init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base)
+init_type_with_meta_base(
+    PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base
+)
 {
     int result;
     PyObject* slotnames;
@@ -580,7 +592,8 @@ init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* b
       and if it's not present, calls ``copyreg._slotnames``, which itself
       looks in the dict again. Then it does some computation, and tries to
       store the object in the dict --- which for built-in types, it can't.
-      So we can save some runtime if we store an empty slotnames for these classes.
+      So we can save some runtime if we store an empty slotnames for these
+      classes.
     */
     slotnames = PyTuple_New(0);
     if (!slotnames) {
@@ -591,18 +604,25 @@ init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* b
     return result < 0 ? 0 : 1;
 }
 
-int /* why isn't this static? */
+static int
 init_persist_type(PyTypeObject* type)
 {
-    return init_type_with_meta_base(type, &PyType_Type, cPersistenceCAPI->pertype);
+    return init_type_with_meta_base(
+        type, &PyType_Type, cPersistenceCAPI->pertype
+    );
 }
 
-static int init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
+static int
+init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
 {
-    if (!init_type_with_meta_base(type, &BTreeTypeType, cPersistenceCAPI->pertype)) {
+    if (!init_type_with_meta_base(
+            type, &BTreeTypeType, cPersistenceCAPI->pertype)
+    ) {
         return 0;
     }
-    if (PyDict_SetItem(type->tp_dict, _bucket_type_str, (PyObject*)bucket_type) < 0) {
+    if (PyDict_SetItem(
+            type->tp_dict, _bucket_type_str, (PyObject*)bucket_type) < 0
+    ) {
         return 0;
     }
     return 1;
@@ -623,9 +643,15 @@ static struct PyModuleDef moduledef = {
 static PyObject*
 module_init(void)
 {
-    PyObject *module, *mod_dict, *interfaces, *conflicterr;
+    PyObject *module;
+    PyObject *mod_dict;
+    PyObject *interfaces;
+    PyObject *conflicterr;
 
 #ifdef KEY_TYPE_IS_PYOBJECT
+    /* global static:  declared in ``objectkeymacros``.
+     * TODO:  move to module state, add helper
+     * */
     object_ = PyTuple_GetItem(Py_TYPE(Py_None)->tp_bases, 0);
     if (object_ == NULL)
       return NULL;
@@ -643,7 +669,6 @@ module_init(void)
     _bucket_type_str = PyUnicode_InternFromString("_bucket_type");
     if (!_bucket_type_str)
         return NULL;
-
     max_internal_size_str = PyUnicode_InternFromString("max_internal_size");
     if (! max_internal_size_str)
         return NULL;
@@ -673,7 +698,8 @@ module_init(void)
     interfaces = PyImport_ImportModule("BTrees.Interfaces");
     if (interfaces != NULL)
     {
-        conflicterr = PyObject_GetAttrString(interfaces, "BTreesConflictError");
+        conflicterr = PyObject_GetAttrString(
+            interfaces, "BTreesConflictError");
         if (conflicterr != NULL)
             ConflictError = conflicterr;
         Py_DECREF(interfaces);
@@ -696,7 +722,8 @@ module_init(void)
         * ImportError so it can be caught in the expected way.
         */
        if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_ImportError)) {
-           PyErr_SetString(PyExc_ImportError, "persistent C extension unavailable");
+            PyErr_SetString(
+                PyExc_ImportError, "persistent C extension unavailable");
        }
         return NULL;
    }
@@ -713,7 +740,9 @@ module_init(void)
     if (!init_persist_type(&BucketType))
             return NULL;
 
-    if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type)) {
+    if (!init_type_with_meta_base(
+        &BTreeTypeType, &PyType_Type, &PyType_Type)
+    ) {
         return NULL;
     }
 
@@ -749,10 +778,12 @@ module_init(void)
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeIterator",
                              (PyObject *)&BTreeIter_Type) < 0)
         return NULL;
-        /* We also want to be able to access these constants without the prefix
-         * so that code can more easily exchange modules (particularly the integer
-         * and long modules, but also others).  The TreeIterator is only internal,
-         * so we don't bother to expose that.
+        /* We also want to be able to access these constants without the
+         * prefix so that code can more easily exchange modules
+         * (particularly the integer and long modules, but also others).
+         *
+         * The TreeIterator is only internal, so we don't bother to
+         * expose that.
      */
     if (PyDict_SetItemString(mod_dict, "Bucket",
                              (PyObject *)&BucketType) < 0)

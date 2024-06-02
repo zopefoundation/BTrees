@@ -160,7 +160,8 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
             activated_child = child;
             CHECK(!SameType_Check(self, child),
                     "BTree children have different types");
-            CHECK(child->len >= 1, "Bucket length < 1");/* no empty buckets! */
+            CHECK(
+                child->len >= 1, "Bucket length < 1");/* no empty buckets! */
             CHECK(child->len <= child->size, "Bucket len > size");
 #ifdef PERSISTENT
             CHECK(Py_REFCNT(child) >= 1, "Bucket has refcount < 1");
@@ -489,7 +490,8 @@ BTree_grow(BTree *self, int index, int noval)
             return -1;
         }
 
-        /* Now split between the original (v) and the new (e) at the midpoint*/
+        /* Now split between the original (v) and the new (e)
+         * at the midpoint*/
         if (SameType_Check(self, v))
             i = BTree_split((BTree *)v, -1, (BTree *)e);
         else
@@ -613,8 +615,8 @@ err:
 /*
 ** _BTree_clear
 **
-** Clears out all of the values in the BTree (firstbucket, keys, and children);
-** leaving self an empty BTree.
+** Clears out all of the values in the BTree (firstbucket, keys, and
+** children); leaving self an empty BTree.
 **
 ** Arguments:    self    The BTree
 **
@@ -903,7 +905,8 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     */
     if (! SameType_Check(self, d->child))
     {
-        /* We're about to delete a bucket, so need to adjust bucket pointers. */
+        /* We're about to delete a bucket,
+         * so need to adjust bucket pointers.*/
         if (min)
         {
             /* It's not our first bucket, so we can tell the previous
@@ -931,7 +934,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             Py_DECREF(self->firstbucket);
             self->firstbucket = nextbucket;
 
-            status = 2; /* we're giving our caller a new firstbucket problem */
+            status = 2; /* giving our caller a new firstbucket problem */
         }
     }
 
@@ -1331,8 +1334,9 @@ get_bucket_state(PyObject *t)
         return Py_None;        /* an empty BTree */
     if (! PyTuple_Check(t))
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected tuple or None for state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected tuple or None for state");
         return NULL;
     }
 
@@ -1346,8 +1350,9 @@ get_bucket_state(PyObject *t)
 
     if (PyTuple_GET_SIZE(t) != 1)
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected 1- or 2-tuple for state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected 1- or 2-tuple for state");
         return NULL;
     }
 
@@ -1363,8 +1368,9 @@ get_bucket_state(PyObject *t)
     t = PyTuple_GET_ITEM(t, 0);
     if (! PyTuple_Check(t))
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected tuple for bucket state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected tuple for bucket state");
         return NULL;
     }
 
@@ -1601,8 +1607,9 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
 
     if (key && key != Py_None)
     {
-        if ((rc = BTree_findRangeEnd(self, key, min, 0, &bucket, &offset)) <= 0)
-        {
+        if ((rc = BTree_findRangeEnd(
+                    self, key, min, 0, &bucket, &offset)) <= 0
+        ) {
             if (rc < 0)
                 goto err;
             empty_tree = 0;
@@ -1836,7 +1843,8 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 
     PER_UNUSE(self);
 
-    result = newBTreeItems(type, lowbucket, lowoffset, highbucket, highoffset);
+    result = newBTreeItems(
+        type, lowbucket, lowoffset, highbucket, highoffset);
     Py_DECREF(lowbucket);
     Py_DECREF(highbucket);
     return result;
@@ -2293,25 +2301,26 @@ static struct PyMethodDef BTree_methods[] = {
      "Add an item if the key is not already used. Return 1 if the item was\n"
      "added, or 0 otherwise."},
 
-    {"update", (PyCFunction) Mapping_update, METH_O,
+    {"update", (PyCFunction)Mapping_update, METH_O,
      "update(collection)\n\n Add the items from the given collection."},
 
-    {"iterkeys", (PyCFunction) BTree_iterkeys, METH_VARARGS | METH_KEYWORDS,
+    {"iterkeys", (PyCFunction)BTree_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
 
-    {"itervalues", (PyCFunction) BTree_itervalues, METH_VARARGS | METH_KEYWORDS,
+    {"itervalues",
+     (PyCFunction)BTree_itervalues, METH_VARARGS | METH_KEYWORDS,
      "B.itervalues([min[,max]]) -> an iterator over the values of B"},
 
-    {"iteritems", (PyCFunction) BTree_iteritems, METH_VARARGS | METH_KEYWORDS,
+    {"iteritems", (PyCFunction)BTree_iteritems, METH_VARARGS | METH_KEYWORDS,
      "B.iteritems([min[,max]]) -> an iterator over the (key, value) "
      "items of B"},
 
-    {"_check", (PyCFunction) BTree_check, METH_NOARGS,
+    {"_check", (PyCFunction)BTree_check, METH_NOARGS,
      "Perform sanity check on BTree, and raise exception if flawed."},
 
 #ifdef PERSISTENT
     {"_p_resolveConflict",
-     (PyCFunction) BTree__p_resolveConflict, METH_VARARGS,
+     (PyCFunction)BTree__p_resolveConflict, METH_VARARGS,
      "_p_resolveConflict() -- Reinitialize from a newly created copy"},
 
     {"_p_deactivate",
@@ -2367,7 +2376,8 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
     /* Call our base type's traverse function.  Because BTrees are
     * subclasses of Peristent, there must be one.
     */
-    err = cPersistenceCAPI->pertype->tp_traverse((PyObject *)self, visit, arg);
+    err = cPersistenceCAPI->pertype->tp_traverse(
+        (PyObject *)self, visit, arg);
     if (err)
         goto Done;
 
@@ -2509,7 +2519,8 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
       would be bad).
 
       Alternately, we could use heap-allocated types when they are supported
-      an all the versions we care about, because those do allow setting attributes.
+      an all the versions we care about, because those do allow setting
+      attributes.
     */
     int allowed;
     allowed = PySequence_Contains(BTreeType_setattro_allowed_names, name);
