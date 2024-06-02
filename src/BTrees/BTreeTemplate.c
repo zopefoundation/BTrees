@@ -1328,7 +1328,7 @@ BTree_setstate(BTree *self, PyObject *arg)
  * for a BTree (corrupted or hostile state).
  */
 PyObject *
-get_bucket_state(PyObject *t)
+get_bucket_state(PyObject* obj_self, PyObject *t)
 {
     if (t == Py_None)
         return Py_None;        /* an empty BTree */
@@ -1343,7 +1343,7 @@ get_bucket_state(PyObject *t)
     if (PyTuple_GET_SIZE(t) == 2)
     {
         /* A non-degenerate BTree. */
-        return merge_error(-1, -1, -1, 11);
+        return merge_error(obj_self, -1, -1, -1, 11);
     }
 
     /* We're in the one-bucket case. */
@@ -1385,19 +1385,20 @@ get_bucket_state(PyObject *t)
 static PyObject *
 BTree__p_resolveConflict(BTree *self, PyObject *args)
 {
+    PyObject *obj_self = (PyObject*)self;
     PyObject *s[3];
     PyObject *x, *y, *z;
 
     if (!PyArg_ParseTuple(args, "OOO", &x, &y, &z))
         return NULL;
 
-    s[0] = get_bucket_state(x);
+    s[0] = get_bucket_state(obj_self, x);
     if (s[0] == NULL)
         return NULL;
-    s[1] = get_bucket_state(y);
+    s[1] = get_bucket_state(obj_self, y);
     if (s[1] == NULL)
         return NULL;
-    s[2] = get_bucket_state(z);
+    s[2] = get_bucket_state(obj_self, z);
     if (s[2] == NULL)
         return NULL;
 

@@ -1624,13 +1624,14 @@ Bucket_iteritems(Bucket *self, PyObject *args, PyObject *kw)
 /* End of iterator support. */
 
 #ifdef PERSISTENT
-static PyObject *merge_error(int p1, int p2, int p3, int reason);
+static PyObject *merge_error(PyObject* b, int p1, int p2, int p3, int reason);
 static PyObject *bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3);
 
 static PyObject *
 _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
 {
     PyObject *result = NULL;    /* guilty until proved innocent */
+    PyObject *bo = NULL;         /* FBO merge_error */
     Bucket *b[3] = {NULL, NULL, NULL};
     PyObject *meth = NULL;
     PyObject *a = NULL;
@@ -1661,8 +1662,9 @@ _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
         a = meth = NULL;
     }
 
+    bo = (PyObject*)b[0];
     if (b[0]->next != b[1]->next || b[0]->next != b[2]->next)
-        merge_error(-1, -1, -1, 0);
+        merge_error(bo, -1, -1, -1, 0);
     else
         result = bucket_merge(b[0], b[1], b[2]);
 
