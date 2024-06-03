@@ -565,7 +565,7 @@ multiunion_m(PyObject *module, PyObject *args)
             UNLESS (PER_USE(b)) goto Error;
             if (b->len)
             status = bucket_append(result, b, 0, b->len, 0, i < n-1);
-            PER_ALLOW_DEACTIVATION(b);
+            per_allow_deactivation((cPersistentObject*)b);
             capi_struct->accessed((cPersistentObject*)b);
             if (status < 0) goto Error;
         } else {

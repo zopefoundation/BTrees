@@ -49,6 +49,16 @@
 #undef PER_ACCESSED
 #endif
 
+#ifdef PER_ALLOW_DEACTIVATION
+#undef PER_ALLOW_DEACTIVATION
+#endif
+static inline void
+per_allow_deactivation(cPersistentObject* p_obj)
+{
+    if (p_obj->state == cPersistent_STICKY_STATE)
+        p_obj->state = cPersistent_UPTODATE_STATE;
+}
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
@@ -72,11 +82,9 @@
 #else
 
 #define PER_USE_OR_RETURN(self, NULL)
-#define PER_ALLOW_DEACTIVATION(self)
 #define PER_PREVENT_DEACTIVATION(self)
 #define PER_DEL(self)
 #define PER_USE(O) 1
-#define PER_ACCESSED(O) 1
 #endif
 
 #define USE_STATIC_MODULE_INIT 1

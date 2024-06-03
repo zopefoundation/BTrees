@@ -106,12 +106,12 @@ bucket_toBytes(PyObject *obj_self)
     memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
     memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
 
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return items;
 
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(items);
     return NULL;

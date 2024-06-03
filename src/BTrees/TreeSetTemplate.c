@@ -230,7 +230,7 @@ TreeSet_setstate(BTree *self, PyObject *args)
 
     PER_PREVENT_DEACTIVATION(self);
     r=_BTree_setstate(self, args, 1);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
