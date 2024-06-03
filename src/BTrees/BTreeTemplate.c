@@ -317,8 +317,8 @@ BTree_get(BTree *self, PyObject *key)
 }
 
 /* Create a new bucket for the BTree or TreeSet using the class attribute
-   _bucket_type, which is normally initialized to BucketType or SetType
-   as appropriate.
+   _bucket_type, which is normally initialized to Bucket_type_def or
+   Set_type_def as appropriate.
 */
 static Sized *
 BTree_newBucket(BTree *self)
@@ -1231,7 +1231,8 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     PyObject *items, *firstbucket = NULL;
     BTreeItem *d;
     int len, l, i, copied=1;
-    PyTypeObject *leaftype = (noval ? &SetType : &BucketType);
+    /* TODO: get these from the module state */
+    PyTypeObject *leaftype = (noval ? &Set_type_def : &Bucket_type_def);
 
     if (_BTree_clear(self) < 0)
         return -1;
@@ -1450,10 +1451,11 @@ BTree__p_resolveConflict(BTree *self, PyObject *args)
     if (s[2] == NULL)
         return NULL;
 
-    if (PyObject_IsInstance((PyObject *)self, (PyObject *)&BTreeType))
-        x = _bucket__p_resolveConflict(OBJECT(&BucketType), s);
+    /* TODO: get these from the module state */
+    if (PyObject_IsInstance((PyObject *)self, (PyObject *)&BTree_type_def))
+        x = _bucket__p_resolveConflict(OBJECT(&Bucket_type_def), s);
     else
-        x = _bucket__p_resolveConflict(OBJECT(&SetType), s);
+        x = _bucket__p_resolveConflict(OBJECT(&Set_type_def), s);
 
     if (x == NULL)
         return NULL;
@@ -2467,7 +2469,8 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
       goto Done;                                \
   }
 
-    if (Py_TYPE(self) == &BTreeType)
+    /* TODO Get this from the module state */
+    if (Py_TYPE(self) == &BTree_type_def)
         assert(Py_TYPE(self)->tp_dictoffset == 0);
 
     /* Call our base type's traverse function.  Because BTrees are
@@ -2566,49 +2569,11 @@ BTree_length(BTree *self)
     return BTree_length_or_nonzero(self, 0);
 }
 
-static PyMappingMethods BTree_as_mapping = {
-    (lenfunc)BTree_length,                  /* mp_length */
-    (binaryfunc)BTree_get,                  /* mp_subscript */
-    (objobjargproc)BTree_setitem,           /* mp_ass_subscript */
-};
-
-static PySequenceMethods BTree_as_sequence = {
-    (lenfunc)0,                             /* sq_length */
-    (binaryfunc)0,                          /* sq_concat */
-    (ssizeargfunc)0,                        /* sq_repeat */
-    (ssizeargfunc)0,                        /* sq_item */
-    (ssizessizeargfunc)0,                   /* sq_slice */
-    (ssizeobjargproc)0,                     /* sq_ass_item */
-    (ssizessizeobjargproc)0,                /* sq_ass_slice */
-    (objobjproc)BTree_contains,             /* sq_contains */
-    0,                                      /* sq_inplace_concat */
-    0,                                      /* sq_inplace_repeat */
-};
-
 static Py_ssize_t
 BTree_nonzero(BTree *self)
 {
   return BTree_length_or_nonzero(self, 1);
 }
-
-static PyNumberMethods BTree_as_number_for_nonzero = {
-    0,                                      /* nb_add */
-    bucket_sub,                             /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-    (inquiry)BTree_nonzero,                 /* nb_nonzero */
-    (unaryfunc)0,                           /* nb_invert */
-    (binaryfunc)0,                          /* nb_lshift */
-    (binaryfunc)0,                          /* nb_rshift */
-    bucket_and,                             /* nb_and */
-    (binaryfunc)0,                          /* nb_xor */
-    bucket_or,                              /* nb_or */
-};
 
 
 static int
@@ -2642,78 +2607,46 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
     return PyType_Type.tp_setattro((PyObject*)type, name, value);
 }
 
-static PyTypeObject BTreeTypeType = {
+static PyTypeObject BTreeType_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "BTreeType",
-    0, /* tp_basicsize */
-    0, /* tp_itemsize */
-    0, /* tp_dealloc */
-    0, /* tp_print */
-    0, /* tp_getattr */
-    0, /* tp_setattr */
-    0, /* tp_compare */
-    0, /* tp_repr */
-    0, /* tp_as_number */
-    0, /* tp_as_sequence */
-    0, /* tp_as_mapping */
-    0, /* tp_hash */
-    0, /* tp_call */
-    0, /* tp_str */
-    0, /* tp_getattro */
-    (setattrofunc)BTreeType_setattro, /* tp_setattro */
-    0, /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_BASETYPE, /* tp_flags */
-    0, /* tp_doc */
-    0, /* tp_traverse */
-    0, /* tp_clear */
-    0, /* tp_richcompare */
-    0, /* tp_weaklistoffset */
-    0, /* tp_iter */
-    0, /* tp_iternext */
-    0, /* tp_methods */
-    0, /* tp_members */
+    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "BTreeType",
+    .tp_setattro            = (setattrofunc)BTreeType_setattro,
+    .tp_flags               = Py_TPFLAGS_DEFAULT |
+                              Py_TPFLAGS_BASETYPE,
 };
 
-static PyTypeObject BTreeType = {
-    PyVarObject_HEAD_INIT(&BTreeTypeType, 0)
-    MODULE_NAME MOD_NAME_PREFIX "BTree",    /* tp_name */
-    sizeof(BTree),                          /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    (destructor)BTree_dealloc,              /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    &BTree_as_number_for_nonzero,           /* tp_as_number */
-    &BTree_as_sequence,                     /* tp_as_sequence */
-    &BTree_as_mapping,                      /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_HAVE_GC |
-    Py_TPFLAGS_BASETYPE,                    /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)BTree_traverse,           /* tp_traverse */
-    (inquiry)BTree_tp_clear,                /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    (getiterfunc)BTree_getiter,             /* tp_iter */
-    0,                                      /* tp_iternext */
-    BTree_methods,                          /* tp_methods */
-    BTree_members,                          /* tp_members */
-    0,                                      /* tp_getset */
-    0,                                      /* tp_base */
-    0,                                      /* tp_dict */
-    0,                                      /* tp_descr_get */
-    0,                                      /* tp_descr_set */
-    0,                                      /* tp_dictoffset */
-    BTree_init,                             /* tp_init */
-    0,                                      /* tp_alloc */
-    0, /*PyType_GenericNew,*/               /* tp_new */
+static PyNumberMethods BTree_as_number_for_nonzero = {
+    .nb_subtract            = bucket_sub,
+    .nb_bool                = (inquiry)BTree_nonzero,
+    .nb_and                 = bucket_and,
+    .nb_or                  = bucket_or,
+};
+
+static PySequenceMethods BTree_as_sequence = {
+    .sq_contains            = (objobjproc)BTree_contains,
+};
+
+static PyMappingMethods BTree_as_mapping = {
+    .mp_length              = (lenfunc)BTree_length,
+    .mp_subscript           = (binaryfunc)BTree_get,
+    .mp_ass_subscript       = (objobjargproc)BTree_setitem,
+};
+
+static PyTypeObject BTree_type_def = {
+    PyVarObject_HEAD_INIT(&BTreeType_type_def, 0)
+    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "BTree",
+    .tp_basicsize           = sizeof(BTree),
+    .tp_dealloc             = (destructor)BTree_dealloc,
+    .tp_as_number           = &BTree_as_number_for_nonzero,
+    .tp_as_sequence         = &BTree_as_sequence,
+    .tp_as_mapping          = &BTree_as_mapping,
+    .tp_flags               = Py_TPFLAGS_DEFAULT |
+                              Py_TPFLAGS_HAVE_GC |
+                              Py_TPFLAGS_BASETYPE,
+    .tp_traverse            = (traverseproc)BTree_traverse,
+    .tp_clear               = (inquiry)BTree_tp_clear,
+    .tp_iter                = (getiterfunc)BTree_getiter,
+    .tp_methods             = BTree_methods,
+    .tp_members             = BTree_members,
+    .tp_init                = BTree_init,
 };

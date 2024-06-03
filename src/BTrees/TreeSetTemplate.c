@@ -309,23 +309,6 @@ static struct PyMethodDef TreeSet_methods[] =
     {NULL,        NULL}        /* sentinel */
 };
 
-static PyMappingMethods TreeSet_as_mapping = {
-  (lenfunc)BTree_length,                        /*mp_length*/
-};
-
-static PySequenceMethods TreeSet_as_sequence = {
-    (lenfunc)0,                                 /* sq_length */
-    (binaryfunc)0,                              /* sq_concat */
-    (ssizeargfunc)0,                            /* sq_repeat */
-    (ssizeargfunc)0,                            /* sq_item */
-    (ssizessizeargfunc)0,                       /* sq_slice */
-    (ssizeobjargproc)0,                         /* sq_ass_item */
-    (ssizessizeobjargproc)0,                    /* sq_ass_slice */
-    (objobjproc)BTree_contains,                 /* sq_contains */
-    0,                                          /* sq_inplace_concat */
-    0,                                          /* sq_inplace_repeat */
-};
-
 static int
 TreeSet_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -554,78 +537,42 @@ err:
 }
 
 
-static PyNumberMethods TreeSet_as_number = {
-    0,                                      /* nb_add */
-    bucket_sub,                             /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-    (inquiry)BTree_nonzero,                 /* nb_nonzero */
-    (unaryfunc)0,                           /* nb_invert */
-    (binaryfunc)0,                          /* nb_lshift */
-    (binaryfunc)0,                          /* nb_rshift */
-    bucket_and,                             /* nb_and */
-    (binaryfunc)Generic_set_xor,            /* nb_xor */
-    bucket_or,                              /* nb_or */
-     0,                                 /*nb_int*/
-     0,                                 /*nb_reserved*/
-     0,                                 /*nb_float*/
-     0,                                 /*nb_inplace_add*/
-     (binaryfunc)TreeSet_isub,          /*nb_inplace_subtract*/
-     0,                                 /*nb_inplace_multiply*/
-     0,                                 /*nb_inplace_remainder*/
-     0,                                 /*nb_inplace_power*/
-     0,                                 /*nb_inplace_lshift*/
-     0,                                 /*nb_inplace_rshift*/
-     (binaryfunc)TreeSet_iand,          /*nb_inplace_and*/
-     (binaryfunc)TreeSet_ixor,          /*nb_inplace_xor*/
-     (binaryfunc)TreeSet_ior,           /*nb_inplace_or*/
+static PyMappingMethods TreeSet_as_mapping = {
+    .mp_length              = (lenfunc)BTree_length,
 };
 
-static PyTypeObject TreeSetType =
+static PySequenceMethods TreeSet_as_sequence = {
+    .sq_contains            = (objobjproc)BTree_contains,
+};
+
+static PyNumberMethods TreeSet_as_number = {
+    .nb_subtract            = bucket_sub,
+    .nb_bool                = (inquiry)BTree_nonzero,
+    .nb_and                 = bucket_and,
+    .nb_xor                 = (binaryfunc)Generic_set_xor,
+    .nb_or                  = bucket_or,
+    .nb_inplace_subtract    = (binaryfunc)TreeSet_isub,
+    .nb_inplace_add         = (binaryfunc)TreeSet_iand,
+    .nb_inplace_xor         = (binaryfunc)TreeSet_ixor,
+    .nb_inplace_or          = (binaryfunc)TreeSet_ior,
+};
+
+static PyTypeObject TreeSet_type_def =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "TreeSet",      /* tp_name */
-    sizeof(BTree),                              /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    (destructor)BTree_dealloc,                  /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_compare */
-    0,                                          /* tp_repr */
-    &TreeSet_as_number,                         /* tp_as_number */
-    &TreeSet_as_sequence,                       /* tp_as_sequence */
-    &TreeSet_as_mapping,                        /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_HAVE_GC |
-    Py_TPFLAGS_BASETYPE,                        /* tp_flags */
-    0,                                          /* tp_doc */
-    (traverseproc)BTree_traverse,               /* tp_traverse */
-    (inquiry)BTree_tp_clear,                    /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    (getiterfunc)BTree_getiter,                 /* tp_iter */
-    0,                                          /* tp_iternext */
-    TreeSet_methods,                            /* tp_methods */
-    BTree_members,                              /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    TreeSet_init,                               /* tp_init */
-    0,                                          /* tp_alloc */
-    0, /*PyType_GenericNew,*/                   /* tp_new */
+    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "TreeSet",
+    .tp_basicsize           = sizeof(BTree),
+    .tp_dealloc             = (destructor)BTree_dealloc,
+    .tp_as_number           = &TreeSet_as_number,
+    .tp_as_sequence         = &TreeSet_as_sequence,
+    .tp_as_mapping          = &TreeSet_as_mapping,
+    .tp_flags               = Py_TPFLAGS_DEFAULT |
+                              Py_TPFLAGS_HAVE_GC |
+                              Py_TPFLAGS_BASETYPE,
+    .tp_traverse            = (traverseproc)BTree_traverse,
+    .tp_clear               = (inquiry)BTree_tp_clear,
+    .tp_iter                = (getiterfunc)BTree_getiter,
+    .tp_methods             = TreeSet_methods,
+    .tp_members             = BTree_members,
+    .tp_init                = TreeSet_init,
 };
