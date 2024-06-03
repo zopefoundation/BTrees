@@ -286,7 +286,7 @@ set_setstate(Bucket *self, PyObject *args)
     PER_PREVENT_DEACTIVATION(self);
     r=_set_setstate(self, args);
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -400,7 +400,7 @@ set_length(Bucket *self)
     PER_USE_OR_RETURN(self, -1);
     r = self->len;
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     return r;
 }
@@ -422,7 +422,7 @@ set_item(Bucket *self, Py_ssize_t index)
         IndexError(index);
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     return r;
 }
@@ -779,7 +779,7 @@ nextSet(SetIteration *i)
         else
         {
           i->position = -1;
-          PER_ACCESSED(BUCKET(i->set));
+          capi_struct->accessed((cPersistentObject*)BUCKET(i->set));
         }
 
       PER_ALLOW_DEACTIVATION(BUCKET(i->set));

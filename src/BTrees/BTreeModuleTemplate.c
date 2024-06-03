@@ -45,6 +45,10 @@
 #undef PER_UNUSE
 #endif
 
+#ifdef PER_ACCESSED
+#undef PER_ACCESSED
+#endif
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
@@ -64,11 +68,6 @@
       || (capi_struct->setstate((PyObject*)(O)) >= 0)) \
      ? (((O)->state==cPersistent_UPTODATE_STATE) \
         ? ((O)->state=cPersistent_STICKY_STATE) : 1) : 0)
-
-#ifdef PER_ACCESSED
-#undef PER_ACCESSED
-#endif
-#define PER_ACCESSED(O)  (capi_struct->accessed((cPersistentObject*)(O)))
 
 #else
 
@@ -529,7 +528,7 @@ PreviousBucket(Bucket **current, Bucket *first)
         &&
         ((trailing)->state=cPersistent_UPTODATE_STATE));
 
-        PER_ACCESSED(trailing);
+        capi_struct->accessed((cPersistentObject*)trailing);
 
         if (first == *current) {
             *current = trailing;

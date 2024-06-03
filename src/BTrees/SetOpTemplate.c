@@ -566,7 +566,7 @@ multiunion_m(PyObject *module, PyObject *args)
             if (b->len)
             status = bucket_append(result, b, 0, b->len, 0, i < n-1);
             PER_ALLOW_DEACTIVATION(b);
-            PER_ACCESSED(b);
+            capi_struct->accessed((cPersistentObject*)b);
             if (status < 0) goto Error;
         } else {
         /* No cheap way:  iterate over set's elements one at a time. */

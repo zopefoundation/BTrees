@@ -116,7 +116,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 
 Done:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 }
 
@@ -478,7 +478,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
 
 Done:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -663,7 +663,7 @@ Bucket_deleteNextBucket(Bucket *self)
             goto Done;
         next = successor->next;
         PER_ALLOW_DEACTIVATION(successor);
-        PER_ACCESSED(successor);
+        capi_struct->accessed((cPersistentObject*)successor);
 
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
@@ -675,7 +675,7 @@ Bucket_deleteNextBucket(Bucket *self)
 
 Done:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -759,7 +759,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
 
 Done:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -799,7 +799,7 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
 
     COPY_KEY_TO_OBJECT(key, self->keys[offset]);
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     return key;
 
@@ -808,7 +808,7 @@ empty:
                     empty_bucket ? "empty bucket" :
                     "no key satisfies the conditions");
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return NULL;
 }
 
@@ -935,12 +935,12 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -984,12 +984,12 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -1046,12 +1046,12 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1127,12 +1127,12 @@ bucket_byValue(Bucket *self, PyObject *omin)
     Py_DECREF(item);
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1246,13 +1246,13 @@ bucket_clear(Bucket *self, PyObject *args)
         goto err;
     }
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_INCREF(Py_None);
     return Py_None;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return NULL;
 }
 
@@ -1334,12 +1334,12 @@ bucket_getstate(Bucket *self)
     Py_DECREF(items);
 
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return state;
 
 err:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(items);
     return NULL;
 }
@@ -1430,7 +1430,7 @@ bucket_setstate(Bucket *self, PyObject *state)
     PER_PREVENT_DEACTIVATION(self);
     r = _bucket_setstate(self, state);
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -1668,7 +1668,7 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 
 Done:
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return (PyObject *)result;
 }
 
@@ -1978,7 +1978,7 @@ Bucket_length( Bucket *self)
         return -1;
     r = self->len;
     PER_ALLOW_DEACTIVATION(self);
-    PER_ACCESSED(self);
+    capi_struct->accessed((cPersistentObject*)self);
     return r;
 }
 
@@ -2106,7 +2106,7 @@ nextBucket(SetIteration *i)
         else
         {
           i->position = -1;
-          PER_ACCESSED(BUCKET(i->set));
+          capi_struct->accessed((cPersistentObject*)BUCKET(i->set));
         }
 
         PER_ALLOW_DEACTIVATION(BUCKET(i->set));
