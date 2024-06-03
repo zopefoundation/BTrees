@@ -105,13 +105,13 @@ BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
             break; /* we already counted the last bucket */
 
         Py_INCREF(next);
-        PER_ALLOW_DEACTIVATION(b);
+        per_allow_deactivation((cPersistentObject*)b);
         capi_struct->accessed((cPersistentObject*)b);
         Py_DECREF(b);
         b = next;
         PER_USE_OR_RETURN(b, -1);
     }
-    PER_ALLOW_DEACTIVATION(b);
+    per_allow_deactivation((cPersistentObject*)b);
     capi_struct->accessed((cPersistentObject*)b);
     Py_DECREF(b);
 
@@ -166,7 +166,7 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
         PER_USE_OR_RETURN(currentbucket, -1);
         max = currentbucket->len - currentoffset - 1;
         b = currentbucket->next;
-        PER_ALLOW_DEACTIVATION(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
         capi_struct->accessed((cPersistentObject*)currentbucket);
         if (delta <= max)
         {
@@ -212,7 +212,7 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
         delta += currentoffset + 1;
         PER_USE_OR_RETURN(currentbucket, -1);
         currentoffset = currentbucket->len - 1;
-        PER_ALLOW_DEACTIVATION(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
         capi_struct->accessed((cPersistentObject*)currentbucket);
     }
 
@@ -224,7 +224,7 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
      */
     PER_USE_OR_RETURN(currentbucket, -1);
     error = currentoffset < 0 || currentoffset >= currentbucket->len;
-    PER_ALLOW_DEACTIVATION(currentbucket);
+    per_allow_deactivation((cPersistentObject*)currentbucket);
     capi_struct->accessed((cPersistentObject*)currentbucket);
     if (error)
     {
@@ -327,7 +327,7 @@ BTreeItems_item(BTreeItems *self, Py_ssize_t i)
     PER_USE_OR_RETURN(self->currentbucket, NULL);
     result = getBucketEntry(self->currentbucket, self->currentoffset,
                             self->kind);
-    PER_ALLOW_DEACTIVATION(self->currentbucket);
+    per_allow_deactivation((cPersistentObject*)self->currentbucket);
     capi_struct->accessed((cPersistentObject*)self->currentbucket);
     return result;
 }
@@ -602,7 +602,7 @@ nextBTreeItems(SetIteration *i)
 
             i->position ++;
 
-            PER_ALLOW_DEACTIVATION(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
             capi_struct->accessed((cPersistentObject*)currentbucket);
         }
         else
@@ -645,7 +645,7 @@ nextTreeSetItems(SetIteration *i)
 
             i->position ++;
 
-            PER_ALLOW_DEACTIVATION(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
             capi_struct->accessed((cPersistentObject*)currentbucket);
         }
         else
@@ -753,7 +753,7 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     }
 
 Done:
-    PER_ALLOW_DEACTIVATION(bucket);
+    per_allow_deactivation((cPersistentObject*)bucket);
     capi_struct->accessed((cPersistentObject*)bucket);
     return result;
 }

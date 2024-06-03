@@ -129,7 +129,7 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
         CHECK(self->firstbucket == BTREE(child)->firstbucket,
             "BTree has firstbucket different than "
             "its first child's firstbucket");
-        PER_ALLOW_DEACTIVATION(child);
+        per_allow_deactivation((cPersistentObject*)child);
         activated_child = NULL;
         for (i = 0; i < self->len; ++i)
         {
@@ -144,7 +144,7 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
                 UNLESS (PER_USE(child2))
                     goto Done;
                 bucketafter = child2->firstbucket;
-                PER_ALLOW_DEACTIVATION(child2);
+                per_allow_deactivation((cPersistentObject*)child2);
             }
             if (BTree_check_inner(BTREE(child), bucketafter) < 0)
                 goto Done;
@@ -176,7 +176,7 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
                 bucketafter = BUCKET(self->data[i+1].child);
             CHECK(BUCKET(child)->next == bucketafter,
                     "Bucket next pointer is damaged");
-            PER_ALLOW_DEACTIVATION(child);
+            per_allow_deactivation((cPersistentObject*)child);
             activated_child = NULL;
         }
     }
@@ -189,10 +189,10 @@ Error:
 
 Done:
     /* No point updating access time -- this isn't a "real" use. */
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     if (activated_child)
     {
-        PER_ALLOW_DEACTIVATION(activated_child);
+        per_allow_deactivation((cPersistentObject*)activated_child);
     }
     return result;
 
@@ -288,7 +288,7 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
             has_key += has_key != 0;    /* bump depth counter, maybe */
             if (SameType_Check(self, child))
             {
-                PER_ALLOW_DEACTIVATION(self);
+                per_allow_deactivation((cPersistentObject*)self);
                 capi_struct->accessed((cPersistentObject*)self);
                 self = BTREE(child);
                 PER_USE_OR_RETURN(self, NULL);
@@ -302,7 +302,7 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
     }
 
 Done:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return result;
 }
@@ -376,7 +376,7 @@ BTree_split(BTree *self, int index, BTree *next)
     {
         PER_USE_OR_RETURN(child, -1);
         next->firstbucket = BTREE(child)->firstbucket;
-        PER_ALLOW_DEACTIVATION(child);
+        per_allow_deactivation((cPersistentObject*)child);
         capi_struct->accessed((cPersistentObject*)child);
     }
     else
@@ -507,7 +507,7 @@ BTree_grow(BTree *self, int index, int noval)
             i = BTree_split((BTree *)v, -1, (BTree *)e);
         else
             i = bucket_split((Bucket *)v, -1, (Bucket *)e);
-        PER_ALLOW_DEACTIVATION(v);
+        per_allow_deactivation((cPersistentObject*)v);
 
         if (i < 0)
         {
@@ -590,7 +590,7 @@ BTree_lastBucket(BTree *self)
         self = BTREE(pchild);
         PER_USE_OR_RETURN(self, NULL);
         result = BTree_lastBucket(self);
-        PER_ALLOW_DEACTIVATION(self);
+        per_allow_deactivation((cPersistentObject*)self);
         capi_struct->accessed((cPersistentObject*)self);
     }
     else
@@ -618,14 +618,14 @@ BTree_deleteNextBucket(BTree *self)
         goto err;
 
     Py_DECREF(b);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     return 0;
 
 err:
     Py_XDECREF(b);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     return -1;
 }
 
@@ -810,7 +810,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     UNLESS(PER_USE(d->child))
         goto Error;
     childlength = d->child->len;
-    PER_ALLOW_DEACTIVATION(d->child);
+    per_allow_deactivation((cPersistentObject*)d->child);
     capi_struct->accessed((cPersistentObject*)d->child);
 
     if (value)
@@ -859,7 +859,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
                 UNLESS(PER_USE(d->child))
                     goto Error;
                 bucket = BTREE(d->child)->firstbucket;
-                PER_ALLOW_DEACTIVATION(d->child);
+                per_allow_deactivation((cPersistentObject*)d->child);
                 capi_struct->accessed((cPersistentObject*)d->child);
             }
             else
@@ -870,7 +870,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             DECREF_KEY(d->key);
             COPY_KEY(d->key, bucket->keys[0]);
             INCREF_KEY(d->key);
-            PER_ALLOW_DEACTIVATION(bucket);
+            per_allow_deactivation((cPersistentObject*)bucket);
             capi_struct->accessed((cPersistentObject*)bucket);
             if (capi_struct->changed((cPersistentObject*)self) < 0)
                     goto Error;
@@ -900,7 +900,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             UNLESS(PER_USE(d->child))
                 goto Error;
             nextbucket = BTREE(d->child)->firstbucket;
-            PER_ALLOW_DEACTIVATION(d->child);
+            per_allow_deactivation((cPersistentObject*)d->child);
             capi_struct->accessed((cPersistentObject*)d->child);
 
             Py_XINCREF(nextbucket);
@@ -951,7 +951,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             UNLESS(PER_USE(d->child))
                 goto Error;
             nextbucket = BUCKET(d->child)->next;
-            PER_ALLOW_DEACTIVATION(d->child);
+            per_allow_deactivation((cPersistentObject*)d->child);
             capi_struct->accessed((cPersistentObject*)d->child);
 
             Py_XINCREF(nextbucket);
@@ -995,7 +995,7 @@ Done:
             goto Error;
     }
 #endif
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return status;
 
@@ -1008,7 +1008,7 @@ Error:
         */
         _BTree_clear(self);
     }
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return -1;
 }
@@ -1110,14 +1110,14 @@ BTree_clear(BTree *self)
             goto err;
     }
 
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     Py_INCREF(Py_None);
     return Py_None;
 
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return NULL;
 }
@@ -1207,13 +1207,13 @@ BTree_getstate(BTree *self)
         Py_INCREF(r);
     }
 
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     return r;
 
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
@@ -1342,7 +1342,7 @@ BTree_setstate(BTree *self, PyObject *arg)
 
     PER_PREVENT_DEACTIVATION(self);
     r = _BTree_setstate(self, arg, 0);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
@@ -1554,7 +1554,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
         {
             if (self_got_rebound)
             {
-                PER_ALLOW_DEACTIVATION(self);
+                per_allow_deactivation((cPersistentObject*)self);
                 capi_struct->accessed((cPersistentObject*)self);
             }
             self = BTREE(pchild);
@@ -1594,7 +1594,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
         }
         else
         result = 0;
-        PER_ALLOW_DEACTIVATION(pbucket);
+        per_allow_deactivation((cPersistentObject*)pbucket);
         capi_struct->accessed((cPersistentObject*)pbucket);
     }
     /* High-end search:  if it's possible to go left, do so. */
@@ -1606,7 +1606,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
                 goto Done;
             /* We own the reference this returns. */
             pbucket = BTree_lastBucket(BTREE(deepest_smaller));
-            PER_ALLOW_DEACTIVATION(deepest_smaller);
+            per_allow_deactivation((cPersistentObject*)deepest_smaller);
             capi_struct->accessed((cPersistentObject*)deepest_smaller);
             if (pbucket == NULL)
                     goto Done;   /* error */
@@ -1621,7 +1621,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
         result = 1;
         *bucket = pbucket;  /* transfer ownership to caller */
         *offset = pbucket->len - 1;
-        PER_ALLOW_DEACTIVATION(pbucket);
+        per_allow_deactivation((cPersistentObject*)pbucket);
         capi_struct->accessed((cPersistentObject*)pbucket);
     }
     else
@@ -1630,7 +1630,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
 Done:
     if (self_got_rebound)
     {
-        PER_ALLOW_DEACTIVATION(self);
+        per_allow_deactivation((cPersistentObject*)self);
         capi_struct->accessed((cPersistentObject*)self);
     }
     return result;
@@ -1667,7 +1667,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
             empty_tree = 0;
             goto empty;
         }
-        PER_ALLOW_DEACTIVATION(self);
+        per_allow_deactivation((cPersistentObject*)self);
         capi_struct->accessed((cPersistentObject*)self);
         UNLESS (PER_USE(bucket))
         {
@@ -1678,7 +1678,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     else if (min)
     {
         bucket = self->firstbucket;
-        PER_ALLOW_DEACTIVATION(self);
+        per_allow_deactivation((cPersistentObject*)self);
         capi_struct->accessed((cPersistentObject*)self);
         PER_USE_OR_RETURN(bucket, NULL);
         Py_INCREF(bucket);
@@ -1687,7 +1687,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     else
     {
         bucket = BTree_lastBucket(self);
-        PER_ALLOW_DEACTIVATION(self);
+        per_allow_deactivation((cPersistentObject*)self);
         capi_struct->accessed((cPersistentObject*)self);
         UNLESS (PER_USE(bucket))
         {
@@ -1699,7 +1699,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     }
 
     COPY_KEY_TO_OBJECT(key, bucket->keys[offset]);
-    PER_ALLOW_DEACTIVATION(bucket);
+    per_allow_deactivation((cPersistentObject*)bucket);
     capi_struct->accessed((cPersistentObject*)bucket);
     Py_DECREF(bucket);
 
@@ -1710,11 +1710,11 @@ empty:
                     empty_tree ? "empty tree" :
                     "no key satisfies the conditions");
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     if (bucket)
     {
-        PER_ALLOW_DEACTIVATION(bucket);
+        per_allow_deactivation((cPersistentObject*)bucket);
         capi_struct->accessed((cPersistentObject*)bucket);
         Py_DECREF(bucket);
     }
@@ -1793,7 +1793,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
             UNLESS (PER_USE(lowbucket))
                 goto err;
             bucketlen = lowbucket->len;
-            PER_ALLOW_DEACTIVATION(lowbucket);
+            per_allow_deactivation((cPersistentObject*)lowbucket);
             capi_struct->accessed((cPersistentObject*)lowbucket);
             if (bucketlen > 1)
                 lowoffset = 1;
@@ -1805,7 +1805,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
                 UNLESS (PER_USE(lowbucket))
                     goto err;
                 next = lowbucket->next;
-                PER_ALLOW_DEACTIVATION(lowbucket);
+                per_allow_deactivation((cPersistentObject*)lowbucket);
                 capi_struct->accessed((cPersistentObject*)lowbucket);
                 assert(next != NULL);
                 lowbucket = next;
@@ -1836,7 +1836,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         UNLESS (PER_USE(highbucket))
             goto err_and_decref_buckets;
         bucketlen = highbucket->len;
-        PER_ALLOW_DEACTIVATION(highbucket);
+        per_allow_deactivation((cPersistentObject*)highbucket);
         capi_struct->accessed((cPersistentObject*)highbucket);
         highoffset = bucketlen - 1;
         if (excludemax)
@@ -1861,7 +1861,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
                 UNLESS (PER_USE(highbucket))
                     goto err_and_decref_buckets;
                 highoffset = highbucket->len - 1;
-                PER_ALLOW_DEACTIVATION(highbucket);
+                per_allow_deactivation((cPersistentObject*)highbucket);
                 capi_struct->accessed((cPersistentObject*)highbucket);
             }
         }
@@ -1892,13 +1892,13 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         UNLESS (PER_USE(lowbucket))
             goto err_and_decref_buckets;
         COPY_KEY(first, lowbucket->keys[lowoffset]);
-        PER_ALLOW_DEACTIVATION(lowbucket);
+        per_allow_deactivation((cPersistentObject*)lowbucket);
         capi_struct->accessed((cPersistentObject*)lowbucket);
 
         UNLESS (PER_USE(highbucket))
             goto err_and_decref_buckets;
         COPY_KEY(last, highbucket->keys[highoffset]);
-        PER_ALLOW_DEACTIVATION(highbucket);
+        per_allow_deactivation((cPersistentObject*)highbucket);
         capi_struct->accessed((cPersistentObject*)highbucket);
 
         TEST_KEY_SET_OR(cmp, first, last)
@@ -1907,7 +1907,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
                 goto empty_and_decref_buckets;
     }
 
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 
     result = newBTreeItems(
@@ -1921,7 +1921,7 @@ err_and_decref_buckets:
     Py_DECREF(highbucket);
 
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return NULL;
 
@@ -1930,7 +1930,7 @@ empty_and_decref_buckets:
     Py_DECREF(highbucket);
 
 empty:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return newBTreeItems(type, 0, 0, 0, 0);
 }
@@ -2036,12 +2036,12 @@ BTree_byValue(BTree *self, PyObject *omin)
     Py_DECREF(item);
 
     finiSetIteration(&it);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     return r;
 
 err:
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     finiSetIteration(&it);
@@ -2531,7 +2531,7 @@ BTree_length_or_nonzero(BTree *self, int nonzero)
 
     PER_USE_OR_RETURN(self, -1);
     b = self->firstbucket;
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
     if (nonzero)
         return b != NULL;
@@ -2542,7 +2542,7 @@ BTree_length_or_nonzero(BTree *self, int nonzero)
         PER_USE_OR_RETURN(b, -1);
         result += b->len;
         next = b->next;
-        PER_ALLOW_DEACTIVATION(b);
+        per_allow_deactivation((cPersistentObject*)b);
         capi_struct->accessed((cPersistentObject*)b);
         b = next;
     }
