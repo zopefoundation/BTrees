@@ -11,11 +11,12 @@
 #define INCREF_VALUE(k)
 #define COPY_VALUE(V, E) (V=(E))
 #define COPY_VALUE_TO_OBJECT(O, K) O=PyFloat_FromDouble(K)
-#define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
-  if (PyFloat_Check(ARG)) TARGET = (float)PyFloat_AsDouble(ARG); \
-  else if (INT_CHECK(ARG)) TARGET = (float)INT_AS_LONG(ARG); \
-  else { \
-      PyErr_SetString(PyExc_TypeError, "expected float or int value"); \
+
+#define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                        \
+  if (PyFloat_Check(ARG)) TARGET = (float)PyFloat_AsDouble(ARG);        \
+  else if (PyLong_Check(ARG)) TARGET = (float)PyLong_AsLong(ARG);       \
+  else {                                                                \
+      PyErr_SetString(PyExc_TypeError, "expected float or int value");  \
       (STATUS)=0; (TARGET)=0; }
 
 #define NORMALIZE_VALUE(V, MIN) ((MIN) > 0) ? ((V)/=(MIN)) : 0

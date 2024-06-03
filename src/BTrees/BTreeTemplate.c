@@ -11,7 +11,7 @@
   FOR A PARTICULAR PURPOSE
 
 ****************************************************************************/
-#include "_compat.h"
+#include "Python.h"
 
 #define BTREETEMPLATE_C "$Id$\n"
 
@@ -267,7 +267,7 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
     {
         /* empty BTree */
         if (has_key)
-            result = INT_FROM_LONG(0);
+            result = PyLong_FromLong(0);
         else
             PyErr_SetObject(PyExc_KeyError, keyarg);
     }
@@ -2115,7 +2115,7 @@ BTree_contains(BTree *self, PyObject *key)
 
     if (asobj != NULL)
     {
-        result = INT_AS_LONG(asobj) ? 1 : 0;
+        result = PyLong_AsLong(asobj) ? 1 : 0;
         Py_DECREF(asobj);
     }
     else if (BTree_ShouldSuppressKeyError())
@@ -2152,7 +2152,7 @@ BTree_addUnique(BTree *self, PyObject *args)
 
     if ((grew=_BTree_set(self, key, v, 1, 0)) < 0)
         return NULL;
-    return INT_FROM_LONG(grew);
+    return PyLong_FromLong(grew);
 }
 
 /**************************************************************************/

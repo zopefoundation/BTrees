@@ -15,7 +15,11 @@
 #define NEED_LONG_LONG_SUPPORT
 #define VALUE_TYPE PY_LONG_LONG
 #define VALUE_PARSE "L"
+
+#define NEED_LONG_LONG_AS_OBJECT
 #define COPY_VALUE_TO_OBJECT(O, K) O=longlong_as_object(K)
+
+#define NEED_LONG_LONG_CONVERT
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
     if (!longlong_convert((ARG), &TARGET)) \
     { \
@@ -24,11 +28,11 @@
 #else
 #define VALUE_TYPE int
 #define VALUE_PARSE "i"
-#define COPY_VALUE_TO_OBJECT(O, K) O=INT_FROM_LONG(K)
+#define COPY_VALUE_TO_OBJECT(O, K) O=PyLong_FromLong(K)
 
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
-  if (INT_CHECK(ARG)) {                                         \
-      long vcopy = INT_AS_LONG(ARG);                            \
+  if (PyLong_Check(ARG)) {                                         \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
@@ -53,7 +57,11 @@
 #define NEED_LONG_LONG_SUPPORT
 #define VALUE_TYPE unsigned PY_LONG_LONG
 #define VALUE_PARSE "K"
+
+#define NEED_ULONG_LONG_AS_OBJECT
 #define COPY_VALUE_TO_OBJECT(O, K) O=ulonglong_as_object(K)
+
+#define NEED_ULONG_LONG_CONVERT
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS) \
     if (!ulonglong_convert((ARG), &TARGET)) \
     { \
@@ -63,20 +71,23 @@
 /* unsigned, 32-bit values */
 #define VALUE_TYPE unsigned int
 #define VALUE_PARSE "I"
-#define COPY_VALUE_TO_OBJECT(O, K) O=UINT_FROM_LONG(K)
+#define COPY_VALUE_TO_OBJECT(O, K) O=PyLong_FromUnsignedLongLong(K)
 
 #define COPY_VALUE_FROM_ARG(TARGET, ARG, STATUS)                  \
-  if (INT_CHECK(ARG)) {                                           \
-      long vcopy = INT_AS_LONG(ARG);                              \
+  if (PyLong_Check(ARG)) {                                        \
+      long vcopy = PyLong_AsLong(ARG);                            \
       if (PyErr_Occurred()) {                                     \
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {        \
             PyErr_Clear();                                        \
-            PyErr_SetString(PyExc_TypeError, "integer out of range"); \
+            PyErr_SetString(                                      \
+                PyExc_TypeError, "integer out of range");         \
         }                                                         \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if (vcopy < 0) {                                       \
-        PyErr_SetString(PyExc_TypeError, "can't convert negative value to unsigned int"); \
+        PyErr_SetString(                                          \
+            PyExc_TypeError,                                      \
+            "can't convert negative value to unsigned int");      \
         (STATUS)=0; (TARGET)=0;                                   \
       }                                                           \
       else if ((unsigned int)vcopy != vcopy) {                    \

@@ -12,7 +12,9 @@
 
 ****************************************************************************/
 
+#include "Python.h"
 #include "SetOpTemplate.h"
+
 #define BUCKETTEMPLATE_C "$Id$\n"
 
 /* Use BUCKET_SEARCH to find the index at which a key belongs.
@@ -98,7 +100,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
     if (has_key)
-        r = INT_FROM_LONG(cmp ? 0 : has_key);
+        r = PyLong_FromLong(cmp ? 0 : has_key);
     else
     {
         if (cmp == 0)
@@ -1509,7 +1511,7 @@ bucket_contains(Bucket *self, PyObject *key)
     int result = -1;
 
     if (asobj != NULL) {
-        result = INT_AS_LONG(asobj) ? 1 : 0;
+        result = PyLong_AsLong(asobj) ? 1 : 0;
         Py_DECREF(asobj);
     }
     else if (BTree_ShouldSuppressKeyError()) {

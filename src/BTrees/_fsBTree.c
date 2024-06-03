@@ -35,7 +35,7 @@ typedef unsigned char char6[6];
 
 
 
-#include "_compat.h"
+#include "Python.h"
 /*#include "intkeymacros.h"*/
 
 #define KEYMACROS_H "$Id$\n"
