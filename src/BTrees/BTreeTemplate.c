@@ -2351,18 +2351,31 @@ BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 static void
 BTree_dealloc(BTree *self)
 {
-    PyObject_GC_UnTrack((PyObject *)self);
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
         _BTree_clear(self);
     }
-    cPersistenceCAPI->pertype->tp_dealloc((PyObject *)self);
+    if (capi_struct) {
+        capi_struct->pertype->tp_dealloc(obj_self);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
+    }
 }
 
 static int
 BTree_traverse(BTree *self, visitproc visit, void *arg)
 {
     int err = 0;
-    int i, len;
+    int i;
+    int len;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    {
+        err = -1;
+        goto Done;
+    }
 
 #define VISIT(SLOT)                             \
   if (SLOT) {                                   \
@@ -2377,7 +2390,7 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
     /* Call our base type's traverse function.  Because BTrees are
     * subclasses of Peristent, there must be one.
     */
-    err = cPersistenceCAPI->pertype->tp_traverse(
+    err = capi_struct->pertype->tp_traverse(
         (PyObject *)self, visit, arg);
     if (err)
         goto Done;

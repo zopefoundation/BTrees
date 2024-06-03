@@ -1802,19 +1802,34 @@ Bucket_init(PyObject *self, PyObject *args, PyObject *kwds)
 static void
 bucket_dealloc(Bucket *self)
 {
-    PyObject_GC_UnTrack((PyObject *)self);
+    PyObject* obj_self = (PyObject*)self;
+
+    PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
         _bucket_clear(self);
     }
 
-    cPersistenceCAPI->pertype->tp_dealloc((PyObject *)self);
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    if (capi_struct) {
+        capi_struct->pertype->tp_dealloc(obj_self);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
+    }
 }
 
 static int
 bucket_traverse(Bucket *self, visitproc visit, void *arg)
 {
     int err = 0;
-    int i, len;
+    int i;
+    int len;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    if (capi_struct == NULL)
+    {
+        err = -1;
+        goto Done;
+    }
 
 #define VISIT(SLOT)                             \
   if (SLOT) {                                   \
@@ -1826,7 +1841,7 @@ bucket_traverse(Bucket *self, visitproc visit, void *arg)
     /* Call our base type's traverse function.  Because buckets are
      * subclasses of Peristent, there must be one.
      */
-    err = cPersistenceCAPI->pertype->tp_traverse((PyObject *)self, visit, arg);
+    err = capi_struct->pertype->tp_traverse(obj_self, visit, arg);
     if (err)
         goto Done;
 
