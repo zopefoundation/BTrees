@@ -99,7 +99,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
         return NULL;
     }
 
-    UNLESS (PER_USE(self)) return NULL;
+    UNLESS (per_use((cPersistentObject*)self, capi_struct)) return NULL;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
     if (has_key)
@@ -366,7 +366,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             return -1;
     }
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, capi_struct))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -651,7 +651,8 @@ Bucket_deleteNextBucket(Bucket *self)
     int result = -1;    /* until proven innocent */
     Bucket *successor;
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return -1;
     successor = self->next;
     if (successor)
     {
@@ -659,7 +660,7 @@ Bucket_deleteNextBucket(Bucket *self)
         /* Before:  self -> successor -> next
         * After:   self --------------> next
         */
-        UNLESS (PER_USE(successor))
+        UNLESS (per_use((cPersistentObject*)successor, capi_struct))
             goto Done;
         next = successor->next;
         per_allow_deactivation((cPersistentObject*)successor);
@@ -731,7 +732,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
     UNLESS (copied)
         return -1;
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, capi_struct))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -776,7 +777,8 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
     if (args && ! PyArg_ParseTuple(args, "|O", &key))
         return NULL;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     UNLESS (self->len)
         goto empty;
@@ -918,7 +920,8 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
     int low;
     int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -966,7 +969,8 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
     int low;
     int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -1016,7 +1020,8 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
     int low;
     int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -1071,7 +1076,8 @@ bucket_byValue(Bucket *self, PyObject *omin)
     int l;
     int copied=1;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     COPY_VALUE_FROM_ARG(min, omin, copied);
     UNLESS(copied)
@@ -1236,7 +1242,8 @@ bucket_clear(Bucket *self, PyObject *args)
 {
     PyObject* obj_self = (PyObject*)self;
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     if (self->len)
     {
@@ -1291,7 +1298,8 @@ bucket_getstate(Bucket *self)
     int len;
     int l;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     len = self->len;
 
@@ -1654,7 +1662,8 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
     int highoffset;
     BTreeIter *result = NULL;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
     if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset) < 0)
         goto Done;
 
@@ -1974,7 +1983,7 @@ Bucket_length( Bucket *self)
     PyObject* obj_self = (PyObject*)self;
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, capi_struct))
         return -1;
     r = self->len;
     per_allow_deactivation((cPersistentObject*)self);
@@ -2086,7 +2095,7 @@ nextBucket(SetIteration *i)
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
-        UNLESS(PER_USE(BUCKET(i->set)))
+        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), capi_struct))
             return -1;
 
         if (i->position)

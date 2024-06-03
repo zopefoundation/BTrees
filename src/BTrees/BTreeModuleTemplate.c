@@ -69,34 +69,27 @@ per_prevent_deactivation(cPersistentObject* p_obj)
         p_obj->state = cPersistent_STICKY_STATE;
 }
 
+#ifdef PER_USE
+#undef PER_USE
+#endif
+
+static inline int
+per_use(cPersistentObject* p_obj, cPersistenceCAPIstruct* capi_struct)
+{
+    if (p_obj->state == cPersistent_GHOST_STATE &&
+        capi_struct->setstate((PyObject*)p_obj) < 0) {
+        return 0;
+    } else if (p_obj->state == cPersistent_UPTODATE_STATE) {
+        p_obj->state = cPersistent_STICKY_STATE;
+    }
+    return 1;
+}
 
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
-#define PER_USE_OR_RETURN(O,R) {                        \
-  if((O)->state == cPersistent_GHOST_STATE &&           \
-     capi_struct->setstate((PyObject*)(O)) < 0)         \
-      return (R);                                       \
-  else if ((O)->state==cPersistent_UPTODATE_STATE)      \
-      (O)->state=cPersistent_STICKY_STATE;              \
-}
 
-#ifdef PER_USE
-#undef PER_USE
-#endif
-#define PER_USE(O) \
-    (((O)->state != cPersistent_GHOST_STATE \
-      || (capi_struct->setstate((PyObject*)(O)) >= 0)) \
-     ? (((O)->state==cPersistent_UPTODATE_STATE) \
-        ? ((O)->state=cPersistent_STICKY_STATE) : 1) : 0)
-
-#else
-
-#define PER_USE_OR_RETURN(self, NULL)
-#define PER_PREVENT_DEACTIVATION(self)
-#define PER_DEL(self)
-#define PER_USE(O) 1
-#endif
+#endif /* defined(PERSISTENT) */
 
 #define USE_STATIC_MODULE_INIT 1
 #define USE_MULTIPHASE_MODULE_INIT 0
@@ -540,7 +533,8 @@ PreviousBucket(Bucket **current, Bucket *first)
 
     do {
         trailing = first;
-        PER_USE_OR_RETURN(first, -1);
+        if (!per_use((cPersistentObject*)first, capi_struct))
+            return -1;
         first = first->next;
 
         ((trailing)->state==cPersistent_STICKY_STATE
