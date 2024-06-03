@@ -28,6 +28,11 @@
  *  want to use a global static 'cPersistenceCAPI', but rather look it
  *  up from module state as 'capi_struct' in each method.
  */
+
+#ifdef PER_GHOSTIFY
+#undef PER_GHOSTIFY
+#endif
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
@@ -49,11 +54,6 @@
 #endif
 #define PER_READCURRENT(O, E)                                     \
     if (capi_struct->readCurrent((cPersistentObject*)(O)) < 0) { E; }
-
-#ifdef PER_GHOSTIFY
-#undef PER_GHOSTIFY
-#endif
-#define PER_GHOSTIFY(O) (capi_struct->ghostify((cPersistentObject*)(O)))
 
 #ifdef PER_USE
 #undef PER_USE

@@ -1073,7 +1073,7 @@ BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
         {
             if (_BTree_clear(self) < 0)
                 return NULL;
-            PER_GHOSTIFY(self);
+            capi_struct->ghostify((cPersistentObject*)self);
         }
     }
 
