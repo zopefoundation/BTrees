@@ -228,8 +228,8 @@ TreeSet_setstate(BTree *self, PyObject *args)
     if (!PyArg_ParseTuple(args,"O",&args))
         return NULL;
 
-    PER_PREVENT_DEACTIVATION(self);
-    r=_BTree_setstate(self, args, 1);
+    per_prevent_deactivation((cPersistentObject*)self);
+    r = _BTree_setstate(self, args, 1);
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 

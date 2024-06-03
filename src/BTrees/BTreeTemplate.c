@@ -1340,7 +1340,7 @@ BTree_setstate(BTree *self, PyObject *arg)
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
-    PER_PREVENT_DEACTIVATION(self);
+    per_prevent_deactivation((cPersistentObject*)self);
     r = _BTree_setstate(self, arg, 0);
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);

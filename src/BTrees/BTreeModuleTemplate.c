@@ -59,6 +59,17 @@ per_allow_deactivation(cPersistentObject* p_obj)
         p_obj->state = cPersistent_UPTODATE_STATE;
 }
 
+#ifdef PER_PREVENT_DEACTIVATION
+#undef PER_PREVENT_DEACTIVATION
+#endif
+static inline void
+per_prevent_deactivation(cPersistentObject* p_obj)
+{
+    if (p_obj->state == cPersistent_UPTODATE_STATE)
+        p_obj->state = cPersistent_STICKY_STATE;
+}
+
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif

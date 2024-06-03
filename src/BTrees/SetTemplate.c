@@ -283,8 +283,8 @@ set_setstate(Bucket *self, PyObject *args)
     UNLESS (PyArg_ParseTuple(args, "O", &args))
         return NULL;
 
-    PER_PREVENT_DEACTIVATION(self);
-    r=_set_setstate(self, args);
+    per_prevent_deactivation((cPersistentObject*)self);
+    r = _set_setstate(self, args);
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
 

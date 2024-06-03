@@ -1427,7 +1427,7 @@ bucket_setstate(Bucket *self, PyObject *state)
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
-    PER_PREVENT_DEACTIVATION(self);
+    per_prevent_deactivation((cPersistentObject*)self);
     r = _bucket_setstate(self, state);
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
