@@ -398,7 +398,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             DECREF_VALUE(self->values[i]);
             COPY_VALUE(self->values[i], value);
             INCREF_VALUE(self->values[i]);
-            if (PER_CHANGED(self) >= 0)
+            if (capi_struct->changed((cPersistentObject*)self) >= 0)
                 result = 0;
             goto Done;
         }
@@ -432,7 +432,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
 
         if (changed)
             *changed = 1;
-        if (PER_CHANGED(self) >= 0)
+        if (capi_struct->changed((cPersistentObject*)self) >= 0)
             result = 1;
         goto Done;
     }
@@ -472,7 +472,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
     self->len++;
     if (changed)
         *changed = 1;
-    if (PER_CHANGED(self) >= 0)
+    if (capi_struct->changed((cPersistentObject*)self) >= 0)
         result = 1;
 
 Done:
@@ -628,7 +628,7 @@ bucket_split(Bucket *self, int index, Bucket *next)
     Py_INCREF(next);
     self->next = next;
 
-    if (PER_CHANGED(self) < 0)
+    if (capi_struct->changed((cPersistentObject*)self) < 0)
         return -1;
 
     return 0;
@@ -665,7 +665,7 @@ Bucket_deleteNextBucket(Bucket *self)
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
         Py_DECREF(successor);
-        if (PER_CHANGED(self) < 0)
+        if (capi_struct->changed((cPersistentObject*)self) < 0)
             goto Done;
     }
     result = 0;
@@ -1227,7 +1227,7 @@ bucket_clear(Bucket *self, PyObject *args)
     {
         if (_bucket_clear(self) < 0)
         return NULL;
-        if (PER_CHANGED(self) < 0)
+        if (capi_struct->changed((cPersistentObject*)self) < 0)
         goto err;
     }
     PER_UNUSE(self);
