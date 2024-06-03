@@ -17,14 +17,14 @@
 #include "structmember.h"
 #include "bytesobject.h"
 
-#ifdef PERSISTENT
+#if defined(PERSISTENT)
 
 #define DONT_USE_CPERSISTENCECAPI
 #include "persistent/cPersistence.h"
 #undef DONT_USE_CPERSISTENCECAPI
 
 /*
- *  Override these macros from 'persistent/cPersistence.h':  we don't
+ *  Unset these macros from 'persistent/cPersistence.h':  we don't
  *  want to use a global static 'cPersistenceCAPI', but rather look it
  *  up from module state as 'capi_struct' in each method.
  */
@@ -52,6 +52,7 @@
 #ifdef PER_ALLOW_DEACTIVATION
 #undef PER_ALLOW_DEACTIVATION
 #endif
+
 static inline void
 per_allow_deactivation(cPersistentObject* p_obj)
 {
@@ -62,6 +63,7 @@ per_allow_deactivation(cPersistentObject* p_obj)
 #ifdef PER_PREVENT_DEACTIVATION
 #undef PER_PREVENT_DEACTIVATION
 #endif
+
 static inline void
 per_prevent_deactivation(cPersistentObject* p_obj)
 {
@@ -164,7 +166,7 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
   PyErr_SetString(PyExc_AssertionError, (S)); return (R); }
 
 
-#ifdef NEED_LONG_LONG_SUPPORT
+#if defined(NEED_LONG_LONG_SUPPORT)
 /* Helper code used to support long long instead of int. */
 
 #ifndef PY_LONG_LONG
@@ -247,7 +249,6 @@ longlong_convert(PyObject *ob, PY_LONG_LONG *value)
 
 #endif /* defined(NEED_LONG_LONG_CONVERT) */
 
-
 #if defined(NEED_ULONG_LONG_CHECK)
 
 static int
@@ -313,7 +314,7 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
 
 #endif /* defined(NEED_ULONG_LONG_CONVERT) */
 
-#endif  /* NEED_LONG_LONG_SUPPORT */
+#endif  /* defined(NEED_LONG_LONG_SUPPORT) */
 
 
 /* Various kinds of BTree and Bucket structs are instances of
