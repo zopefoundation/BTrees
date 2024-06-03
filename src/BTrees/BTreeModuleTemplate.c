@@ -41,6 +41,10 @@
 #undef PER_READCURRENT
 #endif
 
+#ifdef PER_UNUSE
+#undef PER_UNUSE
+#endif
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
@@ -80,17 +84,6 @@
 #define USE_MULTIPHASE_MODULE_INIT 0
 #define USE_STATIC_TYPES 1
 #define USE_HEAP_ALLOCATED_TYPES 0
-
-/* So sue me.  This pair gets used all over the place, so much so that it
- * interferes with understanding non-persistence parts of algorithms.
- * PER_UNUSE can be used after a successul PER_USE or PER_USE_OR_RETURN.
- * It allows the object to become ghostified, and tells the persistence
- * machinery that the object's fields were used recently.
- */
-#define PER_UNUSE(OBJ) do {             \
-    PER_ALLOW_DEACTIVATION(OBJ);        \
-    PER_ACCESSED(OBJ);                  \
-} while (0)
 
 /* The tp_name slots of the various BTree types contain the fully
  * qualified names of the types, e.g. zodb.btrees.OOBTree.OOBTree.

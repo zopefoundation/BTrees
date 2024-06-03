@@ -106,11 +106,13 @@ bucket_toBytes(PyObject *obj_self)
     memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
     memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return items;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(items);
     return NULL;
 }
