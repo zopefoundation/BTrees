@@ -1228,11 +1228,17 @@ err:
 static int
 _BTree_setstate(BTree *self, PyObject *state, int noval)
 {
-    PyObject *items, *firstbucket = NULL;
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject *bucket_type = _get_bucket_type(obj_self);
+    PyTypeObject *set_type = _get_set_type(obj_self);
+    PyObject *items;
+    PyObject *firstbucket = NULL;
     BTreeItem *d;
-    int len, l, i, copied=1;
-    /* TODO: get these from the module state */
-    PyTypeObject *leaftype = (noval ? &Set_type_def : &Bucket_type_def);
+    int len;
+    int l;
+    int i;
+    int copied=1;
+    PyTypeObject *leaftype = (noval ? set_type : bucket_type);
 
     if (_BTree_clear(self) < 0)
         return -1;
@@ -1435,8 +1441,13 @@ static PyObject *
 BTree__p_resolveConflict(BTree *self, PyObject *args)
 {
     PyObject *obj_self = (PyObject*)self;
+    PyTypeObject *btree_type = _get_btree_type(obj_self);
+    PyTypeObject *bucket_type = _get_bucket_type(obj_self);
+    PyTypeObject *set_type = _get_set_type(obj_self);
     PyObject *s[3];
-    PyObject *x, *y, *z;
+    PyObject *x;
+    PyObject *y;
+    PyObject *z;
 
     if (!PyArg_ParseTuple(args, "OOO", &x, &y, &z))
         return NULL;
@@ -1451,11 +1462,10 @@ BTree__p_resolveConflict(BTree *self, PyObject *args)
     if (s[2] == NULL)
         return NULL;
 
-    /* TODO: get these from the module state */
-    if (PyObject_IsInstance((PyObject *)self, (PyObject *)&BTree_type_def))
-        x = _bucket__p_resolveConflict(OBJECT(&Bucket_type_def), s);
+    if (PyObject_IsInstance((PyObject *)self, (PyObject *)btree_type))
+        x = _bucket__p_resolveConflict(OBJECT(bucket_type), s);
     else
-        x = _bucket__p_resolveConflict(OBJECT(&Set_type_def), s);
+        x = _bucket__p_resolveConflict(OBJECT(set_type), s);
 
     if (x == NULL)
         return NULL;
@@ -2452,15 +2462,12 @@ BTree_dealloc(BTree *self)
 static int
 BTree_traverse(BTree *self, visitproc visit, void *arg)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject *btree_type = _get_btree_type(obj_self);
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int err = 0;
     int i;
     int len;
-    PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
-    {
-        err = -1;
-        goto Done;
-    }
 
 #define VISIT(SLOT)                             \
   if (SLOT) {                                   \
@@ -2469,8 +2476,7 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
       goto Done;                                \
   }
 
-    /* TODO Get this from the module state */
-    if (Py_TYPE(self) == &BTree_type_def)
+    if (Py_TYPE(self) == btree_type)
         assert(Py_TYPE(self)->tp_dictoffset == 0);
 
     /* Call our base type's traverse function.  Because BTrees are
