@@ -276,6 +276,8 @@ _set_setstate(Bucket *self, PyObject *args)
 static PyObject *
 set_setstate(Bucket *self, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     UNLESS (PyArg_ParseTuple(args, "O", &args))
@@ -390,6 +392,8 @@ err:
 static Py_ssize_t
 set_length(Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     PER_USE_OR_RETURN(self, -1);
@@ -402,7 +406,10 @@ set_length(Bucket *self)
 static PyObject *
 set_item(Bucket *self, Py_ssize_t index)
 {
-    PyObject *r=0;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+
+    PyObject *r = 0;
 
     PER_USE_OR_RETURN(self, NULL);
     if (index >= 0 && index < self->len)
@@ -747,6 +754,8 @@ static PyTypeObject SetType = {
 static int
 nextSet(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
 
     if (i->position >= 0)
     {

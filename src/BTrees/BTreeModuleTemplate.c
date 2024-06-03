@@ -19,12 +19,55 @@
 
 #ifdef PERSISTENT
 
-/* We'll define the static ourselves, until we remove it.*/
 #define DONT_USE_CPERSISTENCECAPI
 #include "persistent/cPersistence.h"
 #undef DONT_USE_CPERSISTENCECAPI
 
-static cPersistenceCAPIstruct *cPersistenceCAPI;
+/*
+ *  Override these macros from 'persistent/cPersistence.h':  we don't
+ *  want to use a global static 'cPersistenceCAPI', but rather look it
+ *  up from module state as 'capi_struct' in each method.
+ */
+#ifdef PER_USE_OR_RETURN
+#undef PER_USE_OR_RETURN
+#endif
+#define PER_USE_OR_RETURN(O,R) {                        \
+  if((O)->state == cPersistent_GHOST_STATE &&           \
+     capi_struct->setstate((PyObject*)(O)) < 0)         \
+      return (R);                                       \
+  else if ((O)->state==cPersistent_UPTODATE_STATE)      \
+      (O)->state=cPersistent_STICKY_STATE;              \
+}
+
+#ifdef PER_CHANGED
+#undef PER_CHANGED
+#endif
+#define PER_CHANGED(O) (capi_struct->changed((cPersistentObject*)(O)))
+
+#ifdef PER_READCURRENT
+#undef PER_READCURRENT
+#endif
+#define PER_READCURRENT(O, E)                                     \
+    if (capi_struct->readCurrent((cPersistentObject*)(O)) < 0) { E; }
+
+#ifdef PER_GHOSTIFY
+#undef PER_GHOSTIFY
+#endif
+#define PER_GHOSTIFY(O) (capi_struct->ghostify((cPersistentObject*)(O)))
+
+#ifdef PER_USE
+#undef PER_USE
+#endif
+#define PER_USE(O) \
+    (((O)->state != cPersistent_GHOST_STATE \
+      || (capi_struct->setstate((PyObject*)(O)) >= 0)) \
+     ? (((O)->state==cPersistent_UPTODATE_STATE) \
+        ? ((O)->state=cPersistent_STICKY_STATE) : 1) : 0)
+
+#ifdef PER_ACCESSED
+#undef PER_ACCESSED
+#endif
+#define PER_ACCESSED(O)  (capi_struct->accessed((cPersistentObject*)(O)))
 
 #else
 
@@ -100,6 +143,8 @@ intern_strings()
 static inline PyObject* _get_conflict_error(PyObject* bucket_or_btree);
 static inline cPersistenceCAPIstruct* _get_capi_struct(
     PyObject* bucket_or_btree);
+static inline cPersistenceCAPIstruct* _get_capi_struct_from_module(
+    PyObject* module);
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
@@ -472,6 +517,8 @@ IndexError(int i)
 static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
+    PyObject* obj_self = (PyObject*)current;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
@@ -726,19 +773,21 @@ _get_conflict_error(PyObject* bucket_or_btree)
 }
 
 static inline cPersistenceCAPIstruct*
+_get_capi_struct_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->capi_struct;
+}
+
+static inline cPersistenceCAPIstruct*
 _get_capi_struct(PyObject* bucket_or_btree)
 {
-#if 1
-    /* Temporary */
-    return cPersistenceCAPI;
-#else
     PyObject* module = _get_module(Py_TYPE(bucket_or_btree));
     if (module == NULL)
         return NULL;
 
     module_state* state = PyModule_GetState(module);
     return state->capi_struct;
-#endif
 }
 
 static struct PyModuleDef module_def = {
@@ -801,9 +850,7 @@ module_exec(PyObject* module)
        }
         return -1;
     }
-    /* Temporary */
-    state->capi_struct = NULL;
-    cPersistenceCAPI = capi_struct;
+    state->capi_struct = capi_struct;
 
 
     ((PyObject*)&BTreeItemsType)->ob_type = &PyType_Type;

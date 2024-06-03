@@ -80,7 +80,10 @@
 static PyObject *
 _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 {
-    int i, cmp;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    int i;
+    int cmp;
     KEY_TYPE key;
     PyObject *r = NULL;
     int copied = 1;
@@ -326,6 +329,8 @@ static int
 _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             int unique, int noval, int *changed)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int i, cmp;
     KEY_TYPE key;
 
@@ -589,6 +594,8 @@ Mapping_update(PyObject *self, PyObject *seq)
 static int
 bucket_split(Bucket *self, int index, Bucket *next)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int next_size;
 
     ASSERT(self->len > 1, "split of empty bucket", -1);
@@ -637,6 +644,8 @@ bucket_split(Bucket *self, int index, Bucket *next)
 static int
 Bucket_deleteNextBucket(Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int result = -1;    /* until proven innocent */
     Bucket *successor;
 
@@ -706,7 +715,10 @@ static int
 Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
                     int *offset)
 {
-    int i, cmp;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    int i;
+    int cmp;
     int result = -1;    /* until proven innocent */
     KEY_TYPE key;
     int copied = 1;
@@ -749,8 +761,11 @@ Done:
 static PyObject *
 Bucket_maxminKey(Bucket *self, PyObject *args, int min)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *key=0;
-    int rc, offset = 0;
+    int rc;
+    int offset = 0;
     int empty_bucket = 1;
 
     if (args && ! PyArg_ParseTuple(args, "|O", &key))
@@ -888,8 +903,13 @@ empty:
 static PyObject *
 bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r = NULL, *key;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *r = NULL;
+    PyObject *key;
+    int i;
+    int low;
+    int high;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -929,8 +949,13 @@ err:
 static PyObject *
 bucket_values(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r=0, *v;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *r=0;
+    PyObject *v;
+    int i;
+    int low;
+    int high;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -971,8 +996,14 @@ err:
 static PyObject *
 bucket_items(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r=0, *o=0, *item=0;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *r=0;
+    PyObject *o=0;
+    PyObject *item=0;
+    int i;
+    int low;
+    int high;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -1016,10 +1047,16 @@ err:
 static PyObject *
 bucket_byValue(Bucket *self, PyObject *omin)
 {
-    PyObject *r=0, *o=0, *item=0;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *r=0;
+    PyObject *o=0;
+    PyObject *item=0;
     VALUE_TYPE min;
     VALUE_TYPE v;
-    int i, l, copied=1;
+    int i;
+    int l;
+    int copied=1;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -1134,6 +1171,9 @@ _bucket_clear(Bucket *self)
 static PyObject *
 bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+
     int ghostify = 1;
     PyObject *force = NULL;
 
@@ -1179,6 +1219,8 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
 static PyObject *
 bucket_clear(Bucket *self, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PER_USE_OR_RETURN(self, NULL);
 
     if (self->len)
@@ -1223,8 +1265,14 @@ err:
 static PyObject *
 bucket_getstate(Bucket *self)
 {
-    PyObject *o = NULL, *items = NULL, *state;
-    int i, len, l;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *o = NULL;
+    PyObject *items = NULL;
+    PyObject *state;
+    int i;
+    int len;
+    int l;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -1280,9 +1328,14 @@ err:
 static int
 _bucket_setstate(Bucket *self, PyObject *state)
 {
-    PyObject *k, *v, *items;
+    PyObject *k;
+    PyObject *v;
+    PyObject *items;
     Bucket *next = NULL;
-    int i, l, len, copied=1;
+    int i;
+    int l;
+    int len;
+    int copied=1;
     KEY_TYPE *keys;
     VALUE_TYPE *values;
 
@@ -1351,6 +1404,8 @@ _bucket_setstate(Bucket *self, PyObject *state)
 static PyObject *
 bucket_setstate(Bucket *self, PyObject *state)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     PER_PREVENT_DEACTIVATION(self);
@@ -1572,8 +1627,11 @@ bucket_getm(Bucket *self, PyObject *args)
 static PyObject *
 buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     BTreeItems *items;
-    int lowoffset, highoffset;
+    int lowoffset;
+    int highoffset;
     BTreeIter *result = NULL;
 
     PER_USE_OR_RETURN(self, NULL);
@@ -1892,6 +1950,8 @@ bucket_tp_clear(Bucket *self)
 static int
 Bucket_length( Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
     UNLESS (PER_USE(self))
         return -1;
@@ -2000,6 +2060,8 @@ static PyTypeObject BucketType = {
 static int
 nextBucket(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         UNLESS(PER_USE(BUCKET(i->set)))
