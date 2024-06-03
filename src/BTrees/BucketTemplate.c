@@ -1208,7 +1208,7 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
         if (ghostify) {
             if (_bucket_clear(self) < 0)
             return NULL;
-            PER_GHOSTIFY(self);
+            capi_struct->ghostify((cPersistentObject*)self);
         }
     }
     Py_INCREF(Py_None);
