@@ -13,9 +13,7 @@
  ****************************************************************************/
 
 #include "Python.h"
-/* include structmember.h for offsetof */
 #include "structmember.h"
-#include "bytesobject.h"
 
 #if defined(PERSISTENT)
 
