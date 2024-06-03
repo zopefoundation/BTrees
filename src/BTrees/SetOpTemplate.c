@@ -112,12 +112,15 @@ static int nextGenericKeyIter(SetIteration* i)
 static int
 initSetIteration(SetIteration *i, PyObject *s, int useValues)
 {
+    PyTypeObject *btree_type = _get_btree_type(s);
+    PyTypeObject *bucket_type = _get_bucket_type(s);
+    PyTypeObject *set_type = _get_set_type(s);
+    PyTypeObject *tree_set_type = _get_tree_set_type(s);
     i->set = NULL;
     i->position = -1;     /* set to 0 only on normal return */
     i->usesValue = 0;     /* assume it's a set or that values aren't iterated */
 
-    /* TODO: get this from the module state */
-    if (PyObject_IsInstance(s, (PyObject *)&Bucket_type_def)) {
+    if (PyObject_IsInstance(s, (PyObject *)bucket_type)) {
         i->set = s;
         Py_INCREF(s);
 
@@ -128,13 +131,11 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
             i->next = nextSet;
         }
     }
-    /* TODO: get this from the module state */
-    else if (PyObject_IsInstance(s, (PyObject *)&Set_type_def)) {
+    else if (PyObject_IsInstance(s, (PyObject *)set_type)) {
         i->set = s;
         Py_INCREF(s);
         i->next = nextSet;
-    /* TODO: get this from the module state */
-    } else if (PyObject_IsInstance(s, (PyObject *)&BTree_type_def)) {
+    } else if (PyObject_IsInstance(s, (PyObject *)btree_type)) {
         i->set = BTree_rangeSearch(BTREE(s), NULL, NULL, 'i');
         UNLESS(i->set) return -1;
 
@@ -144,8 +145,7 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
         } else {
             i->next = nextTreeSetItems;
         }
-    /* TODO: get this from the module state */
-    } else if (PyObject_IsInstance(s, (PyObject *)&TreeSet_type_def)) {
+    } else if (PyObject_IsInstance(s, (PyObject *)tree_set_type)) {
         i->set = BTree_rangeSearch(BTREE(s), NULL, NULL, 'k');
         UNLESS(i->set) return -1;
         i->next = nextTreeSetItems;
@@ -285,6 +285,8 @@ set_operation(
 )
 {
     Bucket *r=0;
+    PyTypeObject *bucket_type = _get_bucket_type(s1);
+    PyTypeObject *set_type = _get_set_type(s1);
     SetIteration i1 = {0,0,0};
     SetIteration i2 = {0,0,0};
     int cmp;
@@ -326,12 +328,10 @@ set_operation(
         }
 #endif
 
-        /* TODO: get this from the module state */
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&Bucket_type_def), NULL)))
+        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(bucket_type), NULL)))
             goto err;
     } else {
-        /* TODO: get this from the module state */
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&Set_type_def), NULL)))
+        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(set_type), NULL)))
             goto err;
     }
 
@@ -517,7 +517,6 @@ wintersection_m(PyObject *module, PyObject *args)
     if (o1)
         ASSIGN(o1, Py_BuildValue(
             VALUE_PARSE "O",
-            /* TODO: get this from the module state */
             ((o1->ob_type == (PyTypeObject*)(&Set_type_def)) ? w2 + w1 : 1),
             o1));
 
@@ -537,6 +536,8 @@ static PyObject *
 multiunion_m(PyObject *module, PyObject *args)
 {
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
     PyObject *seq;          /* input sequence */
     int n;                  /* length of input sequence */
     PyObject *set = NULL;   /* an element of the input sequence */
@@ -552,8 +553,7 @@ multiunion_m(PyObject *module, PyObject *args)
         return NULL;
 
     /* Construct an empty result set. */
-    /* TODO: get this from the module state */
-    result = BUCKET(PyObject_CallObject(OBJECT(&Set_type_def), NULL));
+    result = BUCKET(PyObject_CallObject(OBJECT(set_type), NULL));
     if (result == NULL)
         return NULL;
 
@@ -565,9 +565,8 @@ multiunion_m(PyObject *module, PyObject *args)
         goto Error;
 
         /* If set is a bucket, do a straight resize + memcpy. */
-        /* TODO: get these from the module state */
-        if (set->ob_type == (PyTypeObject*)&Set_type_def ||
-            set->ob_type == (PyTypeObject*)&Bucket_type_def) {
+        if (set->ob_type == (PyTypeObject*)set_type ||
+            set->ob_type == (PyTypeObject*)bucket_type) {
             Bucket *b = BUCKET(set);
             int status = 0;
 

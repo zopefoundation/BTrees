@@ -90,6 +90,8 @@ static PyObject *
 bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3)
 {
     PyObject *b = (PyObject*)s1;  /* FBO 'merge_error' */
+    PyTypeObject *bucket_type = _get_bucket_type(b);
+    PyTypeObject *set_type = _get_set_type(b);
     Bucket *r = 0;
     PyObject *s;
     SetIteration i1 = {0,0,0};
@@ -118,11 +120,9 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3)
     set = !mapping;
 
     if (mapping)
-        /* TODO get this from the module state */
-        r = (Bucket *)PyObject_CallObject((PyObject *)&Bucket_type_def, NULL);
+        r = (Bucket *)PyObject_CallObject((PyObject *)bucket_type, NULL);
     else
-        /* TODO get this from the module state */
-        r = (Bucket *)PyObject_CallObject((PyObject *)&Set_type_def, NULL);
+        r = (Bucket *)PyObject_CallObject((PyObject *)set_type, NULL);
 
     if (r == NULL)
         goto err;
