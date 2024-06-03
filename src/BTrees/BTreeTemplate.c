@@ -382,7 +382,7 @@ BTree_split(BTree *self, int index, BTree *next)
 
     next->len = next_size;
     self->len = index;
-    return PER_CHANGED(self) >= 0 ? 0 : -1;
+    return capi_struct->changed((cPersistentObject*)self) >= 0 ? 0 : -1;
 }
 
 
@@ -398,7 +398,7 @@ static int BTree_grow(BTree *self, int index, int noval);
  *      0   OK
  *     -1   error
  *
- * CAUTION:  The caller must call PER_CHANGED on self.
+ * CAUTION:  The caller must call 'capi_struct->changed' on self.
  */
 static int
 BTree_split_root(BTree *self, int noval)
@@ -864,7 +864,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             COPY_KEY(d->key, bucket->keys[0]);
             INCREF_KEY(d->key);
             PER_UNUSE(bucket);
-            if (PER_CHANGED(self) < 0)
+            if (capi_struct->changed((cPersistentObject*)self) < 0)
                     goto Error;
         }
     }
@@ -981,7 +981,7 @@ Done:
 #ifdef PERSISTENT
     if (changed)
     {
-        if (PER_CHANGED(self) < 0)
+        if (capi_struct->changed((cPersistentObject*)self) < 0)
             goto Error;
     }
 #endif
@@ -1094,7 +1094,7 @@ BTree_clear(BTree *self)
     {
         if (_BTree_clear(self) < 0)
             goto err;
-        if (PER_CHANGED(self) < 0)
+        if (capi_struct->changed((cPersistentObject*)self) < 0)
             goto err;
     }
 
