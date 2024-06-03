@@ -73,8 +73,11 @@ BTreeItems_dealloc(BTreeItems *self)
 static Py_ssize_t
 BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     Py_ssize_t r;
-    Bucket *b, *next;
+    Bucket *b;
+    Bucket *next;
 
     b = self->firstbucket;
     if (b == NULL)
@@ -136,8 +139,13 @@ BTreeItems_length(BTreeItems *self)
 static int
 BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
 {
-    int delta, pseudoindex, currentoffset;
-    Bucket *b, *currentbucket;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    Bucket *b;
+    Bucket *currentbucket;
+    int delta;
+    int pseudoindex;
+    int currentoffset;
     int error;
 
     pseudoindex = self->pseudoindex;
@@ -304,6 +312,8 @@ getBucketEntry(Bucket *b, int i, char kind)
 static PyObject *
 BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *result;
 
     if (BTreeItems_seek(self, i) < 0)
@@ -553,6 +563,8 @@ newBTreeItems(char kind,
 static int
 nextBTreeItems(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -598,6 +610,8 @@ nextBTreeItems(SetIteration *i)
 static int
 nextTreeSetItems(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -684,6 +698,8 @@ BTreeIter_dealloc(BTreeIter *bi)
 static PyObject *
 BTreeIter_next(BTreeIter *bi, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)bi;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *result = NULL;        /* until proven innocent */
     BTreeItems *items = bi->pitems;
     int i = items->currentoffset;

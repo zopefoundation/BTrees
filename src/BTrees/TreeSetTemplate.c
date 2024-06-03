@@ -221,6 +221,8 @@ err:
 static PyObject *
 TreeSet_setstate(BTree *self, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     if (!PyArg_ParseTuple(args,"O",&args))
