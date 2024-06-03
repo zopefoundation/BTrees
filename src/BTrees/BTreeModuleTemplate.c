@@ -15,6 +15,23 @@
 #include "Python.h"
 #include "structmember.h"
 
+/*#if PY_VERSION_HEX < 0x030b0000*/
+#if PY_VERSION_HEX < 0x030f0000 /* temporary */
+
+#define USE_STATIC_MODULE_INIT 1
+#define USE_MULTIPHASE_MODULE_INIT 0
+#define USE_STATIC_TYPES 1
+#define USE_HEAP_ALLOCATED_TYPES 0
+
+#else
+
+#define USE_STATIC_MODULE_INIT 0
+#define USE_MULTIPHASE_MODULE_INIT 1
+#define USE_STATIC_TYPES 0
+#define USE_HEAP_ALLOCATED_TYPES 1
+
+#endif
+
 #if defined(PERSISTENT)
 
 #define DONT_USE_CPERSISTENCECAPI
@@ -90,11 +107,6 @@ per_use(cPersistentObject* p_obj, cPersistenceCAPIstruct* capi_struct)
 #endif
 
 #endif /* defined(PERSISTENT) */
-
-#define USE_STATIC_MODULE_INIT 1
-#define USE_MULTIPHASE_MODULE_INIT 0
-#define USE_STATIC_TYPES 1
-#define USE_HEAP_ALLOCATED_TYPES 0
 
 /* The tp_name slots of the various BTree types contain the fully
  * qualified names of the types, e.g. zodb.btrees.OOBTree.OOBTree.
