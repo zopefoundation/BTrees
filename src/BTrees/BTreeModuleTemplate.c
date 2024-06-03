@@ -629,6 +629,28 @@ BTree_ShouldSuppressKeyError()
 #include "SetOpTemplate.c"
 #include "MergeTemplate.c"
 
+/*
+ *  Module functions / initialization
+ */
+
+static struct PyModuleDef module_def;
+
+static char BTree_module_documentation[] =
+"\n"
+MASTER_ID
+BTREEITEMSTEMPLATE_C
+"$Id$\n"
+BTREETEMPLATE_C
+BUCKETTEMPLATE_C
+KEYMACROS_H
+MERGETEMPLATE_C
+SETOPTEMPLATE_C
+SETTEMPLATE_C
+TREESETTEMPLATE_C
+VALUEMACROS_H
+BTREEITEMSTEMPLATE_C
+;
+
 static struct PyMethodDef module_methods[] = {
   {"difference", (PyCFunction) difference_m,    METH_VARARGS,
    "difference(o1, o2)\n"
@@ -662,78 +684,6 @@ static struct PyMethodDef module_methods[] = {
 #endif
   {NULL,                NULL}           /* sentinel */
 };
-
-static char BTree_module_documentation[] =
-"\n"
-MASTER_ID
-BTREEITEMSTEMPLATE_C
-"$Id$\n"
-BTREETEMPLATE_C
-BUCKETTEMPLATE_C
-KEYMACROS_H
-MERGETEMPLATE_C
-SETOPTEMPLATE_C
-SETTEMPLATE_C
-TREESETTEMPLATE_C
-VALUEMACROS_H
-BTREEITEMSTEMPLATE_C
-;
-
-static int
-init_type_with_meta_base(
-    PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base
-)
-{
-    int result;
-    PyObject* slotnames;
-    ((PyObject*)type)->ob_type = meta;
-    type->tp_base = base;
-
-    if (PyType_Ready(type) < 0)
-        return 0;
-    /*
-      persistent looks for __slotnames__ in the dict at deactivation time,
-      and if it's not present, calls ``copyreg._slotnames``, which itself
-      looks in the dict again. Then it does some computation, and tries to
-      store the object in the dict --- which for built-in types, it can't.
-      So we can save some runtime if we store an empty slotnames for these
-      classes.
-    */
-    slotnames = PyTuple_New(0);
-    if (!slotnames) {
-        return 0;
-    }
-    result = PyDict_SetItem(type->tp_dict, str___slotnames__, slotnames);
-    Py_DECREF(slotnames);
-    return result < 0 ? 0 : 1;
-}
-
-static int
-init_persist_type(PyTypeObject* type, cPersistenceCAPIstruct* capi_struct)
-{
-    return init_type_with_meta_base(
-        type, &PyType_Type, capi_struct->pertype
-    );
-}
-
-static int
-init_tree_type(
-    PyTypeObject* type,
-    PyTypeObject* bucket_type,
-    cPersistenceCAPIstruct* capi_struct)
-{
-    if (!init_type_with_meta_base(
-            type, &BTreeTypeType, capi_struct->pertype)
-    ) {
-        return 0;
-    }
-    if (PyDict_SetItem(
-            type->tp_dict, str__bucket_type, (PyObject*)bucket_type) < 0
-    ) {
-        return 0;
-    }
-    return 1;
-}
 
 typedef struct {
     PyObject* conflict_error;
@@ -804,13 +754,6 @@ _get_btreetype_setattro_allowed_names(PyTypeObject* type)
 }
 
 static inline cPersistenceCAPIstruct*
-_get_capi_struct_from_module(PyObject* module)
-{
-    module_state* state = PyModule_GetState(module);
-    return state->capi_struct;
-}
-
-static inline cPersistenceCAPIstruct*
 _get_capi_struct(PyObject* bucket_or_btree)
 {
     PyObject* module = _get_module(Py_TYPE(bucket_or_btree));
@@ -821,15 +764,81 @@ _get_capi_struct(PyObject* bucket_or_btree)
     return state->capi_struct;
 }
 
-static struct PyModuleDef module_def = {
-    PyModuleDef_HEAD_INIT,
-    .m_name                 = "_" MOD_NAME_PREFIX "BTree",
-    .m_doc                  = BTree_module_documentation,
-    .m_size                 = sizeof(module_state),
-    .m_methods              = module_methods,
-    .m_traverse             = module_traverse,
-    .m_clear                = module_clear,
-};
+static inline cPersistenceCAPIstruct*
+_get_capi_struct_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->capi_struct;
+}
+
+static PyTypeObject*
+init_type_with_meta_base(
+    PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base
+)
+{
+    PyTypeObject* new_type = NULL;
+    PyObject* slotnames;
+    int result;
+
+    ((PyObject*)type)->ob_type = meta;
+    type->tp_base = base;
+
+    if (PyType_Ready(type) < 0)
+        return NULL;
+    /*
+      persistent looks for __slotnames__ in the dict at deactivation time,
+      and if it's not present, calls ``copyreg._slotnames``, which itself
+      looks in the dict again. Then it does some computation, and tries to
+      store the object in the dict --- which for built-in types, it can't.
+      So we can save some runtime if we store an empty slotnames for these
+      classes.
+    */
+    slotnames = PyTuple_New(0);
+    if (!slotnames)
+        return NULL;
+
+    result = PyDict_SetItem(type->tp_dict, str___slotnames__, slotnames);
+    Py_DECREF(slotnames);
+
+    if (result >= 0)
+        new_type = type;
+
+    return new_type;
+}
+
+static PyTypeObject*
+init_persist_type(PyTypeObject* type, cPersistenceCAPIstruct* capi_struct)
+{
+    return init_type_with_meta_base(
+        type, &PyType_Type, capi_struct->pertype
+    );
+}
+
+static PyTypeObject*
+init_tree_type(
+    PyTypeObject* type,
+    PyTypeObject* bucket_type,
+    cPersistenceCAPIstruct* capi_struct)
+{
+    PyTypeObject* new_type = init_type_with_meta_base(
+        type, &BTreeTypeType, capi_struct->pertype);
+
+    if (new_type == NULL)
+        return NULL;
+
+    if (PyDict_SetItem(
+            type->tp_dict, str__bucket_type, (PyObject*)bucket_type) < 0)
+        return NULL;
+
+    return new_type;
+}
+
+static PyTypeObject*
+init_nonpersistent_type(PyTypeObject* type)
+{
+    /* What to do here? */
+    return type;
+}
 
 static int
 module_exec(PyObject* module)
@@ -956,16 +965,44 @@ module_exec(PyObject* module)
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_False) < 0)
         return -1;
 #endif
+
     return 0;
 }
+
+#if USE_MULTIPHASE_MODULE_INIT
+/* Slot definitions for multi-phase initialization
+ *
+ * See: https://docs.python.org/3/c-api/module.html#multi-phase-initialization
+ * and: https://peps.python.org/pep-0489
+ */
+static PyModuleDef_Slot module_slots[] = {
+    {Py_mod_exec,       module_exec},
+    {0,                 NULL}
+};
+#endif
+
+static struct PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    .m_name                 = "_" MOD_NAME_PREFIX "BTree",
+    .m_doc                  = BTree_module_documentation,
+    .m_size                 = sizeof(module_state),
+    .m_methods              = module_methods,
+    .m_traverse             = module_traverse,
+    .m_clear                = module_clear,
+#if USE_MULTIPHASE_MODULE_INIT
+    .m_slots                = module_slots,
+#endif
+};
 
 static PyObject*
 module_init(void)
 {
-    PyObject *module;
-
     if (intern_strings() < 0 )
         return NULL;
+
+#if USE_STATIC_MODULE_INIT
+
+    PyObject *module;
 
     /* Create the module and add the functions */
     module = PyModule_Create(&module_def);
@@ -974,6 +1011,12 @@ module_init(void)
         return NULL;
 
     return module;
+#endif
+
+#if USE_MULTIPHASE_MODULE_INIT
+    return PyModuleDef_Init(&module_def);
+#endif
+
 }
 
 PyMODINIT_FUNC
