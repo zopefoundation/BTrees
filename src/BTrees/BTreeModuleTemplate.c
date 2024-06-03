@@ -37,6 +37,10 @@
 #undef PER_CHANGED
 #endif
 
+#ifdef PER_READCURRENT
+#undef PER_READCURRENT
+#endif
+
 #ifdef PER_USE_OR_RETURN
 #undef PER_USE_OR_RETURN
 #endif
@@ -47,12 +51,6 @@
   else if ((O)->state==cPersistent_UPTODATE_STATE)      \
       (O)->state=cPersistent_STICKY_STATE;              \
 }
-
-#ifdef PER_READCURRENT
-#undef PER_READCURRENT
-#endif
-#define PER_READCURRENT(O, E)                                     \
-    if (capi_struct->readCurrent((cPersistentObject*)(O)) < 0) { E; }
 
 #ifdef PER_USE
 #undef PER_USE
