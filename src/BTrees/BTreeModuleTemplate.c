@@ -140,7 +140,11 @@ intern_strings()
     return 0;
 }
 
-static inline PyObject* _get_conflict_error(PyObject* bucket_or_btree);
+/* Temporary -- move to 'module_state'. */
+static inline PyObject* _get_conflict_error(
+    PyObject* bucket_or_btree);
+static inline PyObject* _get_btreetype_setattro_allowed_names(
+    PyTypeObject* type);
 static inline cPersistenceCAPIstruct* _get_capi_struct(
     PyObject* bucket_or_btree);
 static inline cPersistenceCAPIstruct* _get_capi_struct_from_module(
@@ -721,6 +725,7 @@ init_tree_type(
 typedef struct {
     PyObject* conflict_error;
     cPersistenceCAPIstruct* capi_struct;
+    PyObject* btreetype_setattro_allowed_names;
 } module_state;
 
 static int
@@ -730,6 +735,7 @@ module_traverse(PyObject* module, visitproc visit, void *arg)
     Py_VISIT(state->conflict_error);
     if (state->capi_struct)
         Py_VISIT(state->capi_struct->pertype);
+    Py_VISIT(state->btreetype_setattro_allowed_names);
     return 0;
 }
 
@@ -740,6 +746,7 @@ module_clear(PyObject* module)
     Py_CLEAR(state->conflict_error);
     if (state->capi_struct)
         Py_CLEAR(state->capi_struct->pertype);
+    Py_CLEAR(state->btreetype_setattro_allowed_names);
     return 0;
 }
 
@@ -770,6 +777,17 @@ _get_conflict_error(PyObject* bucket_or_btree)
 
     module_state* state = PyModule_GetState(module);
     return state->conflict_error;
+}
+
+static inline PyObject*
+_get_btreetype_setattro_allowed_names(PyTypeObject* type)
+{
+    PyObject* module = _get_module(type);
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->btreetype_setattro_allowed_names;
 }
 
 static inline cPersistenceCAPIstruct*
@@ -808,7 +826,7 @@ module_exec(PyObject* module)
     PyObject *interfaces;
     cPersistenceCAPIstruct *capi_struct;
 
-    BTreeType_setattro_allowed_names = PyTuple_Pack(
+    state->btreetype_setattro_allowed_names = PyTuple_Pack(
         5,
         /* BTree attributes  */
         str_max_internal_size,
@@ -818,6 +836,9 @@ module_exec(PyObject* module)
         str___providedBy__,
         str___provides__
     );
+
+    if (state->btreetype_setattro_allowed_names == NULL)
+        return -1;
 
     /* Grab the ConflictError class */
     interfaces = PyImport_ImportModule("BTrees.Interfaces");
