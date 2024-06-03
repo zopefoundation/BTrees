@@ -96,7 +96,8 @@ bucket_toBytes(PyObject *obj_self)
     PyObject *items = NULL;
     int len;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
     len = self->len;
 

@@ -397,7 +397,8 @@ set_length(Bucket *self)
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return -1;
     r = self->len;
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
@@ -413,7 +414,8 @@ set_item(Bucket *self, Py_ssize_t index)
 
     PyObject *r = 0;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
     if (index >= 0 && index < self->len)
     {
         COPY_KEY_TO_OBJECT(r, self->keys[index]);
@@ -762,7 +764,7 @@ nextSet(SetIteration *i)
 
     if (i->position >= 0)
     {
-        UNLESS(PER_USE(BUCKET(i->set)))
+        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), capi_struct))
             return -1;
 
         if (i->position)
