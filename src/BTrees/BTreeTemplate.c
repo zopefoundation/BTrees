@@ -767,7 +767,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     d = self->data + min;
 
 #ifdef PERSISTENT
-    PER_READCURRENT(self, goto Error);
+    if (capi_struct->readCurrent((cPersistentObject*)(self)) < 0) goto Error;
 #endif
 
     if (SameType_Check(self, d->child))
