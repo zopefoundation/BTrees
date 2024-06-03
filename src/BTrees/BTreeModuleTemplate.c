@@ -689,6 +689,13 @@ typedef struct {
     PyObject* conflict_error;
     cPersistenceCAPIstruct* capi_struct;
     PyObject* btreetype_setattro_allowed_names;
+    PyTypeObject* btree_type_type;
+    PyTypeObject* btree_type;
+    PyTypeObject* bucket_type;
+    PyTypeObject* set_type;
+    PyTypeObject* tree_set_type;
+    PyTypeObject* btree_items_type;
+    PyTypeObject* btree_iter_type;
 } module_state;
 
 static int
@@ -699,6 +706,13 @@ module_traverse(PyObject* module, visitproc visit, void *arg)
     if (state->capi_struct)
         Py_VISIT(state->capi_struct->pertype);
     Py_VISIT(state->btreetype_setattro_allowed_names);
+    Py_VISIT(state->btree_type_type);
+    Py_VISIT(state->btree_type);
+    Py_VISIT(state->bucket_type);
+    Py_VISIT(state->set_type);
+    Py_VISIT(state->tree_set_type);
+    Py_VISIT(state->btree_items_type);
+    Py_VISIT(state->btree_iter_type);
     return 0;
 }
 
@@ -710,6 +724,13 @@ module_clear(PyObject* module)
     if (state->capi_struct)
         Py_CLEAR(state->capi_struct->pertype);
     Py_CLEAR(state->btreetype_setattro_allowed_names);
+    Py_CLEAR(state->btree_type_type);
+    Py_CLEAR(state->btree_type);
+    Py_CLEAR(state->bucket_type);
+    Py_CLEAR(state->set_type);
+    Py_CLEAR(state->tree_set_type);
+    Py_CLEAR(state->btree_items_type);
+    Py_CLEAR(state->btree_iter_type);
     return 0;
 }
 
@@ -900,62 +921,83 @@ module_exec(PyObject* module)
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
 
-    if (!init_persist_type(&BucketType, state->capi_struct))
+    state->btree_type_type = init_type_with_meta_base(
+        &BTreeTypeType, &PyType_Type, &PyType_Type);
+
+    if (state->btree_type_type == NULL)
         return -1;
 
-    if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type))
+    state->bucket_type = init_persist_type(&BucketType, state->capi_struct);
+    if (state->bucket_type == NULL)
         return -1;
 
-    if (!init_tree_type(&BTreeType, &BucketType, state->capi_struct))
+    state->btree_type = init_tree_type(
+                            &BTreeType, state->bucket_type, state->capi_struct);
+    if (state->btree_type == NULL)
         return -1;
 
-    if (!init_persist_type(&SetType, state->capi_struct))
+    state->set_type = init_persist_type(&SetType, state->capi_struct);
+    if (state->set_type == NULL)
         return -1;
 
-    if (!init_tree_type(&TreeSetType, &SetType, state->capi_struct)) {
+    state->tree_set_type = init_tree_type(
+                            &TreeSetType, state->set_type, state->capi_struct);
+    if (state->tree_set_type == NULL)
         return -1;
-    }
+
+    state->btree_items_type = init_nonpersistent_type(&BTreeItemsType);
+    if (state->btree_items_type == NULL)
+        return -1;
+
+    state->btree_iter_type = init_nonpersistent_type(&BTreeIter_Type);
+    if (state->btree_iter_type == NULL)
+        return -1;
 
     /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
 
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
-                             (PyObject *)&BucketType) < 0)
+                             (PyObject *)state->bucket_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "BTree",
-                             (PyObject *)&BTreeType) < 0)
+                             (PyObject *)state->btree_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Set",
-                             (PyObject *)&SetType) < 0)
+                             (PyObject *)state->set_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeSet",
-                             (PyObject *)&TreeSetType) < 0)
+                             (PyObject *)state->tree_set_type) < 0)
+        return -1;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeItems",
+                             (PyObject *)state->btree_items_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeIterator",
-                             (PyObject *)&BTreeIter_Type) < 0)
+                             (PyObject *)state->btree_iter_type) < 0)
         return -1;
-        /* We also want to be able to access these constants without the
-         * prefix so that code can more easily exchange modules
-         * (particularly the integer and long modules, but also others).
-         *
-         * The TreeIterator is only internal, so we don't bother to
-         * expose that.
+
+    /* We also want to be able to access these constants without the
+     * prefix so that code can more easily exchange modules
+     * (particularly the integer and long modules, but also others).
+     *
+     * The TreeIterator is only internal, so we don't bother to
+     * expose that.
      */
     if (PyDict_SetItemString(mod_dict, "Bucket",
-                             (PyObject *)&BucketType) < 0)
+                             (PyObject *)state->bucket_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, "BTree",
-                             (PyObject *)&BTreeType) < 0)
+                             (PyObject *)state->btree_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, "Set",
-                             (PyObject *)&SetType) < 0)
+                             (PyObject *)state->set_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, "TreeSet",
-                             (PyObject *)&TreeSetType) < 0)
+                             (PyObject *)state->tree_set_type) < 0)
         return -1;
     if (PyDict_SetItemString(mod_dict, "TreeItems",
-                             (PyObject *)&BTreeItemsType) < 0)
+                             (PyObject *)state->btree_items_type) < 0)
         return -1;
+
 #if defined(ZODB_64BIT_INTS) && defined(NEED_LONG_LONG_SUPPORT)
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_True) < 0)
         return -1;
