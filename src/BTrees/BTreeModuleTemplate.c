@@ -98,6 +98,8 @@ intern_strings()
 }
 
 static inline PyObject* _get_conflict_error(PyObject* bucket_or_btree);
+static inline cPersistenceCAPIstruct* _get_capi_struct(
+    PyObject* bucket_or_btree);
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
@@ -643,18 +645,21 @@ init_type_with_meta_base(
 }
 
 static int
-init_persist_type(PyTypeObject* type)
+init_persist_type(PyTypeObject* type, cPersistenceCAPIstruct* capi_struct)
 {
     return init_type_with_meta_base(
-        type, &PyType_Type, cPersistenceCAPI->pertype
+        type, &PyType_Type, capi_struct->pertype
     );
 }
 
 static int
-init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
+init_tree_type(
+    PyTypeObject* type,
+    PyTypeObject* bucket_type,
+    cPersistenceCAPIstruct* capi_struct)
 {
     if (!init_type_with_meta_base(
-            type, &BTreeTypeType, cPersistenceCAPI->pertype)
+            type, &BTreeTypeType, capi_struct->pertype)
     ) {
         return 0;
     }
@@ -668,6 +673,7 @@ init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
 
 typedef struct {
     PyObject* conflict_error;
+    cPersistenceCAPIstruct* capi_struct;
 } module_state;
 
 static int
@@ -675,6 +681,8 @@ module_traverse(PyObject* module, visitproc visit, void *arg)
 {
     module_state* state = PyModule_GetState(module);
     Py_VISIT(state->conflict_error);
+    if (state->capi_struct)
+        Py_VISIT(state->capi_struct->pertype);
     return 0;
 }
 
@@ -683,6 +691,8 @@ module_clear(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     Py_CLEAR(state->conflict_error);
+    if (state->capi_struct)
+        Py_CLEAR(state->capi_struct->pertype);
     return 0;
 }
 
@@ -715,6 +725,22 @@ _get_conflict_error(PyObject* bucket_or_btree)
     return state->conflict_error;
 }
 
+static inline cPersistenceCAPIstruct*
+_get_capi_struct(PyObject* bucket_or_btree)
+{
+#if 1
+    /* Temporary */
+    return cPersistenceCAPI;
+#else
+    PyObject* module = _get_module(Py_TYPE(bucket_or_btree));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->capi_struct;
+#endif
+}
+
 static struct PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     .m_name                 = "_" MOD_NAME_PREFIX "BTree",
@@ -731,7 +757,7 @@ module_exec(PyObject* module)
     module_state* state = PyModule_GetState(module);
     PyObject *mod_dict;
     PyObject *interfaces;
-    cPersistenceCAPIstruct* capi_struct;
+    cPersistenceCAPIstruct *capi_struct;
 
     BTreeType_setattro_allowed_names = PyTuple_Pack(
         5,
@@ -760,8 +786,8 @@ module_exec(PyObject* module)
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    capi_struct = (cPersistenceCAPIstruct *)PyCapsule_Import(
-                "persistent.cPersistence.CAPI", 0);
+    capi_struct = (cPersistenceCAPIstruct*)PyCapsule_Import(
+                            "persistent.cPersistence.CAPI", 0);
     if (capi_struct == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
         * walk down to the specified attribute using getattr. If the C
@@ -774,9 +800,10 @@ module_exec(PyObject* module)
                 PyExc_ImportError, "persistent C extension unavailable");
        }
         return -1;
-   }
-   /* Temporary */
-   cPersistenceCAPI = capi_struct;
+    }
+    /* Temporary */
+    state->capi_struct = NULL;
+    cPersistenceCAPI = capi_struct;
 
 
     ((PyObject*)&BTreeItemsType)->ob_type = &PyType_Type;
@@ -787,20 +814,19 @@ module_exec(PyObject* module)
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
 
-    if (!init_persist_type(&BucketType))
+    if (!init_persist_type(&BucketType, capi_struct))
         return -1;
 
-    if (!init_type_with_meta_base(
-            &BTreeTypeType, &PyType_Type, &PyType_Type))
+    if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type))
         return -1;
 
-    if (!init_tree_type(&BTreeType, &BucketType))
+    if (!init_tree_type(&BTreeType, &BucketType, capi_struct))
         return -1;
 
-    if (!init_persist_type(&SetType))
+    if (!init_persist_type(&SetType, capi_struct))
         return -1;
 
-    if (!init_tree_type(&TreeSetType, &SetType)) {
+    if (!init_tree_type(&TreeSetType, &SetType, capi_struct)) {
         return -1;
     }
 
