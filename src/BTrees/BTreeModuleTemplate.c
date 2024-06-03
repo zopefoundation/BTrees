@@ -154,14 +154,20 @@ intern_strings()
 }
 
 /* Temporary -- move to 'module_state'. */
-static inline PyObject* _get_conflict_error(
-    PyObject* bucket_or_btree);
+static inline PyObject* _get_conflict_error( PyObject* bt_obj);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
-    PyTypeObject* type);
-static inline cPersistenceCAPIstruct* _get_capi_struct(
-    PyObject* bucket_or_btree);
+                            PyTypeObject* type);
+static inline cPersistenceCAPIstruct* _get_capi_struct(PyObject* bt_obj);
 static inline cPersistenceCAPIstruct* _get_capi_struct_from_module(
-    PyObject* module);
+                            PyObject* module);
+static inline PyTypeObject* _get_btree_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_btree_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_bucket_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_bucket_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_set_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_set_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_tree_set_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_tree_set_type_from_module(PyObject* module);
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
@@ -773,9 +779,9 @@ _get_btreetype_setattro_allowed_names(PyTypeObject* type)
 }
 
 static inline cPersistenceCAPIstruct*
-_get_capi_struct(PyObject* bucket_or_btree)
+_get_capi_struct(PyObject* bt_obj)
 {
-    PyObject* module = _get_module(Py_TYPE(bucket_or_btree));
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
     if (module == NULL)
         return NULL;
 
@@ -788,6 +794,78 @@ _get_capi_struct_from_module(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->capi_struct;
+}
+
+static inline PyTypeObject*
+_get_btree_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->btree_type;
+}
+
+static inline PyTypeObject*
+_get_btree_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_type;
+}
+
+static inline PyTypeObject*
+_get_bucket_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->bucket_type;
+}
+
+static inline PyTypeObject*
+_get_bucket_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->bucket_type;
+}
+
+static inline PyTypeObject*
+_get_set_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->set_type;
+}
+
+static inline PyTypeObject*
+_get_set_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->set_type;
+}
+
+static inline PyTypeObject*
+_get_tree_set_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->tree_set_type;
+}
+
+static inline PyTypeObject*
+_get_tree_set_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->tree_set_type;
 }
 
 static PyTypeObject*
