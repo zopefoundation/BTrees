@@ -825,7 +825,6 @@ module_exec(PyObject* module)
     module_state* state = PyModule_GetState(module);
     PyObject *mod_dict;
     PyObject *interfaces;
-    cPersistenceCAPIstruct *capi_struct;
 
     state->btreetype_setattro_allowed_names = PyTuple_Pack(
         5,
@@ -857,9 +856,9 @@ module_exec(PyObject* module)
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    capi_struct = (cPersistenceCAPIstruct*)PyCapsule_Import(
+    state->capi_struct = (cPersistenceCAPIstruct*)PyCapsule_Import(
                             "persistent.cPersistence.CAPI", 0);
-    if (capi_struct == NULL) {
+    if (state->capi_struct == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
         * walk down to the specified attribute using getattr. If the C
         * extensions aren't available, this can result in an
@@ -872,7 +871,6 @@ module_exec(PyObject* module)
        }
         return -1;
     }
-    state->capi_struct = capi_struct;
 
 
     ((PyObject*)&BTreeItemsType)->ob_type = &PyType_Type;
@@ -883,19 +881,19 @@ module_exec(PyObject* module)
     BTreeType.tp_new = PyType_GenericNew;
     TreeSetType.tp_new = PyType_GenericNew;
 
-    if (!init_persist_type(&BucketType, capi_struct))
+    if (!init_persist_type(&BucketType, state->capi_struct))
         return -1;
 
     if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type))
         return -1;
 
-    if (!init_tree_type(&BTreeType, &BucketType, capi_struct))
+    if (!init_tree_type(&BTreeType, &BucketType, state->capi_struct))
         return -1;
 
-    if (!init_persist_type(&SetType, capi_struct))
+    if (!init_persist_type(&SetType, state->capi_struct))
         return -1;
 
-    if (!init_tree_type(&TreeSetType, &SetType, capi_struct)) {
+    if (!init_tree_type(&TreeSetType, &SetType, state->capi_struct)) {
         return -1;
     }
 
