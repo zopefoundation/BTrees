@@ -2558,11 +2558,11 @@ static PyNumberMethods BTree_as_number_for_nonzero = {
     bucket_or,                              /* nb_or */
 };
 
-static PyObject* BTreeType_setattro_allowed_names; /* initialized in module */
 
 static int
 BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
 {
+    PyObject* allowed_names = _get_btreetype_setattro_allowed_names(type);
     /*
       type.tp_setattro prohibits setting any attributes on a built-in type,
       so we need to use our own (metaclass) type to handle it. The set of
@@ -2574,7 +2574,7 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
       attributes.
     */
     int allowed;
-    allowed = PySequence_Contains(BTreeType_setattro_allowed_names, name);
+    allowed = PySequence_Contains(allowed_names, name);
     if (allowed < 0) {
         return -1;
     }
