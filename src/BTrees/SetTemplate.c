@@ -285,7 +285,8 @@ set_setstate(Bucket *self, PyObject *args)
 
     PER_PREVENT_DEACTIVATION(self);
     r=_set_setstate(self, args);
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
 
     if (r < 0)
         return NULL;
@@ -398,7 +399,8 @@ set_length(Bucket *self)
 
     PER_USE_OR_RETURN(self, -1);
     r = self->len;
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
 
     return r;
 }
@@ -419,7 +421,8 @@ set_item(Bucket *self, Py_ssize_t index)
     else
         IndexError(index);
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
 
     return r;
 }

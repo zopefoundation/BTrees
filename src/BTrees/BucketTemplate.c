@@ -115,7 +115,8 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
     }
 
 Done:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 }
 
@@ -476,7 +477,8 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
         result = 1;
 
 Done:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return result;
 }
 
@@ -660,7 +662,8 @@ Bucket_deleteNextBucket(Bucket *self)
         UNLESS (PER_USE(successor))
             goto Done;
         next = successor->next;
-        PER_UNUSE(successor);
+        PER_ALLOW_DEACTIVATION(successor);
+        PER_ACCESSED(successor);
 
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
@@ -671,7 +674,8 @@ Bucket_deleteNextBucket(Bucket *self)
     result = 0;
 
 Done:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return result;
 }
 
@@ -754,7 +758,8 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
         *offset = i;
 
 Done:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return result;
 }
 
@@ -793,7 +798,8 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
         offset = self->len -1;
 
     COPY_KEY_TO_OBJECT(key, self->keys[offset]);
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
 
     return key;
 
@@ -801,7 +807,8 @@ empty:
     PyErr_SetString(PyExc_ValueError,
                     empty_bucket ? "empty bucket" :
                     "no key satisfies the conditions");
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return NULL;
 }
 
@@ -927,11 +934,13 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
             goto err;
     }
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -974,11 +983,13 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
             goto err;
     }
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -1034,11 +1045,13 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
         item = 0;
     }
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1113,11 +1126,13 @@ bucket_byValue(Bucket *self, PyObject *omin)
         goto err;
     Py_DECREF(item);
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1230,12 +1245,14 @@ bucket_clear(Bucket *self, PyObject *args)
         if (capi_struct->changed((cPersistentObject*)self) < 0)
         goto err;
     }
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_INCREF(Py_None);
     return Py_None;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return NULL;
 }
 
@@ -1316,11 +1333,13 @@ bucket_getstate(Bucket *self)
         state = Py_BuildValue("(O)", items);
     Py_DECREF(items);
 
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return state;
 
 err:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     Py_XDECREF(items);
     return NULL;
 }
@@ -1410,7 +1429,8 @@ bucket_setstate(Bucket *self, PyObject *state)
 
     PER_PREVENT_DEACTIVATION(self);
     r = _bucket_setstate(self, state);
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
 
     if (r < 0)
         return NULL;
@@ -1647,7 +1667,8 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
     Py_DECREF(items);
 
 Done:
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return (PyObject *)result;
 }
 
@@ -1956,7 +1977,8 @@ Bucket_length( Bucket *self)
     UNLESS (PER_USE(self))
         return -1;
     r = self->len;
-    PER_UNUSE(self);
+    PER_ALLOW_DEACTIVATION(self);
+    PER_ACCESSED(self);
     return r;
 }
 
