@@ -1991,44 +1991,6 @@ Bucket_length( Bucket *self)
     return r;
 }
 
-static PyMappingMethods Bucket_as_mapping = {
-    (lenfunc)Bucket_length,             /*mp_length*/
-    (binaryfunc)bucket_getitem,         /*mp_subscript*/
-    (objobjargproc)bucket_setitem,      /*mp_ass_subscript*/
-};
-
-static PySequenceMethods Bucket_as_sequence = {
-    (lenfunc)0,                         /* sq_length */
-    (binaryfunc)0,                      /* sq_concat */
-    (ssizeargfunc)0,                    /* sq_repeat */
-    (ssizeargfunc)0,                    /* sq_item */
-    (ssizessizeargfunc)0,               /* sq_slice */
-    (ssizeobjargproc)0,                 /* sq_ass_item */
-    (ssizessizeobjargproc)0,            /* sq_ass_slice */
-    (objobjproc)bucket_contains,        /* sq_contains */
-    0,                                  /* sq_inplace_concat */
-    0,                                  /* sq_inplace_repeat */
-};
-
-static PyNumberMethods Bucket_as_number = {
-     (binaryfunc)0,                     /* nb_add */
-     bucket_sub,                        /* nb_subtract */
-     (binaryfunc)0,                     /* nb_multiply */
-     (binaryfunc)0,                     /* nb_remainder */
-     (binaryfunc)0,                     /* nb_divmod */
-     (ternaryfunc)0,                    /* nb_power */
-     (unaryfunc)0,                      /* nb_negative */
-     (unaryfunc)0,                      /* nb_positive */
-     (unaryfunc)0,                      /* nb_absolute */
-     (inquiry)0,                        /* nb_bool */
-     (unaryfunc)0,                      /* nb_invert */
-     (binaryfunc)0,                     /* nb_lshift */
-     (binaryfunc)0,                     /* nb_rshift */
-     bucket_and,                        /* nb_and */
-     (binaryfunc)0,                     /* nb_xor */
-     bucket_or,                         /* nb_or */
-};
-
 
 static PyObject *
 bucket_repr(Bucket *self)
@@ -2045,47 +2007,40 @@ bucket_repr(Bucket *self)
     return r;
 }
 
-static PyTypeObject BucketType = {
+static PyNumberMethods Bucket_as_number = {
+     .nb_subtract               = bucket_sub,
+     .nb_and                    = bucket_and,
+     .nb_or                     = bucket_or,
+};
+
+static PyMappingMethods Bucket_as_mapping = {
+    .mp_length                  = (lenfunc)Bucket_length,
+    .mp_subscript               = (binaryfunc)bucket_getitem,
+    .mp_ass_subscript           = (objobjargproc)bucket_setitem,
+};
+
+static PySequenceMethods Bucket_as_sequence = {
+    .sq_contains                = (objobjproc)bucket_contains,
+};
+
+static PyTypeObject Bucket_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "Bucket",   /* tp_name */
-    sizeof(Bucket),                         /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    (destructor)bucket_dealloc,             /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    (reprfunc)bucket_repr,                  /* tp_repr */
-    &Bucket_as_number,                      /* tp_as_number */
-    &Bucket_as_sequence,                    /* tp_as_sequence */
-    &Bucket_as_mapping,                     /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_HAVE_GC |
-    Py_TPFLAGS_BASETYPE,                    /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)bucket_traverse,          /* tp_traverse */
-    (inquiry)bucket_tp_clear,               /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    (getiterfunc)Bucket_getiter,            /* tp_iter */
-    0,                                      /* tp_iternext */
-    Bucket_methods,                         /* tp_methods */
-    Bucket_members,                         /* tp_members */
-    0,                                      /* tp_getset */
-    0,                                      /* tp_base */
-    0,                                      /* tp_dict */
-    0,                                      /* tp_descr_get */
-    0,                                      /* tp_descr_set */
-    0,                                      /* tp_dictoffset */
-    Bucket_init,                            /* tp_init */
-    0,                                      /* tp_alloc */
-    0, /*PyType_GenericNew,*/               /* tp_new */
+    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "Bucket",
+    .tp_basicsize           = sizeof(Bucket),
+    .tp_dealloc             = (destructor)bucket_dealloc,
+    .tp_repr                = (reprfunc)bucket_repr,
+    .tp_as_number           = &Bucket_as_number,
+    .tp_as_sequence         = &Bucket_as_sequence,
+    .tp_as_mapping          = &Bucket_as_mapping,
+    .tp_flags               = Py_TPFLAGS_DEFAULT |
+                              Py_TPFLAGS_HAVE_GC |
+                              Py_TPFLAGS_BASETYPE,
+    .tp_traverse            = (traverseproc)bucket_traverse,
+    .tp_clear               = (inquiry)bucket_tp_clear,
+    .tp_iter                = (getiterfunc)Bucket_getiter,
+    .tp_methods             = Bucket_methods,
+    .tp_members             = Bucket_members,
+    .tp_init                = Bucket_init,
 };
 
 static int

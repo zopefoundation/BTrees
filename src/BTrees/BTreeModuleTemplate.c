@@ -406,9 +406,9 @@ typedef struct BTree_s {
   long max_leaf_size;
 } BTree;
 
-static PyTypeObject BTreeTypeType;
-static PyTypeObject BTreeType;
-static PyTypeObject BucketType;
+static PyTypeObject BTreeType_type_def; /* metatype */
+static PyTypeObject BTree_type_def;
+static PyTypeObject Bucket_type_def;
 
 #define BTREE(O) ((BTree*)(O))
 
@@ -840,7 +840,7 @@ init_tree_type(
     cPersistenceCAPIstruct* capi_struct)
 {
     PyTypeObject* new_type = init_type_with_meta_base(
-        type, &BTreeTypeType, capi_struct->pertype);
+        type, &BTreeType_type_def, capi_struct->pertype);
 
     if (new_type == NULL)
         return NULL;
@@ -916,32 +916,40 @@ module_exec(PyObject* module)
     ((PyObject*)&BTreeItemsType)->ob_type = &PyType_Type;
     ((PyObject*)&BTreeIter_Type)->ob_type = &PyType_Type;
     BTreeIter_Type.tp_getattro = PyObject_GenericGetAttr;
-    BucketType.tp_new = PyType_GenericNew;
-    SetType.tp_new = PyType_GenericNew;
-    BTreeType.tp_new = PyType_GenericNew;
-    TreeSetType.tp_new = PyType_GenericNew;
+    Bucket_type_def.tp_new = PyType_GenericNew;
+    Set_type_def.tp_new = PyType_GenericNew;
+    BTree_type_def.tp_new = PyType_GenericNew;
+    TreeSet_type_def.tp_new = PyType_GenericNew;
 
     state->btree_type_type = init_type_with_meta_base(
-        &BTreeTypeType, &PyType_Type, &PyType_Type);
+                                &BTreeType_type_def,
+                                &PyType_Type,
+                                &PyType_Type);
 
     if (state->btree_type_type == NULL)
         return -1;
 
-    state->bucket_type = init_persist_type(&BucketType, state->capi_struct);
+    state->bucket_type = init_persist_type(
+                                &Bucket_type_def,
+                                state->capi_struct);
     if (state->bucket_type == NULL)
         return -1;
 
     state->btree_type = init_tree_type(
-                            &BTreeType, state->bucket_type, state->capi_struct);
+                                &BTree_type_def,
+                                state->bucket_type,
+                                state->capi_struct);
     if (state->btree_type == NULL)
         return -1;
 
-    state->set_type = init_persist_type(&SetType, state->capi_struct);
+    state->set_type = init_persist_type(&Set_type_def, state->capi_struct);
     if (state->set_type == NULL)
         return -1;
 
     state->tree_set_type = init_tree_type(
-                            &TreeSetType, state->set_type, state->capi_struct);
+                                &TreeSet_type_def,
+                                state->set_type,
+                                state->capi_struct);
     if (state->tree_set_type == NULL)
         return -1;
 

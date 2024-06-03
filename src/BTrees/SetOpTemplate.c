@@ -116,7 +116,8 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
     i->position = -1;     /* set to 0 only on normal return */
     i->usesValue = 0;     /* assume it's a set or that values aren't iterated */
 
-    if (PyObject_IsInstance(s, (PyObject *)&BucketType)) {
+    /* TODO: get this from the module state */
+    if (PyObject_IsInstance(s, (PyObject *)&Bucket_type_def)) {
         i->set = s;
         Py_INCREF(s);
 
@@ -127,11 +128,13 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
             i->next = nextSet;
         }
     }
-    else if (PyObject_IsInstance(s, (PyObject *)&SetType)) {
+    /* TODO: get this from the module state */
+    else if (PyObject_IsInstance(s, (PyObject *)&Set_type_def)) {
         i->set = s;
         Py_INCREF(s);
         i->next = nextSet;
-    } else if (PyObject_IsInstance(s, (PyObject *)&BTreeType)) {
+    /* TODO: get this from the module state */
+    } else if (PyObject_IsInstance(s, (PyObject *)&BTree_type_def)) {
         i->set = BTree_rangeSearch(BTREE(s), NULL, NULL, 'i');
         UNLESS(i->set) return -1;
 
@@ -141,7 +144,8 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
         } else {
             i->next = nextTreeSetItems;
         }
-    } else if (PyObject_IsInstance(s, (PyObject *)&TreeSetType)) {
+    /* TODO: get this from the module state */
+    } else if (PyObject_IsInstance(s, (PyObject *)&TreeSet_type_def)) {
         i->set = BTree_rangeSearch(BTREE(s), NULL, NULL, 'k');
         UNLESS(i->set) return -1;
         i->next = nextTreeSetItems;
@@ -322,10 +326,12 @@ set_operation(
         }
 #endif
 
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&BucketType), NULL)))
+        /* TODO: get this from the module state */
+        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&Bucket_type_def), NULL)))
             goto err;
     } else {
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&SetType), NULL)))
+        /* TODO: get this from the module state */
+        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(&Set_type_def), NULL)))
             goto err;
     }
 
@@ -511,7 +517,8 @@ wintersection_m(PyObject *module, PyObject *args)
     if (o1)
         ASSIGN(o1, Py_BuildValue(
             VALUE_PARSE "O",
-            ((o1->ob_type == (PyTypeObject*)(&SetType)) ? w2 + w1 : 1),
+            /* TODO: get this from the module state */
+            ((o1->ob_type == (PyTypeObject*)(&Set_type_def)) ? w2 + w1 : 1),
             o1));
 
     return o1;
@@ -545,7 +552,8 @@ multiunion_m(PyObject *module, PyObject *args)
         return NULL;
 
     /* Construct an empty result set. */
-    result = BUCKET(PyObject_CallObject(OBJECT(&SetType), NULL));
+    /* TODO: get this from the module state */
+    result = BUCKET(PyObject_CallObject(OBJECT(&Set_type_def), NULL));
     if (result == NULL)
         return NULL;
 
@@ -557,8 +565,9 @@ multiunion_m(PyObject *module, PyObject *args)
         goto Error;
 
         /* If set is a bucket, do a straight resize + memcpy. */
-        if (set->ob_type == (PyTypeObject*)&SetType ||
-            set->ob_type == (PyTypeObject*)&BucketType) {
+        /* TODO: get these from the module state */
+        if (set->ob_type == (PyTypeObject*)&Set_type_def ||
+            set->ob_type == (PyTypeObject*)&Bucket_type_def) {
             Bucket *b = BUCKET(set);
             int status = 0;
 

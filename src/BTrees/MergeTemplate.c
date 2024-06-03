@@ -113,9 +113,11 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3)
   set = !mapping;
 
   if (mapping)
-    r = (Bucket *)PyObject_CallObject((PyObject *)&BucketType, NULL);
+    /* TODO: get this from the module state */
+    r = (Bucket *)PyObject_CallObject((PyObject *)&Bucket_type_def, NULL);
   else
-    r = (Bucket *)PyObject_CallObject((PyObject *)&SetType, NULL);
+    /* TODO: get this from the module state */
+    r = (Bucket *)PyObject_CallObject((PyObject *)&Set_type_def, NULL);
   if (r == NULL)
     goto err;
 
