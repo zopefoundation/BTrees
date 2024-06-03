@@ -713,17 +713,15 @@ module_clear(PyObject* module)
     return 0;
 }
 
-static struct PyModuleDef module_def;
-
 static inline PyObject*
-_get_module(PyTypeObject* type)
+_get_module(PyTypeObject* typeobj)
 {
 #if USE_STATIC_MODULE_INIT
     return PyState_FindModule(&module_def);
 #else
     if (PyType_Check(typeobj)) {
         /* Only added in Python 3.11 */
-        return PyType_GetModuleByDef(typeobj, &CP_module_def);
+        return PyType_GetModuleByDef(typeobj, &module_def);
     }
 
     PyErr_SetString(PyExc_TypeError, "_get_module: called w/ non-type");
