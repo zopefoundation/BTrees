@@ -499,6 +499,7 @@ wunion_m(PyObject *module, PyObject *args)
 static PyObject *
 wintersection_m(PyObject *module, PyObject *args)
 {
+    PyTypeObject *set_type = _get_set_type_from_module(module);
     PyObject *o1;
     PyObject *o2;
     VALUE_TYPE w1 = 1;
@@ -517,7 +518,7 @@ wintersection_m(PyObject *module, PyObject *args)
     if (o1)
         ASSIGN(o1, Py_BuildValue(
             VALUE_PARSE "O",
-            ((o1->ob_type == (PyTypeObject*)(&Set_type_def)) ? w2 + w1 : 1),
+            ((o1->ob_type == set_type) ? w2 + w1 : 1),
             o1));
 
     return o1;
