@@ -168,6 +168,10 @@ static inline PyTypeObject* _get_set_type(PyObject* bt_obj);
 static inline PyTypeObject* _get_set_type_from_module(PyObject* module);
 static inline PyTypeObject* _get_tree_set_type(PyObject* bt_obj);
 static inline PyTypeObject* _get_tree_set_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_btree_items_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_btree_items_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_btree_iter_type(PyObject* bt_obj);
+static inline PyTypeObject* _get_btree_iter_type_from_module(PyObject* module);
 
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
@@ -866,6 +870,42 @@ _get_tree_set_type_from_module(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->tree_set_type;
+}
+
+static inline PyTypeObject*
+_get_btree_items_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->btree_items_type;
+}
+
+static inline PyTypeObject*
+_get_btree_items_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_items_type;
+}
+
+static inline PyTypeObject*
+_get_btree_iter_type(PyObject* bt_obj)
+{
+    PyObject* module = _get_module(Py_TYPE(bt_obj));
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->btree_iter_type;
+}
+
+static inline PyTypeObject*
+_get_btree_iter_type_from_module(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_iter_type;
 }
 
 static PyTypeObject*
