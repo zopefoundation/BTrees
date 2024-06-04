@@ -324,10 +324,13 @@ set_operation(PyObject *s1,
         }
 #endif
 
-        UNLESS(r = BUCKET(PyObject_CallObject(OBJECT(bucket_type), NULL)))
+        r = BUCKET(bucket_type->tp_alloc(bucket_type, 0));
+        if(r == NULL)
             goto err;
     } else {
-        UNLESS(r = BUCKET(PyObject_CallObject(OBJECT(set_type), NULL)))
+
+        r = BUCKET(set_type->tp_alloc(set_type, 0));
+        if(r == NULL)
             goto err;
     }
 
@@ -544,7 +547,7 @@ multiunion_m(PyObject *module, PyObject *args) {
         return NULL;
 
     /* Construct an empty result set. */
-    result = BUCKET(PyObject_CallObject(OBJECT(set_type), NULL));
+    result = BUCKET(set_type->tp_alloc(set_type, 0));
     if (result == NULL)
         return NULL;
 

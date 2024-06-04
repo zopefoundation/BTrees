@@ -111,10 +111,11 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
     mapping = i1.usesValue | i2.usesValue | i3.usesValue;
     set = !mapping;
 
-    if (mapping)
-        r = (Bucket *)PyObject_CallObject((PyObject *)bucket_type, NULL);
-    else
-        r = (Bucket *)PyObject_CallObject((PyObject *)set_type, NULL);
+    if (mapping) {
+        r = BUCKET(bucket_type->tp_alloc(bucket_type, 0));
+    } else {
+        r = BUCKET(set_type->tp_alloc(set_type, 0));
+    }
     if (r == NULL)
         goto err;
 

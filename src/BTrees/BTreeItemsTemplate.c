@@ -592,15 +592,10 @@ newBTreeItems(PyObject* module, char kind,
     PyTypeObject* btree_items_type = _get_btree_items_type_from_module(module);
     BTreeItems *self;
 
-#if USE_STATIC_TYPES
-    UNLESS (self = PyObject_NEW(BTreeItems, btree_items_type))
-        return NULL;
-#else
-    /* Need to allocate in a GC-aware way */
     self = (BTreeItems*)btree_items_type->tp_alloc(btree_items_type, 0);
     if (self == NULL)
         return NULL;
-#endif
+
     self->kind=kind;
 
     self->first=lowoffset;
@@ -745,11 +740,7 @@ newBTreeIter(PyObject* module, BTreeItems *pitems)
 
     assert(pitems != NULL);
 
-#if USE_STATIC_TYPES
-    result = PyObject_New(BTreeIter, btree_iter_type);
-#else
     result = (BTreeIter*)btree_iter_type->tp_alloc(btree_iter_type, 0);
-#endif
 
     if (result)
     {
