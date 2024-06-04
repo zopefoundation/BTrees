@@ -2465,54 +2465,47 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
     PyObject* obj_self = (PyObject*)self;
     PyTypeObject *btree_type = _get_btree_type(obj_self);
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
-    int err = 0;
+
     int i;
     int len;
 
-#define VISIT(SLOT)                             \
-  if (SLOT) {                                   \
-    err = visit((PyObject *)(SLOT), arg);       \
-    if (err)                                    \
-      goto Done;                                \
-  }
+    if (capi_struct == NULL)
+        return -1;
 
     if (Py_TYPE(self) == btree_type)
         assert(Py_TYPE(self)->tp_dictoffset == 0);
 
-    /* Call our base type's traverse function.  Because BTrees are
-    * subclasses of Peristent, there must be one.
+    /* Call our base type's traverse function.
+     *
+     * Because BTrees are subclasses of Peristent, there must be one.
     */
-    err = capi_struct->pertype->tp_traverse(
-        (PyObject *)self, visit, arg);
-    if (err)
-        goto Done;
+    if (capi_struct->pertype->tp_traverse((PyObject *)self, visit, arg) < 0)
+        return -1;
 
     /* If this is registered with the persistence system, cleaning up cycles
     * is the database's problem.  It would be horrid to unghostify BTree
     * nodes here just to chase pointers every time gc runs.
     */
     if (self->state == cPersistent_GHOST_STATE)
-        goto Done;
+        return 0;
 
     len = self->len;
+
 #ifdef KEY_TYPE_IS_PYOBJECT
     /* Keys are Python objects so need to be traversed.  Note that the
     * key 0 slot is unused and should not be traversed.
     */
     for (i = 1; i < len; i++)
-        VISIT(self->data[i].key);
+        Py_VISIT(self->data[i].key);
 #endif
 
     /* Children are always pointers, and child 0 is legit. */
     for (i = 0; i < len; i++)
-        VISIT(self->data[i].child);
+        Py_VISIT(self->data[i].child);
 
-    VISIT(self->firstbucket);
+    Py_VISIT(self->firstbucket);
 
-Done:
-    return err;
-
-#undef VISIT
+    return 0;
 }
 
 static int
