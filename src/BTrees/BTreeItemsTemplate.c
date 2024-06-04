@@ -585,7 +585,7 @@ newBTreeItems(PyObject* module, char kind,
 static int
 nextBTreeItems(SetIteration *i)
 {
-    PyObject* obj_self = (PyObject*)i;
+    PyObject* obj_self = i->set;
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
@@ -633,7 +633,7 @@ nextBTreeItems(SetIteration *i)
 static int
 nextTreeSetItems(SetIteration *i)
 {
-    PyObject* obj_self = (PyObject*)i;
+    PyObject* obj_self = i->set;
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {

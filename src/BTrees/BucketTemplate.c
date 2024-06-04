@@ -2088,7 +2088,7 @@ static PyType_Spec Bucket_type_spec = {
 static int
 nextBucket(SetIteration *i)
 {
-    PyObject* obj_self = (PyObject*)i;
+    PyObject* obj_self = i->set;
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
