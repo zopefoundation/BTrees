@@ -675,8 +675,6 @@ nextTreeSetItems(SetIteration *i)
 
 /* Support for the iteration protocol */
 
-static PyTypeObject BTreeIter_type_def;
-
 /* The type of iterator objects, returned by e.g. iter(IIBTree()). */
 typedef struct
 {
