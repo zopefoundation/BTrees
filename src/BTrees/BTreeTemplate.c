@@ -2272,12 +2272,14 @@ BTree_addUnique(BTree *self, PyObject *args)
 static PyObject *
 buildBTreeIter(BTree *self, PyObject *args, PyObject *kw, char kind)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
     BTreeIter *result = NULL;
     BTreeItems *items = (BTreeItems *)BTree_rangeSearch(self, args, kw, kind);
 
     if (items)
     {
-        result = BTreeIter_new(items);
+        result = newBTreeIter(module, items);
         Py_DECREF(items);
     }
     return (PyObject *)result;

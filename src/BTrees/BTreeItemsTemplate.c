@@ -690,12 +690,13 @@ typedef struct
  * represented by pitems.  pitems must not be NULL.  Returns NULL if error.
  */
 static BTreeIter *
-BTreeIter_new(BTreeItems *pitems)
+newBTreeIter(PyObject* module, BTreeItems *pitems)
 {
+    PyTypeObject* btree_iter_type = _get_btree_iter_type_from_module(module);
     BTreeIter *result;
 
     assert(pitems != NULL);
-    result = PyObject_New(BTreeIter, &BTreeIter_Type);
+    result = PyObject_New(BTreeIter, btree_iter_type);
     if (result)
     {
         Py_INCREF(pitems);

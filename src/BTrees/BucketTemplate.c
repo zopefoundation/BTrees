@@ -1675,7 +1675,7 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
     if (items == NULL)
         goto Done;
 
-    result = BTreeIter_new(items);      /* win or lose, we're done */
+    result = newBTreeIter(module, items);      /* win or lose, we're done */
     Py_DECREF(items);
 
 Done:
