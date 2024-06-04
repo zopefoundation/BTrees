@@ -480,6 +480,12 @@ BTreeItems_nonzero(BTreeItems *self)
     return BTreeItems_length_or_nonzero(self, 1);
 }
 
+static const char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
+static const char BTreeItems__doc__[] =
+    "Sequence type used to iterate over BTree items.";
+
+#ifdef USE_STATIC_TYPES
+
 static PyNumberMethods BTreeItems_as_number_for_nonzero = {
    .nb_bool                 = (inquiry)BTreeItems_nonzero
 };
@@ -498,10 +504,6 @@ static PyMappingMethods BTreeItems_as_mapping = {
     (binaryfunc)BTreeItems_subscript,       /* mp_subscript */
 };
 
-static char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
-static char BTreeItems__doc__[] =
-    "Sequence type used to iterate over BTree items.";
-
 static PyTypeObject BTreeItems_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name                = BTreeItems__name__,
@@ -513,6 +515,11 @@ static PyTypeObject BTreeItems_type_def = {
     .tp_as_mapping          = &BTreeItems_as_mapping,
     .tp_dealloc             = (destructor) BTreeItems_dealloc,
 };
+
+#else
+
+
+#endif
 
 /* Returns a new BTreeItems object representing the contiguous slice from
  * offset lowoffset in bucket lowbucket through offset highoffset in bucket
@@ -760,8 +767,11 @@ BTreeIter_getiter(PyObject *it)
     return it;
 }
 
-const char BTreeIter__name__[] = MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
-const char BTreeIter__doc__[] = "Iterator for BTree items";
+static const char BTreeIter__name__[] =
+    MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
+static const char BTreeIter__doc__[] = "Iterator for BTree items";
+
+#ifdef USE_STATIC_TYPES
 
 static PyTypeObject BTreeIter_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -773,3 +783,8 @@ static PyTypeObject BTreeIter_type_def = {
     .tp_iternext            = (iternextfunc)BTreeIter_next,
     .tp_dealloc             = (destructor)BTreeIter_dealloc,
 };
+
+#else
+
+
+#endif
