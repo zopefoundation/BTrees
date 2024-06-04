@@ -1765,6 +1765,7 @@ static PyObject *
 BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 {
     PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *min = Py_None;
     PyObject *max = Py_None;
@@ -1932,7 +1933,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
     capi_struct->accessed((cPersistentObject*)self);
 
     result = newBTreeItems(
-        type, lowbucket, lowoffset, highbucket, highoffset);
+        module, type, lowbucket, lowoffset, highbucket, highoffset);
     Py_DECREF(lowbucket);
     Py_DECREF(highbucket);
     return result;
@@ -1953,7 +1954,7 @@ empty_and_decref_buckets:
 empty:
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
-    return newBTreeItems(type, 0, 0, 0, 0);
+    return newBTreeItems(module, type, 0, 0, 0, 0);
 }
 
 /*
