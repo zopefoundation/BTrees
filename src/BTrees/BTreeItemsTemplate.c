@@ -474,10 +474,14 @@ BTreeItems_subscript(BTreeItems *self, PyObject* subscript)
     return NULL;
 }
 
-/* Py3K doesn't honor sequence slicing, so implement via mapping */
-static PyMappingMethods BTreeItems_as_mapping = {
-    (lenfunc)BTreeItems_length,             /* mp_length */
-    (binaryfunc)BTreeItems_subscript,       /* mp_subscript */
+static int
+BTreeItems_nonzero(BTreeItems *self)
+{
+    return BTreeItems_length_or_nonzero(self, 1);
+}
+
+static PyNumberMethods BTreeItems_as_number_for_nonzero = {
+   .nb_bool                 = (inquiry)BTreeItems_nonzero
 };
 
 static PySequenceMethods BTreeItems_as_sequence =
@@ -488,50 +492,26 @@ static PySequenceMethods BTreeItems_as_sequence =
     (ssizeargfunc) BTreeItems_item,         /* sq_item */
 };
 
-/* Number Method items (just for nb_nonzero!) */
-
-static int
-BTreeItems_nonzero(BTreeItems *self)
-{
-    return BTreeItems_length_or_nonzero(self, 1);
-}
-
-static PyNumberMethods BTreeItems_as_number_for_nonzero = {
-    0,                                      /* nb_add */
-    0,                                      /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-   (inquiry)BTreeItems_nonzero              /* nb_nonzero */
+/* Py3K doesn't honor sequence slicing, so implement via mapping */
+static PyMappingMethods BTreeItems_as_mapping = {
+    (lenfunc)BTreeItems_length,             /* mp_length */
+    (binaryfunc)BTreeItems_subscript,       /* mp_subscript */
 };
 
-static PyTypeObject BTreeItemsType = {
+static char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
+static char BTreeItems__doc__[] =
+    "Sequence type used to iterate over BTree items.";
+
+static PyTypeObject BTreeItems_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MOD_NAME_PREFIX "BTreeItems",           /* tp_name */
-    sizeof(BTreeItems),                     /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    /* methods */
-    (destructor) BTreeItems_dealloc,        /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* obsolete tp_getattr */
-    0,                                      /* obsolete tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    &BTreeItems_as_number_for_nonzero,      /* tp_as_number */
-    &BTreeItems_as_sequence,                /* tp_as_sequence */
-    &BTreeItems_as_mapping,                 /* tp_as_mapping */
-    (hashfunc)0,                            /* tp_hash */
-    (ternaryfunc)0,                         /* tp_call */
-    (reprfunc)0,                            /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    /* Space for future expansion */
-    0L,0L,
-    "Sequence type used to iterate over BTree items." /* Documentation string */
+    .tp_name                = BTreeItems__name__,
+    .tp_doc                 = BTreeItems__doc__,
+    .tp_basicsize           = sizeof(BTreeItems),
+    .tp_flags               = Py_TPFLAGS_DEFAULT,
+    .tp_as_number           = &BTreeItems_as_number_for_nonzero,
+    .tp_as_sequence         = &BTreeItems_as_sequence,
+    .tp_as_mapping          = &BTreeItems_as_mapping,
+    .tp_dealloc             = (destructor) BTreeItems_dealloc,
 };
 
 /* Returns a new BTreeItems object representing the contiguous slice from
@@ -672,7 +652,7 @@ nextTreeSetItems(SetIteration *i)
 
 /* Support for the iteration protocol */
 
-static PyTypeObject BTreeIter_Type;
+static PyTypeObject BTreeIter_type_def;
 
 /* The type of iterator objects, returned by e.g. iter(IIBTree()). */
 typedef struct
@@ -780,40 +760,16 @@ BTreeIter_getiter(PyObject *it)
     return it;
 }
 
-static PyTypeObject BTreeIter_Type = {
+const char BTreeIter__name__[] = MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
+const char BTreeIter__doc__[] = "Iterator for BTree items";
+
+static PyTypeObject BTreeIter_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "TreeIterator", /* tp_name */
-    sizeof(BTreeIter),                          /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)BTreeIter_dealloc,              /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_compare */
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0, /*PyObject_GenericGetAttr,*/             /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    (getiterfunc)BTreeIter_getiter,             /* tp_iter */
-    (iternextfunc)BTreeIter_next,               /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
+    .tp_name                = BTreeIter__name__,
+    .tp_doc                 = BTreeIter__doc__,
+    .tp_basicsize           = sizeof(BTreeIter),
+    .tp_flags               = Py_TPFLAGS_DEFAULT,
+    .tp_iter                = (getiterfunc)BTreeIter_getiter,
+    .tp_iternext            = (iternextfunc)BTreeIter_next,
+    .tp_dealloc             = (destructor)BTreeIter_dealloc,
 };
