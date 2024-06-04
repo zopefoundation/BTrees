@@ -67,6 +67,9 @@ BTreeItems_dealloc(BTreeItems *self)
 {
     PyObject* obj_self = (PyObject*)self;
     PyTypeObject* tp = Py_TYPE(self);
+#if USE_HEAP_ALLOCATED_TYPES
+    PyObject_GC_UnTrack(obj_self);
+#endif
     Py_CLEAR(self->firstbucket);
     Py_CLEAR(self->lastbucket);
     Py_CLEAR(self->currentbucket);
@@ -489,6 +492,7 @@ static char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
 static char BTreeItems__doc__[] =
     "Sequence type used to iterate over BTree items.";
 
+
 #if USE_STATIC_TYPES
 
 static PyNumberMethods BTreeItems_as_number_for_nonzero = {
@@ -513,7 +517,7 @@ static PyTypeObject BTreeItems_type_def = {
     .tp_doc                 = BTreeItems__doc__,
     .tp_basicsize           = sizeof(BTreeItems),
     .tp_flags               = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc             = (destructor) BTreeItems_dealloc,
+    .tp_dealloc             = (destructor)BTreeItems_dealloc,
     .tp_as_number           = &BTreeItems_as_number_for_nonzero,
     .tp_as_sequence         = &BTreeItems_as_sequence,
     .tp_as_mapping          = &BTreeItems_as_mapping,
@@ -521,12 +525,41 @@ static PyTypeObject BTreeItems_type_def = {
 
 #else
 
+/* With static types, the BTreeItems type does not need to participate
+ * in GC, but we *do* need to play right when allocating from the heap.
+ */
+
+static int
+BTreeItems_traverse(BTreeItems *self, visitproc visit, void *arg)
+{
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+    Py_VISIT((PyObject*)(self->firstbucket));
+    Py_VISIT((PyObject*)(self->currentbucket));
+    Py_VISIT((PyObject*)(self->lastbucket));
+
+    return 0;
+}
+
+static int
+BTreeItems_clear(BTreeItems *self)
+{
+    Py_CLEAR(self->firstbucket);
+    Py_CLEAR(self->currentbucket);
+    Py_CLEAR(self->lastbucket);
+
+    return 0;
+}
+
 static PyType_Slot BTreeItems_type_slots[] = {
     {Py_tp_doc,                 BTreeItems__doc__},
-    {Py_tp_dealloc,             (destructor) BTreeItems_dealloc},
+    {Py_tp_traverse,            (traverseproc)BTreeItems_traverse},
+    {Py_tp_clear,               (inquiry)BTreeItems_clear},
+    {Py_tp_dealloc,             (destructor)BTreeItems_dealloc},
     {Py_nb_bool,                (inquiry)BTreeItems_nonzero},
-    {Py_sq_length,              (lenfunc) BTreeItems_length},
-    {Py_sq_item,                (ssizeargfunc) BTreeItems_item},
+    {Py_sq_length,              (lenfunc)BTreeItems_length},
+    {Py_sq_item,                (ssizeargfunc)BTreeItems_item},
     {Py_mp_length,              (lenfunc)BTreeItems_length},
     {Py_mp_subscript,           (binaryfunc)BTreeItems_subscript},
     {0,                         NULL}
@@ -537,6 +570,7 @@ static PyType_Spec BTreeItems_type_spec = {
     .basicsize                  = sizeof(BTreeItems),
     .flags                      = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_IMMUTABLETYPE |
+                                  Py_TPFLAGS_HAVE_GC |
                                   Py_TPFLAGS_BASETYPE,
     .slots                      = BTreeItems_type_slots
 };
@@ -558,8 +592,15 @@ newBTreeItems(PyObject* module, char kind,
     PyTypeObject* btree_items_type = _get_btree_items_type_from_module(module);
     BTreeItems *self;
 
+#if USE_STATIC_TYPES
     UNLESS (self = PyObject_NEW(BTreeItems, btree_items_type))
         return NULL;
+#else
+    /* Need to allocate in a GC-aware way */
+    self = (BTreeItems*)btree_items_type->tp_alloc(btree_items_type, 0);
+    if (self == NULL)
+        return NULL;
+#endif
     self->kind=kind;
 
     self->first=lowoffset;
@@ -703,7 +744,13 @@ newBTreeIter(PyObject* module, BTreeItems *pitems)
     BTreeIter *result;
 
     assert(pitems != NULL);
+
+#if USE_STATIC_TYPES
     result = PyObject_New(BTreeIter, btree_iter_type);
+#else
+    result = (BTreeIter*)btree_iter_type->tp_alloc(btree_iter_type, 0);
+#endif
+
     if (result)
     {
         Py_INCREF(pitems);
@@ -718,6 +765,9 @@ BTreeIter_dealloc(BTreeIter *bi)
 {
     PyObject* obj_self = (PyObject*)bi;
     PyTypeObject* tp = Py_TYPE(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    PyObject_GC_UnTrack(obj_self);
+#endif
     Py_CLEAR(bi->pitems);
     tp->tp_free(obj_self);
 #if USE_HEAP_ALLOCATED_TYPES
@@ -811,10 +861,35 @@ static PyTypeObject BTreeIter_type_def = {
 
 #else
 
+/* With static types, the BTreeIiter type does not need to participate
+ * in GC, but we *do* need to play right when allocating from the heap.
+ */
+
+static int
+BTreeIter_traverse(BTreeIter *self, visitproc visit, void *arg)
+{
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+    Py_VISIT((PyObject*)(self->pitems));
+
+    return 0;
+}
+
+static int
+BTreeIter_clear(BTreeIter *self)
+{
+    Py_CLEAR(self->pitems);
+
+    return 0;
+}
+
 static PyType_Slot BTreeIter_type_slots[] = {
     {Py_tp_doc,                 BTreeIter__doc__},
     {Py_tp_iter,                (getiterfunc)BTreeIter_getiter},
     {Py_tp_iternext,            (iternextfunc)BTreeIter_next},
+    {Py_tp_traverse,            (traverseproc)BTreeIter_traverse},
+    {Py_tp_clear,               (inquiry)BTreeIter_clear},
     {Py_tp_dealloc,             (destructor)BTreeIter_dealloc},
     {0,                         NULL}
 };
@@ -823,6 +898,7 @@ static PyType_Spec BTreeIter_type_spec = {
     .name                       = BTreeIter__name__,
     .basicsize                  = sizeof(BTreeIter),
     .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
                                   Py_TPFLAGS_IMMUTABLETYPE,
     .slots                      = BTreeIter_type_slots
 };
