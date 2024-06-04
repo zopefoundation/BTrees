@@ -1033,9 +1033,9 @@ module_exec(PyObject* module)
     }
 
 
-    ((PyObject*)&BTreeItemsType)->ob_type = &PyType_Type;
-    ((PyObject*)&BTreeIter_Type)->ob_type = &PyType_Type;
-    BTreeIter_Type.tp_getattro = PyObject_GenericGetAttr;
+    ((PyObject*)&BTreeItems_type_def)->ob_type = &PyType_Type;
+    ((PyObject*)&BTreeIter_type_def)->ob_type = &PyType_Type;
+    BTreeIter_type_def.tp_getattro = PyObject_GenericGetAttr;
     Bucket_type_def.tp_new = PyType_GenericNew;
     Set_type_def.tp_new = PyType_GenericNew;
     BTree_type_def.tp_new = PyType_GenericNew;
@@ -1073,11 +1073,11 @@ module_exec(PyObject* module)
     if (state->tree_set_type == NULL)
         return -1;
 
-    state->btree_items_type = init_nonpersistent_type(&BTreeItemsType);
+    state->btree_items_type = init_nonpersistent_type(&BTreeItems_type_def);
     if (state->btree_items_type == NULL)
         return -1;
 
-    state->btree_iter_type = init_nonpersistent_type(&BTreeIter_Type);
+    state->btree_iter_type = init_nonpersistent_type(&BTreeIter_type_def);
     if (state->btree_iter_type == NULL)
         return -1;
 
