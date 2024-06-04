@@ -15,8 +15,7 @@
 #include "Python.h"
 #include "structmember.h"
 
-/*#if PY_VERSION_HEX < 0x030b0000*/
-#if PY_VERSION_HEX < 0x030f0000 /* temporary */
+#if PY_VERSION_HEX < 0x030c0000
 
 #define USE_STATIC_MODULE_INIT 1
 #define USE_MULTIPHASE_MODULE_INIT 0
@@ -416,9 +415,13 @@ typedef struct BTree_s {
   long max_leaf_size;
 } BTree;
 
+#if USE_STATIC_TYPES
+
 static PyTypeObject BTreeType_type_def; /* metatype */
 static PyTypeObject BTree_type_def;
 static PyTypeObject Bucket_type_def;
+
+#endif
 
 #define BTREE(O) ((BTree*)(O))
 
@@ -908,6 +911,9 @@ _get_btree_iter_type_from_module(PyObject* module)
     return state->btree_iter_type;
 }
 
+
+#if USE_STATIC_TYPES
+
 static PyTypeObject*
 init_type_with_meta_base(
     PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base
@@ -973,11 +979,90 @@ init_tree_type(
 static PyTypeObject*
 init_nonpersistent_type(PyTypeObject* type)
 {
+    ((PyObject*)type)->ob_type = &PyType_Type;
+
     if (PyType_Ready(type) < 0)
         return NULL;
 
     return type;
 }
+
+#else
+
+static PyTypeObject*
+init_type_with_meta_base(
+    PyTypeObject* meta,
+    PyObject* module,
+    PyType_Spec* typespec,
+    PyTypeObject* base
+)
+{
+    PyObject* slotnames;
+    int result;
+
+    PyTypeObject* new_type = (PyTypeObject*)PyType_FromMetaclass(
+        meta, module, typespec, (PyObject*)base
+    );
+    if (new_type == NULL)
+        return NULL;
+
+    /*
+      persistent looks for __slotnames__ in the dict at deactivation time,
+      and if it's not present, calls ``copyreg._slotnames``, which itself
+      looks in the dict again. Then it does some computation, and tries to
+      store the object in the dict --- which for built-in types, it can't.
+      So we can save some runtime if we store an empty slotnames for these
+      classes.
+    */
+    slotnames = PyTuple_New(0);
+    if (!slotnames)
+        return NULL;
+
+    result = PyDict_SetItem(new_type->tp_dict, str___slotnames__, slotnames);
+    Py_DECREF(slotnames);
+
+    if (result < 0)
+        return NULL;
+
+    return new_type;
+}
+
+static PyTypeObject*
+init_persist_type(
+    PyObject* module,
+    PyType_Spec* typespec,
+    cPersistenceCAPIstruct* capi_struct
+)
+{
+    return init_type_with_meta_base(
+        (PyTypeObject*)NULL, module, typespec, capi_struct->pertype
+    );
+}
+
+static PyTypeObject*
+init_tree_type(
+    PyObject* module,
+    PyType_Spec* typespec,
+    PyTypeObject* bucket_type,
+    PyTypeObject* tree_meta,
+    cPersistenceCAPIstruct* capi_struct
+)
+{
+    PyTypeObject* new_type = init_type_with_meta_base(
+        tree_meta, module, typespec, capi_struct->pertype);
+
+    if (new_type == NULL)
+        return NULL;
+
+    if (PyDict_SetItem(
+            new_type->tp_dict, str__bucket_type, (PyObject*)bucket_type) < 0)
+        return NULL;
+
+    return new_type;
+}
+
+
+#endif
 
 static int
 module_exec(PyObject* module)
@@ -1033,8 +1118,12 @@ module_exec(PyObject* module)
     }
 
 
-    ((PyObject*)&BTreeItems_type_def)->ob_type = &PyType_Type;
-    ((PyObject*)&BTreeIter_type_def)->ob_type = &PyType_Type;
+#if USE_STATIC_TYPES
+
+    /* Assign functions from other modules to statically-initialized
+     * struct members here, to work around the fact that some compilers
+     * do not permit such assignment during static initialization.
+     */
     BTreeIter_type_def.tp_getattro = PyObject_GenericGetAttr;
     Bucket_type_def.tp_new = PyType_GenericNew;
     Set_type_def.tp_new = PyType_GenericNew;
@@ -1080,6 +1169,68 @@ module_exec(PyObject* module)
     state->btree_iter_type = init_nonpersistent_type(&BTreeIter_type_def);
     if (state->btree_iter_type == NULL)
         return -1;
+
+#else
+    /*  Hmm, do we need to have the equivalent entries added to
+     *  the '*_type_slots' arrays during static initializaiton, but
+     *  with NULL values?  Or do the compilers which barf at initializing
+     *  the struct members by name with "foreign" function pointers
+     *  tolerated them in a case where we are adding them "anonymously",
+     *  as in the '*_type_slots'?
+     */
+
+    state->btree_type_type = init_type_with_meta_base(
+                                &PyType_Type,
+                                module,
+                                &BTreeType_type_spec,
+                                &PyType_Type);
+
+    if (state->btree_type_type == NULL)
+        return -1;
+
+    state->bucket_type = init_persist_type(
+                                module,
+                                &Bucket_type_spec,
+                                state->capi_struct);
+    if (state->bucket_type == NULL)
+        return -1;
+
+    state->btree_type = init_tree_type(
+                                module,
+                                &BTree_type_spec,
+                                state->bucket_type,
+                                state->btree_type_type,
+                                state->capi_struct);
+    if (state->btree_type == NULL)
+        return -1;
+
+    state->set_type = init_persist_type(
+                                module,
+                                &Set_type_spec,
+                                state->capi_struct);
+    if (state->set_type == NULL)
+        return -1;
+
+    state->tree_set_type = init_tree_type(
+                                module,
+                                &TreeSet_type_spec,
+                                state->set_type,
+                                state->btree_type_type,
+                                state->capi_struct);
+    if (state->tree_set_type == NULL)
+        return -1;
+
+    state->btree_items_type = (PyTypeObject*)PyType_FromModuleAndSpec(
+                                    module, &BTreeItems_type_spec, NULL);
+    if (state->btree_items_type == NULL)
+        return -1;
+
+    state->btree_iter_type = (PyTypeObject*)PyType_FromModuleAndSpec(
+                                    module, &BTreeIter_type_spec, NULL);
+    if (state->btree_iter_type == NULL)
+        return -1;
+
+#endif
 
     /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
