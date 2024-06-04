@@ -668,6 +668,11 @@ err:
     return result;
 }
 
+static const char Set__name__[] = MODULE_NAME MOD_NAME_PREFIX "Set";
+static const char Set__doc__[] = "Result set mapped as a single bucket";
+
+#if USE_STATIC_TYPES
+
 static PySequenceMethods Set_as_sequence = {
     .sq_length              = (lenfunc)set_length,
     .sq_item                = (ssizeargfunc)set_item,
@@ -687,22 +692,29 @@ static PyNumberMethods Set_as_number = {
 
 static PyTypeObject Set_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)      /* PyPersist_Type */
-    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "Set",
+    .tp_name                = Set__name__,
+    .tp_doc                 = Set__doc__,
     .tp_basicsize           = sizeof(Bucket),
-    .tp_dealloc             = (destructor)bucket_dealloc,
-    .tp_repr                = (reprfunc)set_repr,
-    .tp_as_number           = &Set_as_number,
-    .tp_as_sequence         = &Set_as_sequence,
     .tp_flags               = Py_TPFLAGS_DEFAULT |
                               Py_TPFLAGS_HAVE_GC |
                               Py_TPFLAGS_BASETYPE,
+    .tp_init                = Set_init,
+    .tp_repr                = (reprfunc)set_repr,
+    .tp_iter                = (getiterfunc)Bucket_getiter,
     .tp_traverse            = (traverseproc)bucket_traverse,
     .tp_clear               = (inquiry)bucket_tp_clear,
-    .tp_iter                = (getiterfunc)Bucket_getiter,
+    .tp_dealloc             = (destructor)bucket_dealloc,
     .tp_methods             = Set_methods,
     .tp_members             = Bucket_members,
-    .tp_init                = Set_init,
+    .tp_as_number           = &Set_as_number,
+    .tp_as_sequence         = &Set_as_sequence,
 };
+
+#else
+
+
+
+#endif
 
 static int
 nextSet(SetIteration *i)

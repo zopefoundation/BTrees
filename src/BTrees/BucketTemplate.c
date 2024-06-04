@@ -2010,6 +2010,12 @@ bucket_repr(Bucket *self)
     return r;
 }
 
+static const char Bucket__name__[] = MODULE_NAME MOD_NAME_PREFIX "Bucket";
+static const char Bucket__doc__[] =
+    "Buckets are fundamental building blocks of BTrees";
+
+#if USE_STATIC_TYPES
+
 static PyNumberMethods Bucket_as_number = {
      .nb_subtract               = bucket_sub,
      .nb_and                    = bucket_and,
@@ -2028,23 +2034,29 @@ static PySequenceMethods Bucket_as_sequence = {
 
 static PyTypeObject Bucket_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "Bucket",
+    .tp_name                = Bucket__name__,
+    .tp_doc                 = Bucket__doc__,
     .tp_basicsize           = sizeof(Bucket),
-    .tp_dealloc             = (destructor)bucket_dealloc,
-    .tp_repr                = (reprfunc)bucket_repr,
-    .tp_as_number           = &Bucket_as_number,
-    .tp_as_sequence         = &Bucket_as_sequence,
-    .tp_as_mapping          = &Bucket_as_mapping,
     .tp_flags               = Py_TPFLAGS_DEFAULT |
                               Py_TPFLAGS_HAVE_GC |
                               Py_TPFLAGS_BASETYPE,
+    .tp_init                = Bucket_init,
+    .tp_repr                = (reprfunc)bucket_repr,
+    .tp_iter                = (getiterfunc)Bucket_getiter,
     .tp_traverse            = (traverseproc)bucket_traverse,
     .tp_clear               = (inquiry)bucket_tp_clear,
-    .tp_iter                = (getiterfunc)Bucket_getiter,
+    .tp_dealloc             = (destructor)bucket_dealloc,
     .tp_methods             = Bucket_methods,
     .tp_members             = Bucket_members,
-    .tp_init                = Bucket_init,
+    .tp_as_number           = &Bucket_as_number,
+    .tp_as_sequence         = &Bucket_as_sequence,
+    .tp_as_mapping          = &Bucket_as_mapping,
 };
+
+#else
+
+
+#endif
 
 static int
 nextBucket(SetIteration *i)

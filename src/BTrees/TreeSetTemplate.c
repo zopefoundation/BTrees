@@ -536,6 +536,10 @@ err:
 
 }
 
+static const char TreeSet__name__[] = MODULE_NAME MOD_NAME_PREFIX "TreeSet";
+static const char TreeSet__doc__[] = "Result set mapped as a tree";
+
+#if USE_STATIC_TYPES
 
 static PyMappingMethods TreeSet_as_mapping = {
     .mp_length              = (lenfunc)BTree_length,
@@ -560,19 +564,25 @@ static PyNumberMethods TreeSet_as_number = {
 static PyTypeObject TreeSet_type_def =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "TreeSet",
+    .tp_name                = TreeSet__name__,
+    .tp_doc                 = TreeSet__doc__,
     .tp_basicsize           = sizeof(BTree),
-    .tp_dealloc             = (destructor)BTree_dealloc,
-    .tp_as_number           = &TreeSet_as_number,
-    .tp_as_sequence         = &TreeSet_as_sequence,
-    .tp_as_mapping          = &TreeSet_as_mapping,
     .tp_flags               = Py_TPFLAGS_DEFAULT |
                               Py_TPFLAGS_HAVE_GC |
                               Py_TPFLAGS_BASETYPE,
+    .tp_init                = TreeSet_init,
+    .tp_iter                = (getiterfunc)BTree_getiter,
     .tp_traverse            = (traverseproc)BTree_traverse,
     .tp_clear               = (inquiry)BTree_tp_clear,
-    .tp_iter                = (getiterfunc)BTree_getiter,
+    .tp_dealloc             = (destructor)BTree_dealloc,
     .tp_methods             = TreeSet_methods,
     .tp_members             = BTree_members,
-    .tp_init                = TreeSet_init,
+    .tp_as_number           = &TreeSet_as_number,
+    .tp_as_sequence         = &TreeSet_as_sequence,
+    .tp_as_mapping          = &TreeSet_as_mapping,
 };
+
+#else
+
+
+#endif

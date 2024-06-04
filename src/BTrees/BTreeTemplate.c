@@ -15,6 +15,64 @@
 
 #define BTREETEMPLATE_C "$Id$\n"
 
+/*
+ *  BTreeType metaclass
+ */
+
+static int
+BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
+{
+    PyObject* allowed_names = _get_btreetype_setattro_allowed_names(type);
+    /*
+      type.tp_setattro prohibits setting any attributes on a built-in type,
+      so we need to use our own (metaclass) type to handle it. The set of
+      allowable values needs to be carefully controlled (e.g., setting methods
+      would be bad).
+
+      Alternately, we could use heap-allocated types when they are supported
+      an all the versions we care about, because those do allow setting
+      attributes.
+    */
+    int allowed;
+    allowed = PySequence_Contains(allowed_names, name);
+    if (allowed < 0) {
+        return -1;
+    }
+
+    if (allowed) {
+        PyDict_SetItem(type->tp_dict, name, value);
+        PyType_Modified(type);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+    return PyType_Type.tp_setattro((PyObject*)type, name, value);
+}
+
+static const char BTreeType__name__[] =
+    MODULE_NAME MOD_NAME_PREFIX "BTreeType";
+static const char BTreeType__doc__[] = "Metaclass for BTrees";
+
+#if USE_STATIC_TYPES
+
+static PyTypeObject BTreeType_type_def = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name                = BTreeType__name__,
+    .tp_doc                 = BTreeType__doc__,
+    .tp_setattro            = (setattrofunc)BTreeType_setattro,
+    .tp_flags               = Py_TPFLAGS_DEFAULT |
+                              Py_TPFLAGS_BASETYPE,
+};
+
+#else
+
+#endif
+
+/*
+ *  BTree type
+ */
+
 static long
 _get_max_size(BTree *self, PyObject *name, long default_max)
 {
@@ -2578,44 +2636,10 @@ BTree_nonzero(BTree *self)
 }
 
 
-static int
-BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
-{
-    PyObject* allowed_names = _get_btreetype_setattro_allowed_names(type);
-    /*
-      type.tp_setattro prohibits setting any attributes on a built-in type,
-      so we need to use our own (metaclass) type to handle it. The set of
-      allowable values needs to be carefully controlled (e.g., setting methods
-      would be bad).
+static const char BTree__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTree";
+static const char BTree__doc__[] = "Persistent BTree type";
 
-      Alternately, we could use heap-allocated types when they are supported
-      an all the versions we care about, because those do allow setting
-      attributes.
-    */
-    int allowed;
-    allowed = PySequence_Contains(allowed_names, name);
-    if (allowed < 0) {
-        return -1;
-    }
-
-    if (allowed) {
-        PyDict_SetItem(type->tp_dict, name, value);
-        PyType_Modified(type);
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-    return PyType_Type.tp_setattro((PyObject*)type, name, value);
-}
-
-static PyTypeObject BTreeType_type_def = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "BTreeType",
-    .tp_setattro            = (setattrofunc)BTreeType_setattro,
-    .tp_flags               = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_BASETYPE,
-};
+#if USE_STATIC_TYPES
 
 static PyNumberMethods BTree_as_number_for_nonzero = {
     .nb_subtract            = bucket_sub,
@@ -2636,7 +2660,8 @@ static PyMappingMethods BTree_as_mapping = {
 
 static PyTypeObject BTree_type_def = {
     PyVarObject_HEAD_INIT(&BTreeType_type_def, 0)
-    .tp_name                = MODULE_NAME MOD_NAME_PREFIX "BTree",
+    .tp_name                = BTree__name__,
+    .tp_doc                 = BTree__doc__,
     .tp_basicsize           = sizeof(BTree),
     .tp_dealloc             = (destructor)BTree_dealloc,
     .tp_as_number           = &BTree_as_number_for_nonzero,
@@ -2652,3 +2677,8 @@ static PyTypeObject BTree_type_def = {
     .tp_members             = BTree_members,
     .tp_init                = BTree_init,
 };
+
+#else
+
+
+#endif
