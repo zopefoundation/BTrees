@@ -612,6 +612,7 @@ static PyType_Spec TreeSet_type_spec = {
     .basicsize                  = sizeof(BTree),
     .flags                      = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
                                   Py_TPFLAGS_BASETYPE,
     .slots                      = TreeSet_type_slots
 };

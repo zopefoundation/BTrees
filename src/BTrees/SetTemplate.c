@@ -741,6 +741,7 @@ static PyType_Spec Set_type_spec = {
     .basicsize                  = sizeof(Bucket_members),
     .flags                      = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
                                   Py_TPFLAGS_BASETYPE,
     .slots                      = Set_type_slots
 };

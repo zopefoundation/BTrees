@@ -2079,6 +2079,7 @@ static PyType_Spec Bucket_type_spec = {
     .basicsize                  = sizeof(Bucket),
     .flags                      = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
                                   Py_TPFLAGS_BASETYPE,
     .slots                      = Bucket_type_slots
 };

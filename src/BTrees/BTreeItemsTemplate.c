@@ -517,22 +517,23 @@ static PyTypeObject BTreeItems_type_def = {
 #else
 
 static PyType_Slot BTreeItems_type_slots[] = {
-    {Py_tp_doc,             BTreeItems__doc__},
-    {Py_tp_dealloc,         (destructor) BTreeItems_dealloc},
-    {Py_nb_bool,            (inquiry)BTreeItems_nonzero},
-    {Py_sq_length,          (lenfunc) BTreeItems_length},
-    {Py_sq_item,            (ssizeargfunc) BTreeItems_item},
-    {Py_mp_length,          (lenfunc)BTreeItems_length},
-    {Py_mp_subscript,       (binaryfunc)BTreeItems_subscript},
-    {0,                     NULL}
+    {Py_tp_doc,                 BTreeItems__doc__},
+    {Py_tp_dealloc,             (destructor) BTreeItems_dealloc},
+    {Py_nb_bool,                (inquiry)BTreeItems_nonzero},
+    {Py_sq_length,              (lenfunc) BTreeItems_length},
+    {Py_sq_item,                (ssizeargfunc) BTreeItems_item},
+    {Py_mp_length,              (lenfunc)BTreeItems_length},
+    {Py_mp_subscript,           (binaryfunc)BTreeItems_subscript},
+    {0,                         NULL}
 };
 
 static PyType_Spec BTreeItems_type_spec = {
-    .name                   = BTreeItems__name__,
-    .basicsize              = sizeof(BTreeItems),
-    .flags                  = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_BASETYPE,
-    .slots                  = BTreeItems_type_slots
+    .name                       = BTreeItems__name__,
+    .basicsize                  = sizeof(BTreeItems),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTreeItems_type_slots
 };
 
 #endif
@@ -811,7 +812,8 @@ static PyType_Slot BTreeIter_type_slots[] = {
 static PyType_Spec BTreeIter_type_spec = {
     .name                       = BTreeIter__name__,
     .basicsize                  = sizeof(BTreeIter),
-    .flags                      = Py_TPFLAGS_DEFAULT,
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_IMMUTABLETYPE,
     .slots                      = BTreeIter_type_slots
 };
 
