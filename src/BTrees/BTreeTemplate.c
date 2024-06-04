@@ -50,22 +50,37 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
     return PyType_Type.tp_setattro((PyObject*)type, name, value);
 }
 
-static const char BTreeType__name__[] =
+static char BTreeType__name__[] =
     MODULE_NAME MOD_NAME_PREFIX "BTreeType";
-static const char BTreeType__doc__[] = "Metaclass for BTrees";
+static char BTreeType__doc__[] = "Metaclass for BTrees";
 
 #if USE_STATIC_TYPES
 
 static PyTypeObject BTreeType_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = BTreeType__name__,
-    .tp_doc                 = BTreeType__doc__,
-    .tp_setattro            = (setattrofunc)BTreeType_setattro,
-    .tp_flags               = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_BASETYPE,
+    .tp_name                    = BTreeType__name__,
+    .tp_doc                     = BTreeType__doc__,
+    .tp_basicsize               = 0,
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_setattro                = (setattrofunc)BTreeType_setattro,
 };
 
 #else
+
+static PyType_Slot BTreeType_type_slots[] = {
+    {Py_tp_doc,                 BTreeType__doc__},
+    {Py_tp_setattro,            (setattrofunc)BTreeType_setattro},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTreeType_type_spec = {
+    .name                       = BTreeType__name__,
+    .basicsize                  = 0,
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTreeType_type_slots
+};
 
 #endif
 
@@ -2636,49 +2651,77 @@ BTree_nonzero(BTree *self)
 }
 
 
-static const char BTree__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTree";
-static const char BTree__doc__[] = "Persistent BTree type";
+static char BTree__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTree";
+static char BTree__doc__[] = "Persistent BTree type";
 
 #if USE_STATIC_TYPES
 
 static PyNumberMethods BTree_as_number_for_nonzero = {
-    .nb_subtract            = bucket_sub,
-    .nb_bool                = (inquiry)BTree_nonzero,
-    .nb_and                 = bucket_and,
-    .nb_or                  = bucket_or,
+    .nb_subtract                = bucket_sub,
+    .nb_bool                    = (inquiry)BTree_nonzero,
+    .nb_and                     = bucket_and,
+    .nb_or                      = bucket_or,
 };
 
 static PySequenceMethods BTree_as_sequence = {
-    .sq_contains            = (objobjproc)BTree_contains,
+    .sq_contains                = (objobjproc)BTree_contains,
 };
 
 static PyMappingMethods BTree_as_mapping = {
-    .mp_length              = (lenfunc)BTree_length,
-    .mp_subscript           = (binaryfunc)BTree_get,
-    .mp_ass_subscript       = (objobjargproc)BTree_setitem,
+    .mp_length                  = (lenfunc)BTree_length,
+    .mp_subscript               = (binaryfunc)BTree_get,
+    .mp_ass_subscript           = (objobjargproc)BTree_setitem,
 };
 
 static PyTypeObject BTree_type_def = {
     PyVarObject_HEAD_INIT(&BTreeType_type_def, 0)
-    .tp_name                = BTree__name__,
-    .tp_doc                 = BTree__doc__,
-    .tp_basicsize           = sizeof(BTree),
-    .tp_dealloc             = (destructor)BTree_dealloc,
-    .tp_as_number           = &BTree_as_number_for_nonzero,
-    .tp_as_sequence         = &BTree_as_sequence,
-    .tp_as_mapping          = &BTree_as_mapping,
-    .tp_flags               = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_HAVE_GC |
-                              Py_TPFLAGS_BASETYPE,
-    .tp_traverse            = (traverseproc)BTree_traverse,
-    .tp_clear               = (inquiry)BTree_tp_clear,
-    .tp_iter                = (getiterfunc)BTree_getiter,
-    .tp_methods             = BTree_methods,
-    .tp_members             = BTree_members,
-    .tp_init                = BTree_init,
+    .tp_name                    = BTree__name__,
+    .tp_doc                     = BTree__doc__,
+    .tp_basicsize               = sizeof(BTree),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_init                    = BTree_init,
+    .tp_iter                    = (getiterfunc)BTree_getiter,
+    .tp_traverse                = (traverseproc)BTree_traverse,
+    .tp_clear                   = (inquiry)BTree_tp_clear,
+    .tp_dealloc                 = (destructor)BTree_dealloc,
+    .tp_methods                 = BTree_methods,
+    .tp_members                 = BTree_members,
+    .tp_as_number               = &BTree_as_number_for_nonzero,
+    .tp_as_sequence             = &BTree_as_sequence,
+    .tp_as_mapping              = &BTree_as_mapping,
 };
 
 #else
 
+static PyType_Slot BTree_type_slots[] = {
+    {Py_tp_doc,                 BTree__doc__},
+    {Py_tp_init,                BTree_init},
+    {Py_tp_iter,                (getiterfunc)BTree_getiter},
+    {Py_tp_traverse,            (traverseproc)BTree_traverse},
+    {Py_tp_clear,               (inquiry)BTree_tp_clear},
+    {Py_tp_dealloc,             (destructor)BTree_dealloc},
+    {Py_tp_methods,             BTree_methods},
+    {Py_tp_members,             BTree_members},
+    {Py_nb_subtract,            bucket_sub},
+    {Py_nb_bool,                (inquiry)BTree_nonzero},
+    {Py_nb_and,                 bucket_and},
+    {Py_nb_or,                  bucket_or},
+    {Py_sq_contains,            (objobjproc)BTree_contains},
+    {Py_mp_length,              (lenfunc)BTree_length},
+    {Py_mp_subscript,           (binaryfunc)BTree_get},
+    {Py_mp_ass_subscript,       (objobjargproc)BTree_setitem},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTree_type_spec = {
+    .name                       = BTree__name__,
+    .basicsize                  = sizeof(BTree),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTree_type_slots
+};
 
 #endif

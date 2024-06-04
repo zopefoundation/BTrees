@@ -2010,16 +2010,16 @@ bucket_repr(Bucket *self)
     return r;
 }
 
-static const char Bucket__name__[] = MODULE_NAME MOD_NAME_PREFIX "Bucket";
-static const char Bucket__doc__[] =
+static char Bucket__name__[] = MODULE_NAME MOD_NAME_PREFIX "Bucket";
+static char Bucket__doc__[] =
     "Buckets are fundamental building blocks of BTrees";
 
 #if USE_STATIC_TYPES
 
 static PyNumberMethods Bucket_as_number = {
-     .nb_subtract               = bucket_sub,
-     .nb_and                    = bucket_and,
-     .nb_or                     = bucket_or,
+    .nb_subtract               = bucket_sub,
+    .nb_and                    = bucket_and,
+    .nb_or                     = bucket_or,
 };
 
 static PyMappingMethods Bucket_as_mapping = {
@@ -2034,27 +2034,54 @@ static PySequenceMethods Bucket_as_sequence = {
 
 static PyTypeObject Bucket_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = Bucket__name__,
-    .tp_doc                 = Bucket__doc__,
-    .tp_basicsize           = sizeof(Bucket),
-    .tp_flags               = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_HAVE_GC |
-                              Py_TPFLAGS_BASETYPE,
-    .tp_init                = Bucket_init,
-    .tp_repr                = (reprfunc)bucket_repr,
-    .tp_iter                = (getiterfunc)Bucket_getiter,
-    .tp_traverse            = (traverseproc)bucket_traverse,
-    .tp_clear               = (inquiry)bucket_tp_clear,
-    .tp_dealloc             = (destructor)bucket_dealloc,
-    .tp_methods             = Bucket_methods,
-    .tp_members             = Bucket_members,
-    .tp_as_number           = &Bucket_as_number,
-    .tp_as_sequence         = &Bucket_as_sequence,
-    .tp_as_mapping          = &Bucket_as_mapping,
+    .tp_name                    = Bucket__name__,
+    .tp_doc                     = Bucket__doc__,
+    .tp_basicsize               = sizeof(Bucket),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_init                    = Bucket_init,
+    .tp_repr                    = (reprfunc)bucket_repr,
+    .tp_iter                    = (getiterfunc)Bucket_getiter,
+    .tp_traverse                = (traverseproc)bucket_traverse,
+    .tp_clear                   = (inquiry)bucket_tp_clear,
+    .tp_dealloc                 = (destructor)bucket_dealloc,
+    .tp_methods                 = Bucket_methods,
+    .tp_members                 = Bucket_members,
+    .tp_as_number               = &Bucket_as_number,
+    .tp_as_sequence             = &Bucket_as_sequence,
+    .tp_as_mapping              = &Bucket_as_mapping,
 };
 
 #else
 
+static PyType_Slot Bucket_type_slots[] = {
+    {Py_tp_doc,                 Bucket__doc__},
+    {Py_tp_init,                Bucket_init},
+    {Py_tp_repr,                (reprfunc)bucket_repr},
+    {Py_tp_iter,                (getiterfunc)Bucket_getiter},
+    {Py_tp_traverse,            (traverseproc)bucket_traverse},
+    {Py_tp_clear,               (inquiry)bucket_tp_clear},
+    {Py_tp_dealloc,             (destructor)bucket_dealloc},
+    {Py_tp_methods,             Bucket_methods},
+    {Py_tp_members,             Bucket_members},
+    {Py_nb_subtract,            bucket_sub},
+    {Py_nb_and,                 bucket_and},
+    {Py_nb_or,                  bucket_or},
+    {Py_mp_length,              (lenfunc)Bucket_length},
+    {Py_mp_subscript,           (binaryfunc)bucket_getitem},
+    {Py_mp_ass_subscript,       (objobjargproc)bucket_setitem},
+    {0,                         NULL}
+};
+
+static PyType_Spec Bucket_type_spec = {
+    .name                       = Bucket__name__,
+    .basicsize                  = sizeof(Bucket),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = Bucket_type_slots
+};
 
 #endif
 

@@ -668,51 +668,82 @@ err:
     return result;
 }
 
-static const char Set__name__[] = MODULE_NAME MOD_NAME_PREFIX "Set";
-static const char Set__doc__[] = "Result set mapped as a single bucket";
+static char Set__name__[] = MODULE_NAME MOD_NAME_PREFIX "Set";
+static char Set__doc__[] = "Result set mapped as a single bucket";
 
 #if USE_STATIC_TYPES
 
-static PySequenceMethods Set_as_sequence = {
-    .sq_length              = (lenfunc)set_length,
-    .sq_item                = (ssizeargfunc)set_item,
-    .sq_contains            = (objobjproc)bucket_contains,
+static PyNumberMethods Set_as_number = {
+    .nb_subtract                = bucket_sub,
+    .nb_and                     = bucket_and,
+    .nb_xor                     = (binaryfunc)Generic_set_xor,
+    .nb_or                      = bucket_or,
+    .nb_inplace_subtract        = (binaryfunc)set_isub,
+    .nb_inplace_and             = (binaryfunc)set_iand,
+    .nb_inplace_xor             = (binaryfunc)set_ixor,
+    .nb_inplace_or              = (binaryfunc)set_ior,
 };
 
-static PyNumberMethods Set_as_number = {
-     .nb_subtract           = bucket_sub,
-     .nb_and                = bucket_and,
-     .nb_xor                = (binaryfunc)Generic_set_xor,
-     .nb_or                 = bucket_or,
-     .nb_inplace_subtract   = (binaryfunc)set_isub,
-     .nb_inplace_and        = (binaryfunc)set_iand,
-     .nb_inplace_xor        = (binaryfunc)set_ixor,
-     .nb_inplace_or         = (binaryfunc)set_ior,
+static PySequenceMethods Set_as_sequence = {
+    .sq_length                  = (lenfunc)set_length,
+    .sq_item                    = (ssizeargfunc)set_item,
+    .sq_contains                = (objobjproc)bucket_contains,
 };
 
 static PyTypeObject Set_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)      /* PyPersist_Type */
-    .tp_name                = Set__name__,
-    .tp_doc                 = Set__doc__,
-    .tp_basicsize           = sizeof(Bucket),
-    .tp_flags               = Py_TPFLAGS_DEFAULT |
-                              Py_TPFLAGS_HAVE_GC |
-                              Py_TPFLAGS_BASETYPE,
-    .tp_init                = Set_init,
-    .tp_repr                = (reprfunc)set_repr,
-    .tp_iter                = (getiterfunc)Bucket_getiter,
-    .tp_traverse            = (traverseproc)bucket_traverse,
-    .tp_clear               = (inquiry)bucket_tp_clear,
-    .tp_dealloc             = (destructor)bucket_dealloc,
-    .tp_methods             = Set_methods,
-    .tp_members             = Bucket_members,
-    .tp_as_number           = &Set_as_number,
-    .tp_as_sequence         = &Set_as_sequence,
+    .tp_name                    = Set__name__,
+    .tp_doc                     = Set__doc__,
+    .tp_basicsize               = sizeof(Bucket),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_init                    = Set_init,
+    .tp_repr                    = (reprfunc)set_repr,
+    .tp_iter                    = (getiterfunc)Bucket_getiter,
+    .tp_traverse                = (traverseproc)bucket_traverse,
+    .tp_clear                   = (inquiry)bucket_tp_clear,
+    .tp_dealloc                 = (destructor)bucket_dealloc,
+    .tp_methods                 = Set_methods,
+    .tp_members                 = Bucket_members,
+    .tp_as_number               = &Set_as_number,
+    .tp_as_sequence             = &Set_as_sequence,
 };
 
 #else
 
+static PyType_Slot Set_type_slots[] = {
+    {Py_tp_doc,                 Set__doc__},
+    {Py_tp_init,                Set_init},
+    {Py_tp_repr,                (reprfunc)set_repr},
+    {Py_tp_iter,                (getiterfunc)Bucket_getiter},
+    {Py_tp_traverse,            (traverseproc)bucket_traverse},
+    {Py_tp_clear,               (inquiry)bucket_tp_clear},
+    {Py_tp_dealloc,             (destructor)bucket_dealloc},
+    {Py_tp_methods,             Set_methods},
+    {Py_tp_members,             Bucket_members},
+    {Py_nb_subtract,            bucket_sub},
+    {Py_nb_and,                 bucket_and},
+    {Py_nb_xor,                 (binaryfunc)Generic_set_xor},
+    {Py_nb_or,                  bucket_or},
+    {Py_nb_inplace_subtract,    (binaryfunc)set_isub},
+    {Py_nb_inplace_and,         (binaryfunc)set_iand},
+    {Py_nb_inplace_xor,         (binaryfunc)set_ixor},
+    {Py_nb_inplace_or,          (binaryfunc)set_ior},
+    {Py_sq_length,              (lenfunc)set_length},
+    {Py_sq_item,                (ssizeargfunc)set_item},
+    {Py_sq_contains,            (objobjproc)bucket_contains},
+    {0,                         NULL}
+};
 
+static PyType_Spec Set_type_spec = {
+    .name                       = Set__name__,
+    .basicsize                  = sizeof(Bucket_members),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = Set_type_slots
+};
 
 #endif
 
