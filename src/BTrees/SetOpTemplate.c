@@ -1,4 +1,8 @@
 /*****************************************************************************
+ * formatted via formatter.org, LLVM style, indent=4, cols=80;  then:
+ * - func names wrapped back to col 0.
+ * - args wrapped in the long "comment #42" functions
+ * - 'UNLESS' return / goto indented
 
   Copyright (c) 2001, 2002 Zope Foundation and Contributors.
   All Rights Reserved.
@@ -21,44 +25,38 @@
 
 #ifdef KEY_CHECK
 static int
-nextKeyAsSet(SetIteration *i)
-{
+nextKeyAsSet(SetIteration *i) {
     if (i->position >= 0) {
         if (i->position) {
             DECREF_KEY(i->key);
             i->position = -1;
-        }
-        else
+        } else
             i->position = 1;
     }
     return 0;
 }
 #endif
 
-static int nextGenericKeyIter(SetIteration* i)
-{
-    PyObject* next = NULL;
+static int
+nextGenericKeyIter(SetIteration *i) {
+    PyObject *next = NULL;
     int copied = 1;
 
-    if (i->position < 0)
-    {
+    if (i->position < 0) {
         /* Already finished. Do nothing. */
         return 0;
     }
 
-    if (i->position)
-    {
+    if (i->position) {
         /* If we've been called before, release the key cache. */
         DECREF_KEY(i->key);
     }
 
     i->position += 1;
     next = PyIter_Next(i->set);
-    if (next == NULL)
-    {
+    if (next == NULL) {
         /* Either an error, or the end of iteration. */
-        if (!PyErr_Occurred())
-        {
+        if (!PyErr_Occurred()) {
             /* End of iteration. */
             i->position = -1;
             return 0;
@@ -110,15 +108,14 @@ static int nextGenericKeyIter(SetIteration* i)
  *          A SetIteration struct has been cleaned up iff i.set is NULL.
  */
 static int
-initSetIteration(SetIteration *i, PyObject *s, int useValues)
-{
+initSetIteration(SetIteration *i, PyObject *s, int useValues) {
     PyTypeObject *btree_type = _get_btree_type(s);
     PyTypeObject *bucket_type = _get_bucket_type(s);
     PyTypeObject *set_type = _get_set_type(s);
     PyTypeObject *tree_set_type = _get_tree_set_type(s);
     i->set = NULL;
-    i->position = -1;     /* set to 0 only on normal return */
-    i->usesValue = 0;     /* assume it's a set or that values aren't iterated */
+    i->position = -1; /* set to 0 only on normal return */
+    i->usesValue = 0; /* assume it's a set or that values aren't iterated */
 
     if (PyObject_IsInstance(s, (PyObject *)bucket_type)) {
         i->set = s;
@@ -127,11 +124,9 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
         if (useValues) {
             i->usesValue = 1;
             i->next = nextBucket;
-        } else {
+        } else
             i->next = nextSet;
-        }
-    }
-    else if (PyObject_IsInstance(s, (PyObject *)set_type)) {
+    } else if (PyObject_IsInstance(s, (PyObject *)set_type)) {
         i->set = s;
         Py_INCREF(s);
         i->next = nextSet;
@@ -142,9 +137,8 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
         if (useValues) {
             i->usesValue = 1;
             i->next = nextBTreeItems;
-        } else {
+        } else
             i->next = nextTreeSetItems;
-        }
     } else if (PyObject_IsInstance(s, (PyObject *)tree_set_type)) {
         i->set = BTree_rangeSearch(BTREE(s), NULL, NULL, 'k');
         UNLESS(i->set) return -1;
@@ -154,7 +148,7 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
     else if (KEY_CHECK(s)) {
         int copied = 1;
         COPY_KEY_FROM_ARG(i->key, s, copied);
-        UNLESS (copied) return -1;
+        UNLESS(copied) return -1;
 
         INCREF_KEY(i->key);
         i->set = s;
@@ -163,14 +157,13 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
     }
 #endif
     else if (!useValues) {
-        /* If we don't need keys and values, we can just use an iterator.
-         * Unfortunately, it can't be just any iterator, it must be sorted
-         * for the set algorithms to work. So we must materialize a list and
-         * sort it. If this raises a TypeError, let that propagate.
-         * Error detection on types is moved to the next() call.
-         * This is slower, but very convenient.
-         * */
-        PyObject* list = PySequence_List(s);
+        /* If we don't need keys and values, we can just use an iterator. */
+        /* Unfortunately, it can't be just any iterator, it must be sorted
+           for the set algorithms to work. So we must materialize a list and
+           sort it. If this raises a TypeError, let that propagate. */
+        /* Error detection on types is moved to the next() call. */
+        /* This is slower, but very convenient.  */
+        PyObject *list = PySequence_List(s);
         UNLESS(list) return -1;
         if (PyList_Sort(list) == -1) {
             Py_DECREF(list);
@@ -181,11 +174,9 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
         Py_DECREF(list);
         UNLESS(i->set) return -1;
         i->next = nextGenericKeyIter;
-    }
-    else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "set operation: invalid argument, cannot iterate");
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "set operation: invalid argument, cannot iterate");
         return -1;
     }
 
@@ -199,20 +190,19 @@ initSetIteration(SetIteration *i, PyObject *s, int useValues)
 #endif
 
 static int
-copyRemaining(
-    Bucket *r,
-    SetIteration *i,
-    int merge,
-    /* See comment # 42 */
+copyRemaining(Bucket *r,
+              SetIteration *i,
+              int merge,
+/* See comment # 42 */
 #ifdef MERGE
-    VALUE_TYPE w
+              VALUE_TYPE w
 #else
-    int w
+              int w
 #endif
-)
+             )
 {
     while (i->position >= 0) {
-        if(r->len >= r->size && Bucket_grow(r, -1, ! merge) < 0)
+        if (r->len >= r->size && Bucket_grow(r, -1, !merge) < 0)
             return -1;
         COPY_KEY(r->keys[r->len], i->key);
         INCREF_KEY(r->keys[r->len]);
@@ -257,51 +247,50 @@ copyRemaining(
  * mapping was requested.
  */
 static PyObject *
-set_operation(
-    PyObject *s1,
-    PyObject *s2,
-    int usevalues1,
-    int usevalues2,
+set_operation(PyObject *s1,
+              PyObject *s2,
+              int usevalues1,
+              int usevalues2,
 /* Comment # 42
 
-    The following ifdef works around a template/type problem
+   The following ifdef works around a template/type problem
 
-    Weights are passed as integers. In particular, the weight passed by
-    difference is one.  This works fine in the int value and float value
-    cases but makes no sense in the object value case.  In the object
-    value case, we don't do merging, so we don't use the weights, so it
-    doesn't matter what they are.
+   Weights are passed as integers. In particular, the weight passed by
+   difference is one.  This works fine in the int value and float value
+   cases but makes no sense in the object value case.  In the object
+   value case, we don't do merging, so we don't use the weights, so it
+   doesn't matter what they are.
 */
 #ifdef MERGE
-    VALUE_TYPE w1,
-    VALUE_TYPE w2,
+              VALUE_TYPE w1,
+              VALUE_TYPE w2,
 #else
-    int w1,
-    int w2,
+              int w1,
+              int w2,
 #endif
-    int c1,
-    int c12,
-    int c2
-)
+              int c1,
+              int c12,
+              int c2
+             )
 {
-    Bucket *r=0;
+    Bucket *r = 0;
     PyTypeObject *bucket_type = _get_bucket_type(s1);
     PyTypeObject *set_type = _get_set_type(s1);
-    SetIteration i1 = {0,0,0};
-    SetIteration i2 = {0,0,0};
-    int cmp;
-    int merge;
+    SetIteration i1 = {0, 0, 0}, i2 = {0, 0, 0};
+    int cmp, merge;
 
-    if (initSetIteration(&i1, s1, usevalues1) < 0) goto err;
-    if (initSetIteration(&i2, s2, usevalues2) < 0) goto err;
-
+    if (initSetIteration(&i1, s1, usevalues1) < 0)
+        goto err;
+    if (initSetIteration(&i2, s2, usevalues2) < 0)
+        goto err;
     merge = i1.usesValue | i2.usesValue;
 
     if (merge) {
 #ifndef MERGE
-        if (c12 && i1.usesValue && i2.usesValue) goto invalid_set_operation;
+        if (c12 && i1.usesValue && i2.usesValue)
+            goto invalid_set_operation;
 #endif
-        if (! i1.usesValue&& i2.usesValue) {
+        if (!i1.usesValue && i2.usesValue) {
             SetIteration t;
             int i;
 
@@ -312,37 +301,46 @@ set_operation(
             int v;
 #endif
 
-            t=i1; i1=i2; i2=t;
-            i=c1; c1=c2; c2=i;
-            v=w1; w1=w2; w2=v;
+            t = i1;
+            i1 = i2;
+            i2 = t;
+            i = c1;
+            c1 = c2;
+            c2 = i;
+            v = w1;
+            w1 = w2;
+            w2 = v;
         }
 #ifdef MERGE_DEFAULT
         i1.value = MERGE_DEFAULT;
         i2.value = MERGE_DEFAULT;
 #else
         if (i1.usesValue) {
-            if (! i2.usesValue && c2) goto invalid_set_operation;
-        }
-        else {
-            if (c1 || c12) goto invalid_set_operation;
+            if (!i2.usesValue && c2)
+                goto invalid_set_operation;
+        } else {
+            if (c1 || c12)
+                goto invalid_set_operation;
         }
 #endif
 
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(bucket_type), NULL)))
+        UNLESS(r = BUCKET(PyObject_CallObject(OBJECT(bucket_type), NULL)))
             goto err;
     } else {
-        UNLESS(r=BUCKET(PyObject_CallObject(OBJECT(set_type), NULL)))
+        UNLESS(r = BUCKET(PyObject_CallObject(OBJECT(set_type), NULL)))
             goto err;
     }
 
-    if (i1.next(&i1) < 0) goto err;
-    if (i2.next(&i2) < 0) goto err;
+    if (i1.next(&i1) < 0)
+        goto err;
+    if (i2.next(&i2) < 0)
+        goto err;
 
     while (i1.position >= 0 && i2.position >= 0) {
         TEST_KEY_SET_OR(cmp, i1.key, i2.key) goto err;
-        if(cmp < 0) {
-            if(c1) {
-                if(r->len >= r->size && Bucket_grow(r, -1, ! merge) < 0)
+        if (cmp < 0) {
+            if (c1) {
+                if (r->len >= r->size && Bucket_grow(r, -1, !merge) < 0)
                     goto err;
                 COPY_KEY(r->keys[r->len], i1.key);
                 INCREF_KEY(r->keys[r->len]);
@@ -352,10 +350,11 @@ set_operation(
                 }
                 r->len++;
             }
-            if (i1.next(&i1) < 0) goto err;
-        } else if(cmp==0) {
-            if(c12) {
-                if(r->len >= r->size && Bucket_grow(r, -1, ! merge) < 0)
+            if (i1.next(&i1) < 0)
+                goto err;
+        } else if (cmp == 0) {
+            if (c12) {
+                if (r->len >= r->size && Bucket_grow(r, -1, !merge) < 0)
                     goto err;
                 COPY_KEY(r->keys[r->len], i1.key);
                 INCREF_KEY(r->keys[r->len]);
@@ -369,11 +368,13 @@ set_operation(
                 }
                 r->len++;
             }
-            if (i1.next(&i1) < 0) goto err;
-            if (i2.next(&i2) < 0) goto err;
+            if (i1.next(&i1) < 0)
+                goto err;
+            if (i2.next(&i2) < 0)
+                goto err;
         } else {
-            if(c2) {
-                if(r->len >= r->size && Bucket_grow(r, -1, ! merge) < 0)
+            if (c2) {
+                if (r->len >= r->size && Bucket_grow(r, -1, !merge) < 0)
                     goto err;
                 COPY_KEY(r->keys[r->len], i2.key);
                 INCREF_KEY(r->keys[r->len]);
@@ -383,11 +384,14 @@ set_operation(
                 }
                 r->len++;
             }
-            if (i2.next(&i2) < 0) goto err;
+            if (i2.next(&i2) < 0)
+                goto err;
         }
     }
-    if(c1 && copyRemaining(r, &i1, merge, w1) < 0) goto err;
-    if(c2 && copyRemaining(r, &i2, merge, w2) < 0) goto err;
+    if (c1 && copyRemaining(r, &i1, merge, w1) < 0)
+        goto err;
+    if (c2 && copyRemaining(r, &i2, merge, w2) < 0)
+        goto err;
 
     finiSetIteration(&i1);
     finiSetIteration(&i2);
@@ -407,13 +411,10 @@ err:
 }
 
 static PyObject *
-difference_m(PyObject *module, PyObject *args)
-{
-    PyObject *o1;
-    PyObject *o2;
+difference_m(PyObject *module, PyObject *args) {
+    PyObject *o1, *o2;
 
-    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2))
-        return NULL;
+    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
 
     if (o1 == Py_None || o2 == Py_None) {
         /* difference(None, X) -> None; difference(X, None) -> X */
@@ -421,19 +422,17 @@ difference_m(PyObject *module, PyObject *args)
         return o1;
     }
 
-    return set_operation(o1, o2, 1, 0, /* preserve values from o1, ignore o2's */
-                        1, 0,         /* o1's values multiplied by 1 */
-                        1, 0, 0);     /* take only keys unique to o1 */
+    return set_operation(o1, o2, 1,
+                         0,        /* preserve values from o1, ignore o2's */
+                         1, 0,     /* o1's values multiplied by 1 */
+                         1, 0, 0); /* take only keys unique to o1 */
 }
 
 static PyObject *
-union_m(PyObject *module, PyObject *args)
-{
-    PyObject *o1;
-    PyObject *o2;
+union_m(PyObject *module, PyObject *args) {
+    PyObject *o1, *o2;
 
-    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2))
-        return NULL;
+    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
 
     if (o1 == Py_None) {
         Py_INCREF(o2);
@@ -443,19 +442,16 @@ union_m(PyObject *module, PyObject *args)
         return o1;
     }
 
-    return set_operation(o1, o2, 0, 0,    /* ignore values in both */
-                        1, 1,            /* the weights are irrelevant */
-                        1, 1, 1);        /* take all keys */
+    return set_operation(o1, o2, 0, 0, /* ignore values in both */
+                         1, 1,         /* the weights are irrelevant */
+                         1, 1, 1);     /* take all keys */
 }
 
 static PyObject *
-intersection_m(PyObject *module, PyObject *args)
-{
-    PyObject *o1;
-    PyObject *o2;
+intersection_m(PyObject *module, PyObject *args) {
+    PyObject *o1, *o2;
 
-    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2))
-        return NULL;
+    UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
 
     if (o1 == Py_None) {
         Py_INCREF(o2);
@@ -465,23 +461,20 @@ intersection_m(PyObject *module, PyObject *args)
         return o1;
     }
 
-    return set_operation(o1, o2, 0, 0,    /* ignore values in both */
-                        1, 1,            /* the weights are irrelevant */
-                        0, 1, 0);        /* take only keys common to both */
+    return set_operation(o1, o2, 0, 0, /* ignore values in both */
+                         1, 1,         /* the weights are irrelevant */
+                         0, 1, 0);     /* take only keys common to both */
 }
 
 #ifdef MERGE
 
 static PyObject *
-wunion_m(PyObject *module, PyObject *args)
-{
-    PyObject *o1;
-    PyObject *o2;
-    VALUE_TYPE w1 = 1;
-    VALUE_TYPE w2 = 1;
+wunion_m(PyObject *module, PyObject *args) {
+    PyObject *o1, *o2;
+    VALUE_TYPE w1 = 1, w2 = 1;
 
-    UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE,
-                            &o1, &o2, &w1, &w2))
+    UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE, &o1, &o2, &w1,
+                            &w2))
         return NULL;
 
     if (o1 == Py_None)
@@ -497,16 +490,13 @@ wunion_m(PyObject *module, PyObject *args)
 }
 
 static PyObject *
-wintersection_m(PyObject *module, PyObject *args)
-{
+wintersection_m(PyObject *module, PyObject *args) {
     PyTypeObject *set_type = _get_set_type_from_module(module);
-    PyObject *o1;
-    PyObject *o2;
-    VALUE_TYPE w1 = 1;
-    VALUE_TYPE w2 = 1;
+    PyObject *o1, *o2;
+    VALUE_TYPE w1 = 1, w2 = 1;
 
-    UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE,
-                            &o1, &o2, &w1, &w2))
+    UNLESS(PyArg_ParseTuple(args, "OO|" VALUE_PARSE VALUE_PARSE, &o1, &o2, &w1,
+                            &w2))
         return NULL;
 
     if (o1 == Py_None)
@@ -516,10 +506,11 @@ wintersection_m(PyObject *module, PyObject *args)
 
     o1 = set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0);
     if (o1)
-        ASSIGN(o1, Py_BuildValue(
-            VALUE_PARSE "O",
-            ((o1->ob_type == set_type) ? w2 + w1 : 1),
-            o1));
+        ASSIGN(o1,
+               Py_BuildValue(
+                   VALUE_PARSE "O",
+                   ((o1->ob_type == (PyTypeObject *)(set_type)) ? w2 + w1 : 1),
+                   o1));
 
     return o1;
 }
@@ -534,15 +525,14 @@ wintersection_m(PyObject *module, PyObject *args)
    is to run much faster than doing pairs of unions.
 */
 static PyObject *
-multiunion_m(PyObject *module, PyObject *args)
-{
+multiunion_m(PyObject *module, PyObject *args) {
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
     PyTypeObject *set_type = _get_set_type_from_module(module);
     PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyObject *seq;          /* input sequence */
-    int n;                  /* length of input sequence */
-    PyObject *set = NULL;   /* an element of the input sequence */
-    Bucket *result;         /* result set */
+    PyObject *seq;        /* input sequence */
+    int n;                /* length of input sequence */
+    PyObject *set = NULL; /* an element of the input sequence */
+    Bucket *result;       /* result set */
     SetIteration setiter = {0};
     int i;
 
@@ -559,49 +549,55 @@ multiunion_m(PyObject *module, PyObject *args)
         return NULL;
 
     /* For each set in the input sequence, append its elements to the result
-        set.  At this point, we ignore the possibility of duplicates. */
+       set.  At this point, we ignore the possibility of duplicates. */
     for (i = 0; i < n; ++i) {
         set = PySequence_GetItem(seq, i);
         if (set == NULL)
-        goto Error;
+            goto Error;
 
         /* If set is a bucket, do a straight resize + memcpy. */
-        if (set->ob_type == (PyTypeObject*)set_type ||
-            set->ob_type == (PyTypeObject*)bucket_type) {
+        if (set->ob_type == (PyTypeObject *)set_type ||
+            set->ob_type == (PyTypeObject *)bucket_type) {
             Bucket *b = BUCKET(set);
             int status = 0;
 
-            UNLESS (per_use((cPersistentObject*)b, capi_struct)) goto Error;
+            UNLESS(per_use((cPersistentObject*)b, capi_struct))
+                goto Error;
             if (b->len)
-            status = bucket_append(result, b, 0, b->len, 0, i < n-1);
+                status = bucket_append(result, b, 0, b->len, 0, i < n - 1);
             per_allow_deactivation((cPersistentObject*)b);
             capi_struct->accessed((cPersistentObject*)b);
-            if (status < 0) goto Error;
+            if (status < 0)
+                goto Error;
         } else {
-        /* No cheap way:  iterate over set's elements one at a time. */
-        if (initSetIteration(&setiter, set, 0) < 0) goto Error;
-        if (setiter.next(&setiter) < 0) goto Error;
-        while (setiter.position >= 0) {
-            if (result->len >= result->size && Bucket_grow(result, -1, 1) < 0)
-            goto Error;
-            COPY_KEY(result->keys[result->len], setiter.key);
-            ++result->len;
-            /* We know the key is an int, so no need to incref it. */
-            if (setiter.next(&setiter) < 0) goto Error;
-        }
-        finiSetIteration(&setiter);
+            /* No cheap way:  iterate over set's elements one at a time. */
+            if (initSetIteration(&setiter, set, 0) < 0)
+                goto Error;
+            if (setiter.next(&setiter) < 0)
+                goto Error;
+            while (setiter.position >= 0) {
+                if (result->len >= result->size &&
+                    Bucket_grow(result, -1, 1) < 0)
+                    goto Error;
+                COPY_KEY(result->keys[result->len], setiter.key);
+                ++result->len;
+                /* We know the key is an int, so no need to incref it. */
+                if (setiter.next(&setiter) < 0)
+                    goto Error;
+            }
+            finiSetIteration(&setiter);
         }
         Py_DECREF(set);
         set = NULL;
     }
 
     /* Combine, sort, remove duplicates, and reset the result's len.
-        If the set shrinks (which happens if and only if there are
-        duplicates), no point to realloc'ing the set smaller, as we
-        expect the result set to be short-lived.
+       If the set shrinks (which happens if and only if there are
+       duplicates), no point to realloc'ing the set smaller, as we
+       expect the result set to be short-lived.
     */
     if (result->len > 0) {
-        size_t newlen;          /* number of elements in final result set */
+        size_t newlen; /* number of elements in final result set */
         newlen = sort_int_nodups(result->keys, (size_t)result->len);
         result->len = (int)newlen;
     }
@@ -614,3 +610,4 @@ Error:
     return NULL;
 }
 #endif
+
