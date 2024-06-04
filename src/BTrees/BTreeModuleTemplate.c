@@ -933,7 +933,9 @@ init_tree_type(
 static PyTypeObject*
 init_nonpersistent_type(PyTypeObject* type)
 {
-    /* What to do here? */
+    if (PyType_Ready(type) < 0)
+        return NULL;
+
     return type;
 }
 
