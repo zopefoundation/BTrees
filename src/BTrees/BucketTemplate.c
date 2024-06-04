@@ -1894,6 +1894,9 @@ static void
 bucket_dealloc(Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+#endif
 
     PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
@@ -1906,6 +1909,10 @@ bucket_dealloc(Bucket *self)
     } else {
         PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
     }
+
+#if USE_HEAP_ALLOCATED_TYPES
+    Py_DECREF(tp);
+#endif
 }
 
 static int
