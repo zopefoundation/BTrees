@@ -153,7 +153,7 @@ intern_strings()
     return 0;
 }
 
-/* Temporary -- move to 'module_state'. */
+static inline PyObject* _get_module(PyTypeObject* typeobj);
 static inline PyObject* _get_conflict_error( PyObject* bt_obj);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
                             PyTypeObject* type);
