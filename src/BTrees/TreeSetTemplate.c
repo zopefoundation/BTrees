@@ -552,7 +552,7 @@ static PyNumberMethods TreeSet_as_number = {
     .nb_xor                 = (binaryfunc)Generic_set_xor,
     .nb_or                  = bucket_or,
     .nb_inplace_subtract    = (binaryfunc)TreeSet_isub,
-    .nb_inplace_add         = (binaryfunc)TreeSet_iand,
+    .nb_inplace_and         = (binaryfunc)TreeSet_iand,
     .nb_inplace_xor         = (binaryfunc)TreeSet_ixor,
     .nb_inplace_or          = (binaryfunc)TreeSet_ior,
 };
