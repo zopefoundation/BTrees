@@ -749,24 +749,22 @@ _BTree_clear(BTree *self)
         ASSERT(Py_REFCNT(self->firstbucket) > 1,
             "Invalid firstbucket pointer", -1);
 #endif
-        Py_DECREF(self->firstbucket);
-        self->firstbucket = NULL;
+        Py_CLEAR(self->firstbucket);
     }
 
     if (self->data)
     {
-        int i;
         if (len > 0) /* 0 is special because key 0 is trash */
         {
-            Py_DECREF(self->data[0].child);
+            Py_CLEAR(self->data[0].child);
         }
 
-        for (i = 1; i < len; i++)
+        for (int i = 1; i < len; ++i)
         {
 #ifdef KEY_TYPE_IS_PYOBJECT
-            DECREF_KEY(self->data[i].key);
+            Py_CLEAR(self->data[i].key);
 #endif
-            Py_DECREF(self->data[i].child);
+            Py_CLEAR(self->data[i].child);
         }
         free(self->data);
         self->data = NULL;
@@ -2523,7 +2521,11 @@ static void
 BTree_dealloc(BTree *self)
 {
     PyObject* obj_self = (PyObject*)self;
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+#endif
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+
     PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
         _BTree_clear(self);
@@ -2533,12 +2535,20 @@ BTree_dealloc(BTree *self)
     } else {
         PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
     }
+#if USE_HEAP_ALLOCATED_TYPES
+    /* Hmmm, is Persistent going to do this for us? */
+    Py_DECREF(tp);
+#endif
 }
 
 static int
 BTree_traverse(BTree *self, visitproc visit, void *arg)
 {
     PyObject* obj_self = (PyObject*)self;
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+#endif
     PyTypeObject *btree_type = _get_btree_type(obj_self);
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
 

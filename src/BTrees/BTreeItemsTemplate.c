@@ -65,10 +65,15 @@ newBTreeItems(PyObject* module, char kind,
 static void
 BTreeItems_dealloc(BTreeItems *self)
 {
-    Py_XDECREF(self->firstbucket);
-    Py_XDECREF(self->lastbucket);
-    Py_XDECREF(self->currentbucket);
-    PyObject_DEL(self);
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(self);
+    Py_CLEAR(self->firstbucket);
+    Py_CLEAR(self->lastbucket);
+    Py_CLEAR(self->currentbucket);
+    tp->tp_free(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    Py_DECREF(tp);
+#endif
 }
 
 static Py_ssize_t
@@ -711,8 +716,13 @@ newBTreeIter(PyObject* module, BTreeItems *pitems)
 static void
 BTreeIter_dealloc(BTreeIter *bi)
 {
-    Py_DECREF(bi->pitems);
-    PyObject_Del(bi);
+    PyObject* obj_self = (PyObject*)bi;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_CLEAR(bi->pitems);
+    tp->tp_free(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    Py_DECREF(tp);
+#endif
 }
 
 /* The implementation of the iterator's tp_iternext slot.  Returns "the next"
