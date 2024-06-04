@@ -484,7 +484,7 @@ static char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
 static char BTreeItems__doc__[] =
     "Sequence type used to iterate over BTree items.";
 
-#ifdef USE_STATIC_TYPES
+#if USE_STATIC_TYPES
 
 static PyNumberMethods BTreeItems_as_number_for_nonzero = {
     .nb_bool                = (inquiry)BTreeItems_nonzero,
@@ -787,7 +787,7 @@ static char BTreeIter__name__[] =
     MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
 static char BTreeIter__doc__[] = "Iterator for BTree items";
 
-#ifdef USE_STATIC_TYPES
+#if USE_STATIC_TYPES
 
 static PyTypeObject BTreeIter_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
