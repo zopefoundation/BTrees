@@ -57,9 +57,10 @@ typedef struct
 #define ITEMS(O)((BTreeItems*)(O))
 
 static PyObject *
-newBTreeItems(char kind,
+newBTreeItems(PyObject* module, char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset);
+              Bucket *highbucket, int highoffset
+              );
 
 static void
 BTreeItems_dealloc(BTreeItems *self)
@@ -353,6 +354,8 @@ BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 static PyObject *
 BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
     Bucket *lowbucket;
     Bucket *highbucket;
     int lowoffset;
@@ -426,8 +429,10 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
         highbucket = self->currentbucket;
         highoffset = self->currentoffset;
     }
-    return newBTreeItems(self->kind,
-                         lowbucket, lowoffset, highbucket, highoffset);
+    return newBTreeItems(module, self->kind,
+                         lowbucket, lowoffset,
+                         highbucket, highoffset
+                        );
 }
 
 static PyObject *
@@ -536,13 +541,15 @@ static PyTypeObject BTreeItemsType = {
  * pseudoindex to 0.  kind is 'k', 'v' or 'i' (see BTreeItems struct docs).
  */
 static PyObject *
-newBTreeItems(char kind,
+newBTreeItems(PyObject* module, char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset)
+              Bucket *highbucket, int highoffset
+             )
 {
+    PyTypeObject* btree_items_type = _get_btree_items_type_from_module(module);
     BTreeItems *self;
 
-    UNLESS (self = PyObject_NEW(BTreeItems, &BTreeItemsType))
+    UNLESS (self = PyObject_NEW(BTreeItems, btree_items_type))
         return NULL;
     self->kind=kind;
 

@@ -1656,6 +1656,7 @@ static PyObject *
 buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 {
     PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     BTreeItems *items;
     int lowoffset;
@@ -1667,8 +1668,10 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
     if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset) < 0)
         goto Done;
 
-    items = (BTreeItems *)newBTreeItems(kind, self, lowoffset,
-                                        self, highoffset);
+    items = (BTreeItems *)newBTreeItems(module, kind,
+                                        self, lowoffset,
+                                        self, highoffset
+                                       );
     if (items == NULL)
         goto Done;
 
