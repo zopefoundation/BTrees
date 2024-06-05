@@ -1707,18 +1707,29 @@ Bucket_iteritems(Bucket *self, PyObject *args, PyObject *kw)
 /* End of iterator support. */
 
 #ifdef PERSISTENT
-static PyObject *merge_error(PyObject* b, int p1, int p2, int p3, int reason);
-static PyObject *bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3);
+/* Defined in 'MergeTemplate.c' */
+static PyObject *merge_error(
+    PyObject* module, int p1, int p2, int p3, int reason
+);
+static PyObject *bucket_merge(
+    PyObject* module, Bucket *s1, Bucket *s2, Bucket *s3);
 
 static PyObject *
 _bucket__p_resolveConflict(PyTypeObject *tp, PyObject *s[3])
 {
     PyObject *result = NULL;    /* guilty until proved innocent */
-    PyObject *bo = NULL;         /* FBO merge_error */
     Bucket *b[3] = {NULL, NULL, NULL};
     PyObject *meth = NULL;
     PyObject *a = NULL;
     int i;
+
+    PyObject *module = _get_module(tp);
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "_bucket__p_resolveConflict: module is NULL");
+        return NULL;
+    }
 
     for (i = 0; i < 3; i++) {
         PyObject *r;
@@ -1745,11 +1756,10 @@ _bucket__p_resolveConflict(PyTypeObject *tp, PyObject *s[3])
         a = meth = NULL;
     }
 
-    bo = (PyObject*)b[0];
     if (b[0]->next != b[1]->next || b[0]->next != b[2]->next)
-        merge_error(bo, -1, -1, -1, 0);
+        merge_error(module, -1, -1, -1, 0);
     else
-        result = bucket_merge(b[0], b[1], b[2]);
+        result = bucket_merge(module, b[0], b[1], b[2]);
 
 Done:
     Py_XDECREF(meth);

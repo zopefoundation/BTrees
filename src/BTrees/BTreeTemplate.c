@@ -1485,10 +1485,18 @@ get_bucket_state(PyObject* obj_self, PyObject *t)
         return NULL;
     }
 
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "get_bucket_state: module is NULL");
+        return NULL;
+    }
+
     if (PyTuple_GET_SIZE(t) == 2)
     {
         /* A non-degenerate BTree. */
-        return merge_error(obj_self, -1, -1, -1, 11);
+        return merge_error(module, -1, -1, -1, 11);
     }
 
     /* We're in the one-bucket case. */
