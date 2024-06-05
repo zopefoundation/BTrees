@@ -1534,9 +1534,9 @@ BTree__p_resolveConflict(BTree *self, PyObject *args)
         return NULL;
 
     if (PyObject_IsInstance((PyObject *)self, (PyObject *)btree_type))
-        x = _bucket__p_resolveConflict(OBJECT(bucket_type), s);
+        x = _bucket__p_resolveConflict(bucket_type, s);
     else
-        x = _bucket__p_resolveConflict(OBJECT(set_type), s);
+        x = _bucket__p_resolveConflict(set_type, s);
 
     if (x == NULL)
         return NULL;
