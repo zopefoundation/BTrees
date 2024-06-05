@@ -559,7 +559,7 @@ multiunion_m(PyObject *module, PyObject *args) {
     }
 
     /* If we have a valid module, these are bound to succeed.*/
-    PerCAPI* per_capi = _get_capi_struct_from_module(module);
+    PerCAPI* per_capi = _get_per_capi(module);
     PyTypeObject *set_type = _get_set_type(module);
     PyTypeObject *bucket_type = _get_bucket_type(module);
 

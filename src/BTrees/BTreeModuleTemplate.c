@@ -161,9 +161,6 @@ static inline PyObject* _get_conflict_error_from_module(PyObject* module);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
                             PyTypeObject* type);
 static inline PerCAPI* _get_per_capi(PyObject* bt_obj_or_module);
-static inline PerCAPI* _get_capi_struct(PyObject* bt_obj);
-static inline PerCAPI* _get_capi_struct_from_module(
-                            PyObject* module);
 static inline PyTypeObject* _get_btree_type(PyObject* module);
 static inline PyTypeObject* _get_bucket_type(PyObject* module);
 static inline PyTypeObject* _get_set_type(PyObject* module);
@@ -576,7 +573,7 @@ static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
     PyObject* obj_self = (PyObject*)current;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
@@ -838,18 +835,6 @@ _get_per_capi(PyObject* bt_obj_or_module)
 
     module_state* state = PyModule_GetState(module);
     return state->per_capi;
-}
-
-static inline PerCAPI*
-_get_capi_struct(PyObject* bt_obj)
-{
-    return _get_per_capi(bt_obj);
-}
-
-static inline PerCAPI*
-_get_capi_struct_from_module(PyObject* module)
-{
-    return _get_per_capi(module);
 }
 
 static inline PyTypeObject*

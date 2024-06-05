@@ -222,7 +222,7 @@ static PyObject *
 TreeSet_setstate(BTree *self, PyObject *args)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
 
     if (!PyArg_ParseTuple(args,"O",&args))
