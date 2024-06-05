@@ -2054,6 +2054,7 @@ static PyType_Slot Bucket_type_slots[] = {
     {Py_mp_length,              (lenfunc)Bucket_length},
     {Py_mp_subscript,           (binaryfunc)bucket_getitem},
     {Py_mp_ass_subscript,       (objobjargproc)bucket_setitem},
+    {Py_sq_contains,            (objobjproc)bucket_contains},
     {0,                         NULL}
 };
 
