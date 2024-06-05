@@ -1428,22 +1428,25 @@ bucket_setstate(Bucket *self, PyObject *state)
 static PyObject *
 bucket_sub(PyObject *self, PyObject *other)
 {
+    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
-    return difference_m(NULL, args);
+    return difference_m(module, args);
 }
 
 static PyObject *
 bucket_or(PyObject *self, PyObject *other)
 {
+    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
-    return union_m(NULL, args);
+    return union_m(module, args);
 }
 
 static PyObject *
 bucket_and(PyObject *self, PyObject *other)
 {
+    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
-    return intersection_m(NULL, args);
+    return intersection_m(module, args);
 }
 
 static PyObject *
