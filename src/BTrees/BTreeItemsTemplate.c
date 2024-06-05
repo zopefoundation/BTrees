@@ -496,31 +496,33 @@ static char BTreeItems__doc__[] =
 #if USE_STATIC_TYPES
 
 static PyNumberMethods BTreeItems_as_number_for_nonzero = {
-    .nb_bool                = (inquiry)BTreeItems_nonzero,
+    .nb_bool                    = (inquiry)BTreeItems_nonzero,
 };
 
 static PySequenceMethods BTreeItems_as_sequence =
 {
-    .sq_length              = (lenfunc) BTreeItems_length,
-    .sq_item                = (ssizeargfunc) BTreeItems_item,
+    .sq_length                  = (lenfunc) BTreeItems_length,
+    .sq_item                    = (ssizeargfunc) BTreeItems_item,
 };
 
 /* Py3K doesn't honor sequence slicing, so implement via mapping */
 static PyMappingMethods BTreeItems_as_mapping = {
-    .mp_length              = (lenfunc)BTreeItems_length,
-    .mp_subscript           = (binaryfunc)BTreeItems_subscript,
+    .mp_length                  = (lenfunc)BTreeItems_length,
+    .mp_subscript               = (binaryfunc)BTreeItems_subscript,
 };
 
 static PyTypeObject BTreeItems_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name                = BTreeItems__name__,
-    .tp_doc                 = BTreeItems__doc__,
-    .tp_basicsize           = sizeof(BTreeItems),
-    .tp_flags               = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc             = (destructor)BTreeItems_dealloc,
-    .tp_as_number           = &BTreeItems_as_number_for_nonzero,
-    .tp_as_sequence         = &BTreeItems_as_sequence,
-    .tp_as_mapping          = &BTreeItems_as_mapping,
+    .tp_name                    = BTreeItems__name__,
+    .tp_doc                     = BTreeItems__doc__,
+    .tp_basicsize               = sizeof(BTreeItems),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_dealloc                 = (destructor)BTreeItems_dealloc,
+    .tp_as_number               = &BTreeItems_as_number_for_nonzero,
+    .tp_as_sequence             = &BTreeItems_as_sequence,
+    .tp_as_mapping              = &BTreeItems_as_mapping,
 };
 
 #else
@@ -554,6 +556,8 @@ BTreeItems_clear(BTreeItems *self)
 
 static PyType_Slot BTreeItems_type_slots[] = {
     {Py_tp_doc,                 BTreeItems__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_traverse,            (traverseproc)BTreeItems_traverse},
     {Py_tp_clear,               (inquiry)BTreeItems_clear},
     {Py_tp_dealloc,             (destructor)BTreeItems_dealloc},
@@ -845,6 +849,9 @@ static PyTypeObject BTreeIter_type_def = {
     .tp_doc                     = BTreeIter__doc__,
     .tp_basicsize               = sizeof(BTreeIter),
     .tp_flags                   = Py_TPFLAGS_DEFAULT,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_getattro                = _pyobject_generic_getattr,
     .tp_iter                    = (getiterfunc)BTreeIter_getiter,
     .tp_iternext                = (iternextfunc)BTreeIter_next,
     .tp_dealloc                 = (destructor)BTreeIter_dealloc,
@@ -877,6 +884,9 @@ BTreeIter_clear(BTreeIter *self)
 
 static PyType_Slot BTreeIter_type_slots[] = {
     {Py_tp_doc,                 BTreeIter__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
+    {Py_tp_getattro,            _pyobject_generic_getattr},
     {Py_tp_iter,                (getiterfunc)BTreeIter_getiter},
     {Py_tp_iternext,            (iternextfunc)BTreeIter_next},
     {Py_tp_traverse,            (traverseproc)BTreeIter_traverse},

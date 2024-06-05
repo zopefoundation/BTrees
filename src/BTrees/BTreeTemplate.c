@@ -2705,6 +2705,8 @@ static PyTypeObject BTree_type_def = {
     .tp_flags                   = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
                                   Py_TPFLAGS_BASETYPE,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
     .tp_init                    = BTree_init,
     .tp_iter                    = (getiterfunc)BTree_getiter,
     .tp_traverse                = (traverseproc)BTree_traverse,
@@ -2721,6 +2723,8 @@ static PyTypeObject BTree_type_def = {
 
 static PyType_Slot BTree_type_slots[] = {
     {Py_tp_doc,                 BTree__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_init,                BTree_init},
     {Py_tp_iter,                (getiterfunc)BTree_getiter},
     {Py_tp_traverse,            (traverseproc)BTree_traverse},
