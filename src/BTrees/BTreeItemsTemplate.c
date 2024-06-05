@@ -488,7 +488,7 @@ BTreeItems_nonzero(BTreeItems *self)
     return BTreeItems_length_or_nonzero(self, 1);
 }
 
-static char BTreeItems__name__[] = MOD_NAME_PREFIX "BTreeItems";
+static char BTreeItems__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTreeItems";
 static char BTreeItems__doc__[] =
     "Sequence type used to iterate over BTree items.";
 
@@ -837,8 +837,7 @@ BTreeIter_getiter(PyObject *it)
     return it;
 }
 
-static char BTreeIter__name__[] =
-    MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
+static char BTreeIter__name__[] = MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
 static char BTreeIter__doc__[] = "Iterator for BTree items";
 
 #if USE_STATIC_TYPES
