@@ -108,11 +108,11 @@ nextGenericKeyIter(SetIteration *i) {
  *          A SetIteration struct has been cleaned up iff i.set is NULL.
  */
 static int
-initSetIteration(SetIteration *i, PyObject *s, int useValues) {
-    PyTypeObject *btree_type = _get_btree_type(s);
-    PyTypeObject *bucket_type = _get_bucket_type(s);
-    PyTypeObject *set_type = _get_set_type(s);
-    PyTypeObject *tree_set_type = _get_tree_set_type(s);
+initSetIteration(PyObject* module, SetIteration *i, PyObject *s, int useValues) {
+    PyTypeObject *btree_type = _get_btree_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *tree_set_type = _get_tree_set_type_from_module(module);
     i->set = NULL;
     i->position = -1; /* set to 0 only on normal return */
     i->usesValue = 0; /* assume it's a set or that values aren't iterated */
@@ -247,7 +247,8 @@ copyRemaining(Bucket *r,
  * mapping was requested.
  */
 static PyObject *
-set_operation(PyObject *s1,
+set_operation(PyObject* module,
+              PyObject *s1,
               PyObject *s2,
               int usevalues1,
               int usevalues2,
@@ -274,14 +275,14 @@ set_operation(PyObject *s1,
              )
 {
     Bucket *r = 0;
-    PyTypeObject *bucket_type = _get_bucket_type(s1);
-    PyTypeObject *set_type = _get_set_type(s1);
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
     SetIteration i1 = {0, 0, 0}, i2 = {0, 0, 0};
     int cmp, merge;
 
-    if (initSetIteration(&i1, s1, usevalues1) < 0)
+    if (initSetIteration(module, &i1, s1, usevalues1) < 0)
         goto err;
-    if (initSetIteration(&i2, s2, usevalues2) < 0)
+    if (initSetIteration(module, &i2, s2, usevalues2) < 0)
         goto err;
     merge = i1.usesValue | i2.usesValue;
 
@@ -425,7 +426,8 @@ difference_m(PyObject *module, PyObject *args) {
         return o1;
     }
 
-    return set_operation(o1, o2, 1,
+    return set_operation(module,
+                         o1, o2, 1,
                          0,        /* preserve values from o1, ignore o2's */
                          1, 0,     /* o1's values multiplied by 1 */
                          1, 0, 0); /* take only keys unique to o1 */
@@ -445,7 +447,8 @@ union_m(PyObject *module, PyObject *args) {
         return o1;
     }
 
-    return set_operation(o1, o2, 0, 0, /* ignore values in both */
+    return set_operation(module,
+                         o1, o2, 0, 0, /* ignore values in both */
                          1, 1,         /* the weights are irrelevant */
                          1, 1, 1);     /* take all keys */
 }
@@ -464,7 +467,8 @@ intersection_m(PyObject *module, PyObject *args) {
         return o1;
     }
 
-    return set_operation(o1, o2, 0, 0, /* ignore values in both */
+    return set_operation(module,
+                         o1, o2, 0, 0, /* ignore values in both */
                          1, 1,         /* the weights are irrelevant */
                          0, 1, 0);     /* take only keys common to both */
 }
@@ -485,7 +489,7 @@ wunion_m(PyObject *module, PyObject *args) {
     else if (o2 == Py_None)
         return Py_BuildValue(VALUE_PARSE "O", w1, o1);
 
-    o1 = set_operation(o1, o2, 1, 1, w1, w2, 1, 1, 1);
+    o1 = set_operation(module, o1, o2, 1, 1, w1, w2, 1, 1, 1);
     if (o1)
         ASSIGN(o1, Py_BuildValue(VALUE_PARSE "O", (VALUE_TYPE)1, o1));
 
@@ -507,7 +511,7 @@ wintersection_m(PyObject *module, PyObject *args) {
     else if (o2 == Py_None)
         return Py_BuildValue(VALUE_PARSE "O", w1, o1);
 
-    o1 = set_operation(o1, o2, 1, 1, w1, w2, 0, 1, 0);
+    o1 = set_operation(module, o1, o2, 1, 1, w1, w2, 0, 1, 0);
     if (o1)
         ASSIGN(o1,
                Py_BuildValue(
@@ -574,7 +578,7 @@ multiunion_m(PyObject *module, PyObject *args) {
                 goto Error;
         } else {
             /* No cheap way:  iterate over set's elements one at a time. */
-            if (initSetIteration(&setiter, set, 0) < 0)
+            if (initSetIteration(module, &setiter, set, 0) < 0)
                 goto Error;
             if (setiter.next(&setiter) < 0)
                 goto Error;

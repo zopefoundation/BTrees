@@ -88,6 +88,7 @@ merge_error(PyObject* bucket_or_btree, int p1, int p2, int p3, int reason) {
 static PyObject *
 bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
     PyObject *b = (PyObject*)s1;  /* FBO 'merge_error' */
+    PyObject *module = _get_module(Py_TYPE(b));
     PyTypeObject *bucket_type = _get_bucket_type(b);
     PyTypeObject *set_type = _get_set_type(b);
     Bucket *r = 0;
@@ -101,11 +102,11 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
         goto err;
     }
 
-    if (initSetIteration(&i1, OBJECT(s1), 1) < 0)
+    if (initSetIteration(module, &i1, OBJECT(s1), 1) < 0)
         goto err;
-    if (initSetIteration(&i2, OBJECT(s2), 1) < 0)
+    if (initSetIteration(module, &i2, OBJECT(s2), 1) < 0)
         goto err;
-    if (initSetIteration(&i3, OBJECT(s3), 1) < 0)
+    if (initSetIteration(module, &i3, OBJECT(s3), 1) < 0)
         goto err;
 
     mapping = i1.usesValue | i2.usesValue | i3.usesValue;
