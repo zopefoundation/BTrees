@@ -146,7 +146,7 @@ static int
 BTree_check_inner(BTree *self, Bucket *nextbucket)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int i;
     Bucket *bucketafter;
     Sized *child;
@@ -325,7 +325,7 @@ static PyObject *
 _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     KEY_TYPE key;
     PyObject *result = NULL;    /* guilty until proved innocent */
     int copied = 1;
@@ -452,7 +452,7 @@ static int
 BTree_split(BTree *self, int index, BTree *next)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int next_size;
     Sized *child;
 
@@ -559,7 +559,7 @@ static int
 BTree_grow(BTree *self, int index, int noval)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int i;
     Sized *v, *e = 0;
     BTreeItem *d;
@@ -676,7 +676,7 @@ static Bucket *
 BTree_lastBucket(BTree *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Sized *pchild;
     Bucket *result;
 
@@ -708,7 +708,7 @@ static int
 BTree_deleteNextBucket(BTree *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Bucket *b;
 
     UNLESS (per_use((cPersistentObject*)self, capi_struct))
@@ -830,7 +830,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
            int unique, int noval)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int changed = 0;    /* did I mutate? */
     int min;            /* index of child I searched */
     BTreeItem *d;       /* self->data[min] */
@@ -1140,7 +1140,7 @@ static PyObject *
 BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
 
     int ghostify = 1;
     PyObject *force = NULL;
@@ -1200,7 +1200,7 @@ static PyObject *
 BTree_clear(BTree *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
 
     UNLESS (per_use((cPersistentObject*)self, capi_struct)) return NULL;
 
@@ -1255,7 +1255,7 @@ static PyObject *
 BTree_getstate(BTree *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     PyObject *r = NULL;
     PyObject *o;
     int i;
@@ -1457,7 +1457,7 @@ static PyObject *
 BTree_setstate(BTree *self, PyObject *arg)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     per_prevent_deactivation((cPersistentObject*)self);
@@ -1658,7 +1658,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
                    Bucket **bucket, int *offset)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Sized *deepest_smaller = NULL;      /* last possibility to move left */
     int deepest_smaller_is_btree = 0;   /* Boolean; if false, it's a bucket */
     Bucket *pbucket;
@@ -1784,7 +1784,7 @@ static PyObject *
 BTree_maxminKey(BTree *self, PyObject *args, int min)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     PyObject *key=0;
     Bucket *bucket = NULL;
     int offset, rc;
@@ -1908,7 +1908,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         return NULL;
     }
 
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
 
     if (capi_struct == NULL) {
         PyErr_SetString(
@@ -2126,7 +2126,7 @@ static PyObject *
 BTree_byValue(BTree *self, PyObject *omin)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     PyObject *r=0;
     PyObject *o=0;
     PyObject *item=0;
@@ -2591,7 +2591,7 @@ BTree_dealloc(BTree *self)
 #if USE_HEAP_ALLOCATED_TYPES
     PyTypeObject* tp = Py_TYPE(obj_self);
 #endif
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
 
     PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
@@ -2625,7 +2625,7 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
 
     /* If we have a valid module, these are bound to succeed.*/
     PyTypeObject *btree_type = _get_btree_type(module);
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
+    PerCAPI* capi_struct = _get_capi_struct_from_module(module);
 
     int i;
     int len;
@@ -2696,7 +2696,7 @@ static Py_ssize_t
 BTree_length_or_nonzero(BTree *self, int nonzero)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     int result;
     Bucket *b;
     Bucket *next;
