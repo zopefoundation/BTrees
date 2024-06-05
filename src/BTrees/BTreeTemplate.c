@@ -1855,8 +1855,6 @@ static PyObject *
 BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 {
     PyObject* obj_self = (PyObject*)self;
-    PyObject* module = _get_module(Py_TYPE(obj_self));
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *min = Py_None;
     PyObject *max = Py_None;
     int excludemin = 0;
@@ -1867,6 +1865,22 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
     int lowoffset;
     int highoffset;
     PyObject *result;
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_rangeSearch: module is NULL");
+        return NULL;
+    }
+
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+
+    if (capi_struct == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_rangeSearch: capi_struct is NULL");
+        return NULL;
+    }
 
     if (args)
     {
@@ -2359,14 +2373,19 @@ buildBTreeIter(BTree *self, PyObject *args, PyObject *kw, char kind)
 {
     PyObject* obj_self = (PyObject*)self;
     PyObject* module = _get_module(Py_TYPE(obj_self));
-    BTreeIter *result = NULL;
+
+    if (module == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "buildBTreeIter: module is NULL");
+        return NULL;
+    }
+
     BTreeItems *items = (BTreeItems *)BTree_rangeSearch(self, args, kw, kind);
 
-    if (items)
-    {
-        result = newBTreeIter(module, items);
-        Py_DECREF(items);
-    }
+    if (items == NULL)
+        return NULL;
+
+    BTreeIter* result = newBTreeIter(module, items);
+    Py_DECREF(items);
     return (PyObject *)result;
 }
 

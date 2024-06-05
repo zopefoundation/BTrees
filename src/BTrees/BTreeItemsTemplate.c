@@ -370,6 +370,12 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
     int highoffset;
     Py_ssize_t length = -1;  /* len(self), but computed only if needed */
 
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTreeItems_slice: module is NULL");
+        return NULL;
+    }
+
     /* Complications:
      * A Python slice never raises IndexError, but BTreeItems_seek does.
      * Python did only part of index normalization before calling this:
@@ -593,6 +599,10 @@ newBTreeItems(PyObject* module, char kind,
               Bucket *highbucket, int highoffset
              )
 {
+    if (module == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "newBTreeItems: module is NULL");
+        return NULL;
+    }
     PyTypeObject* btree_items_type = _get_btree_items_type_from_module(module);
     BTreeItems *self;
 
