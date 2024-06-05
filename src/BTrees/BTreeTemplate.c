@@ -396,6 +396,7 @@ BTree_get(BTree *self, PyObject *key)
 static Sized *
 BTree_newBucket(BTree *self)
 {
+#if 1
     PyObject *factory;
     Sized *result;
 
@@ -411,6 +412,22 @@ BTree_newBucket(BTree *self)
     result = SIZED(PyObject_CallObject(factory, NULL));
     Py_DECREF(factory);
     return result;
+#else
+    /* Can't do this, even though it would be much cleaner, because
+     * we've made the promise that classes derived from a BTree can set
+     * the '_bucket_type' attribute with whatever they choose (any callable
+     * which takes no args, but usually a subclass of the same family's
+     * Bucket type.
+     */
+    PyObject* obj_self = (PyObject*)self;
+
+    PyTypeObject* bucket_type = _get_bucket_type(obj_self);
+    if (bucket_type == NULL)
+        return NULL;
+
+    return SIZED(bucket_type->tp_alloc(bucket_type, 0));
+#endif
+
 }
 
 /*
@@ -483,11 +500,12 @@ static int BTree_grow(BTree *self, int index, int noval);
 static int
 BTree_split_root(BTree *self, int noval)
 {
+    PyTypeObject* tp = Py_TYPE(self);
     BTree *child;
     BTreeItem *d;
 
     /* Create a child BTree, and a new data vector for self. */
-    child = BTREE(PyObject_CallObject(OBJECT(Py_TYPE(self)), NULL));
+    child = BTREE(tp->tp_alloc(tp, 0));
     if (!child)
         return -1;
 
@@ -568,7 +586,8 @@ BTree_grow(BTree *self, int index, int noval)
         d = self->data + index;
         v = d->child;
         /* Create a new object of the same type as the target value */
-        e = (Sized *)PyObject_CallObject((PyObject *)Py_TYPE(v), NULL);
+        PyTypeObject* tp = Py_TYPE(v);
+        e = (Sized *)tp->tp_alloc(tp, 0);
         if (e == NULL)
             return -1;
 
