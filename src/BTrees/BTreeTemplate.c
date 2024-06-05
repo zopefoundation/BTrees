@@ -1473,10 +1473,11 @@ BTree_setstate(BTree *self, PyObject *arg)
  * for a BTree (corrupted or hostile state).
  */
 PyObject *
-get_bucket_state(PyObject* obj_self, PyObject *t)
+get_bucket_state(PyObject* module, PyObject *t)
 {
     if (t == Py_None)
         return Py_None;        /* an empty BTree */
+
     if (! PyTuple_Check(t))
     {
         PyErr_SetString(
@@ -1484,8 +1485,6 @@ get_bucket_state(PyObject* obj_self, PyObject *t)
             "_p_resolveConflict: expected tuple or None for state");
         return NULL;
     }
-
-    PyObject* module = _get_module(Py_TYPE(obj_self));
 
     if (module == NULL) {
         PyErr_SetString(
@@ -1539,9 +1538,6 @@ static PyObject *
 BTree__p_resolveConflict(BTree *self, PyObject *args)
 {
     PyObject *obj_self = (PyObject*)self;
-    PyTypeObject *btree_type = _get_btree_type(obj_self);
-    PyTypeObject *bucket_type = _get_bucket_type(obj_self);
-    PyTypeObject *set_type = _get_set_type(obj_self);
     PyObject *s[3];
     PyObject *x;
     PyObject *y;
@@ -1550,13 +1546,26 @@ BTree__p_resolveConflict(BTree *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOO", &x, &y, &z))
         return NULL;
 
-    s[0] = get_bucket_state(obj_self, x);
+    PyObject *module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree__p_resolveConflict: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a non-NULL module, these three are guaranteed to work. */
+    PyTypeObject *btree_type = _get_btree_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+
+    s[0] = get_bucket_state(module, x);
     if (s[0] == NULL)
         return NULL;
-    s[1] = get_bucket_state(obj_self, y);
+    s[1] = get_bucket_state(module, y);
     if (s[1] == NULL)
         return NULL;
-    s[2] = get_bucket_state(obj_self, z);
+    s[2] = get_bucket_state(module, z);
     if (s[2] == NULL)
         return NULL;
 
