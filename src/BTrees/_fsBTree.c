@@ -92,11 +92,11 @@ static PyObject *
 bucket_toBytes(PyObject *obj_self)
 {
     Bucket *self = (Bucket *)obj_self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *items = NULL;
     int len;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     len = self->len;
@@ -108,12 +108,12 @@ bucket_toBytes(PyObject *obj_self)
     memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
 
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return items;
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(items);
     return NULL;
 }

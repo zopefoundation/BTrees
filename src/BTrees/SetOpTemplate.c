@@ -559,7 +559,7 @@ multiunion_m(PyObject *module, PyObject *args) {
     }
 
     /* If we have a valid module, these are bound to succeed.*/
-    PerCAPI* capi_struct = _get_capi_struct_from_module(module);
+    PerCAPI* per_capi = _get_capi_struct_from_module(module);
     PyTypeObject *set_type = _get_set_type(module);
     PyTypeObject *bucket_type = _get_bucket_type(module);
 
@@ -581,12 +581,12 @@ multiunion_m(PyObject *module, PyObject *args) {
             Bucket *b = BUCKET(set);
             int status = 0;
 
-            UNLESS(per_use((cPersistentObject*)b, capi_struct))
+            UNLESS(per_use((cPersistentObject*)b, per_capi))
                 goto Error;
             if (b->len)
                 status = bucket_append(result, b, 0, b->len, 0, i < n - 1);
             per_allow_deactivation((cPersistentObject*)b);
-            capi_struct->accessed((cPersistentObject*)b);
+            per_capi->accessed((cPersistentObject*)b);
             if (status < 0)
                 goto Error;
         } else {
