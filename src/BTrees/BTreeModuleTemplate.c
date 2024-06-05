@@ -157,8 +157,7 @@ intern_strings()
 
 static inline PyObject* _get_module(PyTypeObject* typeobj);
 static inline PyObject* _get_conflict_error( PyObject* bt_obj_or_module);
-static inline PyObject* _get_btreetype_setattro_allowed_names(
-                            PyTypeObject* type);
+static inline PyObject* _get_btreetype_allowed_attrs(PyTypeObject* type);
 static inline PerCAPI* _get_per_capi(PyObject* bt_obj_or_module);
 static inline PyTypeObject* _get_btree_type(PyObject* module);
 static inline PyTypeObject* _get_bucket_type(PyObject* module);
@@ -726,7 +725,7 @@ static struct PyMethodDef module_methods[] = {
 typedef struct {
     PyObject* conflict_error;
     PerCAPI* per_capi;
-    PyObject* btreetype_setattro_allowed_names;
+    PyObject* btreetype_allowed_attrs;
     PyTypeObject* btree_type_type;
     PyTypeObject* btree_type;
     PyTypeObject* bucket_type;
@@ -743,7 +742,7 @@ module_traverse(PyObject* module, visitproc visit, void *arg)
     Py_VISIT(state->conflict_error);
     if (state->per_capi)
         Py_VISIT(state->per_capi->pertype);
-    Py_VISIT(state->btreetype_setattro_allowed_names);
+    Py_VISIT(state->btreetype_allowed_attrs);
     Py_VISIT(state->btree_type_type);
     Py_VISIT(state->btree_type);
     Py_VISIT(state->bucket_type);
@@ -761,7 +760,7 @@ module_clear(PyObject* module)
     Py_CLEAR(state->conflict_error);
     if (state->per_capi)
         Py_CLEAR(state->per_capi->pertype);
-    Py_CLEAR(state->btreetype_setattro_allowed_names);
+    Py_CLEAR(state->btreetype_allowed_attrs);
     Py_CLEAR(state->btree_type_type);
     Py_CLEAR(state->btree_type);
     Py_CLEAR(state->bucket_type);
@@ -807,14 +806,14 @@ _get_conflict_error(PyObject* bt_obj_or_module)
 }
 
 static inline PyObject*
-_get_btreetype_setattro_allowed_names(PyTypeObject* type)
+_get_btreetype_allowed_attrs(PyTypeObject* type)
 {
     PyObject* module = _get_module(type);
     if (module == NULL)
         return NULL;
 
     module_state* state = PyModule_GetState(module);
-    return state->btreetype_setattro_allowed_names;
+    return state->btreetype_allowed_attrs;
 }
 
 static inline PerCAPI*
@@ -1038,7 +1037,7 @@ module_exec(PyObject* module)
     PyObject *mod_dict;
     PyObject *interfaces;
 
-    state->btreetype_setattro_allowed_names = PyTuple_Pack(
+    state->btreetype_allowed_attrs = PyTuple_Pack(
         5,
         /* BTree attributes  */
         str_max_internal_size,
@@ -1049,7 +1048,7 @@ module_exec(PyObject* module)
         str___provides__
     );
 
-    if (state->btreetype_setattro_allowed_names == NULL)
+    if (state->btreetype_allowed_attrs == NULL)
         return -1;
 
     /* Grab the ConflictError class */

@@ -22,7 +22,7 @@
 static int
 BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
 {
-    PyObject* allowed_names = _get_btreetype_setattro_allowed_names(type);
+    PyObject* allowed_attrs = _get_btreetype_allowed_attrs(type);
     /*
       type.tp_setattro prohibits setting any attributes on a built-in type,
       so we need to use our own (metaclass) type to handle it. The set of
@@ -34,7 +34,7 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
       attributes.
     */
     int allowed;
-    allowed = PySequence_Contains(allowed_names, name);
+    allowed = PySequence_Contains(allowed_attrs, name);
     if (allowed < 0) {
         return -1;
     }
