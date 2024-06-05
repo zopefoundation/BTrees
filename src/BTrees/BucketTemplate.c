@@ -1135,32 +1135,23 @@ err:
     return NULL;
 }
 
+
 static int
 _bucket_clear(Bucket *self)
 {
     const int len = self->len;
-    /* Don't declare i at this level.  If neither keys nor values are
-     * PyObject*, i won't be referenced, and you'll get a nuisance compiler
-     * wng for declaring it here.
-     */
+    /* silence compiler nag when neither keys nor values are objects*/
+    (void)len;
+
     self->len = self->size = 0;
 
-    if (self->next)
-    {
-        Py_DECREF(self->next);
-        self->next = NULL;
-    }
-
-    /* Silence compiler warning about unused variable len for the case
-        when neither key nor value is an object, i.e. II. */
-    (void)len;
+    Py_CLEAR(self->next);
 
     if (self->keys)
     {
 #ifdef KEY_TYPE_IS_PYOBJECT
-        int i;
-        for (i = 0; i < len; ++i)
-            DECREF_KEY(self->keys[i]);
+        for (int i_key = 0; i_key < len; ++i_key)
+            DECREF_KEY(self->keys[i_key]);
 #endif
         free(self->keys);
         self->keys = NULL;
@@ -1169,13 +1160,13 @@ _bucket_clear(Bucket *self)
     if (self->values)
     {
 #ifdef VALUE_TYPE_IS_PYOBJECT
-        int i;
-        for (i = 0; i < len; ++i)
-            DECREF_VALUE(self->values[i]);
+        for (int i_val = 0; i_val < len; ++i_val)
+            DECREF_VALUE(self->values[i_val]);
 #endif
         free(self->values);
         self->values = NULL;
     }
+
     return 0;
 }
 
@@ -1218,8 +1209,7 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
             return NULL;
         }
         if (ghostify) {
-            if (_bucket_clear(self) < 0)
-            return NULL;
+            if (_bucket_clear(self) < 0) return NULL;
             capi_struct->ghostify((cPersistentObject*)self);
         }
     }
@@ -1232,6 +1222,8 @@ static PyObject *
 bucket_clear(Bucket *self, PyObject *args)
 {
     PyObject* obj_self = (PyObject*)self;
+    PyObject* result = NULL;
+
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (!per_use((cPersistentObject*)self, capi_struct))
         return NULL;
@@ -1239,19 +1231,18 @@ bucket_clear(Bucket *self, PyObject *args)
     if (self->len)
     {
         if (_bucket_clear(self) < 0)
-        return NULL;
-        if (capi_struct->changed((cPersistentObject*)self) < 0)
-        goto err;
-    }
-    per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
-    Py_INCREF(Py_None);
-    return Py_None;
+            return NULL;
 
-err:
+        if (capi_struct->changed((cPersistentObject*)self) < 0)
+            goto done;
+    }
+    result = Py_None;
+    Py_INCREF(result);
+
+done:
     per_allow_deactivation((cPersistentObject*)self);
     capi_struct->accessed((cPersistentObject*)self);
-    return NULL;
+    return result;
 }
 
 /*
@@ -1376,10 +1367,7 @@ _bucket_setstate(Bucket *self, PyObject *state)
     }
     self->len = 0;
 
-    if (self->next) {
-        Py_DECREF(self->next);
-        self->next = NULL;
-    }
+    Py_CLEAR(self->next);
 
     if (len > self->size) {
         keys = BTree_Realloc(self->keys, sizeof(KEY_TYPE)*len);
@@ -1412,8 +1400,8 @@ _bucket_setstate(Bucket *self, PyObject *state)
     self->len = len;
 
     if (next) {
-        self->next = next;
         Py_INCREF(next);
+        self->next = next;
     }
 
     return 0;
@@ -1909,64 +1897,57 @@ bucket_dealloc(Bucket *self)
 static int
 bucket_traverse(Bucket *self, visitproc visit, void *arg)
 {
-    int err = 0;
-    int i;
-    int len;
     PyObject* obj_self = (PyObject*)self;
+
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
-    if (capi_struct == NULL)
-    {
-        err = -1;
-        goto Done;
+    if(capi_struct == NULL) {
+        /* Likely means that we are in application shutdown:  just bail.*/
+        return -1;
     }
-
-#define VISIT(SLOT)                             \
-  if (SLOT) {                                   \
-    err = visit((PyObject *)(SLOT), arg);       \
-    if (err)                                    \
-      goto Done;                                \
-  }
-
     /* Call our base type's traverse function.  Because buckets are
      * subclasses of Peristent, there must be one.
      */
-    err = capi_struct->pertype->tp_traverse(obj_self, visit, arg);
-    if (err)
-        goto Done;
+    if (capi_struct->pertype->tp_traverse(obj_self, visit, arg) < 0)
+        return -1;
+
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+
+    if ( (capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE) ) {
+        /* Persistent will have already travered our type, so skip. */
+    } else
+        Py_VISIT(tp);
+#endif
 
     /* If this is registered with the persistence system, cleaning up cycles
      * is the database's problem.  It would be horrid to unghostify buckets
      * here just to chase pointers every time gc runs.
      */
     if (self->state == cPersistent_GHOST_STATE)
-        goto Done;
+        return 0;
 
-    len = self->len;
-    /* if neither keys nor values are PyObject*, "i" is otherwise
-       unreferenced and we get a nuisance compiler wng */
-    (void)i;
-    (void)len;
+    /*
+     *  OK, now we visit "normal" attributes / items.
+     */
+
 #ifdef KEY_TYPE_IS_PYOBJECT
     /* Keys are Python objects so need to be traversed. */
-    for (i = 0; i < len; i++)
-        VISIT(self->keys[i]);
+    for (int i_key = 0; i_key < self->len; ++i_key)
+        Py_VISIT(self->keys[i_key]);
 #endif
 
 #ifdef VALUE_TYPE_IS_PYOBJECT
     if (self->values != NULL) {
         /* self->values exists (this is a mapping bucket, not a set bucket),
-        * and are Python objects, so need to be traversed. */
-        for (i = 0; i < len; i++)
-            VISIT(self->values[i]);
+         * and are Python objects, so need to be traversed. */
+        for (int i_val = 0; i_val < self->len; ++i_val)
+            Py_VISIT(self->values[i_val]);
     }
 #endif
 
-    VISIT(self->next);
+    Py_VISIT(self->next);
 
-Done:
-    return err;
-
-#undef VISIT
+    return 0;
 }
 
 static int
