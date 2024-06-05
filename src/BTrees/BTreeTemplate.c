@@ -2133,19 +2133,14 @@ BTree_byValue(BTree *self, PyObject *omin)
             goto err;
     }
 
-    item=PyObject_GetAttr(r, str_sort);
-    UNLESS (item)
+    item = PyObject_CallMethodObjArgs(r, str_sort, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
+    Py_DECREF(item); /* Py_None */
+    item = PyObject_CallMethodObjArgs(r, str_reverse, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, str_reverse));
-    UNLESS (item)
-        goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
-        goto err;
-    Py_DECREF(item);
+    Py_DECREF(item); /* Py_None */
 
     finiSetIteration(&it);
     per_allow_deactivation((cPersistentObject*)self);

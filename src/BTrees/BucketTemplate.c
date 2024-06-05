@@ -1118,23 +1118,14 @@ bucket_byValue(Bucket *self, PyObject *omin)
         item = 0;
     }
 
-    item=PyObject_GetAttr(r, str_sort);
-    UNLESS (item)
+    item = PyObject_CallMethodObjArgs(r, str_sort, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
+    Py_DECREF(item); /* Py_None */
+    item = PyObject_CallMethodObjArgs(r, str_reverse, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, str_reverse));
-    UNLESS (item)
-        goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
-        goto err;
-    Py_DECREF(item);
-
-    per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
-    return r;
+    Py_DECREF(item); /* Py_None */
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
