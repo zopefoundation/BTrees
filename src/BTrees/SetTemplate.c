@@ -743,7 +743,7 @@ static PyType_Slot Set_type_slots[] = {
 
 static PyType_Spec Set_type_spec = {
     .name                       = Set__name__,
-    .basicsize                  = sizeof(Bucket_members),
+    .basicsize                  = sizeof(Bucket),
     .flags                      = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
                                   Py_TPFLAGS_IMMUTABLETYPE |
