@@ -429,7 +429,7 @@ BTree_newBucket(BTree *self)
     }
 
     /* If we have a valid module, this is guaranteed to succeed. */
-    PyTypeObject* bucket_type = _get_bucket_type_from_module(obj_self);
+    PyTypeObject* bucket_type = _get_bucket_type(obj_self);
 
     return SIZED(bucket_type->tp_alloc(bucket_type, 0));
 #endif
@@ -1342,8 +1342,8 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     }
 
     /* If we have a valid module, these two are bound to succeed. */
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
 
     PyTypeObject *leaftype = (noval ? set_type : bucket_type);
 
@@ -1572,9 +1572,9 @@ BTree__p_resolveConflict(BTree *self, PyObject *args)
     }
 
     /* If we have a non-NULL module, these three are guaranteed to work. */
-    PyTypeObject *btree_type = _get_btree_type_from_module(module);
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *btree_type = _get_btree_type(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
 
     s[0] = get_bucket_state(module, x);
     if (s[0] == NULL)
@@ -2624,7 +2624,7 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
     }
 
     /* If we have a valid module, these are bound to succeed.*/
-    PyTypeObject *btree_type = _get_btree_type_from_module(module);
+    PyTypeObject *btree_type = _get_btree_type(module);
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
 
     int i;

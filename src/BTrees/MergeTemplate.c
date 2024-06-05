@@ -99,8 +99,8 @@ bucket_merge(PyObject* module, Bucket *s1, Bucket *s2, Bucket *s3) {
     }
 
     /* If we have a non-NULL module, these two are guaranteed to work. */
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
 
     /* If either "after" bucket is empty, punt. */
     if (s2->len == 0 || s3->len == 0) {
