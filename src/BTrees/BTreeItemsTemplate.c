@@ -83,7 +83,7 @@ static Py_ssize_t
 BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Py_ssize_t r;
     Bucket *b;
     Bucket *next;
@@ -153,7 +153,7 @@ static int
 BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Bucket *b;
     Bucket *currentbucket;
     int delta;
@@ -332,7 +332,7 @@ static PyObject *
 BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 {
     PyObject* obj_self = (PyObject*)self;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     PyObject *result;
 
     if (BTreeItems_seek(self, i) < 0)
@@ -643,7 +643,7 @@ static int
 nextBTreeItems(SetIteration *i)
 {
     PyObject* obj_self = i->set;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -691,7 +691,7 @@ static int
 nextTreeSetItems(SetIteration *i)
 {
     PyObject* obj_self = i->set;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -789,7 +789,7 @@ static PyObject *
 BTreeIter_next(BTreeIter *bi, PyObject *args)
 {
     PyObject* obj_self = (PyObject*)bi;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     PyObject *result = NULL;        /* until proven innocent */
     BTreeItems *items = bi->pitems;
     int i = items->currentoffset;

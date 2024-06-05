@@ -37,6 +37,8 @@
 #include "persistent/cPersistence.h"
 #undef DONT_USE_CPERSISTENCECAPI
 
+typedef cPersistenceCAPIstruct PerCAPI;
+
 /*
  *  Unset these macros from 'persistent/cPersistence.h':  we don't
  *  want to use a global static 'cPersistenceCAPI', but rather look it
@@ -90,7 +92,7 @@ per_prevent_deactivation(cPersistentObject* p_obj)
 #endif
 
 static inline int
-per_use(cPersistentObject* p_obj, cPersistenceCAPIstruct* capi_struct)
+per_use(cPersistentObject* p_obj, PerCAPI* capi_struct)
 {
     if (p_obj->state == cPersistent_GHOST_STATE &&
         capi_struct->setstate((PyObject*)p_obj) < 0) {
@@ -158,8 +160,8 @@ static inline PyObject* _get_conflict_error( PyObject* bt_obj);
 static inline PyObject* _get_conflict_error_from_module(PyObject* module);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
                             PyTypeObject* type);
-static inline cPersistenceCAPIstruct* _get_capi_struct(PyObject* bt_obj);
-static inline cPersistenceCAPIstruct* _get_capi_struct_from_module(
+static inline PerCAPI* _get_capi_struct(PyObject* bt_obj);
+static inline PerCAPI* _get_capi_struct_from_module(
                             PyObject* module);
 static inline PyTypeObject* _get_btree_type(PyObject* module);
 static inline PyTypeObject* _get_bucket_type(PyObject* module);
@@ -573,7 +575,7 @@ static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
     PyObject* obj_self = (PyObject*)current;
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* capi_struct = _get_capi_struct(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
@@ -726,7 +728,7 @@ static struct PyMethodDef module_methods[] = {
 
 typedef struct {
     PyObject* conflict_error;
-    cPersistenceCAPIstruct* capi_struct;
+    PerCAPI* capi_struct;
     PyObject* btreetype_setattro_allowed_names;
     PyTypeObject* btree_type_type;
     PyTypeObject* btree_type;
@@ -818,7 +820,7 @@ _get_btreetype_setattro_allowed_names(PyTypeObject* type)
     return state->btreetype_setattro_allowed_names;
 }
 
-static inline cPersistenceCAPIstruct*
+static inline PerCAPI*
 _get_capi_struct(PyObject* bt_obj)
 {
     PyObject* module = _get_module(Py_TYPE(bt_obj));
@@ -829,7 +831,7 @@ _get_capi_struct(PyObject* bt_obj)
     return state->capi_struct;
 }
 
-static inline cPersistenceCAPIstruct*
+static inline PerCAPI*
 _get_capi_struct_from_module(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
@@ -917,7 +919,7 @@ init_type_with_meta_base(
 }
 
 static PyTypeObject*
-init_persist_type(PyTypeObject* type, cPersistenceCAPIstruct* capi_struct)
+init_persist_type(PyTypeObject* type, PerCAPI* capi_struct)
 {
     return init_type_with_meta_base(
         type, &PyType_Type, capi_struct->pertype
@@ -928,7 +930,7 @@ static PyTypeObject*
 init_tree_type(
     PyTypeObject* type,
     PyTypeObject* bucket_type,
-    cPersistenceCAPIstruct* capi_struct)
+    PerCAPI* capi_struct)
 {
     PyTypeObject* new_type = init_type_with_meta_base(
         type, &BTreeType_type_def, capi_struct->pertype);
@@ -998,7 +1000,7 @@ static PyTypeObject*
 init_persist_type(
     PyObject* module,
     PyType_Spec* typespec,
-    cPersistenceCAPIstruct* capi_struct
+    PerCAPI* capi_struct
 )
 {
     return init_type_with_meta_base(
@@ -1012,7 +1014,7 @@ init_tree_type(
     PyType_Spec* typespec,
     PyTypeObject* bucket_type,
     PyTypeObject* tree_meta,
-    cPersistenceCAPIstruct* capi_struct
+    PerCAPI* capi_struct
 )
 {
     PyTypeObject* new_type = init_type_with_meta_base(
@@ -1068,7 +1070,7 @@ module_exec(PyObject* module)
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    state->capi_struct = (cPersistenceCAPIstruct*)PyCapsule_Import(
+    state->capi_struct = (PerCAPI*)PyCapsule_Import(
                             "persistent.cPersistence.CAPI", 0);
     if (state->capi_struct == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
