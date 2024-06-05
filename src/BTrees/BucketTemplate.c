@@ -1151,6 +1151,11 @@ _bucket_clear(Bucket *self)
     {
 #ifdef KEY_TYPE_IS_PYOBJECT
         for (int i_key = 0; i_key < len; ++i_key)
+            /* XXX Should we use 'Py_CLEAR' instead of 'DECREF_KEY'?
+             *
+             * We *are* just about to free the whole array, but could
+             * be be in the dreaded GC-inconsistent state here?
+             */
             DECREF_KEY(self->keys[i_key]);
 #endif
         free(self->keys);
@@ -1161,6 +1166,11 @@ _bucket_clear(Bucket *self)
     {
 #ifdef VALUE_TYPE_IS_PYOBJECT
         for (int i_val = 0; i_val < len; ++i_val)
+            /* XXX Should we use 'Py_CLEAR' instead of 'DECREF_VALUE'?
+             *
+             * We *are* just about to free the whole array, but could
+             * be be in the dreaded GC-inconsistent state here?
+             */
             DECREF_VALUE(self->values[i_val]);
 #endif
         free(self->values);
