@@ -239,11 +239,7 @@ _set_setstate(Bucket *self, PyObject *args)
     }
     self->len=0;
 
-    if (self->next)
-    {
-        Py_DECREF(self->next);
-        self->next=0;
-    }
+    Py_CLEAR(self->next);
 
     if (l > self->size)
     {
