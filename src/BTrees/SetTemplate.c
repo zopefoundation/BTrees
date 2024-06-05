@@ -273,7 +273,7 @@ static PyObject *
 set_setstate(Bucket *self, PyObject *args)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
 
     UNLESS (PyArg_ParseTuple(args, "O", &args))
@@ -395,7 +395,7 @@ static Py_ssize_t
 set_length(Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
 
     if (!per_use((cPersistentObject*)self, per_capi))
@@ -411,7 +411,7 @@ static PyObject *
 set_item(Bucket *self, Py_ssize_t index)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
 
     PyObject *r = 0;
 
@@ -757,7 +757,7 @@ static int
 nextSet(SetIteration *i)
 {
     PyObject* obj_self = i->set;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
 
     if (i->position >= 0)
     {

@@ -92,7 +92,7 @@ static PyObject *
 bucket_toBytes(PyObject *obj_self)
 {
     Bucket *self = (Bucket *)obj_self;
-    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *items = NULL;
     int len;
 
