@@ -1886,6 +1886,7 @@ static void
 bucket_dealloc(Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
+
 #if USE_HEAP_ALLOCATED_TYPES
     PyTypeObject* tp = Py_TYPE(obj_self);
 #endif
@@ -1896,14 +1897,18 @@ bucket_dealloc(Bucket *self)
     }
 
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
-    if (capi_struct) {
-        capi_struct->pertype->tp_dealloc(obj_self);
-    } else {
+    if (! capi_struct) {
         PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
+        return;
     }
+    capi_struct->pertype->tp_dealloc(obj_self);
 
 #if USE_HEAP_ALLOCATED_TYPES
-    Py_DECREF(tp);
+    int per_is_heaptype = capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+
+    /* Heap-allocated Persistent will have already decref'ed our type. */
+    if (!per_is_heaptype)
+        Py_DECREF(tp);
 #endif
 }
 
@@ -1924,12 +1929,11 @@ bucket_traverse(Bucket *self, visitproc visit, void *arg)
         return -1;
 
 #if USE_HEAP_ALLOCATED_TYPES
-    PyTypeObject* tp = Py_TYPE(obj_self);
+    int per_is_heaptype = capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
 
-    if ( (capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE) ) {
-        /* Persistent will have already travered our type, so skip. */
-    } else
-        Py_VISIT(tp);
+    /* Heap-allocated Persistent will have already traversed our type. */
+    if (!per_is_heaptype)
+        Py_VISIT(Py_TYPE(obj_self));
 #endif
 
     /* If this is registered with the persistence system, cleaning up cycles
