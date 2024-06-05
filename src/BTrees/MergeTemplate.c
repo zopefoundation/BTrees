@@ -41,7 +41,7 @@ merge_output(Bucket *r, SetIteration *i, int mapping) {
 static PyObject *
 merge_error(PyObject* module, int p1, int p2, int p3, int reason) {
     PyObject *r;
-    PyObject * conflict_error = _get_conflict_error_from_module(module);
+    PyObject * conflict_error = _get_conflict_error(module);
 
     UNLESS(r = Py_BuildValue("iiii", p1, p2, p3, reason)) r = Py_None;
     if (conflict_error == NULL) {
