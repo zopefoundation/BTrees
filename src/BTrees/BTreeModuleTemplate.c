@@ -156,8 +156,7 @@ intern_strings()
 }
 
 static inline PyObject* _get_module(PyTypeObject* typeobj);
-static inline PyObject* _get_conflict_error( PyObject* bt_obj);
-static inline PyObject* _get_conflict_error_from_module(PyObject* module);
+static inline PyObject* _get_conflict_error( PyObject* bt_obj_or_module);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
                             PyTypeObject* type);
 static inline PerCAPI* _get_per_capi(PyObject* bt_obj_or_module);
@@ -790,19 +789,19 @@ _get_module(PyTypeObject* typeobj)
 }
 
 static inline PyObject*
-_get_conflict_error(PyObject* bucket_or_btree)
+_get_conflict_error(PyObject* bt_obj_or_module)
 {
-    PyObject* module = _get_module(Py_TYPE(bucket_or_btree));
+    PyObject* module;
+
+    if (PyModule_Check(bt_obj_or_module))
+        module = bt_obj_or_module;
+    else
+        module = _get_module(Py_TYPE(bt_obj_or_module));
+
     if (module == NULL)
+        /* Probably occurs during shutdown.  Just bail.*/
         return NULL;
 
-    module_state* state = PyModule_GetState(module);
-    return state->conflict_error;
-}
-
-static inline PyObject*
-_get_conflict_error_from_module(PyObject* module)
-{
     module_state* state = PyModule_GetState(module);
     return state->conflict_error;
 }
