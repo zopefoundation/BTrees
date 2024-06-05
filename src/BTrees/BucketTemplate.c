@@ -1719,7 +1719,7 @@ static PyObject *merge_error(PyObject* b, int p1, int p2, int p3, int reason);
 static PyObject *bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3);
 
 static PyObject *
-_bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
+_bucket__p_resolveConflict(PyTypeObject *tp, PyObject *s[3])
 {
     PyObject *result = NULL;    /* guilty until proved innocent */
     PyObject *bo = NULL;         /* FBO merge_error */
@@ -1731,7 +1731,7 @@ _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
     for (i = 0; i < 3; i++) {
         PyObject *r;
 
-        b[i] = (Bucket*)PyObject_CallObject((PyObject *)ob_type, NULL);
+        b[i] = BUCKET(tp->tp_alloc(tp, 0));
         if (b[i] == NULL)
             goto Done;
         if (s[i] == Py_None) /* None is equivalent to empty, for BTrees */
@@ -1777,7 +1777,7 @@ bucket__p_resolveConflict(Bucket *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOO", &s[0], &s[1], &s[2]))
         return NULL;
 
-    return _bucket__p_resolveConflict((PyObject *)Py_TYPE(self), s);
+    return _bucket__p_resolveConflict(Py_TYPE(self), s);
 }
 #endif
 
