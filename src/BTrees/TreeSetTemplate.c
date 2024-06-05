@@ -570,6 +570,8 @@ static PyTypeObject TreeSet_type_def =
     .tp_flags                   = Py_TPFLAGS_DEFAULT |
                                   Py_TPFLAGS_HAVE_GC |
                                   Py_TPFLAGS_BASETYPE,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
     .tp_init                    = TreeSet_init,
     .tp_iter                    = (getiterfunc)BTree_getiter,
     .tp_traverse                = (traverseproc)BTree_traverse,
@@ -586,6 +588,8 @@ static PyTypeObject TreeSet_type_def =
 
 static PyType_Slot TreeSet_type_slots[] = {
     {Py_tp_doc,                 TreeSet__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_init,                TreeSet_init},
     {Py_tp_iter,                BTree_getiter},
     {Py_tp_traverse,            BTree_traverse},

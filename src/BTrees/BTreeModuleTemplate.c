@@ -172,8 +172,38 @@ static inline PyTypeObject* _get_btree_items_type_from_module(PyObject* module);
 static inline PyTypeObject* _get_btree_iter_type(PyObject* bt_obj);
 static inline PyTypeObject* _get_btree_iter_type_from_module(PyObject* module);
 
+/*
+ *  Non-macro aliases for Python APIs, for use in static initializers.
+ */
+static inline PyObject*
+_pyobject_generic_getattr(PyObject* self, PyObject* attr)
+{
+    return PyObject_GenericGetAttr(self, attr);
+}
+
+static inline PyObject*
+_pytype_generic_alloc(PyTypeObject* tp, Py_ssize_t nitems)
+{
+    return PyType_GenericAlloc(tp, nitems);
+}
+
+static inline PyObject*
+_pytype_generic_new(PyTypeObject* tp, PyObject* _args,  PyObject* _kw)
+{
+#if 0
+    return PyType_GenericNew(tp, _args, _kw);
+#else
+    /* just inline it */
+    return tp->tp_alloc(tp, 0);;
+#endif
+}
+
+/* Why is this one prefixed 'Py'?  There is no such API in any version
+ * of Python on my machine, going back to 1.5.2!
+ */
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
+
 #define UNLESS(E) if (!(E))
 #define OBJECT(O) ((PyObject*)(O))
 
@@ -1123,13 +1153,14 @@ module_exec(PyObject* module)
     /* Assign functions from other modules to statically-initialized
      * struct members here, to work around the fact that some compilers
      * do not permit such assignment during static initialization.
+     *
+     * Replace with inline aliases, defined at top of module:
+     * [X] BTreeIter_type_def.tp_getattro = PyObject_GenericGetAttr;
+       [X] Bucket_type_def.tp_new = PyType_GenericNew;
+       [X] Set_type_def.tp_new = PyType_GenericNew;
+       [X] BTree_type_def.tp_new = PyType_GenericNew;
+       [X] TreeSet_type_def.tp_new = PyType_GenericNew;
      */
-    BTreeIter_type_def.tp_getattro = PyObject_GenericGetAttr;
-    Bucket_type_def.tp_new = PyType_GenericNew;
-    Set_type_def.tp_new = PyType_GenericNew;
-    BTree_type_def.tp_new = PyType_GenericNew;
-    TreeSet_type_def.tp_new = PyType_GenericNew;
-
     state->btree_type_type = init_type_with_meta_base(
                                 &BTreeType_type_def,
                                 &PyType_Type,
@@ -1171,14 +1202,6 @@ module_exec(PyObject* module)
         return -1;
 
 #else
-    /*  Hmm, do we need to have the equivalent entries added to
-     *  the '*_type_slots' arrays during static initializaiton, but
-     *  with NULL values?  Or do the compilers which barf at initializing
-     *  the struct members by name with "foreign" function pointers
-     *  tolerated them in a case where we are adding them "anonymously",
-     *  as in the '*_type_slots'?
-     */
-
     state->btree_type_type = init_type_with_meta_base(
                                 &PyType_Type,
                                 module,
