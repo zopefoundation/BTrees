@@ -604,7 +604,7 @@ newBTreeItems(PyObject* module, char kind,
         PyErr_SetString(PyExc_RuntimeError, "newBTreeItems: module is NULL");
         return NULL;
     }
-    PyTypeObject* btree_items_type = _get_btree_items_type_from_module(module);
+    PyTypeObject* btree_items_type = _get_btree_items_type(module);
     BTreeItems *self;
 
     self = (BTreeItems*)btree_items_type->tp_alloc(btree_items_type, 0);
@@ -750,7 +750,7 @@ typedef struct
 static BTreeIter *
 newBTreeIter(PyObject* module, BTreeItems *pitems)
 {
-    PyTypeObject* btree_iter_type = _get_btree_iter_type_from_module(module);
+    PyTypeObject* btree_iter_type = _get_btree_iter_type(module);
     BTreeIter *result;
 
     assert(pitems != NULL);

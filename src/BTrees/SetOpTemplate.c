@@ -109,10 +109,10 @@ nextGenericKeyIter(SetIteration *i) {
  */
 static int
 initSetIteration(PyObject* module, SetIteration *i, PyObject *s, int useValues) {
-    PyTypeObject *btree_type = _get_btree_type_from_module(module);
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
-    PyTypeObject *tree_set_type = _get_tree_set_type_from_module(module);
+    PyTypeObject *btree_type = _get_btree_type(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
+    PyTypeObject *tree_set_type = _get_tree_set_type(module);
     i->set = NULL;
     i->position = -1; /* set to 0 only on normal return */
     i->usesValue = 0; /* assume it's a set or that values aren't iterated */
@@ -275,8 +275,8 @@ set_operation(PyObject* module,
              )
 {
     Bucket *r = 0;
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
     SetIteration i1 = {0, 0, 0}, i2 = {0, 0, 0};
     int cmp, merge;
 
@@ -503,7 +503,7 @@ wunion_m(PyObject *module, PyObject *args) {
 static PyObject *
 wintersection_m(PyObject *module, PyObject *args) {
     /* set_operation checks module */
-    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type(module);
     PyObject *o1, *o2;
     VALUE_TYPE w1 = 1, w2 = 1;
 
@@ -560,8 +560,8 @@ multiunion_m(PyObject *module, PyObject *args) {
 
     /* If we have a valid module, these are bound to succeed.*/
     cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
 
     /* Construct an empty result set. */
     result = BUCKET(set_type->tp_alloc(set_type, 0));

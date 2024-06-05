@@ -161,18 +161,12 @@ static inline PyObject* _get_btreetype_setattro_allowed_names(
 static inline cPersistenceCAPIstruct* _get_capi_struct(PyObject* bt_obj);
 static inline cPersistenceCAPIstruct* _get_capi_struct_from_module(
                             PyObject* module);
-static inline PyTypeObject* _get_btree_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_btree_type_from_module(PyObject* module);
-static inline PyTypeObject* _get_bucket_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_bucket_type_from_module(PyObject* module);
-static inline PyTypeObject* _get_set_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_set_type_from_module(PyObject* module);
-static inline PyTypeObject* _get_tree_set_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_tree_set_type_from_module(PyObject* module);
-static inline PyTypeObject* _get_btree_items_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_btree_items_type_from_module(PyObject* module);
-static inline PyTypeObject* _get_btree_iter_type(PyObject* bt_obj);
-static inline PyTypeObject* _get_btree_iter_type_from_module(PyObject* module);
+static inline PyTypeObject* _get_btree_type(PyObject* module);
+static inline PyTypeObject* _get_bucket_type(PyObject* module);
+static inline PyTypeObject* _get_set_type(PyObject* module);
+static inline PyTypeObject* _get_tree_set_type(PyObject* module);
+static inline PyTypeObject* _get_btree_items_type(PyObject* module);
+static inline PyTypeObject* _get_btree_iter_type(PyObject* module);
 
 /*
  *  Non-macro aliases for Python APIs, for use in static initializers.
@@ -843,108 +837,42 @@ _get_capi_struct_from_module(PyObject* module)
 }
 
 static inline PyTypeObject*
-_get_btree_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->btree_type;
-}
-
-static inline PyTypeObject*
-_get_btree_type_from_module(PyObject* module)
+_get_btree_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->btree_type;
 }
 
 static inline PyTypeObject*
-_get_bucket_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->bucket_type;
-}
-
-static inline PyTypeObject*
-_get_bucket_type_from_module(PyObject* module)
+_get_bucket_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->bucket_type;
 }
 
 static inline PyTypeObject*
-_get_set_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->set_type;
-}
-
-static inline PyTypeObject*
-_get_set_type_from_module(PyObject* module)
+_get_set_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->set_type;
 }
 
 static inline PyTypeObject*
-_get_tree_set_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->tree_set_type;
-}
-
-static inline PyTypeObject*
-_get_tree_set_type_from_module(PyObject* module)
+_get_tree_set_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->tree_set_type;
 }
 
 static inline PyTypeObject*
-_get_btree_items_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->btree_items_type;
-}
-
-static inline PyTypeObject*
-_get_btree_items_type_from_module(PyObject* module)
+_get_btree_items_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->btree_items_type;
 }
 
 static inline PyTypeObject*
-_get_btree_iter_type(PyObject* bt_obj)
-{
-    PyObject* module = _get_module(Py_TYPE(bt_obj));
-    if (module == NULL)
-        return NULL;
-
-    module_state* state = PyModule_GetState(module);
-    return state->btree_iter_type;
-}
-
-static inline PyTypeObject*
-_get_btree_iter_type_from_module(PyObject* module)
+_get_btree_iter_type(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     return state->btree_iter_type;
