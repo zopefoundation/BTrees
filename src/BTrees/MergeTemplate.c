@@ -39,9 +39,9 @@ merge_output(Bucket *r, SetIteration *i, int mapping) {
  * via zodb/btrees/interfaces.py.
  */
 static PyObject *
-merge_error(PyObject* bucket_or_btree, int p1, int p2, int p3, int reason) {
+merge_error(PyObject* module, int p1, int p2, int p3, int reason) {
     PyObject *r;
-    PyObject * conflict_error = _get_conflict_error(bucket_or_btree);
+    PyObject * conflict_error = _get_conflict_error_from_module(module);
 
     UNLESS(r = Py_BuildValue("iiii", p1, p2, p3, reason)) r = Py_None;
     if (conflict_error == NULL) {
@@ -86,19 +86,25 @@ merge_error(PyObject* bucket_or_btree, int p1, int p2, int p3, int reason) {
  * a new key mapping to the same value).
  */
 static PyObject *
-bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
-    PyObject *b = (PyObject*)s1;  /* FBO 'merge_error' */
-    PyObject *module = _get_module(Py_TYPE(b));
-    PyTypeObject *bucket_type = _get_bucket_type(b);
-    PyTypeObject *set_type = _get_set_type(b);
+bucket_merge(PyObject* module, Bucket *s1, Bucket *s2, Bucket *s3) {
     Bucket *r = 0;
     PyObject *s;
     SetIteration i1 = {0, 0, 0}, i2 = {0, 0, 0}, i3 = {0, 0, 0};
     int cmp12, cmp13, cmp23, mapping, set;
 
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "bucket_merge: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a non-NULL module, these two are guaranteed to work. */
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+
     /* If either "after" bucket is empty, punt. */
     if (s2->len == 0 || s3->len == 0) {
-        merge_error(b, -1, -1, -1, 12);
+        merge_error(module, -1, -1, -1, 12);
         goto err;
     }
 
@@ -145,7 +151,8 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                     if (merge_output(r, &i2, mapping) < 0)
                         goto err;
                 } else { /* conflicting value changes in i2 and i3 */
-                    merge_error(b, i1.position, i2.position, i3.position, 1);
+                    merge_error(
+                        module, i1.position, i2.position, i3.position, 1);
                     goto err;
                 }
                 if (i1.next(&i1) < 0)
@@ -166,7 +173,8 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                        parent node, so we don't know if merging will be
                        safe
                     */
-                    merge_error(b, i1.position, i2.position, i3.position, 13);
+                    merge_error(
+                        module, i1.position, i2.position, i3.position, 13);
                     goto err;
                 }
                 if (i1.next(&i1) < 0)
@@ -174,7 +182,7 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                 if (i2.next(&i2) < 0)
                     goto err;
             } else { /* conflicting del in i3 and change in i2 */
-                merge_error(b, i1.position, i2.position, i3.position, 2);
+                merge_error(module, i1.position, i2.position, i3.position, 2);
                 goto err;
             }
         } else if (cmp13 == 0) {
@@ -190,7 +198,8 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                        parent node, so we don't know if merging will be
                        safe
                     */
-                    merge_error(b, i1.position, i2.position, i3.position, 13);
+                    merge_error(
+                        module, i1.position, i2.position, i3.position, 13);
                     goto err;
                 }
                 if (i1.next(&i1) < 0)
@@ -198,13 +207,13 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                 if (i3.next(&i3) < 0)
                     goto err;
             } else { /* conflicting del in i2 and change in i3 */
-                merge_error(b, i1.position, i2.position, i3.position, 3);
+                merge_error(module, i1.position, i2.position, i3.position, 3);
                 goto err;
             }
         } else { /* Both keys changed */
             TEST_KEY_SET_OR(cmp23, i2.key, i3.key) goto err;
             if (cmp23 == 0) { /* dueling inserts or deletes */
-                merge_error(b, i1.position, i2.position, i3.position, 4);
+                merge_error(module, i1.position, i2.position, i3.position, 4);
                 goto err;
             }
             if (cmp12 > 0) {     /* insert i2 */
@@ -225,7 +234,7 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
                 if (i3.next(&i3) < 0)
                     goto err;
             } else { /* 1<2 and 1<3:  both deleted 1.key */
-                merge_error(b, i1.position, i2.position, i3.position, 5);
+                merge_error(module, i1.position, i2.position, i3.position, 5);
                 goto err;
             }
         }
@@ -234,7 +243,7 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
     while (i2.position >= 0 && i3.position >= 0) { /* New inserts */
         TEST_KEY_SET_OR(cmp23, i2.key, i3.key) goto err;
         if (cmp23 == 0) { /* dueling inserts */
-            merge_error(b, i1.position, i2.position, i3.position, 6);
+            merge_error(module, i1.position, i2.position, i3.position, 6);
             goto err;
         }
         if (cmp23 > 0) { /* insert i3 */
@@ -265,7 +274,7 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
             if (i2.next(&i2) < 0)
                 goto err;
         } else { /* Dueling deletes or delete and change */
-            merge_error(b, i1.position, i2.position, i3.position, 7);
+            merge_error(module, i1.position, i2.position, i3.position, 7);
             goto err;
         }
     }
@@ -285,13 +294,13 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
             if (i3.next(&i3) < 0)
                 goto err;
         } else { /* Dueling deletes or delete and change */
-            merge_error(b, i1.position, i2.position, i3.position, 8);
+            merge_error(module, i1.position, i2.position, i3.position, 8);
             goto err;
         }
     }
 
     if (i1.position >= 0) { /* Dueling deletes */
-        merge_error(b, i1.position, i2.position, i3.position, 9);
+        merge_error(module, i1.position, i2.position, i3.position, 9);
         goto err;
     }
 
@@ -313,7 +322,7 @@ bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3) {
      * enough info to unlink it from its containing BTree correctly.
      */
     if (r->len == 0) {
-        merge_error(b, -1, -1, -1, 10);
+        merge_error(module, -1, -1, -1, 10);
         goto err;
     }
 
