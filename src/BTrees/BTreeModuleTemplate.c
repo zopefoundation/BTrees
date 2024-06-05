@@ -155,6 +155,7 @@ intern_strings()
 
 static inline PyObject* _get_module(PyTypeObject* typeobj);
 static inline PyObject* _get_conflict_error( PyObject* bt_obj);
+static inline PyObject* _get_conflict_error_from_module(PyObject* module);
 static inline PyObject* _get_btreetype_setattro_allowed_names(
                             PyTypeObject* type);
 static inline cPersistenceCAPIstruct* _get_capi_struct(PyObject* bt_obj);
@@ -801,6 +802,13 @@ _get_conflict_error(PyObject* bucket_or_btree)
     if (module == NULL)
         return NULL;
 
+    module_state* state = PyModule_GetState(module);
+    return state->conflict_error;
+}
+
+static inline PyObject*
+_get_conflict_error_from_module(PyObject* module)
+{
     module_state* state = PyModule_GetState(module);
     return state->conflict_error;
 }
