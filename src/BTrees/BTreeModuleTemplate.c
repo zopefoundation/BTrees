@@ -149,6 +149,7 @@ intern_strings()
     INIT_STRING(__provides__);
 
 #undef INIT_STRING
+
     return 0;
 }
 
@@ -1017,7 +1018,7 @@ init_nonpersistent_type(PyTypeObject* type)
     return type;
 }
 
-#else
+#else   /* heap-allocated types */
 
 static PyTypeObject*
 init_type_with_meta_base(
@@ -1201,7 +1202,8 @@ module_exec(PyObject* module)
     if (state->btree_iter_type == NULL)
         return -1;
 
-#else
+#else   /* heap-allocated types */
+
     state->btree_type_type = init_type_with_meta_base(
                                 &PyType_Type,
                                 module,
@@ -1255,8 +1257,12 @@ module_exec(PyObject* module)
 
 #endif
 
-    /* Add some symbolic constants to the module */
     mod_dict = PyModule_GetDict(module);
+
+    /* Add our types to the module dict
+     *
+     * XXX Should this use 'PyModule_AddObjectRef' instead?
+     */
 
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
                              (PyObject *)state->bucket_type) < 0)
