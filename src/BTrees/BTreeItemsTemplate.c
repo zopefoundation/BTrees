@@ -363,12 +363,13 @@ static PyObject *
 BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 {
     PyObject* obj_self = (PyObject*)self;
-    PyObject* module = _get_module(Py_TYPE(obj_self));
     Bucket *lowbucket;
     Bucket *highbucket;
     int lowoffset;
     int highoffset;
     Py_ssize_t length = -1;  /* len(self), but computed only if needed */
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
 
     if (module == NULL) {
         PyErr_SetString(

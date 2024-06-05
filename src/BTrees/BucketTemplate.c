@@ -1438,24 +1438,27 @@ bucket_setstate(Bucket *self, PyObject *state)
 static PyObject *
 bucket_sub(PyObject *self, PyObject *other)
 {
-    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'difference_m' checks if needed. */
     return difference_m(module, args);
 }
 
 static PyObject *
 bucket_or(PyObject *self, PyObject *other)
 {
-    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'union_m' checks if needed. */
     return union_m(module, args);
 }
 
 static PyObject *
 bucket_and(PyObject *self, PyObject *other)
 {
-    PyObject *module = _get_module(Py_TYPE(self));
     PyObject *args = Py_BuildValue("OO", self, other);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'intersection_m' checks if needed. */
     return intersection_m(module, args);
 }
 
@@ -1648,12 +1651,21 @@ static PyObject *
 buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 {
     PyObject* obj_self = (PyObject*)self;
-    PyObject* module = _get_module(Py_TYPE(obj_self));
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     BTreeItems *items;
     int lowoffset;
     int highoffset;
     BTreeIter *result = NULL;
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "buildBucketIter: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a valid module, this one is bound to succeed. */
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
 
     if (!per_use((cPersistentObject*)self, capi_struct))
         return NULL;

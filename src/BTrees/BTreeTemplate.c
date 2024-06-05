@@ -420,10 +420,16 @@ BTree_newBucket(BTree *self)
      * Bucket type.
      */
     PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
 
-    PyTypeObject* bucket_type = _get_bucket_type(obj_self);
-    if (bucket_type == NULL)
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_newBucket: module is NULL");
         return NULL;
+    }
+
+    /* If we have a valid module, this is guaranteed to succeed. */
+    PyTypeObject* bucket_type = _get_bucket_type_from_module(obj_self);
 
     return SIZED(bucket_type->tp_alloc(bucket_type, 0));
 #endif
@@ -1319,8 +1325,6 @@ static int
 _BTree_setstate(BTree *self, PyObject *state, int noval)
 {
     PyObject* obj_self = (PyObject*)self;
-    PyTypeObject *bucket_type = _get_bucket_type(obj_self);
-    PyTypeObject *set_type = _get_set_type(obj_self);
     PyObject *items;
     PyObject *firstbucket = NULL;
     BTreeItem *d;
@@ -1328,6 +1332,19 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
     int l;
     int i;
     int copied=1;
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "_BTree_setstate: module is NULL");
+        return -1;
+    }
+
+    /* If we have a valid module, these two are bound to succeed. */
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+
     PyTypeObject *leaftype = (noval ? set_type : bucket_type);
 
     if (_BTree_clear(self) < 0)
@@ -2599,8 +2616,16 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
     PyTypeObject* tp = Py_TYPE(obj_self);
     Py_VISIT(tp);
 #endif
-    PyTypeObject *btree_type = _get_btree_type(obj_self);
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        /* Likely means that we are in application shutdown:  just bail.*/
+        return -1;
+    }
+
+    /* If we have a valid module, these are bound to succeed.*/
+    PyTypeObject *btree_type = _get_btree_type_from_module(module);
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
 
     int i;
     int len;

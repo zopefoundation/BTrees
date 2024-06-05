@@ -416,6 +416,7 @@ err:
 
 static PyObject *
 difference_m(PyObject *module, PyObject *args) {
+    /* set_operation checks module */
     PyObject *o1, *o2;
 
     UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
@@ -435,6 +436,7 @@ difference_m(PyObject *module, PyObject *args) {
 
 static PyObject *
 union_m(PyObject *module, PyObject *args) {
+    /* set_operation checks module */
     PyObject *o1, *o2;
 
     UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
@@ -455,6 +457,7 @@ union_m(PyObject *module, PyObject *args) {
 
 static PyObject *
 intersection_m(PyObject *module, PyObject *args) {
+    /* set_operation checks module */
     PyObject *o1, *o2;
 
     UNLESS(PyArg_ParseTuple(args, "OO", &o1, &o2)) return NULL;
@@ -477,6 +480,7 @@ intersection_m(PyObject *module, PyObject *args) {
 
 static PyObject *
 wunion_m(PyObject *module, PyObject *args) {
+    /* set_operation checks module */
     PyObject *o1, *o2;
     VALUE_TYPE w1 = 1, w2 = 1;
 
@@ -498,6 +502,7 @@ wunion_m(PyObject *module, PyObject *args) {
 
 static PyObject *
 wintersection_m(PyObject *module, PyObject *args) {
+    /* set_operation checks module */
     PyTypeObject *set_type = _get_set_type_from_module(module);
     PyObject *o1, *o2;
     VALUE_TYPE w1 = 1, w2 = 1;
@@ -533,9 +538,6 @@ wintersection_m(PyObject *module, PyObject *args) {
 */
 static PyObject *
 multiunion_m(PyObject *module, PyObject *args) {
-    cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
-    PyTypeObject *set_type = _get_set_type_from_module(module);
-    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
     PyObject *seq;        /* input sequence */
     int n;                /* length of input sequence */
     PyObject *set = NULL; /* an element of the input sequence */
@@ -549,6 +551,17 @@ multiunion_m(PyObject *module, PyObject *args) {
     n = PyObject_Length(seq);
     if (n < 0)
         return NULL;
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "multiunion_m: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a valid module, these are bound to succeed.*/
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct_from_module(module);
+    PyTypeObject *set_type = _get_set_type_from_module(module);
+    PyTypeObject *bucket_type = _get_bucket_type_from_module(module);
 
     /* Construct an empty result set. */
     result = BUCKET(set_type->tp_alloc(set_type, 0));
