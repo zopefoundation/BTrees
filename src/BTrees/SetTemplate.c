@@ -352,13 +352,18 @@ static struct PyMethodDef Set_methods[] = {
 static int
 Set_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
+    Bucket* b_self = BUCKET(self);
     PyObject *v = NULL;
+
+    b_self->next = 0;
+    b_self->keys = 0;
+    b_self->values = 0;
 
     if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "Set", &v))
         return -1;
 
     if (v)
-        return _Set_update((Bucket *)self, v);
+        return _Set_update(b_self, v);
     else
         return 0;
 }
