@@ -42,7 +42,7 @@ typedef cPersistenceCAPIstruct PerCAPI;
 /*
  *  Unset these macros from 'persistent/cPersistence.h':  we don't
  *  want to use a global static 'cPersistenceCAPI', but rather look it
- *  up from module state as 'capi_struct' in each method.
+ *  up from module state as 'per_capi' in each method.
  */
 
 #ifdef PER_GHOSTIFY
@@ -92,10 +92,10 @@ per_prevent_deactivation(cPersistentObject* p_obj)
 #endif
 
 static inline int
-per_use(cPersistentObject* p_obj, PerCAPI* capi_struct)
+per_use(cPersistentObject* p_obj, PerCAPI* per_capi)
 {
     if (p_obj->state == cPersistent_GHOST_STATE &&
-        capi_struct->setstate((PyObject*)p_obj) < 0) {
+        per_capi->setstate((PyObject*)p_obj) < 0) {
         return 0;
     } else if (p_obj->state == cPersistent_UPTODATE_STATE) {
         p_obj->state = cPersistent_STICKY_STATE;
@@ -576,7 +576,7 @@ static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
     PyObject* obj_self = (PyObject*)current;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
@@ -586,7 +586,7 @@ PreviousBucket(Bucket **current, Bucket *first)
 
     do {
         trailing = first;
-        if (!per_use((cPersistentObject*)first, capi_struct))
+        if (!per_use((cPersistentObject*)first, per_capi))
             return -1;
         first = first->next;
 
@@ -594,7 +594,7 @@ PreviousBucket(Bucket **current, Bucket *first)
         &&
         ((trailing)->state=cPersistent_UPTODATE_STATE));
 
-        capi_struct->accessed((cPersistentObject*)trailing);
+        per_capi->accessed((cPersistentObject*)trailing);
 
         if (first == *current) {
             *current = trailing;
@@ -729,7 +729,7 @@ static struct PyMethodDef module_methods[] = {
 
 typedef struct {
     PyObject* conflict_error;
-    PerCAPI* capi_struct;
+    PerCAPI* per_capi;
     PyObject* btreetype_setattro_allowed_names;
     PyTypeObject* btree_type_type;
     PyTypeObject* btree_type;
@@ -745,8 +745,8 @@ module_traverse(PyObject* module, visitproc visit, void *arg)
 {
     module_state* state = PyModule_GetState(module);
     Py_VISIT(state->conflict_error);
-    if (state->capi_struct)
-        Py_VISIT(state->capi_struct->pertype);
+    if (state->per_capi)
+        Py_VISIT(state->per_capi->pertype);
     Py_VISIT(state->btreetype_setattro_allowed_names);
     Py_VISIT(state->btree_type_type);
     Py_VISIT(state->btree_type);
@@ -763,8 +763,8 @@ module_clear(PyObject* module)
 {
     module_state* state = PyModule_GetState(module);
     Py_CLEAR(state->conflict_error);
-    if (state->capi_struct)
-        Py_CLEAR(state->capi_struct->pertype);
+    if (state->per_capi)
+        Py_CLEAR(state->per_capi->pertype);
     Py_CLEAR(state->btreetype_setattro_allowed_names);
     Py_CLEAR(state->btree_type_type);
     Py_CLEAR(state->btree_type);
@@ -837,7 +837,7 @@ _get_per_capi(PyObject* bt_obj_or_module)
     }
 
     module_state* state = PyModule_GetState(module);
-    return state->capi_struct;
+    return state->per_capi;
 }
 
 static inline PerCAPI*
@@ -933,10 +933,10 @@ init_type_with_meta_base(
 }
 
 static PyTypeObject*
-init_persist_type(PyTypeObject* type, PerCAPI* capi_struct)
+init_persist_type(PyTypeObject* type, PerCAPI* per_capi)
 {
     return init_type_with_meta_base(
-        type, &PyType_Type, capi_struct->pertype
+        type, &PyType_Type, per_capi->pertype
     );
 }
 
@@ -944,10 +944,10 @@ static PyTypeObject*
 init_tree_type(
     PyTypeObject* type,
     PyTypeObject* bucket_type,
-    PerCAPI* capi_struct)
+    PerCAPI* per_capi)
 {
     PyTypeObject* new_type = init_type_with_meta_base(
-        type, &BTreeType_type_def, capi_struct->pertype);
+        type, &BTreeType_type_def, per_capi->pertype);
 
     if (new_type == NULL)
         return NULL;
@@ -1014,11 +1014,11 @@ static PyTypeObject*
 init_persist_type(
     PyObject* module,
     PyType_Spec* typespec,
-    PerCAPI* capi_struct
+    PerCAPI* per_capi
 )
 {
     return init_type_with_meta_base(
-        (PyTypeObject*)NULL, module, typespec, capi_struct->pertype
+        (PyTypeObject*)NULL, module, typespec, per_capi->pertype
     );
 }
 
@@ -1028,11 +1028,11 @@ init_tree_type(
     PyType_Spec* typespec,
     PyTypeObject* bucket_type,
     PyTypeObject* tree_meta,
-    PerCAPI* capi_struct
+    PerCAPI* per_capi
 )
 {
     PyTypeObject* new_type = init_type_with_meta_base(
-        tree_meta, module, typespec, capi_struct->pertype);
+        tree_meta, module, typespec, per_capi->pertype);
 
     if (new_type == NULL)
         return NULL;
@@ -1084,9 +1084,9 @@ module_exec(PyObject* module)
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    state->capi_struct = (PerCAPI*)PyCapsule_Import(
+    state->per_capi = (PerCAPI*)PyCapsule_Import(
                             "persistent.cPersistence.CAPI", 0);
-    if (state->capi_struct == NULL) {
+    if (state->per_capi == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
         * walk down to the specified attribute using getattr. If the C
         * extensions aren't available, this can result in an
@@ -1124,25 +1124,25 @@ module_exec(PyObject* module)
 
     state->bucket_type = init_persist_type(
                                 &Bucket_type_def,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->bucket_type == NULL)
         return -1;
 
     state->btree_type = init_tree_type(
                                 &BTree_type_def,
                                 state->bucket_type,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->btree_type == NULL)
         return -1;
 
-    state->set_type = init_persist_type(&Set_type_def, state->capi_struct);
+    state->set_type = init_persist_type(&Set_type_def, state->per_capi);
     if (state->set_type == NULL)
         return -1;
 
     state->tree_set_type = init_tree_type(
                                 &TreeSet_type_def,
                                 state->set_type,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->tree_set_type == NULL)
         return -1;
 
@@ -1168,7 +1168,7 @@ module_exec(PyObject* module)
     state->bucket_type = init_persist_type(
                                 module,
                                 &Bucket_type_spec,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->bucket_type == NULL)
         return -1;
 
@@ -1177,14 +1177,14 @@ module_exec(PyObject* module)
                                 &BTree_type_spec,
                                 state->bucket_type,
                                 state->btree_type_type,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->btree_type == NULL)
         return -1;
 
     state->set_type = init_persist_type(
                                 module,
                                 &Set_type_spec,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->set_type == NULL)
         return -1;
 
@@ -1193,7 +1193,7 @@ module_exec(PyObject* module)
                                 &TreeSet_type_spec,
                                 state->set_type,
                                 state->btree_type_type,
-                                state->capi_struct);
+                                state->per_capi);
     if (state->tree_set_type == NULL)
         return -1;
 

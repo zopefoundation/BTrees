@@ -81,7 +81,7 @@ static PyObject *
 _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int i;
     int cmp;
     KEY_TYPE key;
@@ -99,7 +99,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
         return NULL;
     }
 
-    UNLESS (per_use((cPersistentObject*)self, capi_struct)) return NULL;
+    UNLESS (per_use((cPersistentObject*)self, per_capi)) return NULL;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
     if (has_key)
@@ -116,7 +116,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 
 Done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 }
 
@@ -331,7 +331,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             int unique, int noval, int *changed)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int i, cmp;
     KEY_TYPE key;
 
@@ -366,7 +366,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             return -1;
     }
 
-    UNLESS (per_use((cPersistentObject*)self, capi_struct))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -399,7 +399,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             DECREF_VALUE(self->values[i]);
             COPY_VALUE(self->values[i], value);
             INCREF_VALUE(self->values[i]);
-            if (capi_struct->changed((cPersistentObject*)self) >= 0)
+            if (per_capi->changed((cPersistentObject*)self) >= 0)
                 result = 0;
             goto Done;
         }
@@ -433,7 +433,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
 
         if (changed)
             *changed = 1;
-        if (capi_struct->changed((cPersistentObject*)self) >= 0)
+        if (per_capi->changed((cPersistentObject*)self) >= 0)
             result = 1;
         goto Done;
     }
@@ -473,12 +473,12 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
     self->len++;
     if (changed)
         *changed = 1;
-    if (capi_struct->changed((cPersistentObject*)self) >= 0)
+    if (per_capi->changed((cPersistentObject*)self) >= 0)
         result = 1;
 
 Done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -597,7 +597,7 @@ static int
 bucket_split(Bucket *self, int index, Bucket *next)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int next_size;
 
     ASSERT(self->len > 1, "split of empty bucket", -1);
@@ -630,7 +630,7 @@ bucket_split(Bucket *self, int index, Bucket *next)
     Py_INCREF(next);
     self->next = next;
 
-    if (capi_struct->changed((cPersistentObject*)self) < 0)
+    if (per_capi->changed((cPersistentObject*)self) < 0)
         return -1;
 
     return 0;
@@ -647,11 +647,11 @@ static int
 Bucket_deleteNextBucket(Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int result = -1;    /* until proven innocent */
     Bucket *successor;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return -1;
     successor = self->next;
     if (successor)
@@ -660,23 +660,23 @@ Bucket_deleteNextBucket(Bucket *self)
         /* Before:  self -> successor -> next
         * After:   self --------------> next
         */
-        UNLESS (per_use((cPersistentObject*)successor, capi_struct))
+        UNLESS (per_use((cPersistentObject*)successor, per_capi))
             goto Done;
         next = successor->next;
         per_allow_deactivation((cPersistentObject*)successor);
-        capi_struct->accessed((cPersistentObject*)successor);
+        per_capi->accessed((cPersistentObject*)successor);
 
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
         Py_DECREF(successor);
-        if (capi_struct->changed((cPersistentObject*)self) < 0)
+        if (per_capi->changed((cPersistentObject*)self) < 0)
             goto Done;
     }
     result = 0;
 
 Done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -721,7 +721,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
                     int *offset)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int i;
     int cmp;
     int result = -1;    /* until proven innocent */
@@ -732,7 +732,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
     UNLESS (copied)
         return -1;
 
-    UNLESS (per_use((cPersistentObject*)self, capi_struct))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -760,7 +760,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
 
 Done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -768,7 +768,7 @@ static PyObject *
 Bucket_maxminKey(Bucket *self, PyObject *args, int min)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *key=0;
     int rc;
     int offset = 0;
@@ -777,7 +777,7 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
     if (args && ! PyArg_ParseTuple(args, "|O", &key))
         return NULL;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     UNLESS (self->len)
@@ -801,7 +801,7 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
 
     COPY_KEY_TO_OBJECT(key, self->keys[offset]);
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     return key;
 
@@ -810,7 +810,7 @@ empty:
                     empty_bucket ? "empty bucket" :
                     "no key satisfies the conditions");
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return NULL;
 }
 
@@ -913,14 +913,14 @@ static PyObject *
 bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *r = NULL;
     PyObject *key;
     int i;
     int low;
     int high;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
@@ -938,12 +938,12 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -962,14 +962,14 @@ static PyObject *
 bucket_values(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *r=0;
     PyObject *v;
     int i;
     int low;
     int high;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
@@ -988,12 +988,12 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -1012,7 +1012,7 @@ static PyObject *
 bucket_items(Bucket *self, PyObject *args, PyObject *kw)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *r=0;
     PyObject *o=0;
     PyObject *item=0;
@@ -1020,7 +1020,7 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
     int low;
     int high;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
@@ -1051,12 +1051,12 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
     }
 
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1066,7 +1066,7 @@ static PyObject *
 bucket_byValue(Bucket *self, PyObject *omin)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *r=0;
     PyObject *o=0;
     PyObject *item=0;
@@ -1076,7 +1076,7 @@ bucket_byValue(Bucket *self, PyObject *omin)
     int l;
     int copied=1;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     COPY_VALUE_FROM_ARG(min, omin, copied);
@@ -1129,7 +1129,7 @@ bucket_byValue(Bucket *self, PyObject *omin)
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1185,7 +1185,7 @@ static PyObject *
 bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
 
     int ghostify = 1;
     PyObject *force = NULL;
@@ -1220,7 +1220,7 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
         }
         if (ghostify) {
             if (_bucket_clear(self) < 0) return NULL;
-            capi_struct->ghostify((cPersistentObject*)self);
+            per_capi->ghostify((cPersistentObject*)self);
         }
     }
     Py_INCREF(Py_None);
@@ -1234,8 +1234,8 @@ bucket_clear(Bucket *self, PyObject *args)
     PyObject* obj_self = (PyObject*)self;
     PyObject* result = NULL;
 
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     if (self->len)
@@ -1243,7 +1243,7 @@ bucket_clear(Bucket *self, PyObject *args)
         if (_bucket_clear(self) < 0)
             return NULL;
 
-        if (capi_struct->changed((cPersistentObject*)self) < 0)
+        if (per_capi->changed((cPersistentObject*)self) < 0)
             goto done;
     }
     result = Py_None;
@@ -1251,7 +1251,7 @@ bucket_clear(Bucket *self, PyObject *args)
 
 done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -1282,7 +1282,7 @@ static PyObject *
 bucket_getstate(Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     PyObject *o = NULL;
     PyObject *items = NULL;
     PyObject *state;
@@ -1290,7 +1290,7 @@ bucket_getstate(Bucket *self)
     int len;
     int l;
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     len = self->len;
@@ -1334,12 +1334,12 @@ bucket_getstate(Bucket *self)
     Py_DECREF(items);
 
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return state;
 
 err:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(items);
     return NULL;
 }
@@ -1421,13 +1421,13 @@ static PyObject *
 bucket_setstate(Bucket *self, PyObject *state)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int r;
 
     per_prevent_deactivation((cPersistentObject*)self);
     r = _bucket_setstate(self, state);
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -1665,9 +1665,9 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
     }
 
     /* If we have a valid module, this one is bound to succeed. */
-    PerCAPI* capi_struct = _get_capi_struct_from_module(module);
+    PerCAPI* per_capi = _get_capi_struct_from_module(module);
 
-    if (!per_use((cPersistentObject*)self, capi_struct))
+    if (!per_use((cPersistentObject*)self, per_capi))
         return NULL;
     if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset) < 0)
         goto Done;
@@ -1684,7 +1684,7 @@ buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 
 Done:
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return (PyObject *)result;
 }
 
@@ -1918,15 +1918,15 @@ bucket_dealloc(Bucket *self)
         _bucket_clear(self);
     }
 
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
-    if (! capi_struct) {
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    if (! per_capi) {
         PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
         return;
     }
-    capi_struct->pertype->tp_dealloc(obj_self);
+    per_capi->pertype->tp_dealloc(obj_self);
 
 #if USE_HEAP_ALLOCATED_TYPES
-    int per_is_heaptype = capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+    int per_is_heaptype = per_capi->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
 
     /* Heap-allocated Persistent will have already decref'ed our type. */
     if (!per_is_heaptype)
@@ -1939,19 +1939,19 @@ bucket_traverse(Bucket *self, visitproc visit, void *arg)
 {
     PyObject* obj_self = (PyObject*)self;
 
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
-    if(capi_struct == NULL) {
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
+    if(per_capi == NULL) {
         /* Likely means that we are in application shutdown:  just bail.*/
         return -1;
     }
     /* Call our base type's traverse function.  Because buckets are
      * subclasses of Peristent, there must be one.
      */
-    if (capi_struct->pertype->tp_traverse(obj_self, visit, arg) < 0)
+    if (per_capi->pertype->tp_traverse(obj_self, visit, arg) < 0)
         return -1;
 
 #if USE_HEAP_ALLOCATED_TYPES
-    int per_is_heaptype = capi_struct->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+    int per_is_heaptype = per_capi->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
 
     /* Heap-allocated Persistent will have already traversed our type. */
     if (!per_is_heaptype)
@@ -2002,13 +2002,13 @@ static int
 Bucket_length( Bucket *self)
 {
     PyObject* obj_self = (PyObject*)self;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     int r;
-    UNLESS (per_use((cPersistentObject*)self, capi_struct))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
     r = self->len;
     per_allow_deactivation((cPersistentObject*)self);
-    capi_struct->accessed((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 }
 
@@ -2113,10 +2113,10 @@ static int
 nextBucket(SetIteration *i)
 {
     PyObject* obj_self = i->set;
-    PerCAPI* capi_struct = _get_capi_struct(obj_self);
+    PerCAPI* per_capi = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
-        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), capi_struct))
+        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), per_capi))
             return -1;
 
         if (i->position)
@@ -2136,7 +2136,7 @@ nextBucket(SetIteration *i)
         else
         {
           i->position = -1;
-          capi_struct->accessed((cPersistentObject*)BUCKET(i->set));
+          per_capi->accessed((cPersistentObject*)BUCKET(i->set));
         }
 
         per_allow_deactivation((cPersistentObject*)BUCKET(i->set));
