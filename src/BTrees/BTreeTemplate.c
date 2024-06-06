@@ -15,6 +15,79 @@
 
 #define BTREETEMPLATE_C "$Id$\n"
 
+/*
+ *  BTreeType metaclass
+ */
+
+static int
+BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
+{
+    PyObject* allowed_attrs = _get_btreetype_allowed_attrs(type);
+    /*
+      type.tp_setattro prohibits setting any attributes on a built-in type,
+      so we need to use our own (metaclass) type to handle it. The set of
+      allowable values needs to be carefully controlled (e.g., setting methods
+      would be bad).
+
+      Alternately, we could use heap-allocated types when they are supported
+      an all the versions we care about, because those do allow setting
+      attributes.
+    */
+    int allowed;
+    allowed = PySequence_Contains(allowed_attrs, name);
+    if (allowed < 0) {
+        return -1;
+    }
+
+    if (allowed) {
+        PyDict_SetItem(type->tp_dict, name, value);
+        PyType_Modified(type);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+    return PyType_Type.tp_setattro((PyObject*)type, name, value);
+}
+
+static char BTreeType__name__[] =
+    MODULE_NAME MOD_NAME_PREFIX "BTreeType";
+static char BTreeType__doc__[] = "Metaclass for BTrees";
+
+#if USE_STATIC_TYPES
+
+static PyTypeObject BTreeType_type_def = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name                    = BTreeType__name__,
+    .tp_doc                     = BTreeType__doc__,
+    .tp_basicsize               = 0,
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_setattro                = (setattrofunc)BTreeType_setattro,
+};
+
+#else
+
+static PyType_Slot BTreeType_type_slots[] = {
+    {Py_tp_doc,                 BTreeType__doc__},
+    {Py_tp_setattro,            (setattrofunc)BTreeType_setattro},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTreeType_type_spec = {
+    .name                       = BTreeType__name__,
+    .basicsize                  = 0,
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTreeType_type_slots
+};
+
+#endif
+
+/*
+ *  BTree type
+ */
+
 static long
 _get_max_size(BTree *self, PyObject *name, long default_max)
 {
@@ -44,7 +117,7 @@ _max_internal_size(BTree *self)
   long isize;
 
   if (self->max_internal_size > 0) return self->max_internal_size;
-  isize = _get_max_size(self, max_internal_size_str, -1);
+  isize = _get_max_size(self, str_max_internal_size, -1);
   self->max_internal_size = isize;
   return isize;
 }
@@ -55,7 +128,7 @@ _max_leaf_size(BTree *self)
   long isize;
 
   if (self->max_leaf_size > 0) return self->max_leaf_size;
-  isize = _get_max_size(self, max_leaf_size_str, -1);
+  isize = _get_max_size(self, str_max_leaf_size, -1);
   self->max_leaf_size = isize;
   return isize;
 }
@@ -72,6 +145,8 @@ _max_leaf_size(BTree *self)
 static int
 BTree_check_inner(BTree *self, Bucket *nextbucket)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int i;
     Bucket *bucketafter;
     Sized *child;
@@ -85,7 +160,8 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
     goto Error;                                 \
   }
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return -1;
     CHECK(self->len >= 0, "BTree len < 0");
     CHECK(self->len <= self->size, "BTree len > size");
     if (self->len == 0) /* Empty BTree. */
@@ -121,13 +197,13 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
     {
         /* Our children are also BTrees. */
         child = self->data[0].child;
-        UNLESS (PER_USE(child))
+        UNLESS (per_use((cPersistentObject*)child, per_capi))
             goto Done;
         activated_child = child;
         CHECK(self->firstbucket == BTREE(child)->firstbucket,
             "BTree has firstbucket different than "
             "its first child's firstbucket");
-        PER_ALLOW_DEACTIVATION(child);
+        per_allow_deactivation((cPersistentObject*)child);
         activated_child = NULL;
         for (i = 0; i < self->len; ++i)
         {
@@ -139,10 +215,10 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
             else
             {
                 BTree *child2 = BTREE(self->data[i+1].child);
-                UNLESS (PER_USE(child2))
+                UNLESS (per_use((cPersistentObject*)child2, per_capi))
                     goto Done;
                 bucketafter = child2->firstbucket;
-                PER_ALLOW_DEACTIVATION(child2);
+                per_allow_deactivation((cPersistentObject*)child2);
             }
             if (BTree_check_inner(BTREE(child), bucketafter) < 0)
                 goto Done;
@@ -155,12 +231,13 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
         for (i = 0; i < self->len; ++i)
         {
             child = self->data[i].child;
-            UNLESS (PER_USE(child))
+            UNLESS (per_use((cPersistentObject*)child, per_capi))
                 goto Done;
             activated_child = child;
             CHECK(!SameType_Check(self, child),
                     "BTree children have different types");
-            CHECK(child->len >= 1, "Bucket length < 1");/* no empty buckets! */
+            CHECK(
+                child->len >= 1, "Bucket length < 1");/* no empty buckets! */
             CHECK(child->len <= child->size, "Bucket len > size");
 #ifdef PERSISTENT
             CHECK(Py_REFCNT(child) >= 1, "Bucket has refcount < 1");
@@ -173,7 +250,7 @@ BTree_check_inner(BTree *self, Bucket *nextbucket)
                 bucketafter = BUCKET(self->data[i+1].child);
             CHECK(BUCKET(child)->next == bucketafter,
                     "Bucket next pointer is damaged");
-            PER_ALLOW_DEACTIVATION(child);
+            per_allow_deactivation((cPersistentObject*)child);
             activated_child = NULL;
         }
     }
@@ -186,10 +263,10 @@ Error:
 
 Done:
     /* No point updating access time -- this isn't a "real" use. */
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     if (activated_child)
     {
-        PER_ALLOW_DEACTIVATION(activated_child);
+        per_allow_deactivation((cPersistentObject*)activated_child);
     }
     return result;
 
@@ -247,6 +324,8 @@ BTree_check(BTree *self)
 static PyObject *
 _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     KEY_TYPE key;
     PyObject *result = NULL;    /* guilty until proved innocent */
     int copied = 1;
@@ -262,7 +341,8 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
         return NULL;
     }
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
     if (self->len == 0)
     {
         /* empty BTree */
@@ -283,9 +363,11 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
             has_key += has_key != 0;    /* bump depth counter, maybe */
             if (SameType_Check(self, child))
             {
-                PER_UNUSE(self);
+                per_allow_deactivation((cPersistentObject*)self);
+                per_capi->accessed((cPersistentObject*)self);
                 self = BTREE(child);
-                PER_USE_OR_RETURN(self, NULL);
+                if (!per_use((cPersistentObject*)self, per_capi))
+                    return NULL;
             }
             else
             {
@@ -296,7 +378,8 @@ _BTree_get(BTree *self, PyObject *keyarg, int has_key, int replace_type_err)
     }
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -307,17 +390,18 @@ BTree_get(BTree *self, PyObject *key)
 }
 
 /* Create a new bucket for the BTree or TreeSet using the class attribute
-   _bucket_type, which is normally initialized to BucketType or SetType
-   as appropriate.
+   _bucket_type, which is normally initialized to Bucket_type_def or
+   Set_type_def as appropriate.
 */
 static Sized *
 BTree_newBucket(BTree *self)
 {
+#if 1
     PyObject *factory;
     Sized *result;
 
-    /* _bucket_type_str defined in BTreeModuleTemplate.c */
-    factory = PyObject_GetAttr((PyObject *)Py_TYPE(self), _bucket_type_str);
+    /* str__bucket_type defined in BTreeModuleTemplate.c */
+    factory = PyObject_GetAttr((PyObject *)Py_TYPE(self), str__bucket_type);
     if (factory == NULL)
         return NULL;
     /* TODO: Should we check that the factory actually returns something
@@ -328,6 +412,28 @@ BTree_newBucket(BTree *self)
     result = SIZED(PyObject_CallObject(factory, NULL));
     Py_DECREF(factory);
     return result;
+#else
+    /* Can't do this, even though it would be much cleaner, because
+     * we've made the promise that classes derived from a BTree can set
+     * the '_bucket_type' attribute with whatever they choose (any callable
+     * which takes no args, but usually a subclass of the same family's
+     * Bucket type.
+     */
+    PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_newBucket: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a valid module, this is guaranteed to succeed. */
+    PyTypeObject* bucket_type = _get_bucket_type(obj_self);
+
+    return SIZED(bucket_type->tp_alloc(bucket_type, 0));
+#endif
+
 }
 
 /*
@@ -345,6 +451,8 @@ BTree_newBucket(BTree *self)
 static int
 BTree_split(BTree *self, int index, BTree *next)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int next_size;
     Sized *child;
 
@@ -365,9 +473,11 @@ BTree_split(BTree *self, int index, BTree *next)
     child = next->data[0].child;
     if (SameType_Check(self, child))
     {
-        PER_USE_OR_RETURN(child, -1);
+        if (!per_use((cPersistentObject*)child, per_capi))
+            return -1;
         next->firstbucket = BTREE(child)->firstbucket;
-        PER_UNUSE(child);
+        per_allow_deactivation((cPersistentObject*)child);
+        per_capi->accessed((cPersistentObject*)child);
     }
     else
         next->firstbucket = BUCKET(child);
@@ -375,7 +485,7 @@ BTree_split(BTree *self, int index, BTree *next)
 
     next->len = next_size;
     self->len = index;
-    return PER_CHANGED(self) >= 0 ? 0 : -1;
+    return per_capi->changed((cPersistentObject*)self) >= 0 ? 0 : -1;
 }
 
 
@@ -391,16 +501,17 @@ static int BTree_grow(BTree *self, int index, int noval);
  *      0   OK
  *     -1   error
  *
- * CAUTION:  The caller must call PER_CHANGED on self.
+ * CAUTION:  The caller must call 'per_capi->changed' on self.
  */
 static int
 BTree_split_root(BTree *self, int noval)
 {
+    PyTypeObject* tp = Py_TYPE(self);
     BTree *child;
     BTreeItem *d;
 
     /* Create a child BTree, and a new data vector for self. */
-    child = BTREE(PyObject_CallObject(OBJECT(Py_TYPE(self)), NULL));
+    child = BTREE(tp->tp_alloc(tp, 0));
     if (!child)
         return -1;
 
@@ -447,6 +558,8 @@ BTree_split_root(BTree *self, int noval)
 static int
 BTree_grow(BTree *self, int index, int noval)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int i;
     Sized *v, *e = 0;
     BTreeItem *d;
@@ -479,22 +592,24 @@ BTree_grow(BTree *self, int index, int noval)
         d = self->data + index;
         v = d->child;
         /* Create a new object of the same type as the target value */
-        e = (Sized *)PyObject_CallObject((PyObject *)Py_TYPE(v), NULL);
+        PyTypeObject* tp = Py_TYPE(v);
+        e = (Sized *)tp->tp_alloc(tp, 0);
         if (e == NULL)
             return -1;
 
-        UNLESS(PER_USE(v))
+        UNLESS(per_use((cPersistentObject*)v, per_capi))
         {
             Py_DECREF(e);
             return -1;
         }
 
-        /* Now split between the original (v) and the new (e) at the midpoint*/
+        /* Now split between the original (v) and the new (e)
+         * at the midpoint*/
         if (SameType_Check(self, v))
             i = BTree_split((BTree *)v, -1, (BTree *)e);
         else
             i = bucket_split((Bucket *)v, -1, (Bucket *)e);
-        PER_ALLOW_DEACTIVATION(v);
+        per_allow_deactivation((cPersistentObject*)v);
 
         if (i < 0)
         {
@@ -560,6 +675,8 @@ BTree_grow(BTree *self, int index, int noval)
 static Bucket *
 BTree_lastBucket(BTree *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Sized *pchild;
     Bucket *result;
 
@@ -573,9 +690,11 @@ BTree_lastBucket(BTree *self)
     if (SameType_Check(self, pchild))
     {
         self = BTREE(pchild);
-        PER_USE_OR_RETURN(self, NULL);
+        if (!per_use((cPersistentObject*)self, per_capi))
+            return NULL;
         result = BTree_lastBucket(self);
-        PER_UNUSE(self);
+        per_allow_deactivation((cPersistentObject*)self);
+        per_capi->accessed((cPersistentObject*)self);
     }
     else
     {
@@ -588,9 +707,11 @@ BTree_lastBucket(BTree *self)
 static int
 BTree_deleteNextBucket(BTree *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Bucket *b;
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
 
     b = BTree_lastBucket(self);
@@ -600,21 +721,22 @@ BTree_deleteNextBucket(BTree *self)
         goto err;
 
     Py_DECREF(b);
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     return 0;
 
 err:
     Py_XDECREF(b);
-    PER_ALLOW_DEACTIVATION(self);
+    per_allow_deactivation((cPersistentObject*)self);
     return -1;
 }
 
 /*
 ** _BTree_clear
 **
-** Clears out all of the values in the BTree (firstbucket, keys, and children);
-** leaving self an empty BTree.
+** Clears out all of the values in the BTree (firstbucket, keys, and
+** children); leaving self an empty BTree.
 **
 ** Arguments:    self    The BTree
 **
@@ -652,24 +774,22 @@ _BTree_clear(BTree *self)
         ASSERT(Py_REFCNT(self->firstbucket) > 1,
             "Invalid firstbucket pointer", -1);
 #endif
-        Py_DECREF(self->firstbucket);
-        self->firstbucket = NULL;
+        Py_CLEAR(self->firstbucket);
     }
 
     if (self->data)
     {
-        int i;
         if (len > 0) /* 0 is special because key 0 is trash */
         {
-            Py_DECREF(self->data[0].child);
+            Py_CLEAR(self->data[0].child);
         }
 
-        for (i = 1; i < len; i++)
+        for (int i = 1; i < len; ++i)
         {
 #ifdef KEY_TYPE_IS_PYOBJECT
-            DECREF_KEY(self->data[i].key);
+            Py_CLEAR(self->data[i].key);
 #endif
-            Py_DECREF(self->data[i].child);
+            Py_CLEAR(self->data[i].child);
         }
         free(self->data);
         self->data = NULL;
@@ -709,6 +829,8 @@ static int
 _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
            int unique, int noval)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int changed = 0;    /* did I mutate? */
     int min;            /* index of child I searched */
     BTreeItem *d;       /* self->data[min] */
@@ -727,7 +849,8 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
         return -1;
 #endif
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return -1;
 
     self_was_empty = self->len == 0;
     if (self_was_empty)
@@ -751,7 +874,7 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     d = self->data + min;
 
 #ifdef PERSISTENT
-    PER_READCURRENT(self, goto Error);
+    if (per_capi->readCurrent((cPersistentObject*)(self)) < 0) goto Error;
 #endif
 
     if (SameType_Check(self, d->child))
@@ -786,10 +909,11 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     * rooted at the child changed size, so did the tree rooted at self:
     * our status must be >= 1 too.
     */
-    UNLESS(PER_USE(d->child))
+    UNLESS(per_use((cPersistentObject*)d->child, per_capi))
         goto Error;
     childlength = d->child->len;
-    PER_UNUSE(d->child);
+    per_allow_deactivation((cPersistentObject*)d->child);
+    per_capi->accessed((cPersistentObject*)d->child);
 
     if (value)
     {
@@ -834,21 +958,23 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
 
             if (SameType_Check(self, d->child))
             {
-                UNLESS(PER_USE(d->child))
+                UNLESS(per_use((cPersistentObject*)d->child, per_capi))
                     goto Error;
                 bucket = BTREE(d->child)->firstbucket;
-                PER_UNUSE(d->child);
+                per_allow_deactivation((cPersistentObject*)d->child);
+                per_capi->accessed((cPersistentObject*)d->child);
             }
             else
                 bucket = BUCKET(d->child);
 
-            UNLESS(PER_USE(bucket))
+            UNLESS(per_use((cPersistentObject*)bucket, per_capi))
                 goto Error;
             DECREF_KEY(d->key);
             COPY_KEY(d->key, bucket->keys[0]);
             INCREF_KEY(d->key);
-            PER_UNUSE(bucket);
-            if (PER_CHANGED(self) < 0)
+            per_allow_deactivation((cPersistentObject*)bucket);
+            per_capi->accessed((cPersistentObject*)bucket);
+            if (per_capi->changed((cPersistentObject*)self) < 0)
                     goto Error;
         }
     }
@@ -873,10 +999,11 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
         {
             /* This was our firstbucket.  Update to new firstbucket value. */
             Bucket *nextbucket;
-            UNLESS(PER_USE(d->child))
+            UNLESS(per_use((cPersistentObject*)d->child, per_capi))
                 goto Error;
             nextbucket = BTREE(d->child)->firstbucket;
-            PER_UNUSE(d->child);
+            per_allow_deactivation((cPersistentObject*)d->child);
+            per_capi->accessed((cPersistentObject*)d->child);
 
             Py_XINCREF(nextbucket);
             Py_DECREF(self->firstbucket);
@@ -903,7 +1030,8 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
     */
     if (! SameType_Check(self, d->child))
     {
-        /* We're about to delete a bucket, so need to adjust bucket pointers. */
+        /* We're about to delete a bucket,
+         * so need to adjust bucket pointers.*/
         if (min)
         {
             /* It's not our first bucket, so we can tell the previous
@@ -922,16 +1050,17 @@ _BTree_set(BTree *self, PyObject *keyarg, PyObject *value,
             Bucket *nextbucket;
             /* It's our first bucket.  We can't unlink it directly. */
             /* 'changed' will be set true by the deletion code following. */
-            UNLESS(PER_USE(d->child))
+            UNLESS(per_use((cPersistentObject*)d->child, per_capi))
                 goto Error;
             nextbucket = BUCKET(d->child)->next;
-            PER_UNUSE(d->child);
+            per_allow_deactivation((cPersistentObject*)d->child);
+            per_capi->accessed((cPersistentObject*)d->child);
 
             Py_XINCREF(nextbucket);
             Py_DECREF(self->firstbucket);
             self->firstbucket = nextbucket;
 
-            status = 2; /* we're giving our caller a new firstbucket problem */
+            status = 2; /* giving our caller a new firstbucket problem */
         }
     }
 
@@ -964,11 +1093,12 @@ Done:
 #ifdef PERSISTENT
     if (changed)
     {
-        if (PER_CHANGED(self) < 0)
+        if (per_capi->changed((cPersistentObject*)self) < 0)
             goto Error;
     }
 #endif
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return status;
 
 Error:
@@ -980,7 +1110,8 @@ Error:
         */
         _BTree_clear(self);
     }
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return -1;
 }
 
@@ -1008,6 +1139,9 @@ BTree_setitem(BTree *self, PyObject *key, PyObject *v)
 static PyObject *
 BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+
     int ghostify = 1;
     PyObject *force = NULL;
 
@@ -1053,7 +1187,7 @@ BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
         {
             if (_BTree_clear(self) < 0)
                 return NULL;
-            PER_GHOSTIFY(self);
+            per_capi->ghostify((cPersistentObject*)self);
         }
     }
 
@@ -1065,23 +1199,28 @@ BTree__p_deactivate(BTree *self, PyObject *args, PyObject *keywords)
 static PyObject *
 BTree_clear(BTree *self)
 {
-    UNLESS (PER_USE(self)) return NULL;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+
+    UNLESS (per_use((cPersistentObject*)self, per_capi)) return NULL;
 
     if (self->len)
     {
         if (_BTree_clear(self) < 0)
             goto err;
-        if (PER_CHANGED(self) < 0)
+        if (per_capi->changed((cPersistentObject*)self) < 0)
             goto err;
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     Py_INCREF(Py_None);
     return Py_None;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return NULL;
 }
 
@@ -1115,11 +1254,14 @@ err:
 static PyObject *
 BTree_getstate(BTree *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *r = NULL;
     PyObject *o;
-    int i, l;
+    int i;
+    int l;
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     if (self->len)
@@ -1167,12 +1309,14 @@ BTree_getstate(BTree *self)
         Py_INCREF(r);
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     return r;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -1180,10 +1324,28 @@ err:
 static int
 _BTree_setstate(BTree *self, PyObject *state, int noval)
 {
-    PyObject *items, *firstbucket = NULL;
+    PyObject* obj_self = (PyObject*)self;
+    PyObject *items;
+    PyObject *firstbucket = NULL;
     BTreeItem *d;
-    int len, l, i, copied=1;
-    PyTypeObject *leaftype = (noval ? &SetType : &BucketType);
+    int len;
+    int l;
+    int i;
+    int copied=1;
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "_BTree_setstate: module is NULL");
+        return -1;
+    }
+
+    /* If we have a valid module, these two are bound to succeed. */
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
+
+    PyTypeObject *leaftype = (noval ? set_type : bucket_type);
 
     if (_BTree_clear(self) < 0)
         return -1;
@@ -1294,11 +1456,14 @@ _BTree_setstate(BTree *self, PyObject *state, int noval)
 static PyObject *
 BTree_setstate(BTree *self, PyObject *arg)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
 
-    PER_PREVENT_DEACTIVATION(self);
+    per_prevent_deactivation((cPersistentObject*)self);
     r = _BTree_setstate(self, arg, 0);
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -1325,29 +1490,38 @@ BTree_setstate(BTree *self, PyObject *arg)
  * for a BTree (corrupted or hostile state).
  */
 PyObject *
-get_bucket_state(PyObject *t)
+get_bucket_state(PyObject* module, PyObject *t)
 {
     if (t == Py_None)
         return Py_None;        /* an empty BTree */
+
     if (! PyTuple_Check(t))
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected tuple or None for state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected tuple or None for state");
+        return NULL;
+    }
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "get_bucket_state: module is NULL");
         return NULL;
     }
 
     if (PyTuple_GET_SIZE(t) == 2)
     {
         /* A non-degenerate BTree. */
-        return merge_error(-1, -1, -1, 11);
+        return merge_error(module, -1, -1, -1, 11);
     }
 
     /* We're in the one-bucket case. */
 
     if (PyTuple_GET_SIZE(t) != 1)
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected 1- or 2-tuple for state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected 1- or 2-tuple for state");
         return NULL;
     }
 
@@ -1363,8 +1537,9 @@ get_bucket_state(PyObject *t)
     t = PyTuple_GET_ITEM(t, 0);
     if (! PyTuple_Check(t))
     {
-        PyErr_SetString(PyExc_TypeError,
-                        "_p_resolveConflict: expected tuple for bucket state");
+        PyErr_SetString(
+            PyExc_TypeError,
+            "_p_resolveConflict: expected tuple for bucket state");
         return NULL;
     }
 
@@ -1379,26 +1554,42 @@ get_bucket_state(PyObject *t)
 static PyObject *
 BTree__p_resolveConflict(BTree *self, PyObject *args)
 {
+    PyObject *obj_self = (PyObject*)self;
     PyObject *s[3];
-    PyObject *x, *y, *z;
+    PyObject *x;
+    PyObject *y;
+    PyObject *z;
 
     if (!PyArg_ParseTuple(args, "OOO", &x, &y, &z))
         return NULL;
 
-    s[0] = get_bucket_state(x);
+    PyObject *module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree__p_resolveConflict: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a non-NULL module, these three are guaranteed to work. */
+    PyTypeObject *btree_type = _get_btree_type(module);
+    PyTypeObject *bucket_type = _get_bucket_type(module);
+    PyTypeObject *set_type = _get_set_type(module);
+
+    s[0] = get_bucket_state(module, x);
     if (s[0] == NULL)
         return NULL;
-    s[1] = get_bucket_state(y);
+    s[1] = get_bucket_state(module, y);
     if (s[1] == NULL)
         return NULL;
-    s[2] = get_bucket_state(z);
+    s[2] = get_bucket_state(module, z);
     if (s[2] == NULL)
         return NULL;
 
-    if (PyObject_IsInstance((PyObject *)self, (PyObject *)&BTreeType))
-        x = _bucket__p_resolveConflict(OBJECT(&BucketType), s);
+    if (PyObject_IsInstance((PyObject *)self, (PyObject *)btree_type))
+        x = _bucket__p_resolveConflict(bucket_type, s);
     else
-        x = _bucket__p_resolveConflict(OBJECT(&SetType), s);
+        x = _bucket__p_resolveConflict(set_type, s);
 
     if (x == NULL)
         return NULL;
@@ -1466,6 +1657,8 @@ static int
 BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
                    Bucket **bucket, int *offset)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Sized *deepest_smaller = NULL;      /* last possibility to move left */
     int deepest_smaller_is_btree = 0;   /* Boolean; if false, it's a bucket */
     Bucket *pbucket;
@@ -1479,8 +1672,9 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
     UNLESS (copied)
         return -1;
 
-    /* We don't need to: PER_USE_OR_RETURN(self, -1);
-        because the caller does. */
+    /* We don't need to check 'per_use(self, per_capi)' and return -1
+     * on fail, because the caller does.
+     */
     UNLESS (self->data && self->len)
         return 0;
 
@@ -1503,11 +1697,13 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
         {
             if (self_got_rebound)
             {
-                PER_UNUSE(self);
+                per_allow_deactivation((cPersistentObject*)self);
+                per_capi->accessed((cPersistentObject*)self);
             }
             self = BTREE(pchild);
             self_got_rebound = 1;
-            PER_USE_OR_RETURN(self, -1);
+            if (!per_use((cPersistentObject*)self, per_capi))
+                return -1;
         }
         else
         {
@@ -1532,7 +1728,7 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
     {
         Bucket *next;
 
-        UNLESS(PER_USE(pbucket)) goto Done;
+        UNLESS(per_use((cPersistentObject*)pbucket, per_capi)) goto Done;
         next = pbucket->next;
         if (next) {
         result = 1;
@@ -1542,18 +1738,20 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
         }
         else
         result = 0;
-        PER_UNUSE(pbucket);
+        per_allow_deactivation((cPersistentObject*)pbucket);
+        per_capi->accessed((cPersistentObject*)pbucket);
     }
     /* High-end search:  if it's possible to go left, do so. */
     else if (deepest_smaller)
     {
         if (deepest_smaller_is_btree)
         {
-            UNLESS(PER_USE(deepest_smaller))
+            UNLESS(per_use((cPersistentObject*)deepest_smaller, per_capi))
                 goto Done;
             /* We own the reference this returns. */
             pbucket = BTree_lastBucket(BTREE(deepest_smaller));
-            PER_UNUSE(deepest_smaller);
+            per_allow_deactivation((cPersistentObject*)deepest_smaller);
+            per_capi->accessed((cPersistentObject*)deepest_smaller);
             if (pbucket == NULL)
                     goto Done;   /* error */
         }
@@ -1562,12 +1760,13 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
             pbucket = BUCKET(deepest_smaller);
             Py_INCREF(pbucket);
         }
-        UNLESS(PER_USE(pbucket))
+        UNLESS(per_use((cPersistentObject*)pbucket, per_capi))
             goto Done;
         result = 1;
         *bucket = pbucket;  /* transfer ownership to caller */
         *offset = pbucket->len - 1;
-        PER_UNUSE(pbucket);
+        per_allow_deactivation((cPersistentObject*)pbucket);
+        per_capi->accessed((cPersistentObject*)pbucket);
     }
     else
         result = 0;     /* simply not found */
@@ -1575,7 +1774,8 @@ BTree_findRangeEnd(BTree *self, PyObject *keyarg, int low, int exclude_equal,
 Done:
     if (self_got_rebound)
     {
-        PER_UNUSE(self);
+        per_allow_deactivation((cPersistentObject*)self);
+        per_capi->accessed((cPersistentObject*)self);
     }
     return result;
 }
@@ -1583,6 +1783,8 @@ Done:
 static PyObject *
 BTree_maxminKey(BTree *self, PyObject *args, int min)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *key=0;
     Bucket *bucket = NULL;
     int offset, rc;
@@ -1591,7 +1793,7 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     UNLESS (PyArg_ParseTuple(args, "|O", &key))
         return NULL;
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     UNLESS (self->data && self->len)
@@ -1601,15 +1803,17 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
 
     if (key && key != Py_None)
     {
-        if ((rc = BTree_findRangeEnd(self, key, min, 0, &bucket, &offset)) <= 0)
-        {
+        if ((rc = BTree_findRangeEnd(
+                    self, key, min, 0, &bucket, &offset)) <= 0
+        ) {
             if (rc < 0)
                 goto err;
             empty_tree = 0;
             goto empty;
         }
-        PER_UNUSE(self);
-        UNLESS (PER_USE(bucket))
+        per_allow_deactivation((cPersistentObject*)self);
+        per_capi->accessed((cPersistentObject*)self);
+        UNLESS (per_use((cPersistentObject*)bucket, per_capi))
         {
             Py_DECREF(bucket);
             return NULL;
@@ -1618,16 +1822,19 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     else if (min)
     {
         bucket = self->firstbucket;
-        PER_UNUSE(self);
-        PER_USE_OR_RETURN(bucket, NULL);
+        per_allow_deactivation((cPersistentObject*)self);
+        per_capi->accessed((cPersistentObject*)self);
+        if (!per_use((cPersistentObject*)bucket, per_capi))
+            return NULL;
         Py_INCREF(bucket);
         offset = 0;
     }
     else
     {
         bucket = BTree_lastBucket(self);
-        PER_UNUSE(self);
-        UNLESS (PER_USE(bucket))
+        per_allow_deactivation((cPersistentObject*)self);
+        per_capi->accessed((cPersistentObject*)self);
+        UNLESS (per_use((cPersistentObject*)bucket, per_capi))
         {
             Py_DECREF(bucket);
             return NULL;
@@ -1637,7 +1844,8 @@ BTree_maxminKey(BTree *self, PyObject *args, int min)
     }
 
     COPY_KEY_TO_OBJECT(key, bucket->keys[offset]);
-    PER_UNUSE(bucket);
+    per_allow_deactivation((cPersistentObject*)bucket);
+    per_capi->accessed((cPersistentObject*)bucket);
     Py_DECREF(bucket);
 
     return key;
@@ -1647,10 +1855,12 @@ empty:
                     empty_tree ? "empty tree" :
                     "no key satisfies the conditions");
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     if (bucket)
     {
-        PER_UNUSE(bucket);
+        per_allow_deactivation((cPersistentObject*)bucket);
+        per_capi->accessed((cPersistentObject*)bucket);
         Py_DECREF(bucket);
     }
   return NULL;
@@ -1678,6 +1888,7 @@ BTree_maxKey(BTree *self, PyObject *args)
 static PyObject *
 BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
 {
+    PyObject* obj_self = (PyObject*)self;
     PyObject *min = Py_None;
     PyObject *max = Py_None;
     int excludemin = 0;
@@ -1689,6 +1900,22 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
     int highoffset;
     PyObject *result;
 
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_rangeSearch: module is NULL");
+        return NULL;
+    }
+
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+
+    if (per_capi == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTree_rangeSearch: per_capi is NULL");
+        return NULL;
+    }
+
     if (args)
     {
         if (! PyArg_ParseTupleAndKeywords(args, kw, "|OOii", search_keywords,
@@ -1699,7 +1926,7 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         return NULL;
     }
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     UNLESS (self->data && self->len)
@@ -1723,10 +1950,11 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         if (excludemin)
         {
             int bucketlen;
-            UNLESS (PER_USE(lowbucket))
+            UNLESS (per_use((cPersistentObject*)lowbucket, per_capi))
                 goto err;
             bucketlen = lowbucket->len;
-            PER_UNUSE(lowbucket);
+            per_allow_deactivation((cPersistentObject*)lowbucket);
+            per_capi->accessed((cPersistentObject*)lowbucket);
             if (bucketlen > 1)
                 lowoffset = 1;
             else if (self->len < 2)
@@ -1734,10 +1962,11 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
             else
             {    /* move to first item in next bucket */
                 Bucket *next;
-                UNLESS (PER_USE(lowbucket))
+                UNLESS (per_use((cPersistentObject*)lowbucket, per_capi))
                     goto err;
                 next = lowbucket->next;
-                PER_UNUSE(lowbucket);
+                per_allow_deactivation((cPersistentObject*)lowbucket);
+                per_capi->accessed((cPersistentObject*)lowbucket);
                 assert(next != NULL);
                 lowbucket = next;
                 /* and lowoffset is still 0 */
@@ -1764,10 +1993,11 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         int bucketlen;
         highbucket = BTree_lastBucket(self);
         assert(highbucket != NULL);  /* we know self isn't empty */
-        UNLESS (PER_USE(highbucket))
+        UNLESS (per_use((cPersistentObject*)highbucket, per_capi))
             goto err_and_decref_buckets;
         bucketlen = highbucket->len;
-        PER_UNUSE(highbucket);
+        per_allow_deactivation((cPersistentObject*)highbucket);
+        per_capi->accessed((cPersistentObject*)highbucket);
         highoffset = bucketlen - 1;
         if (excludemax)
         {
@@ -1788,10 +2018,11 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
                 }
                 assert(status > 0);
                 Py_INCREF(highbucket);
-                UNLESS (PER_USE(highbucket))
+                UNLESS (per_use((cPersistentObject*)highbucket, per_capi))
                     goto err_and_decref_buckets;
                 highoffset = highbucket->len - 1;
-                PER_UNUSE(highbucket);
+                per_allow_deactivation((cPersistentObject*)highbucket);
+                per_capi->accessed((cPersistentObject*)highbucket);
             }
         }
         assert(highoffset >= 0);
@@ -1818,15 +2049,17 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
         int cmp;
 
         /* Have to check the hard way:  see how the endpoints compare. */
-        UNLESS (PER_USE(lowbucket))
+        UNLESS (per_use((cPersistentObject*)lowbucket, per_capi))
             goto err_and_decref_buckets;
         COPY_KEY(first, lowbucket->keys[lowoffset]);
-        PER_UNUSE(lowbucket);
+        per_allow_deactivation((cPersistentObject*)lowbucket);
+        per_capi->accessed((cPersistentObject*)lowbucket);
 
-        UNLESS (PER_USE(highbucket))
+        UNLESS (per_use((cPersistentObject*)highbucket, per_capi))
             goto err_and_decref_buckets;
         COPY_KEY(last, highbucket->keys[highoffset]);
-        PER_UNUSE(highbucket);
+        per_allow_deactivation((cPersistentObject*)highbucket);
+        per_capi->accessed((cPersistentObject*)highbucket);
 
         TEST_KEY_SET_OR(cmp, first, last)
             goto err_and_decref_buckets;
@@ -1834,9 +2067,11 @@ BTree_rangeSearch(BTree *self, PyObject *args, PyObject *kw, char type)
                 goto empty_and_decref_buckets;
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
-    result = newBTreeItems(type, lowbucket, lowoffset, highbucket, highoffset);
+    result = newBTreeItems(
+        module, type, lowbucket, lowoffset, highbucket, highoffset);
     Py_DECREF(lowbucket);
     Py_DECREF(highbucket);
     return result;
@@ -1846,7 +2081,8 @@ err_and_decref_buckets:
     Py_DECREF(highbucket);
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return NULL;
 
 empty_and_decref_buckets:
@@ -1854,8 +2090,9 @@ empty_and_decref_buckets:
     Py_DECREF(highbucket);
 
 empty:
-    PER_UNUSE(self);
-    return newBTreeItems(type, 0, 0, 0, 0);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
+    return newBTreeItems(module, type, 0, 0, 0, 0);
 }
 
 /*
@@ -1888,13 +2125,17 @@ BTree_items(BTree *self, PyObject *args, PyObject *kw)
 static PyObject *
 BTree_byValue(BTree *self, PyObject *omin)
 {
-    PyObject *r=0, *o=0, *item=0;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *r=0;
+    PyObject *o=0;
+    PyObject *item=0;
     VALUE_TYPE min;
     VALUE_TYPE v;
     int copied=1;
     SetIteration it = {0, 0, 1};
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return NULL;
 
     COPY_VALUE_FROM_ARG(min, omin, copied);
@@ -1940,26 +2181,23 @@ BTree_byValue(BTree *self, PyObject *omin)
             goto err;
     }
 
-    item=PyObject_GetAttr(r,sort_str);
-    UNLESS (item)
+    item = PyObject_CallMethodObjArgs(r, str_sort, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
+    Py_DECREF(item); /* Py_None */
+    item = PyObject_CallMethodObjArgs(r, str_reverse, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, reverse_str));
-    UNLESS (item)
-        goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
-        goto err;
-    Py_DECREF(item);
+    Py_DECREF(item); /* Py_None */
 
     finiSetIteration(&it);
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     finiSetIteration(&it);
     Py_XDECREF(item);
@@ -2167,14 +2405,21 @@ BTree_addUnique(BTree *self, PyObject *args)
 static PyObject *
 buildBTreeIter(BTree *self, PyObject *args, PyObject *kw, char kind)
 {
-    BTreeIter *result = NULL;
+    PyObject* obj_self = (PyObject*)self;
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "buildBTreeIter: module is NULL");
+        return NULL;
+    }
+
     BTreeItems *items = (BTreeItems *)BTree_rangeSearch(self, args, kw, kind);
 
-    if (items)
-    {
-        result = BTreeIter_new(items);
-        Py_DECREF(items);
-    }
+    if (items == NULL)
+        return NULL;
+
+    BTreeIter* result = newBTreeIter(module, items);
+    Py_DECREF(items);
     return (PyObject *)result;
 }
 
@@ -2293,25 +2538,26 @@ static struct PyMethodDef BTree_methods[] = {
      "Add an item if the key is not already used. Return 1 if the item was\n"
      "added, or 0 otherwise."},
 
-    {"update", (PyCFunction) Mapping_update, METH_O,
+    {"update", (PyCFunction)Mapping_update, METH_O,
      "update(collection)\n\n Add the items from the given collection."},
 
-    {"iterkeys", (PyCFunction) BTree_iterkeys, METH_VARARGS | METH_KEYWORDS,
+    {"iterkeys", (PyCFunction)BTree_iterkeys, METH_VARARGS | METH_KEYWORDS,
      "B.iterkeys([min[,max]]) -> an iterator over the keys of B"},
 
-    {"itervalues", (PyCFunction) BTree_itervalues, METH_VARARGS | METH_KEYWORDS,
+    {"itervalues",
+     (PyCFunction)BTree_itervalues, METH_VARARGS | METH_KEYWORDS,
      "B.itervalues([min[,max]]) -> an iterator over the values of B"},
 
-    {"iteritems", (PyCFunction) BTree_iteritems, METH_VARARGS | METH_KEYWORDS,
+    {"iteritems", (PyCFunction)BTree_iteritems, METH_VARARGS | METH_KEYWORDS,
      "B.iteritems([min[,max]]) -> an iterator over the (key, value) "
      "items of B"},
 
-    {"_check", (PyCFunction) BTree_check, METH_NOARGS,
+    {"_check", (PyCFunction)BTree_check, METH_NOARGS,
      "Perform sanity check on BTree, and raise exception if flawed."},
 
 #ifdef PERSISTENT
     {"_p_resolveConflict",
-     (PyCFunction) BTree__p_resolveConflict, METH_VARARGS,
+     (PyCFunction)BTree__p_resolveConflict, METH_VARARGS,
      "_p_resolveConflict() -- Reinitialize from a newly created copy"},
 
     {"_p_deactivate",
@@ -2341,62 +2587,86 @@ BTree_init(PyObject *self, PyObject *args, PyObject *kwds)
 static void
 BTree_dealloc(BTree *self)
 {
-    PyObject_GC_UnTrack((PyObject *)self);
+    PyObject* obj_self = (PyObject*)self;
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+#endif
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+
+    PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
         _BTree_clear(self);
     }
-    cPersistenceCAPI->pertype->tp_dealloc((PyObject *)self);
+    if (per_capi) {
+        per_capi->pertype->tp_dealloc(obj_self);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
+    }
+#if USE_HEAP_ALLOCATED_TYPES
+    /* Hmmm, is Persistent going to do this for us? */
+    Py_DECREF(tp);
+#endif
 }
 
 static int
 BTree_traverse(BTree *self, visitproc visit, void *arg)
 {
-    int err = 0;
-    int i, len;
+    PyObject* obj_self = (PyObject*)self;
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+#endif
+    PyObject* module = _get_module(Py_TYPE(obj_self));
 
-#define VISIT(SLOT)                             \
-  if (SLOT) {                                   \
-    err = visit((PyObject *)(SLOT), arg);       \
-    if (err)                                    \
-      goto Done;                                \
-  }
+    if (module == NULL) {
+        /* Likely means that we are in application shutdown:  just bail.*/
+        return -1;
+    }
 
-    if (Py_TYPE(self) == &BTreeType)
+    /* If we have a valid module, these are bound to succeed.*/
+    PyTypeObject *btree_type = _get_btree_type(module);
+    PerCAPI* per_capi = _get_per_capi(module);
+
+    int i;
+    int len;
+
+    if (per_capi == NULL)
+        return -1;
+
+    if (Py_TYPE(self) == btree_type)
         assert(Py_TYPE(self)->tp_dictoffset == 0);
 
-    /* Call our base type's traverse function.  Because BTrees are
-    * subclasses of Peristent, there must be one.
+    /* Call our base type's traverse function.
+     *
+     * Because BTrees are subclasses of Peristent, there must be one.
     */
-    err = cPersistenceCAPI->pertype->tp_traverse((PyObject *)self, visit, arg);
-    if (err)
-        goto Done;
+    if (per_capi->pertype->tp_traverse((PyObject *)self, visit, arg) < 0)
+        return -1;
 
     /* If this is registered with the persistence system, cleaning up cycles
     * is the database's problem.  It would be horrid to unghostify BTree
     * nodes here just to chase pointers every time gc runs.
     */
     if (self->state == cPersistent_GHOST_STATE)
-        goto Done;
+        return 0;
 
     len = self->len;
+
 #ifdef KEY_TYPE_IS_PYOBJECT
     /* Keys are Python objects so need to be traversed.  Note that the
     * key 0 slot is unused and should not be traversed.
     */
     for (i = 1; i < len; i++)
-        VISIT(self->data[i].key);
+        Py_VISIT(self->data[i].key);
 #endif
 
     /* Children are always pointers, and child 0 is legit. */
     for (i = 0; i < len; i++)
-        VISIT(self->data[i].child);
+        Py_VISIT(self->data[i].child);
 
-    VISIT(self->firstbucket);
+    Py_VISIT(self->firstbucket);
 
-Done:
-    return err;
-
-#undef VISIT
+    return 0;
 }
 
 static int
@@ -2425,23 +2695,29 @@ BTree_tp_clear(BTree *self)
 static Py_ssize_t
 BTree_length_or_nonzero(BTree *self, int nonzero)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int result;
     Bucket *b;
     Bucket *next;
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return -1;
     b = self->firstbucket;
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     if (nonzero)
         return b != NULL;
 
     result = 0;
     while (b)
     {
-        PER_USE_OR_RETURN(b, -1);
+        if (!per_use((cPersistentObject*)b, per_capi))
+            return -1;
         result += b->len;
         next = b->next;
-        PER_UNUSE(b);
+        per_allow_deactivation((cPersistentObject*)b);
+        per_capi->accessed((cPersistentObject*)b);
         b = next;
     }
     return result;
@@ -2453,153 +2729,89 @@ BTree_length(BTree *self)
     return BTree_length_or_nonzero(self, 0);
 }
 
-static PyMappingMethods BTree_as_mapping = {
-    (lenfunc)BTree_length,                  /* mp_length */
-    (binaryfunc)BTree_get,                  /* mp_subscript */
-    (objobjargproc)BTree_setitem,           /* mp_ass_subscript */
-};
-
-static PySequenceMethods BTree_as_sequence = {
-    (lenfunc)0,                             /* sq_length */
-    (binaryfunc)0,                          /* sq_concat */
-    (ssizeargfunc)0,                        /* sq_repeat */
-    (ssizeargfunc)0,                        /* sq_item */
-    (ssizessizeargfunc)0,                   /* sq_slice */
-    (ssizeobjargproc)0,                     /* sq_ass_item */
-    (ssizessizeobjargproc)0,                /* sq_ass_slice */
-    (objobjproc)BTree_contains,             /* sq_contains */
-    0,                                      /* sq_inplace_concat */
-    0,                                      /* sq_inplace_repeat */
-};
-
 static Py_ssize_t
 BTree_nonzero(BTree *self)
 {
   return BTree_length_or_nonzero(self, 1);
 }
 
+
+static char BTree__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTree";
+static char BTree__doc__[] = "Persistent BTree type";
+
+#if USE_STATIC_TYPES
+
 static PyNumberMethods BTree_as_number_for_nonzero = {
-    0,                                      /* nb_add */
-    bucket_sub,                             /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-    (inquiry)BTree_nonzero,                 /* nb_nonzero */
-    (unaryfunc)0,                           /* nb_invert */
-    (binaryfunc)0,                          /* nb_lshift */
-    (binaryfunc)0,                          /* nb_rshift */
-    bucket_and,                             /* nb_and */
-    (binaryfunc)0,                          /* nb_xor */
-    bucket_or,                              /* nb_or */
+    .nb_subtract                = bucket_sub,
+    .nb_bool                    = (inquiry)BTree_nonzero,
+    .nb_and                     = bucket_and,
+    .nb_or                      = bucket_or,
 };
 
-static PyObject* BTreeType_setattro_allowed_names; /* initialized in module */
-
-static int
-BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
-{
-    /*
-      type.tp_setattro prohibits setting any attributes on a built-in type,
-      so we need to use our own (metaclass) type to handle it. The set of
-      allowable values needs to be carefully controlled (e.g., setting methods
-      would be bad).
-
-      Alternately, we could use heap-allocated types when they are supported
-      an all the versions we care about, because those do allow setting attributes.
-    */
-    int allowed;
-    allowed = PySequence_Contains(BTreeType_setattro_allowed_names, name);
-    if (allowed < 0) {
-        return -1;
-    }
-
-    if (allowed) {
-        PyDict_SetItem(type->tp_dict, name, value);
-        PyType_Modified(type);
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-    return PyType_Type.tp_setattro((PyObject*)type, name, value);
-}
-
-static PyTypeObject BTreeTypeType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "BTreeType",
-    0, /* tp_basicsize */
-    0, /* tp_itemsize */
-    0, /* tp_dealloc */
-    0, /* tp_print */
-    0, /* tp_getattr */
-    0, /* tp_setattr */
-    0, /* tp_compare */
-    0, /* tp_repr */
-    0, /* tp_as_number */
-    0, /* tp_as_sequence */
-    0, /* tp_as_mapping */
-    0, /* tp_hash */
-    0, /* tp_call */
-    0, /* tp_str */
-    0, /* tp_getattro */
-    (setattrofunc)BTreeType_setattro, /* tp_setattro */
-    0, /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_BASETYPE, /* tp_flags */
-    0, /* tp_doc */
-    0, /* tp_traverse */
-    0, /* tp_clear */
-    0, /* tp_richcompare */
-    0, /* tp_weaklistoffset */
-    0, /* tp_iter */
-    0, /* tp_iternext */
-    0, /* tp_methods */
-    0, /* tp_members */
+static PySequenceMethods BTree_as_sequence = {
+    .sq_contains                = (objobjproc)BTree_contains,
 };
 
-static PyTypeObject BTreeType = {
-    PyVarObject_HEAD_INIT(&BTreeTypeType, 0)
-    MODULE_NAME MOD_NAME_PREFIX "BTree",    /* tp_name */
-    sizeof(BTree),                          /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    (destructor)BTree_dealloc,              /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    &BTree_as_number_for_nonzero,           /* tp_as_number */
-    &BTree_as_sequence,                     /* tp_as_sequence */
-    &BTree_as_mapping,                      /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_HAVE_GC |
-    Py_TPFLAGS_BASETYPE,                    /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)BTree_traverse,           /* tp_traverse */
-    (inquiry)BTree_tp_clear,                /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    (getiterfunc)BTree_getiter,             /* tp_iter */
-    0,                                      /* tp_iternext */
-    BTree_methods,                          /* tp_methods */
-    BTree_members,                          /* tp_members */
-    0,                                      /* tp_getset */
-    0,                                      /* tp_base */
-    0,                                      /* tp_dict */
-    0,                                      /* tp_descr_get */
-    0,                                      /* tp_descr_set */
-    0,                                      /* tp_dictoffset */
-    BTree_init,                             /* tp_init */
-    0,                                      /* tp_alloc */
-    0, /*PyType_GenericNew,*/               /* tp_new */
+static PyMappingMethods BTree_as_mapping = {
+    .mp_length                  = (lenfunc)BTree_length,
+    .mp_subscript               = (binaryfunc)BTree_get,
+    .mp_ass_subscript           = (objobjargproc)BTree_setitem,
 };
+
+static PyTypeObject BTree_type_def = {
+    PyVarObject_HEAD_INIT(&BTreeType_type_def, 0)
+    .tp_name                    = BTree__name__,
+    .tp_doc                     = BTree__doc__,
+    .tp_basicsize               = sizeof(BTree),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_init                    = BTree_init,
+    .tp_iter                    = (getiterfunc)BTree_getiter,
+    .tp_traverse                = (traverseproc)BTree_traverse,
+    .tp_clear                   = (inquiry)BTree_tp_clear,
+    .tp_dealloc                 = (destructor)BTree_dealloc,
+    .tp_methods                 = BTree_methods,
+    .tp_members                 = BTree_members,
+    .tp_as_number               = &BTree_as_number_for_nonzero,
+    .tp_as_sequence             = &BTree_as_sequence,
+    .tp_as_mapping              = &BTree_as_mapping,
+};
+
+#else
+
+static PyType_Slot BTree_type_slots[] = {
+    {Py_tp_doc,                 BTree__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
+    {Py_tp_init,                BTree_init},
+    {Py_tp_iter,                (getiterfunc)BTree_getiter},
+    {Py_tp_traverse,            (traverseproc)BTree_traverse},
+    {Py_tp_clear,               (inquiry)BTree_tp_clear},
+    {Py_tp_dealloc,             (destructor)BTree_dealloc},
+    {Py_tp_methods,             BTree_methods},
+    {Py_tp_members,             BTree_members},
+    {Py_nb_subtract,            bucket_sub},
+    {Py_nb_bool,                (inquiry)BTree_nonzero},
+    {Py_nb_and,                 bucket_and},
+    {Py_nb_or,                  bucket_or},
+    {Py_sq_contains,            (objobjproc)BTree_contains},
+    {Py_mp_length,              (lenfunc)BTree_length},
+    {Py_mp_subscript,           (binaryfunc)BTree_get},
+    {Py_mp_ass_subscript,       (objobjargproc)BTree_setitem},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTree_type_spec = {
+    .name                       = BTree__name__,
+    .basicsize                  = sizeof(BTree),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTree_type_slots
+};
+
+#endif
