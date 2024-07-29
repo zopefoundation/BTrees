@@ -207,8 +207,6 @@ setup(
             'sphinx_rtd_theme',
         ],
     },
-    test_suite="BTrees.tests",
-    tests_require=TESTS_REQUIRE,
     python_requires='>=3.8',
     install_requires=REQUIRES,
     cmdclass={
