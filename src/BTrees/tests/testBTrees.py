@@ -129,7 +129,7 @@ class DegenerateBTree(unittest.TestCase):
         sorted_keys.sort()
         self.assertEqual(list(tree.keys()), sorted_keys)
         for k in keys:
-            self.assertTrue(k in tree)
+            self.assertIn(k, tree)
         if keys:
             lokey = sorted_keys[0]
             hikey = sorted_keys[-1]
@@ -456,10 +456,10 @@ class FamilyTest(unittest.TestCase):
             BTrees.family32.OU, BTrees.OUBTree)
         s = IOTreeSet()
         s.insert(BTrees.family32.maxint)
-        self.assertTrue(BTrees.family32.maxint in s)
+        self.assertIn(BTrees.family32.maxint, s)
         s = IOTreeSet()
         s.insert(BTrees.family32.minint)
-        self.assertTrue(BTrees.family32.minint in s)
+        self.assertIn(BTrees.family32.minint, s)
         s = IOTreeSet()
         # this next bit illustrates an, um, "interesting feature".  If
         # the characteristics change to match the 64 bit version, please
@@ -499,10 +499,10 @@ class FamilyTest(unittest.TestCase):
             BTrees.family64.OU, BTrees.OQBTree)
         s = LOTreeSet()
         s.insert(BTrees.family64.maxint)
-        self.assertTrue(BTrees.family64.maxint in s)
+        self.assertIn(BTrees.family64.maxint, s)
         s = LOTreeSet()
         s.insert(BTrees.family64.minint)
-        self.assertTrue(BTrees.family64.minint in s)
+        self.assertIn(BTrees.family64.minint, s)
         s = LOTreeSet()
 
         # XXX why oh why do we expect ValueError here, but TypeError in test32?
@@ -535,8 +535,8 @@ class FamilyTest(unittest.TestCase):
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
-        self.assertTrue(f1 is family)
-        self.assertTrue(f2 is family)
+        self.assertIs(f1, family)
+        self.assertIs(f2, family)
 
         # Using separate memos for each pickle:
         sio = BytesIO()
@@ -547,5 +547,5 @@ class FamilyTest(unittest.TestCase):
         u = pickle.Unpickler(BytesIO(sio.getvalue()))
         f1 = u.load()
         f2, = u.load()
-        self.assertTrue(f1 is family)
-        self.assertTrue(f2 is family)
+        self.assertIs(f1, family)
+        self.assertIs(f2, family)

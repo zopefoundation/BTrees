@@ -554,7 +554,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         tm2 = transaction.TransactionManager()
         conn2 = db.open(tm2)
 
-        t[k+1] = k+1
+        t[k + 1] = k + 1
         del conn2.root.t[k]
         for i in range(200, 300):
             conn2.root.t[i] = i
@@ -564,7 +564,7 @@ class NastyConfictFunctionalTests(ConflictTestBase, unittest.TestCase):
         tm2.abort()
 
         k = t.__getstate__()[0][1]
-        t[k+1] = k+1
+        t[k + 1] = k + 1
         del conn2.root.t[k]
 
         tm2.commit()

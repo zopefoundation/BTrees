@@ -165,9 +165,9 @@ class _BucketBase(_ArithmeticMixin, _Base):
         if index >= 0:
             return key
         else:
-            index = -index-1
+            index = -index - 1
             if index:
-                return self._keys[index-1]
+                return self._keys[index - 1]
             else:
                 raise ValueError("no key satisfies the conditions")
 
@@ -229,7 +229,7 @@ class _BucketBase(_ArithmeticMixin, _Base):
         mod = type_self.__module__
         name = type_self.__name__
         name = name[:-2] if name.endswith("Py") else name
-        return "{}.{}({!r})".format(mod, name, items)
+        return f"{mod}.{name}({items!r})"
 
 
 class _SetIteration:
@@ -480,7 +480,7 @@ class Bucket(_MutableMappingMixin, _BucketBase):
         values = self._values
         for i in range(0, len(state), 2):
             keys.append(state[i])
-            values.append(state[i+1])
+            values.append(state[i + 1])
 
     def _p_resolveConflict(self, s_old, s_com, s_new):
         b_old = type(self)()
@@ -1085,7 +1085,7 @@ class _Tree(_ArithmeticMixin, _Base):
     def _grow(self, child, index):
         self._p_changed = True
         new_child = child._split()
-        self._data.insert(index+1, _TreeItem(new_child.minKey(), new_child))
+        self._data.insert(index + 1, _TreeItem(new_child.minKey(), new_child))
         if len(self._data) >= type(self).max_internal_size * 2:
             self._split_root()
 
@@ -1145,7 +1145,7 @@ class _Tree(_ArithmeticMixin, _Base):
 
         if removed_first_bucket:
             if index:
-                data[index-1].child._deleteNextBucket()
+                data[index - 1].child._deleteNextBucket()
                 removed_first_bucket = False  # clear flag
             else:
                 self._firstbucket = child._firstbucket
@@ -1153,7 +1153,7 @@ class _Tree(_ArithmeticMixin, _Base):
         if not child.size:
             if type(child) is self._bucket_type:
                 if index:
-                    data[index-1].child._deleteNextBucket()
+                    data[index - 1].child._deleteNextBucket()
                 else:
                     self._firstbucket = child._next
                     removed_first_bucket = True
@@ -1247,17 +1247,17 @@ class _Tree(_ArithmeticMixin, _Base):
                 "BTree has firstbucket different than "
                 "its first child's firstbucket"
             )
-            for i in range(len(data)-1):
-                data[i].child._check(data[i+1].child._firstbucket)
+            for i in range(len(data) - 1):
+                data[i].child._check(data[i + 1].child._firstbucket)
             data[-1].child._check(nextbucket)
         elif child_class is self._bucket_type:
             assert_(
                 self._firstbucket is data[0].child,
                 "Bottom-level BTree node has inconsistent firstbucket belief"
             )
-            for i in range(len(data)-1):
+            for i in range(len(data) - 1):
                 assert_(
-                    data[i].child._next is data[i+1].child,
+                    data[i].child._next is data[i + 1].child,
                     "Bucket next pointer is damaged"
                 )
             assert_(
@@ -1370,6 +1370,7 @@ class _TreeItems:
 class _TreeIterator:
     """ Faux implementation for BBB only.
     """
+
     def __init__(self, items):  # pragma: no cover
         raise TypeError(
             "TreeIterators are private implementation details "
@@ -1413,7 +1414,7 @@ class Tree(_MutableMappingMixin, _Tree):
 
     def byValue(self, min):
         return reversed(
-                sorted((v, k) for (k, v) in self.iteritems() if v >= min))
+            sorted((v, k) for (k, v) in self.iteritems() if v >= min))
 
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
