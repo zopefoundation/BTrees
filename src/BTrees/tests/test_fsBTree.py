@@ -28,7 +28,7 @@ class fsBucketTests(unittest.TestCase):
 
     def _makeBytesItems(self):
         from .._compat import _ascii
-        return [(_ascii(c*2), _ascii(c*6)) for c in 'abcdef']
+        return [(_ascii(c * 2), _ascii(c * 6)) for c in 'abcdef']
 
     def test_toString(self):
         bucket = self._makeOne(self._makeBytesItems())
