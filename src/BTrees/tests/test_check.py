@@ -282,7 +282,7 @@ class CheckerTests(unittest.TestCase):
         obj.__setstate__(new_state)
         checker = self._makeOne(obj)
         e = self.assertRaises(AssertionError, checker.check)
-        self.assertTrue(">= upper bound" in str(e))
+        self.assertIn(">= upper bound", str(e))
 
     def test_walk_w_key_too_small(self):
         obj = _makeTree(True)
@@ -292,7 +292,7 @@ class CheckerTests(unittest.TestCase):
         obj.__setstate__(new_state)
         checker = self._makeOne(obj)
         e = self.assertRaises(AssertionError, checker.check)
-        self.assertTrue("< lower bound" in str(e))
+        self.assertIn("< lower bound", str(e))
 
     def test_walk_w_keys_swapped(self):
         obj = _makeTree(True)
@@ -314,7 +314,7 @@ class CheckerTests(unittest.TestCase):
         b0.__setstate__((newpairs, nextbucket))
         checker = self._makeOne(obj)
         e = self.assertRaises(AssertionError, checker.check)
-        self.assertTrue("key 5 at index 4 >= key 4 at index 5" in str(e))
+        self.assertIn("key 5 at index 4 >= key 4 at index 5", str(e))
 
 
 class Test_check(unittest.TestCase):
@@ -327,14 +327,14 @@ class Test_check(unittest.TestCase):
         from BTrees.OOBTree import OOBTree
         tree = OOBTree()
         for i in range(31):
-            tree[i] = 2*i
+            tree[i] = 2 * i
         return tree
 
     def test_normal(self):
         from BTrees.OOBTree import OOBTree
         tree = OOBTree()
         for i in range(31):
-            tree[i] = 2*i
+            tree[i] = 2 * i
         state = tree.__getstate__()
         self.assertEqual(len(state), 2)
         self.assertEqual(len(state[0]), 3)
@@ -348,5 +348,5 @@ def _makeTree(fill):
     tree = OOBTree()
     if fill:
         for i in range(OOBTreePy.max_leaf_size + 1):
-            tree[i] = 2*i
+            tree[i] = 2 * i
     return tree

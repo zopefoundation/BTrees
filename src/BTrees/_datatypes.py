@@ -360,7 +360,7 @@ class _AbstractBytes(KeyDataType):
     def __call__(self, item):
         if not isinstance(item, bytes) or len(item) != self._length:
             raise TypeError(
-                "{}-byte array expected, not {!r}".format(self._length, item)
+                f"{self._length}-byte array expected, not {item!r}"
             )
         return item
 
@@ -411,7 +411,7 @@ class f(_AbstractBytes):
             if length % 8 != 0:
                 raise ValueError()
             count = length // 8
-            keys, values = v[:count*2], v[count*2:]
+            keys, values = v[:count * 2], v[count * 2:]
             self.clear()
             while keys and values:
                 key, keys = keys[:2], keys[2:]

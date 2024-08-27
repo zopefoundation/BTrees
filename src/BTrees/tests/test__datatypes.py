@@ -28,7 +28,7 @@ to_6_bytes = _datatypes.s()
 class TestDatatypes(unittest.TestCase):
     def test_to_ob(self):
         for thing in "abc", 0, 1.3, (), frozenset((1, 2)), object():
-            self.assertTrue(to_ob(thing) is thing)
+            self.assertIs(to_ob(thing), thing)
 
     def test_to_int_w_int(self):
         self.assertEqual(to_int(3), 3)
