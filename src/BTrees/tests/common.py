@@ -2871,7 +2871,7 @@ class SetResult:
         _skip_if_pure_py_and_py_test(self)
 
         rawAkeys = [1, 3, 5, 6]
-        rawBkeys = [2, 3, 4, 6, 7]  # noqa #201
+        rawBkeys = [2, 3, 4, 6, 7]
         self.Akeys = [self.KEYS[k] for k in rawAkeys]
         self.Bkeys = [self.KEYS[k] for k in rawBkeys]
         self.As = [makeset(rawAkeys) for makeset in self.builders()]
