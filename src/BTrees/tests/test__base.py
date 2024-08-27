@@ -70,20 +70,20 @@ class Test_BucketBase(unittest.TestCase):
     def test__deleteNextBucket_none(self):
         bucket = self._makeOne()
         bucket._deleteNextBucket()  # no raise
-        self.assertTrue(bucket._next is None)
+        self.assertIsNone(bucket._next)
 
     def test__deleteNextBucket_one(self):
         bucket1 = self._makeOne()
         bucket1._next = self._makeOne()
         bucket1._deleteNextBucket()  # no raise
-        self.assertTrue(bucket1._next is None)
+        self.assertIsNone(bucket1._next)
 
     def test__deleteNextBucket_two(self):
         bucket1 = self._makeOne()
         bucket2 = bucket1._next = self._makeOne()
         bucket3 = bucket2._next = self._makeOne()
         bucket1._deleteNextBucket()  # no raise
-        self.assertTrue(bucket1._next is bucket3)
+        self.assertIs(bucket1._next, bucket3)
 
     def test__search_empty(self):
         bucket = self._makeOne()
@@ -376,20 +376,20 @@ class Test_BucketBase(unittest.TestCase):
     def test___contains___empty(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
-        self.assertFalse('nonesuch' in bucket)
+        self.assertNotIn('nonesuch', bucket)
 
     def test___contains___filled_miss(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertFalse('nonesuch' in bucket)
+        self.assertNotIn('nonesuch', bucket)
 
     def test___contains___filled_hit(self):
         bucket = self._makeOne()
         bucket._to_key = lambda x: x
         KEYS = bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
         for key in KEYS:
-            self.assertTrue(key in bucket)
+            self.assertIn(key, bucket)
 
 
 class Test_SetIteration(unittest.TestCase):
@@ -407,7 +407,7 @@ class Test_SetIteration(unittest.TestCase):
         from .._base import _marker
         si = self._makeOne(None)
         self.assertEqual(si.useValues, False)
-        self.assertTrue(si.key is _marker)
+        self.assertIs(si.key, _marker)
         self.assertEqual(si.value, None)
         self.assertEqual(si.active, False)
         self.assertEqual(si.position, -1)
@@ -598,8 +598,8 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(len(bucket._values), 0)
         self.assertEqual(len(new_b._keys), 0)
         self.assertEqual(len(new_b._values), 0)
-        self.assertTrue(bucket._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(bucket._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test__split_filled_default_index(self):
         bucket = self._makeOne()
@@ -611,8 +611,8 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(list(bucket._values), [0, 1, 2])
         self.assertEqual(list(new_b._keys), ['d', 'e', 'f'])
         self.assertEqual(list(new_b._values), [3, 4, 5])
-        self.assertTrue(bucket._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(bucket._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test__split_filled_explicit_index(self):
         bucket = self._makeOne()
@@ -624,8 +624,8 @@ class BucketTests(unittest.TestCase):
         self.assertEqual(list(bucket._values), [0, 1])
         self.assertEqual(list(new_b._keys), ['c', 'd', 'e', 'f'])
         self.assertEqual(list(new_b._values), [2, 3, 4, 5])
-        self.assertTrue(bucket._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(bucket._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test_keys_empty_no_args(self):
         bucket = self._makeOne()
@@ -665,8 +665,8 @@ class BucketTests(unittest.TestCase):
         for i, c in enumerate('abcdef'):
             bucket[c] = i
         self.assertEqual(list(bucket.iterkeys(
-                                   min='b', excludemin=True,
-                                   max='f', excludemax=True)), ['c', 'd', 'e'])
+            min='b', excludemin=True,
+            max='f', excludemax=True)), ['c', 'd', 'e'])
 
     def test_values_empty_no_args(self):
         bucket = self._makeOne()
@@ -700,8 +700,8 @@ class BucketTests(unittest.TestCase):
         for i, c in enumerate('abcdef'):
             bucket[c] = i
         self.assertEqual(list(bucket.itervalues(
-                                       min='b', excludemin=True,
-                                       max='f', excludemax=True)), [2, 3, 4])
+            min='b', excludemin=True,
+            max='f', excludemax=True)), [2, 3, 4])
 
     def test_items_empty_no_args(self):
         bucket = self._makeOne()
@@ -790,7 +790,7 @@ class BucketTests(unittest.TestCase):
             bucket[c] = i
         bucket.__setstate__(((),))
         self.assertEqual(len(bucket.keys()), 0)
-        self.assertTrue(bucket._next is None)
+        self.assertIsNone(bucket._next)
 
     def test___setstate___w_non_empty_w_next(self):
         bucket = self._makeOne()
@@ -802,7 +802,7 @@ class BucketTests(unittest.TestCase):
             EXPECTED.append((c, i))
         bucket.__setstate__((ITEMS, next_b))
         self.assertEqual(bucket.items(), EXPECTED)
-        self.assertTrue(bucket._next is next_b)
+        self.assertIs(bucket._next, next_b)
 
     def test__p_resolveConflict_x_on_com_next_old_new_None(self):
         from ..Interfaces import BTreesConflictError
@@ -1168,7 +1168,7 @@ class SetTests(unittest.TestCase):
             _set.add(c)
         _set.__setstate__(((),))
         self.assertEqual(len(_set), 0)
-        self.assertTrue(_set._next is None)
+        self.assertIsNone(_set._next)
 
     def test___setstate___w_non_empty_w_next(self):
         _set = self._makeOne()
@@ -1180,7 +1180,7 @@ class SetTests(unittest.TestCase):
             EXPECTED.append(c)
         _set.__setstate__((ITEMS, next_s))
         self.assertEqual(sorted(_set), EXPECTED)
-        self.assertTrue(_set._next is next_s)
+        self.assertIs(_set._next, next_s)
 
     def test___getitem___out_of_bounds(self):
         _set = self._makeOne()
@@ -1201,8 +1201,8 @@ class SetTests(unittest.TestCase):
         new_b = _set._split()
         self.assertEqual(len(_set._keys), 0)
         self.assertEqual(len(new_b._keys), 0)
-        self.assertTrue(_set._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(_set._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test__split_filled_default_index(self):
         _set = self._makeOne()
@@ -1212,8 +1212,8 @@ class SetTests(unittest.TestCase):
         new_b = _set._split()
         self.assertEqual(list(_set._keys), ['a', 'b', 'c'])
         self.assertEqual(list(new_b._keys), ['d', 'e', 'f'])
-        self.assertTrue(_set._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(_set._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test__split_filled_explicit_index(self):
         _set = self._makeOne()
@@ -1223,8 +1223,8 @@ class SetTests(unittest.TestCase):
         new_b = _set._split(2)
         self.assertEqual(list(_set._keys), ['a', 'b'])
         self.assertEqual(list(new_b._keys), ['c', 'd', 'e', 'f'])
-        self.assertTrue(_set._next is new_b)
-        self.assertTrue(new_b._next is next_b)
+        self.assertIs(_set._next, new_b)
+        self.assertIs(new_b._next, next_b)
 
     def test__p_resolveConflict_x_on_com_next_old_new_None(self):
         from ..Interfaces import BTreesConflictError
@@ -1481,7 +1481,7 @@ class Test_TreeItem(unittest.TestCase):
         child = object()
         item = self._makeOne('key', child)
         self.assertEqual(item.key, 'key')
-        self.assertTrue(item.child is child)
+        self.assertIs(item.child, child)
 
 
 class Test_Tree(unittest.TestCase):
@@ -1515,18 +1515,18 @@ class Test_Tree(unittest.TestCase):
     def test_setdefault_miss(self):
         tree = self._makeOne()
         value = object()
-        self.assertTrue(tree.setdefault('non_extant', value) is value)
-        self.assertTrue('non_extant' in tree)
-        self.assertTrue(tree._findbucket('non_extant')['non_extant'] is value)
+        self.assertIs(tree.setdefault('non_extant', value), value)
+        self.assertIn('non_extant', tree)
+        self.assertIs(tree._findbucket('non_extant')['non_extant'], value)
 
     def test_setdefault_hit(self):
         tree = self._makeOne()
         value1 = object()
         value2 = object()
         tree['extant'] = value1
-        self.assertTrue(tree.setdefault('extant', value2) is value1)
-        self.assertTrue('extant' in tree)
-        self.assertTrue(tree._findbucket('extant')['extant'] is value1)
+        self.assertIs(tree.setdefault('extant', value2), value1)
+        self.assertIn('extant', tree)
+        self.assertIs(tree._findbucket('extant')['extant'], value1)
 
     def test_pop_miss_no_default(self):
         tree = self._makeOne()
@@ -1535,14 +1535,14 @@ class Test_Tree(unittest.TestCase):
     def test_pop_miss_w_default(self):
         default = object()
         tree = self._makeOne()
-        self.assertTrue(tree.pop('nonesuch', default) is default)
+        self.assertIs(tree.pop('nonesuch', default), default)
 
     def test_pop_hit(self):
         tree = self._makeOne()
         value = object()
         tree['extant'] = value
-        self.assertTrue(tree.pop('extant', value) is value)
-        self.assertFalse('extant' in tree)
+        self.assertIs(tree.pop('extant', value), value)
+        self.assertNotIn('extant', tree)
 
     def test_update_value_w_iteritems(self):
         tree = self._makeOne()
@@ -1599,13 +1599,13 @@ class Test_Tree(unittest.TestCase):
         tree = self._makeOne()
         tree['a'] = 'b'
         del tree['a']
-        self.assertFalse('a' in tree)
+        self.assertNotIn('a', tree)
 
     def test_clear(self):
         tree = self._makeOne()
         tree['a'] = 'b'
         tree.clear()
-        self.assertFalse('a' in tree)
+        self.assertNotIn('a', tree)
         self.assertEqual(tree._firstbucket, None)
 
     def test___nonzero___empty(self):
@@ -1691,7 +1691,7 @@ class Test_Tree(unittest.TestCase):
         tree = self._makeOne()
         for i in range(1000):
             tree[float(i)] = i
-        self.assertTrue(tree._findbucket(0.1) is tree._firstbucket)
+        self.assertIs(tree._findbucket(0.1), tree._firstbucket)
 
     def test__find_bucket_high(self):
         tree = self._makeOne()
@@ -1700,17 +1700,17 @@ class Test_Tree(unittest.TestCase):
         bucket = tree._firstbucket
         while bucket._next is not None:
             bucket = bucket._next
-        self.assertTrue(tree._findbucket(999.5) is bucket)
+        self.assertIs(tree._findbucket(999.5), bucket)
 
     def test___contains___empty(self):
         tree = self._makeOne()
-        self.assertFalse('nonesuch' in tree)
+        self.assertNotIn('nonesuch', tree)
 
     def test___contains___miss(self):
         tree = self._makeOne()
         for i in range(1000):
             tree[float(i)] = i
-        self.assertFalse(1000.0 in tree)
+        self.assertNotIn(1000.0, tree)
 
     def test___contains___hit(self):
         tree = self._makeOne()
@@ -1720,7 +1720,7 @@ class Test_Tree(unittest.TestCase):
             tree[key] = i
             keys.append(key)
         for key in keys:
-            self.assertTrue(key in tree)
+            self.assertIn(key, tree)
 
     def test_has_key_empty(self):
         tree = self._makeOne()
@@ -1900,7 +1900,7 @@ class Test_Tree(unittest.TestCase):
         tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._set('a', 'b')
-        self.assertTrue(tree in jar._current)
+        self.assertIn(tree, jar._current)
 
     def test__split_empty(self):
         tree = self._makeOne()
@@ -1913,9 +1913,9 @@ class Test_Tree(unittest.TestCase):
         fb = tree._firstbucket
         new_t = tree._split()
         self.assertEqual(list(tree), [])
-        self.assertTrue(tree._firstbucket is None)
+        self.assertIsNone(tree._firstbucket)
         self.assertEqual(list(new_t), ['a', 'b', 'c', 'd', 'e', 'f'])
-        self.assertTrue(new_t._firstbucket is fb)
+        self.assertIs(new_t._firstbucket, fb)
 
     def test__split_filled_divides_original(self):
         tree = self._makeOne()
@@ -1926,9 +1926,9 @@ class Test_Tree(unittest.TestCase):
         new_t = tree._split()
         # Note that original tree still links to split buckets
         self.assertEqual(''.join(list(tree)), LETTERS)
-        self.assertTrue(tree._firstbucket is fb)
+        self.assertIs(tree._firstbucket, fb)
         self.assertEqual(''.join(list(new_t)), LETTERS[10:])
-        self.assertFalse(new_t._firstbucket is fb)
+        self.assertIsNot(new_t._firstbucket, fb)
 
     def test__split_filled_divides_deeper(self):
         tree = self._makeOne()
@@ -1942,10 +1942,10 @@ class Test_Tree(unittest.TestCase):
         new_t = tree._split(tree.max_internal_size - 2)
         # Note that original tree still links to split buckets
         self.assertEqual(list(tree), KEYS)
-        self.assertTrue(tree._firstbucket is fb)
+        self.assertIs(tree._firstbucket, fb)
         new_min = new_t.minKey()
         self.assertEqual(list(new_t), KEYS[int(new_min):])
-        self.assertFalse(new_t._firstbucket is fb)
+        self.assertIsNot(new_t._firstbucket, fb)
 
     def test__del_calls_readCurrent_on_jar(self):
         tree = self._makeOne({'a': 'b'})
@@ -1953,7 +1953,7 @@ class Test_Tree(unittest.TestCase):
         tree._p_serial = b'01234567'
         tree._p_jar = jar = _Jar()
         tree._del('a')
-        self.assertTrue(tree in jar._current)
+        self.assertIn(tree, jar._current)
 
     def test__del_miss(self):
         tree = self._makeOne({'a': 'b'})
@@ -1965,7 +1965,7 @@ class Test_Tree(unittest.TestCase):
         before = tree._data[1].key
         del tree[before]
         after = tree._data[1].key
-        self.assertTrue(after > before)
+        self.assertGreater(after, before)
 
     def test__del_empties_first_bucket_not_zeroth_item(self):
         SOURCE = {'%05d' % i: i for i in range(1000)}
@@ -1974,7 +1974,7 @@ class Test_Tree(unittest.TestCase):
         next_b = bucket._next
         for key in list(bucket):  # don't del while iterting
             del tree[key]
-        self.assertTrue(tree._data[1].child._firstbucket is next_b)
+        self.assertIs(tree._data[1].child._firstbucket, next_b)
 
     def test__del_empties_first_bucket_zeroth_item(self):
         SOURCE = {'%05d' % i: i for i in range(1000)}
@@ -1983,8 +1983,8 @@ class Test_Tree(unittest.TestCase):
         next_b = bucket._next
         for key in list(bucket):  # don't del while iterting
             del tree[key]
-        self.assertTrue(tree._data[0].child._firstbucket is next_b)
-        self.assertTrue(tree._firstbucket is next_b)
+        self.assertIs(tree._data[0].child._firstbucket, next_b)
+        self.assertIs(tree._firstbucket, next_b)
 
     def test__del_empties_other_bucket_not_zeroth_item(self):
         SOURCE = {'%05d' % i: i for i in range(1000)}
@@ -1993,7 +1993,7 @@ class Test_Tree(unittest.TestCase):
         next_b = bucket._next
         for key in list(bucket):  # don't del while iterting
             del tree[key]
-        self.assertTrue(tree._data[1].child._firstbucket._next is next_b)
+        self.assertIs(tree._data[1].child._firstbucket._next, next_b)
 
     def test___getstate___empty(self):
         tree = self._makeOne()
@@ -2038,8 +2038,8 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(list(tree.keys()), ['a'])
         self.assertEqual(tree._findbucket('a')['a'], 'b')
         self.assertTrue(len(tree._data), 1)
-        self.assertTrue(tree._data[0].child is tree._firstbucket)
-        self.assertTrue(tree._firstbucket._p_oid is None)
+        self.assertIs(tree._data[0].child, tree._firstbucket)
+        self.assertIsNone(tree._firstbucket._p_oid)
 
     def test___setstate___to_multiple_buckets(self):
         from .._base import Bucket
@@ -2060,7 +2060,7 @@ class Test_Tree(unittest.TestCase):
         self.assertEqual(tree._data[0].child, b1)
         self.assertEqual(tree._data[1].key, 'c')
         self.assertEqual(tree._data[1].child, b2)
-        self.assertTrue(tree._firstbucket is b1)
+        self.assertIs(tree._firstbucket, b1)
 
     def test__check_empty_wo_firstbucket(self):
         tree = self._makeOne()
@@ -2356,7 +2356,7 @@ class TreeTests(unittest.TestCase):
     def test_get_empty_miss_w_default(self):
         DEFAULT = object()
         tree = self._makeOne()
-        self.assertTrue(tree.get('nonesuch', DEFAULT) is DEFAULT)
+        self.assertIs(tree.get('nonesuch', DEFAULT), DEFAULT)
 
     def test_get_filled_miss(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -2367,7 +2367,7 @@ class TreeTests(unittest.TestCase):
         DEFAULT = object()
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
         tree = self._makeOne(ITEMS)
-        self.assertTrue(tree.get('nonesuch', DEFAULT) is DEFAULT)
+        self.assertIs(tree.get('nonesuch', DEFAULT), DEFAULT)
 
     def test_get_filled_hit(self):
         ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
@@ -2513,7 +2513,7 @@ class TreeSetTests(unittest.TestCase):
     def test_add_new_key(self):
         _set = self._makeOne()
         self.assertTrue(_set.add('a'))
-        self.assertTrue('a' in _set)
+        self.assertIn('a', _set)
 
     def test_add_existing_key(self):
         _set = self._makeOne()
@@ -2528,7 +2528,7 @@ class TreeSetTests(unittest.TestCase):
         _set = self._makeOne()
         _set.add('a')
         self.assertEqual(_set.remove('a'), None)
-        self.assertFalse('a' in _set)
+        self.assertNotIn('a', _set)
 
     def test_update_empty_sequence(self):
         _set = self._makeOne()
@@ -2541,7 +2541,7 @@ class TreeSetTests(unittest.TestCase):
         _set.update(LETTERS)
         self.assertEqual(len(_set), len(LETTERS))
         for letter in LETTERS:
-            self.assertTrue(letter in _set)
+            self.assertIn(letter, _set)
 
     def test_update_mppaing(self):
         _set = self._makeOne()
@@ -2550,7 +2550,7 @@ class TreeSetTests(unittest.TestCase):
         _set.update(a_dict)
         self.assertEqual(len(_set), len(LETTERS))
         for letter in LETTERS:
-            self.assertTrue(letter in _set)
+            self.assertIn(letter, _set)
 
 
 class Test_set_operation(unittest.TestCase):
@@ -2827,7 +2827,7 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         rhs = self._makeMapping({'a': 13, 'b': 12, 'c': 11})
         weight, result = self._callFUT(lhs.__class__, lhs, rhs)
         self.assertEqual(weight, 1)
-        self.assertTrue(isinstance(result, _Mapping))
+        self.assertIsInstance(result, _Mapping)
         self.assertEqual(list(result), ['a', 'b', 'c', 'd'])
         self.assertEqual(result['a'], 14)
         self.assertEqual(result['b'], 12)
@@ -2839,7 +2839,7 @@ class Test_weightedUnion(unittest.TestCase, _SetObBase):
         rhs = self._makeSet('a', 'd')
         weight, result = self._callFUT(lhs.__class__, lhs, rhs)
         self.assertEqual(weight, 1)
-        self.assertTrue(isinstance(result, _Mapping))
+        self.assertIsInstance(result, _Mapping)
         self.assertEqual(list(result), ['a', 'b', 'c', 'd'])
         self.assertEqual(result['a'], 55)
         self.assertEqual(result['b'], 12)
@@ -2937,7 +2937,7 @@ class Test_weightedIntersection(unittest.TestCase, _SetObBase):
         rhs = self._makeSet('a', 'd')
         weight, result = self._callFUT(lhs.__class__, lhs, rhs)
         self.assertEqual(weight, 1)
-        self.assertTrue(isinstance(result, _Mapping))
+        self.assertIsInstance(result, _Mapping)
         self.assertEqual(list(result), ['a'])
         self.assertEqual(result['a'], 55)
 

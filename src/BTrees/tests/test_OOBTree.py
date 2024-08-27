@@ -80,7 +80,7 @@ class OOBTreeTest(BTreeTests):
 
         self.assertEqual(t.get(C(), 42), 42)
         self.assertRaises(KeyError, t.__getitem__, C())
-        self.assertFalse(C() in t)
+        self.assertNotIn(C(), t)
 
     def testNewStyleClassWithCustomMetaClassAllowed(self):
         class Meta(type):
@@ -94,13 +94,13 @@ class OOBTreeTest(BTreeTests):
     def test_None_is_smallest(self):
         t = self._makeOne()
         for i in range(999):  # Make sure we multiple buckets
-            t[i] = i*i
+            t[i] = i * i
         t[None] = -1
         for i in range(-99, 0):  # Make sure we multiple buckets
-            t[i] = i*i
+            t[i] = i * i
         self.assertEqual(list(t), [None] + list(range(-99, 999)))
         self.assertEqual(list(t.values()),
-                         [-1] + [i*i for i in range(-99, 999)])
+                         [-1] + [i * i for i in range(-99, 999)])
         self.assertEqual(t[2], 4)
         self.assertEqual(t[-2], 4)
         self.assertEqual(t[None], -1)

@@ -167,12 +167,12 @@ BTREE_EMPTY, BTREE_ONE, BTREE_NORMAL = range(3)
 
 _btree2bucket = {}
 for kv in _FAMILIES:
-    _btree2bucket[globals()[kv+'BTree']] = globals()[kv+'Bucket']
+    _btree2bucket[globals()[kv + 'BTree']] = globals()[kv + 'Bucket']
     py = kv + 'BTreePy'
-    _btree2bucket[globals()[py]] = globals()[kv+'BucketPy']
-    _btree2bucket[globals()[kv+'TreeSet']] = globals()[kv+'Set']
+    _btree2bucket[globals()[py]] = globals()[kv + 'BucketPy']
+    _btree2bucket[globals()[kv + 'TreeSet']] = globals()[kv + 'Set']
     py = kv + 'TreeSetPy'
-    _btree2bucket[globals()[kv+'TreeSetPy']] = globals()[kv+'SetPy']
+    _btree2bucket[globals()[kv + 'TreeSetPy']] = globals()[kv + 'SetPy']
 
 
 def crack_btree(t, is_mapping):
@@ -318,12 +318,12 @@ class Walker:
                     # push the kids, in reverse order (so they're popped off
                     # the stack in forward order)
                     n = len(kids)
-                    for i in range(len(kids)-1, -1, -1):
-                        newlo, newhi = lo,  hi
-                        if i < n-1:
+                    for i in range(len(kids) - 1, -1, -1):
+                        newlo, newhi = lo, hi
+                        if i < n - 1:
                             newhi = keys[i]
                         if i > 0:
-                            newlo = keys[i-1]
+                            newlo = keys[i - 1]
                         stack.append((kids[i],
                                       path + [i],
                                       obj,
@@ -401,17 +401,17 @@ class Checker(Walker):
             if hi is not None and not compare(x, hi) < 0:
                 s = "key %r >= upper bound %r at index %d" % (x, hi, i)
                 self.complain(s, obj, path)
-            if i < n-1 and not compare(x, keys[i+1]) < 0:
+            if i < n - 1 and not compare(x, keys[i + 1]) < 0:
                 s = "key %r at index %d >= key %r at index %d" % (
-                    x, i, keys[i+1], i+1)
+                    x, i, keys[i + 1], i + 1)
                 self.complain(s, obj, path)
             i += 1
 
     def complain(self, msg, obj, path):
         s = "{}, in {}, path from root {}".format(
-                msg,
-                type_and_adr(obj),
-                ".".join(map(str, path)))
+            msg,
+            type_and_adr(obj),
+            ".".join(map(str, path)))
         self.errors.append(s)
 
 
@@ -426,10 +426,10 @@ class Printer(Walker):  # pragma: no cover
                     keys, kids, lo, hi):
         indent = "    " * len(path)
         print("%s%s %s with %d children" % (
-                  indent,
-                  ".".join(map(str, path)),
-                  type_and_adr(obj),
-                  len(kids)))
+            indent,
+            ".".join(map(str, path)),
+            type_and_adr(obj),
+            len(kids)))
         indent += "    "
         n = len(keys)
         for i in range(n):
@@ -439,16 +439,16 @@ class Printer(Walker):  # pragma: no cover
                      keys, values, lo, hi):
         indent = "    " * len(path)
         print("%s%s %s with %d keys" % (
-                  indent,
-                  ".".join(map(str, path)),
-                  type_and_adr(obj),
-                  len(keys)))
+            indent,
+            ".".join(map(str, path)),
+            type_and_adr(obj),
+            len(keys)))
         indent += "    "
         n = len(keys)
         for i in range(n):
             print("%skey %d: %r" % (indent, i, keys[i]),)
             if is_mapping:
-                print("value {!r}".format(values[i]))
+                print(f"value {values[i]!r}")
 
 
 def check(btree):

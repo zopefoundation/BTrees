@@ -126,11 +126,15 @@ class _Family64(_Family):
 
 def _family32():
     return family32
+
+
 _family32.__safe_for_unpickling__ = True  # noqa E305
 
 
 def _family64():
     return family64
+
+
 _family64.__safe_for_unpickling__ = True  # noqa E305
 
 #: 32-bit BTree family.

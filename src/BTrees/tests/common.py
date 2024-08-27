@@ -397,16 +397,16 @@ class Base(ZODBAccess, SignedMixin):
 
         # Modifying a thing
         remove(100)
-        self.assertTrue(t in read)
+        self.assertIn(t, read)
         del read[:]
         add(100)
-        self.assertTrue(t in read)
+        self.assertIn(t, read)
         del read[:]
 
         transaction.abort()
         conn.cacheMinimize()
         list(t)
-        self.assertTrue(K[100] in t)
+        self.assertIn(K[100], t)
         self.assertTrue(not read)
 
     def test_impl_pickle(self):
@@ -419,7 +419,7 @@ class Base(ZODBAccess, SignedMixin):
 
         for proto in range(1, pickle.HIGHEST_PROTOCOL + 1):
             dumped_str = pickle.dumps(made_one, proto)
-            self.assertTrue(b'Py' not in dumped_str, repr(dumped_str))
+            self.assertNotIn(b'Py', dumped_str, repr(dumped_str))
 
             loaded_one = pickle.loads(dumped_str)
 
@@ -430,10 +430,10 @@ class Base(ZODBAccess, SignedMixin):
             # available, the __name__ will be altered to not have Py in it.
             # See _fix_pickle)
             if 'Py' in type(made_one).__name__:
-                self.assertTrue(type(loaded_one) is not type(made_one))
+                self.assertIsNot(type(loaded_one), type(made_one))
             else:
-                self.assertTrue(type(loaded_one) is type(made_one))
-                self.assertTrue(type(loaded_one) is self._getTargetClass())
+                self.assertIs(type(loaded_one), type(made_one))
+                self.assertIs(type(loaded_one), self._getTargetClass())
 
             dumped_str2 = pickle.dumps(loaded_one, proto)
             self.assertEqual(dumped_str, dumped_str2)
@@ -472,8 +472,8 @@ class Base(ZODBAccess, SignedMixin):
 
         import pickle
         loaded = pickle.loads(pickle.dumps(PickleSubclass()))
-        self.assertTrue(type(loaded) is PickleSubclass, type(loaded))
-        self.assertTrue(PickleSubclass().__class__ is PickleSubclass)
+        self.assertIs(type(loaded), PickleSubclass, type(loaded))
+        self.assertIs(PickleSubclass().__class__, PickleSubclass)
 
     def test_isinstance_subclass(self):
         # Issue #2:
@@ -484,8 +484,8 @@ class Base(ZODBAccess, SignedMixin):
         t = self._makeOne()
         # It's a little bit weird, but in the fibbing case,
         # we're an instance of two unrelated classes
-        self.assertTrue(isinstance(t, type(t)), (t, type(t)))
-        self.assertTrue(isinstance(t, t.__class__))
+        self.assertIsInstance(t, type(t), (t, type(t)))
+        self.assertIsInstance(t, t.__class__)
 
         class Sub(type(t)):
             pass
@@ -501,7 +501,7 @@ class Base(ZODBAccess, SignedMixin):
             pass
 
         self.assertFalse(issubclass(NonSub, type(t)))
-        self.assertFalse(isinstance(NonSub(), type(t)))
+        self.assertNotIsInstance(NonSub(), type(t))
 
 
 class MappingBase(Base):
@@ -551,7 +551,7 @@ class MappingBase(Base):
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
-        self.assertTrue(len(r) < 10000)
+        self.assertLess(len(r), 10000)
         # Make sure the repr is human readable if it's a bucket
         if 'Bucket' in r:
             self.assertTrue(r.startswith("BTrees"))
@@ -580,7 +580,7 @@ class MappingBase(Base):
         # But since the test is also run for btrees, skip the length
         # check if the repr starts with '<'
         if not r.startswith('<'):
-            self.assertTrue(len(r) > 10000)
+            self.assertGreater(len(r), 10000)
 
     def testGetItemFails(self):
         self.assertRaises(KeyError, self._getitemfail)
@@ -718,8 +718,9 @@ class MappingBase(Base):
                 list(lst),
                 [K[x] for x in range(0 + x, 99 - x + 1)]
             )
-            lst = t.keys(max=K[99-x], min=K[0+x])
-            self.assertEqual(list(lst), [K[x] for x in range(0+x, 99-x+1)])
+            lst = t.keys(max=K[99 - x], min=K[0 + x])
+            self.assertEqual(list(lst), [K[x]
+                             for x in range(0 + x, 99 - x + 1)])
 
         self.assertEqual(len(v), 100)
 
@@ -740,18 +741,18 @@ class MappingBase(Base):
         K = self.KEYS
         V = self.VALUES
         for x in range(100):
-            t[K[x]] = V[2*x]
+            t[K[x]] = V[2 * x]
         v = t.items()
         i = 0
         for x in v:
             self.assertEqual(x[0], K[i])
-            self.assertEqual(x[1], V[2*i])
+            self.assertEqual(x[1], V[2 * i])
             i += 1
-        self.assertRaises(IndexError, lambda: v[i+1])
+        self.assertRaises(IndexError, lambda: v[i + 1])
 
         i = 0
         for x in t.iteritems():
-            self.assertEqual(x, (K[i], V[2*i]))
+            self.assertEqual(x, (K[i], V[2 * i]))
             i += 1
 
         items = list(t.items(min=K[12], max=K[20]))
@@ -957,7 +958,7 @@ class MappingBase(Base):
             x = islice[:]
             self.assertEqual(list(x), items[:])
 
-            for lo in range(-2*n, 2*n+1):
+            for lo in range(-2 * n, 2 * n + 1):
                 # Test one-sided slices.
                 x = kslice[:lo]
                 self.assertEqual(list(x), keys[:lo])
@@ -974,7 +975,7 @@ class MappingBase(Base):
                 x = islice[lo:]
                 self.assertEqual(list(x), items[lo:])
 
-                for hi in range(-2*n, 2*n+1):
+                for hi in range(-2 * n, 2 * n + 1):
                     # Test two-sided slices.
                     x = kslice[lo:hi]
                     self.assertEqual(list(x), keys[lo:hi])
@@ -1014,7 +1015,7 @@ class MappingBase(Base):
             self.assertEqual(x, keys)
 
             it = iter(t)
-            self.assertTrue(it is iter(it))
+            self.assertIs(it, iter(it))
             x = []
             try:
                 while 1:
@@ -1178,7 +1179,7 @@ class MappingBase(Base):
         V = self.VALUES
         self.assertEqual(t.setdefault(K[1], V[2]), V[2])
         # That should also have associated 1 with 2 in the tree.
-        self.assertTrue(K[1] in t)
+        self.assertIn(K[1], t)
         self.assertEqual(t[K[1]], V[2])
         # And trying to change it again should have no effect.
         self.assertEqual(t.setdefault(K[1], self.coerce_to_value(666)), V[2])
@@ -1251,7 +1252,7 @@ class MappingBase(Base):
     # one will always return a correct answer, not raise
     # a TypeError.
     def testStringAllowedInContains(self):
-        self.assertFalse('key' in self._makeOne())
+        self.assertNotIn('key', self._makeOne())
 
     def testStringKeyRaisesKeyErrorWhenMissing(self):
         self.assertRaises(KeyError, self._makeOne().__getitem__, 'key')
@@ -1652,7 +1653,7 @@ class BTreeTests(MappingBase):
             k = random.choice(r)
             k = K[k]
             if k in t:
-                self.assertTrue(k in t)
+                self.assertIn(k, t)
                 del t[k]
                 deleted.append(k)
                 if k in t:
@@ -1739,7 +1740,7 @@ class BTreeTests(MappingBase):
             157, 172, 192, 135, 163, 275, 74, 296, 298, 265, 105, 191,
             282, 277, 83, 188, 144, 259, 6, 173, 81, 107, 292, 231,
             129, 65, 161, 113, 103, 136, 255, 285, 289, 1
-            ]
+        ]
         delete_order = [
             276, 273, 12, 275, 2, 286, 127, 83, 92, 33, 101, 195,
             299, 191, 22, 232, 291, 226, 110, 94, 257, 233, 215, 184,
@@ -1751,7 +1752,7 @@ class BTreeTests(MappingBase):
             213, 180, 97, 108, 120, 218, 44, 187, 196, 251, 202, 203,
             172, 28, 188, 77, 90, 199, 297, 282, 141, 100, 161, 216,
             73, 19, 17, 189, 30, 258
-            ]
+        ]
         for x in add_order:
             t[K[x]] = V[1]
         for x in delete_order:
@@ -1817,7 +1818,7 @@ class BTreeTests(MappingBase):
         for i in range(range_begin, 200 + range_begin):
             t[self.coerce_to_key(i)] = self.coerce_to_value(i)
         items, dummy = t.__getstate__()
-        self.assertTrue(len(items) > 2)   # at least two buckets and a key
+        self.assertGreater(len(items), 2)  # at least two buckets and a key
         # All values in the first bucket are < firstkey.  All in the
         # second bucket are >= firstkey, and firstkey is the first key in
         # the second bucket.
@@ -2000,7 +2001,7 @@ class BTreeTests(MappingBase):
 
             # It still functions and can be dumped again, as the original class
             s2 = pickle.dumps(loaded_one, proto)
-            self.assertTrue(b'Py' not in s2)
+            self.assertNotIn(b'Py', s2)
             self.assertEqual(s2, s)
 
     def testSetstateBadChild(self):
@@ -2018,7 +2019,7 @@ class BTreeTests(MappingBase):
         # xchild is non-BTree class deriving from Persistent
         import persistent
         xchild = persistent.Persistent()
-        self.assertIs(xchild._p_oid, None)
+        self.assertIsNone(xchild._p_oid)
 
         typeErrOK = "tree child {} is neither {} nor {}".format(
             _tp_name(type(xchild)),
@@ -2211,7 +2212,7 @@ class NormalSetTests(Base):
         r = repr(t)
         # Make sure the repr is **not* 10000 bytes long for a shrort bucket.
         # (the buffer must be terminated when copied).
-        self.assertTrue(len(r) < 10000)
+        self.assertLess(len(r), 10000)
         # Make sure the repr is human readable, unless it's a tree
         if 'TreeSet' not in r:
             self.assertTrue(r.endswith("Set(%r)" % t.keys()))
@@ -2242,8 +2243,8 @@ class NormalSetTests(Base):
         t = self._makeOne()
         K = self.KEYS
         t.insert(K[1])
-        self.assertTrue(K[1] in t)
-        self.assertTrue(K[2] not in t)
+        self.assertIn(K[1], t)
+        self.assertNotIn(K[2], t)
 
     def testBigInsert(self):
         t = self._makeOne()
@@ -2253,7 +2254,7 @@ class NormalSetTests(Base):
             t.insert(to_key(x))
         for x in r:
             x = to_key(x)
-            self.assertTrue(x in t)
+            self.assertIn(x, t)
 
     def testRemoveSucceeds(self):
         t = self._makeOne()
@@ -2272,7 +2273,7 @@ class NormalSetTests(Base):
 
     def testHasKeyFails(self):
         t = self._makeOne()
-        self.assertTrue(1 not in t)
+        self.assertNotIn(1, t)
 
     def testKeys(self):
         t = self._makeOne()
@@ -2313,15 +2314,15 @@ class NormalSetTests(Base):
         self.assertEqual(t.minKey(None), K[1])
         self.assertEqual(t.minKey(K[3]), K[3])
         self.assertEqual(t.minKey(K[9]), K[10])
-        self.assertTrue(t.minKey() in t)
-        self.assertTrue(t.maxKey() in t)
+        self.assertIn(t.minKey(), t)
+        self.assertIn(t.maxKey(), t)
         try:
             bigger = t.maxKey() + 1
         except TypeError:
             assert 'fs' in type(t).__name__
         else:
-            self.assertTrue(bigger not in t)
-            self.assertTrue(t.minKey() - 1 not in t)
+            self.assertNotIn(bigger, t)
+            self.assertNotIn(t.minKey() - 1, t)
             try:
                 t.maxKey(t.minKey() - 1)
             except ValueError as err:
@@ -2428,7 +2429,7 @@ class NormalSetTests(Base):
             self.assertEqual(x, keys)
 
             it = iter(t)
-            self.assertTrue(it is iter(it))
+            self.assertIs(it, iter(it))
             x = []
             try:
                 while 1:
@@ -2580,7 +2581,7 @@ class InternalKeysMappingTest:
         key = data[1]
         del tree[key]
         data = tree.__getstate__()[0]
-        self.assertTrue(data[1] != key)
+        self.assertNotEqual(data[1], key)
 
         # The tree should have changed:
         self.assertTrue(tree._p_changed)
@@ -2604,7 +2605,7 @@ class InternalKeysMappingTest:
         key = data[1]
         del tree[key]
         data = tree.__getstate__()[0]
-        self.assertTrue(data[1] != key)
+        self.assertNotEqual(data[1], key)
 
         transaction.abort()
         db.close()
@@ -2643,12 +2644,14 @@ class ModuleTest:
     def testFamily(self):
         import BTrees
         if self.prefix == 'OO':
-            self.assertTrue(
-                getattr(self._getModule(), 'family', self) is self)
+            self.assertIs(
+                getattr(self._getModule(), 'family', self),
+                self
+            )
         elif 'L' in self.prefix:
-            self.assertTrue(self._getModule().family is BTrees.family64)
+            self.assertIs(self._getModule().family, BTrees.family64)
         elif 'I' in self.prefix:
-            self.assertTrue(self._getModule().family is BTrees.family32)
+            self.assertIs(self._getModule().family, BTrees.family32)
 
     def _check_union_presence(self, datatype, name):
         mod = self._getModule()
@@ -2867,8 +2870,8 @@ class SetResult:
         super().setUp()
         _skip_if_pure_py_and_py_test(self)
 
-        rawAkeys = [1,    3,    5, 6]
-        rawBkeys = [   2, 3, 4,    6, 7]  # noqa #201
+        rawAkeys = [1, 3, 5, 6]
+        rawBkeys = [2, 3, 4, 6, 7]
         self.Akeys = [self.KEYS[k] for k in rawAkeys]
         self.Bkeys = [self.KEYS[k] for k in rawBkeys]
         self.As = [makeset(rawAkeys) for makeset in self.builders()]
@@ -3069,33 +3072,33 @@ class Weighted(SignedMixin):
     def testBothNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             w, C = op(None, None)
-            self.assertTrue(C is None)
+            self.assertIsNone(C)
             self.assertEqual(w, 0)
 
             w, C = op(None, None, 42, 666)
-            self.assertTrue(C is None)
+            self.assertIsNone(C)
             self.assertEqual(w, 0)
 
     def testLeftNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             for A in self.As + self.emptys:
                 w, C = op(None, A)
-                self.assertTrue(C is A)
+                self.assertIs(C, A)
                 self.assertEqual(w, 1)
 
                 w, C = op(None, A, 42, 666)
-                self.assertTrue(C is A)
+                self.assertIs(C, A)
                 self.assertEqual(w, 666)
 
     def testRightNone(self):
         for op in self.weightedUnion(), self.weightedIntersection():
             for A in self.As + self.emptys:
                 w, C = op(A, None)
-                self.assertTrue(C is A)
+                self.assertIs(C, A)
                 self.assertEqual(w, 1)
 
                 w, C = op(A, None, 42, 666)
-                self.assertTrue(C is A)
+                self.assertIs(C, A)
                 self.assertEqual(w, 42)
 
     # If obj is a set, return a bucket with values all 1; else return obj.
@@ -3114,7 +3117,7 @@ class Weighted(SignedMixin):
         for key in self.union()(A, B):
             v1 = A.get(key, 0)
             v2 = B.get(key, 0)
-            result.append((key, v1*w1 + v2*w2))
+            result.append((key, v1 * w1 + v2 * w2))
         return 1, result
 
     def testUnion(self):
@@ -3151,7 +3154,7 @@ class Weighted(SignedMixin):
         B = self._normalize(B)
         result = []
         for key in self.intersection()(A, B):
-            result.append((key, A[key]*w1 + B[key]*w2))
+            result.append((key, A[key] * w1 + B[key] * w2))
         return 1, result
 
     def testIntersection(self):
@@ -3309,7 +3312,7 @@ class MultiUnion(SignedMixin):
         output = self.multiunion([input] * 10)
         self.assertEqual(len(output), N)
         self.assertEqual(output.minKey(), 0)
-        self.assertEqual(output.maxKey(), N-1)
+        self.assertEqual(output.maxKey(), N - 1)
         self.assertEqual(list(output), list(range(N)))
 
     def testLotsOfLittleOnes(self):
