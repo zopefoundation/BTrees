@@ -2,7 +2,6 @@
 requires = ["setuptools<74", "wheel", "persistent"]
 build-backend = "setuptools.build_meta"
 
-[tool.coverage]
 [tool.coverage.run]
 branch = true
 source = ["BTrees"]
