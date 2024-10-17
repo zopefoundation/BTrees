@@ -57,24 +57,36 @@ typedef struct
 #define ITEMS(O)((BTreeItems*)(O))
 
 static PyObject *
-newBTreeItems(char kind,
+newBTreeItems(PyObject* module, char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset);
+              Bucket *highbucket, int highoffset
+              );
 
 static void
 BTreeItems_dealloc(BTreeItems *self)
 {
-    Py_XDECREF(self->firstbucket);
-    Py_XDECREF(self->lastbucket);
-    Py_XDECREF(self->currentbucket);
-    PyObject_DEL(self);
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(self);
+#if USE_HEAP_ALLOCATED_TYPES
+    PyObject_GC_UnTrack(obj_self);
+#endif
+    Py_CLEAR(self->firstbucket);
+    Py_CLEAR(self->lastbucket);
+    Py_CLEAR(self->currentbucket);
+    tp->tp_free(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    Py_DECREF(tp);
+#endif
 }
 
 static Py_ssize_t
 BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Py_ssize_t r;
-    Bucket *b, *next;
+    Bucket *b;
+    Bucket *next;
 
     b = self->firstbucket;
     if (b == NULL)
@@ -90,7 +102,8 @@ BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
         return r;
 
     Py_INCREF(b);
-    PER_USE_OR_RETURN(b, -1);
+    if (!per_use((cPersistentObject*)b, per_capi))
+        return -1;
     while ((next = b->next))
     {
         r += b->len;
@@ -102,12 +115,15 @@ BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
             break; /* we already counted the last bucket */
 
         Py_INCREF(next);
-        PER_UNUSE(b);
+        per_allow_deactivation((cPersistentObject*)b);
+        per_capi->accessed((cPersistentObject*)b);
         Py_DECREF(b);
         b = next;
-        PER_USE_OR_RETURN(b, -1);
+        if (!per_use((cPersistentObject*)b, per_capi))
+            return -1;
     }
-    PER_UNUSE(b);
+    per_allow_deactivation((cPersistentObject*)b);
+    per_capi->accessed((cPersistentObject*)b);
     Py_DECREF(b);
 
     return r >= 0 ? r : 0;
@@ -136,8 +152,13 @@ BTreeItems_length(BTreeItems *self)
 static int
 BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
 {
-    int delta, pseudoindex, currentoffset;
-    Bucket *b, *currentbucket;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    Bucket *b;
+    Bucket *currentbucket;
+    int delta;
+    int pseudoindex;
+    int currentoffset;
     int error;
 
     pseudoindex = self->pseudoindex;
@@ -153,10 +174,12 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
         /* Want to move right delta positions; the most we can move right in
          * this bucket is currentbucket->len - currentoffset - 1 positions.
          */
-        PER_USE_OR_RETURN(currentbucket, -1);
+        if (!per_use((cPersistentObject*)currentbucket, per_capi))
+            return -1;
         max = currentbucket->len - currentoffset - 1;
         b = currentbucket->next;
-        PER_UNUSE(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
+        per_capi->accessed((cPersistentObject*)currentbucket);
         if (delta <= max)
         {
             currentoffset += delta;
@@ -199,9 +222,11 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
             return -1;
         pseudoindex -= currentoffset + 1;
         delta += currentoffset + 1;
-        PER_USE_OR_RETURN(currentbucket, -1);
+        if (!per_use((cPersistentObject*)currentbucket, per_capi))
+            return -1;
         currentoffset = currentbucket->len - 1;
-        PER_UNUSE(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
+        per_capi->accessed((cPersistentObject*)currentbucket);
     }
 
     assert(pseudoindex == i);
@@ -210,9 +235,11 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
      * were called, and if they deleted stuff, we may be pointing into
      * trash memory now.
      */
-    PER_USE_OR_RETURN(currentbucket, -1);
+    if (!per_use((cPersistentObject*)currentbucket, per_capi))
+        return -1;
     error = currentoffset < 0 || currentoffset >= currentbucket->len;
-    PER_UNUSE(currentbucket);
+    per_allow_deactivation((cPersistentObject*)currentbucket);
+    per_capi->accessed((cPersistentObject*)currentbucket);
     if (error)
     {
         PyErr_SetString(PyExc_RuntimeError,
@@ -304,15 +331,19 @@ getBucketEntry(Bucket *b, int i, char kind)
 static PyObject *
 BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *result;
 
     if (BTreeItems_seek(self, i) < 0)
         return NULL;
 
-    PER_USE_OR_RETURN(self->currentbucket, NULL);
+    if (!per_use((cPersistentObject*)self->currentbucket, per_capi))
+        return NULL;
     result = getBucketEntry(self->currentbucket, self->currentoffset,
                             self->kind);
-    PER_UNUSE(self->currentbucket);
+    per_allow_deactivation((cPersistentObject*)self->currentbucket);
+    per_capi->accessed((cPersistentObject*)self->currentbucket);
     return result;
 }
 
@@ -331,11 +362,20 @@ BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 static PyObject *
 BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 {
+    PyObject* obj_self = (PyObject*)self;
     Bucket *lowbucket;
     Bucket *highbucket;
     int lowoffset;
     int highoffset;
     Py_ssize_t length = -1;  /* len(self), but computed only if needed */
+
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "BTreeItems_slice: module is NULL");
+        return NULL;
+    }
 
     /* Complications:
      * A Python slice never raises IndexError, but BTreeItems_seek does.
@@ -404,8 +444,10 @@ BTreeItems_slice(BTreeItems *self, Py_ssize_t ilow, Py_ssize_t ihigh)
         highbucket = self->currentbucket;
         highoffset = self->currentoffset;
     }
-    return newBTreeItems(self->kind,
-                         lowbucket, lowoffset, highbucket, highoffset);
+    return newBTreeItems(module, self->kind,
+                         lowbucket, lowoffset,
+                         highbucket, highoffset
+                        );
 }
 
 static PyObject *
@@ -447,65 +489,104 @@ BTreeItems_subscript(BTreeItems *self, PyObject* subscript)
     return NULL;
 }
 
-/* Py3K doesn't honor sequence slicing, so implement via mapping */
-static PyMappingMethods BTreeItems_as_mapping = {
-    (lenfunc)BTreeItems_length,             /* mp_length */
-    (binaryfunc)BTreeItems_subscript,       /* mp_subscript */
-};
-
-static PySequenceMethods BTreeItems_as_sequence =
-{
-    (lenfunc) BTreeItems_length,            /* sq_length */
-    (binaryfunc)0,                          /* sq_concat */
-    (ssizeargfunc)0,                        /* sq_repeat */
-    (ssizeargfunc) BTreeItems_item,         /* sq_item */
-};
-
-/* Number Method items (just for nb_nonzero!) */
-
 static int
 BTreeItems_nonzero(BTreeItems *self)
 {
     return BTreeItems_length_or_nonzero(self, 1);
 }
 
+static char BTreeItems__name__[] = MODULE_NAME MOD_NAME_PREFIX "BTreeItems";
+static char BTreeItems__doc__[] =
+    "Sequence type used to iterate over BTree items.";
+
+
+#if USE_STATIC_TYPES
+
 static PyNumberMethods BTreeItems_as_number_for_nonzero = {
-    0,                                      /* nb_add */
-    0,                                      /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-   (inquiry)BTreeItems_nonzero              /* nb_nonzero */
+    .nb_bool                    = (inquiry)BTreeItems_nonzero,
 };
 
-static PyTypeObject BTreeItemsType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    MOD_NAME_PREFIX "BTreeItems",           /* tp_name */
-    sizeof(BTreeItems),                     /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    /* methods */
-    (destructor) BTreeItems_dealloc,        /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* obsolete tp_getattr */
-    0,                                      /* obsolete tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    &BTreeItems_as_number_for_nonzero,      /* tp_as_number */
-    &BTreeItems_as_sequence,                /* tp_as_sequence */
-    &BTreeItems_as_mapping,                 /* tp_as_mapping */
-    (hashfunc)0,                            /* tp_hash */
-    (ternaryfunc)0,                         /* tp_call */
-    (reprfunc)0,                            /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    /* Space for future expansion */
-    0L,0L,
-    "Sequence type used to iterate over BTree items." /* Documentation string */
+static PySequenceMethods BTreeItems_as_sequence =
+{
+    .sq_length                  = (lenfunc) BTreeItems_length,
+    .sq_item                    = (ssizeargfunc) BTreeItems_item,
 };
+
+/* Py3K doesn't honor sequence slicing, so implement via mapping */
+static PyMappingMethods BTreeItems_as_mapping = {
+    .mp_length                  = (lenfunc)BTreeItems_length,
+    .mp_subscript               = (binaryfunc)BTreeItems_subscript,
+};
+
+static PyTypeObject BTreeItems_type_def = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name                    = BTreeItems__name__,
+    .tp_doc                     = BTreeItems__doc__,
+    .tp_basicsize               = sizeof(BTreeItems),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_dealloc                 = (destructor)BTreeItems_dealloc,
+    .tp_as_number               = &BTreeItems_as_number_for_nonzero,
+    .tp_as_sequence             = &BTreeItems_as_sequence,
+    .tp_as_mapping              = &BTreeItems_as_mapping,
+};
+
+#else
+
+/* With static types, the BTreeItems type does not need to participate
+ * in GC, but we *do* need to play right when allocating from the heap.
+ */
+
+static int
+BTreeItems_traverse(BTreeItems *self, visitproc visit, void *arg)
+{
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+    Py_VISIT((PyObject*)(self->firstbucket));
+    Py_VISIT((PyObject*)(self->currentbucket));
+    Py_VISIT((PyObject*)(self->lastbucket));
+
+    return 0;
+}
+
+static int
+BTreeItems_clear(BTreeItems *self)
+{
+    Py_CLEAR(self->firstbucket);
+    Py_CLEAR(self->currentbucket);
+    Py_CLEAR(self->lastbucket);
+
+    return 0;
+}
+
+static PyType_Slot BTreeItems_type_slots[] = {
+    {Py_tp_doc,                 BTreeItems__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
+    {Py_tp_traverse,            (traverseproc)BTreeItems_traverse},
+    {Py_tp_clear,               (inquiry)BTreeItems_clear},
+    {Py_tp_dealloc,             (destructor)BTreeItems_dealloc},
+    {Py_nb_bool,                (inquiry)BTreeItems_nonzero},
+    {Py_sq_length,              (lenfunc)BTreeItems_length},
+    {Py_sq_item,                (ssizeargfunc)BTreeItems_item},
+    {Py_mp_length,              (lenfunc)BTreeItems_length},
+    {Py_mp_subscript,           (binaryfunc)BTreeItems_subscript},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTreeItems_type_spec = {
+    .name                       = BTreeItems__name__,
+    .basicsize                  = sizeof(BTreeItems),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = BTreeItems_type_slots
+};
+
+#endif
 
 /* Returns a new BTreeItems object representing the contiguous slice from
  * offset lowoffset in bucket lowbucket through offset highoffset in bucket
@@ -514,14 +595,22 @@ static PyTypeObject BTreeItemsType = {
  * pseudoindex to 0.  kind is 'k', 'v' or 'i' (see BTreeItems struct docs).
  */
 static PyObject *
-newBTreeItems(char kind,
+newBTreeItems(PyObject* module, char kind,
               Bucket *lowbucket, int lowoffset,
-              Bucket *highbucket, int highoffset)
+              Bucket *highbucket, int highoffset
+             )
 {
+    if (module == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "newBTreeItems: module is NULL");
+        return NULL;
+    }
+    PyTypeObject* btree_items_type = _get_btree_items_type(module);
     BTreeItems *self;
 
-    UNLESS (self = PyObject_NEW(BTreeItems, &BTreeItemsType))
+    self = (BTreeItems*)btree_items_type->tp_alloc(btree_items_type, 0);
+    if (self == NULL)
         return NULL;
+
     self->kind=kind;
 
     self->first=lowoffset;
@@ -553,6 +642,8 @@ newBTreeItems(char kind,
 static int
 nextBTreeItems(SetIteration *i)
 {
+    PyObject* obj_self = i->set;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -566,7 +657,7 @@ nextBTreeItems(SetIteration *i)
             Bucket *currentbucket;
 
             currentbucket = BUCKET(ITEMS(i->set)->currentbucket);
-            UNLESS(PER_USE(currentbucket))
+            UNLESS(per_use((cPersistentObject*)currentbucket, per_capi))
             {
                 /* Mark iteration terminated, so that finiSetIteration doesn't
                 * try to redundantly decref the key and value
@@ -584,7 +675,8 @@ nextBTreeItems(SetIteration *i)
 
             i->position ++;
 
-            PER_UNUSE(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
+            per_capi->accessed((cPersistentObject*)currentbucket);
         }
         else
         {
@@ -598,6 +690,8 @@ nextBTreeItems(SetIteration *i)
 static int
 nextTreeSetItems(SetIteration *i)
 {
+    PyObject* obj_self = i->set;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -610,7 +704,7 @@ nextTreeSetItems(SetIteration *i)
             Bucket *currentbucket;
 
             currentbucket = BUCKET(ITEMS(i->set)->currentbucket);
-            UNLESS(PER_USE(currentbucket))
+            UNLESS(per_use((cPersistentObject*)currentbucket, per_capi))
             {
                 /* Mark iteration terminated, so that finiSetIteration doesn't
                 * try to redundantly decref the key and value
@@ -624,7 +718,8 @@ nextTreeSetItems(SetIteration *i)
 
             i->position ++;
 
-            PER_UNUSE(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
+            per_capi->accessed((cPersistentObject*)currentbucket);
         }
         else
         {
@@ -636,8 +731,6 @@ nextTreeSetItems(SetIteration *i)
 }
 
 /* Support for the iteration protocol */
-
-static PyTypeObject BTreeIter_Type;
 
 /* The type of iterator objects, returned by e.g. iter(IIBTree()). */
 typedef struct
@@ -655,12 +748,15 @@ typedef struct
  * represented by pitems.  pitems must not be NULL.  Returns NULL if error.
  */
 static BTreeIter *
-BTreeIter_new(BTreeItems *pitems)
+newBTreeIter(PyObject* module, BTreeItems *pitems)
 {
+    PyTypeObject* btree_iter_type = _get_btree_iter_type(module);
     BTreeIter *result;
 
     assert(pitems != NULL);
-    result = PyObject_New(BTreeIter, &BTreeIter_Type);
+
+    result = (BTreeIter*)btree_iter_type->tp_alloc(btree_iter_type, 0);
+
     if (result)
     {
         Py_INCREF(pitems);
@@ -673,8 +769,16 @@ BTreeIter_new(BTreeItems *pitems)
 static void
 BTreeIter_dealloc(BTreeIter *bi)
 {
-    Py_DECREF(bi->pitems);
-    PyObject_Del(bi);
+    PyObject* obj_self = (PyObject*)bi;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    PyObject_GC_UnTrack(obj_self);
+#endif
+    Py_CLEAR(bi->pitems);
+    tp->tp_free(obj_self);
+#if USE_HEAP_ALLOCATED_TYPES
+    Py_DECREF(tp);
+#endif
 }
 
 /* The implementation of the iterator's tp_iternext slot.  Returns "the next"
@@ -684,6 +788,8 @@ BTreeIter_dealloc(BTreeIter *bi)
 static PyObject *
 BTreeIter_next(BTreeIter *bi, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)bi;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *result = NULL;        /* until proven innocent */
     BTreeItems *items = bi->pitems;
     int i = items->currentoffset;
@@ -692,7 +798,8 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     if (bucket == NULL)    /* iteration termination is sticky */
         return NULL;
 
-    PER_USE_OR_RETURN(bucket, NULL);
+    if (!per_use((cPersistentObject*)bucket, per_capi))
+        return NULL;
     if (i >= bucket->len)
     {
         /* We never leave this routine normally with i >= len:  somebody
@@ -729,7 +836,8 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     }
 
 Done:
-    PER_UNUSE(bucket);
+    per_allow_deactivation((cPersistentObject*)bucket);
+    per_capi->accessed((cPersistentObject*)bucket);
     return result;
 }
 
@@ -740,40 +848,71 @@ BTreeIter_getiter(PyObject *it)
     return it;
 }
 
-static PyTypeObject BTreeIter_Type = {
+static char BTreeIter__name__[] = MODULE_NAME MOD_NAME_PREFIX "TreeIterator";
+static char BTreeIter__doc__[] = "Iterator for BTree items";
+
+#if USE_STATIC_TYPES
+
+static PyTypeObject BTreeIter_type_def = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "TreeIterator", /* tp_name */
-    sizeof(BTreeIter),                          /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)BTreeIter_dealloc,              /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_compare */
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0, /*PyObject_GenericGetAttr,*/             /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    (getiterfunc)BTreeIter_getiter,             /* tp_iter */
-    (iternextfunc)BTreeIter_next,               /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
+    .tp_name                    = BTreeIter__name__,
+    .tp_doc                     = BTreeIter__doc__,
+    .tp_basicsize               = sizeof(BTreeIter),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_getattro                = _pyobject_generic_getattr,
+    .tp_iter                    = (getiterfunc)BTreeIter_getiter,
+    .tp_iternext                = (iternextfunc)BTreeIter_next,
+    .tp_dealloc                 = (destructor)BTreeIter_dealloc,
 };
+
+#else
+
+/* With static types, the BTreeIiter type does not need to participate
+ * in GC, but we *do* need to play right when allocating from the heap.
+ */
+
+static int
+BTreeIter_traverse(BTreeIter *self, visitproc visit, void *arg)
+{
+    PyObject* obj_self = (PyObject*)self;
+    PyTypeObject* tp = Py_TYPE(obj_self);
+    Py_VISIT(tp);
+    Py_VISIT((PyObject*)(self->pitems));
+
+    return 0;
+}
+
+static int
+BTreeIter_clear(BTreeIter *self)
+{
+    Py_CLEAR(self->pitems);
+
+    return 0;
+}
+
+static PyType_Slot BTreeIter_type_slots[] = {
+    {Py_tp_doc,                 BTreeIter__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
+    {Py_tp_getattro,            _pyobject_generic_getattr},
+    {Py_tp_iter,                (getiterfunc)BTreeIter_getiter},
+    {Py_tp_iternext,            (iternextfunc)BTreeIter_next},
+    {Py_tp_traverse,            (traverseproc)BTreeIter_traverse},
+    {Py_tp_clear,               (inquiry)BTreeIter_clear},
+    {Py_tp_dealloc,             (destructor)BTreeIter_dealloc},
+    {0,                         NULL}
+};
+
+static PyType_Spec BTreeIter_type_spec = {
+    .name                       = BTreeIter__name__,
+    .basicsize                  = sizeof(BTreeIter),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE,
+    .slots                      = BTreeIter_type_slots
+};
+
+
+#endif
