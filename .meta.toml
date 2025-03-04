@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "3c1c588c"
+commit-id = "2d8bba0c"
 
 [python]
 with-windows = true
@@ -59,11 +59,6 @@ additional-rules = [
 additional-ignores = [
     "docs/_build/html/_static/*",
     "docs/_build/html/_static/*/*",
-    ]
-
-[github-actions]
-additional-build-dependencies = [
-    "persistent",
     ]
 
 [c-code]
