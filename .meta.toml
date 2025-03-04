@@ -2,12 +2,12 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "32ea0a11"
+commit-id = "2d8bba0c"
 
 [python]
 with-windows = true
 with-pypy = true
-with-future-python = false
+with-future-python = true
 with-docs = true
 with-sphinx-doctests = true
 with-macos = false
@@ -61,11 +61,6 @@ additional-ignores = [
     "docs/_build/html/_static/*/*",
     ]
 
-[github-actions]
-additional-build-dependencies = [
-    "persistent",
-    ]
-
 [c-code]
 manylinux-install-setup = [
     "export CFLAGS=\"-pipe\"",
@@ -98,4 +93,3 @@ manylinux-aarch64-tests = [
     "    cd ..",
     "fi",
     ]
-require-cffi = true
