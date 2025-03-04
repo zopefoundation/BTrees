@@ -339,7 +339,7 @@ jobs:
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
-          ls -l dist/*whl
+          ls -l dist/
           unzip -n dist/*.whl -d src
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
@@ -353,7 +353,7 @@ jobs:
           # Unzip into src/ so that testrunner can find the .so files
           # when we ask it to load tests from that directory. This
           # might also save some build time?
-          ls -l dist/*whl
+          ls -l dist/
           unzip -n dist/*.whl -d src
           pip install -e .[test]
       - name: Run tests with C extensions
@@ -449,7 +449,7 @@ jobs:
         run: |
           pip install -U wheel
           pip install -U coverage[toml]
-          pip install -U  "`ls dist/BTrees-*.whl`[docs]"
+          pip install -U  "`ls dist/*.whl`[docs]"
       - name: Build docs
         env:
           ZOPE_INTERFACE_STRICT_IRO: 1
@@ -520,7 +520,7 @@ jobs:
         run: |
           pip install -U wheel
           pip install -U tox
-          pip install -U  "`ls dist/BTrees-*.whl`[docs]"
+          pip install -U  "`ls dist/*.whl`[docs]"
       - name: Run release check
         env:
           ZOPE_INTERFACE_STRICT_IRO: 1
