@@ -340,7 +340,7 @@ jobs:
           # when we ask it to load tests from that directory. This
           # might also save some build time?
           ls -l dist/*whl
-          unzip -n dist/BTrees-*whl -d src
+          unzip -n dist/*.whl -d src
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
           pip install --pre -e .[test]
@@ -354,7 +354,7 @@ jobs:
           # when we ask it to load tests from that directory. This
           # might also save some build time?
           ls -l dist/*whl
-          unzip -n dist/BTrees-*whl -d src
+          unzip -n dist/*.whl -d src
           pip install -e .[test]
       - name: Run tests with C extensions
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
