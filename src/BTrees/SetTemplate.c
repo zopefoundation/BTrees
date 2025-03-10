@@ -276,14 +276,17 @@ _set_setstate(Bucket *self, PyObject *args)
 static PyObject *
 set_setstate(Bucket *self, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     UNLESS (PyArg_ParseTuple(args, "O", &args))
         return NULL;
 
-    PER_PREVENT_DEACTIVATION(self);
-    r=_set_setstate(self, args);
-    PER_UNUSE(self);
+    per_prevent_deactivation((cPersistentObject*)self);
+    r = _set_setstate(self, args);
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -390,11 +393,15 @@ err:
 static Py_ssize_t
 set_length(Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return -1;
     r = self->len;
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     return r;
 }
@@ -402,9 +409,13 @@ set_length(Bucket *self)
 static PyObject *
 set_item(Bucket *self, Py_ssize_t index)
 {
-    PyObject *r=0;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
 
-    PER_USE_OR_RETURN(self, NULL);
+    PyObject *r = 0;
+
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
     if (index >= 0 && index < self->len)
     {
         COPY_KEY_TO_OBJECT(r, self->keys[index]);
@@ -412,7 +423,8 @@ set_item(Bucket *self, Py_ssize_t index)
     else
         IndexError(index);
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     return r;
 }
@@ -747,10 +759,12 @@ static PyTypeObject SetType = {
 static int
 nextSet(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
 
     if (i->position >= 0)
     {
-        UNLESS(PER_USE(BUCKET(i->set)))
+        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), capi_struct))
             return -1;
 
         if (i->position)
@@ -767,10 +781,10 @@ nextSet(SetIteration *i)
         else
         {
           i->position = -1;
-          PER_ACCESSED(BUCKET(i->set));
+          capi_struct->accessed((cPersistentObject*)BUCKET(i->set));
         }
 
-      PER_ALLOW_DEACTIVATION(BUCKET(i->set));
+      per_allow_deactivation((cPersistentObject*)BUCKET(i->set));
     }
 
 

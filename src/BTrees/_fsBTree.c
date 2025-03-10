@@ -89,72 +89,79 @@ static PyObject *bucket_fromBytes(PyObject *self, PyObject *state);
 #include "BTreeModuleTemplate.c"
 
 static PyObject *
-bucket_toBytes(PyObject *oself)
+bucket_toBytes(PyObject *obj_self)
 {
-  Bucket *self = (Bucket *)oself;
-  PyObject *items = NULL;
-  int len;
+    Bucket *self = (Bucket *)obj_self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    PyObject *items = NULL;
+    int len;
 
-  PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, capi_struct))
+        return NULL;
 
-  len = self->len;
+    len = self->len;
 
-  items = PyBytes_FromStringAndSize(NULL, len*8);
-  if (items == NULL)
-    goto err;
-  memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
-  memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
+    items = PyBytes_FromStringAndSize(NULL, len*8);
+    if (items == NULL)
+        goto err;
+    memcpy(PyBytes_AS_STRING(items),       self->keys,   len*2);
+    memcpy(PyBytes_AS_STRING(items)+len*2, self->values, len*6);
 
-  PER_UNUSE(self);
-  return items;
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
+    return items;
 
- err:
-  PER_UNUSE(self);
-  Py_XDECREF(items);
-  return NULL;
+err:
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
+    Py_XDECREF(items);
+    return NULL;
 }
 
 static PyObject *
-bucket_fromBytes(PyObject *oself, PyObject *state)
+bucket_fromBytes(PyObject *obj_self, PyObject *state)
 {
-  Bucket *self = (Bucket *)oself;
-  int len;
-  KEY_TYPE *keys;
-  VALUE_TYPE *values;
+    Bucket *self = (Bucket *)obj_self;
+    int len;
+    KEY_TYPE *keys;
+    VALUE_TYPE *values;
 
-  len = PyBytes_Size(state);
-  if (len < 0)
-    return NULL;
+    len = PyBytes_Size(state);
+    if (len < 0)
+        return NULL;
 
-  if (len%8)
-    {
-      PyErr_SetString(PyExc_ValueError, "state string of wrong size");
-      return NULL;
+    if (len % 8) {
+        PyErr_SetString(PyExc_ValueError, "state string of wrong size");
+        return NULL;
     }
-  len /= 8;
+    len /= 8;
 
-  if (self->next) {
-    Py_DECREF(self->next);
-    self->next = NULL;
-  }
+    if (self->next) {
+        Py_DECREF(self->next);
+        self->next = NULL;
+    }
 
-  if (len > self->size) {
-    keys = BTree_Realloc(self->keys, sizeof(KEY_TYPE)*len);
-    if (keys == NULL)
-      return NULL;
-    values = BTree_Realloc(self->values, sizeof(VALUE_TYPE)*len);
-    if (values == NULL)
-      return NULL;
-    self->keys = keys;
-    self->values = values;
-    self->size = len;
-  }
+    if (len > self->size) {
+        keys = BTree_Realloc(self->keys, sizeof(KEY_TYPE)*len);
 
-  memcpy(self->keys,   PyBytes_AS_STRING(state),       len*2);
-  memcpy(self->values, PyBytes_AS_STRING(state)+len*2, len*6);
+        if (keys == NULL)
+            return NULL;
 
-  self->len = len;
+        values = BTree_Realloc(self->values, sizeof(VALUE_TYPE)*len);
 
-  Py_INCREF(self);
-  return (PyObject *)self;
+        if (values == NULL)
+            return NULL;
+
+        self->keys = keys;
+        self->values = values;
+        self->size = len;
+    }
+
+    memcpy(self->keys,   PyBytes_AS_STRING(state),       len*2);
+    memcpy(self->values, PyBytes_AS_STRING(state)+len*2, len*6);
+
+    self->len = len;
+
+    Py_INCREF(self);
+    return (PyObject *)self;
 }
