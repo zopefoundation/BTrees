@@ -5,6 +5,8 @@
 6.2 (unreleased)
 ================
 
+- Drop support for Python 3.9.
+
 - Drop support for Python 3.8.
 
 - Add preliminary support for Python 3.14.
