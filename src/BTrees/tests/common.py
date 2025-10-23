@@ -207,7 +207,7 @@ class Base(ZODBAccess, SignedMixin):
             '__provides__',
             '__implemented__',
             '__providedBy__',
-            '__class_getitem__',  # Python 3.9+
+            '__class_getitem__',
             # Also the equality and comparison operators;
             # we don't implement those methods, but the ABC does.
             '__lt__', '__le__', '__eq__', '__gt__', '__ge__', '__ne__',

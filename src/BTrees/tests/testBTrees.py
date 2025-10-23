@@ -198,11 +198,9 @@ class ToBeDeleted:
         assert isinstance(id, int)  # don't want to store any object ref here
         self.id = id
 
-        global LP294788_ids
         LP294788_ids[id] = 1
 
     def __del__(self):
-        global LP294788_ids
         LP294788_ids.pop(self.id, None)
 
     def __le__(self, other):

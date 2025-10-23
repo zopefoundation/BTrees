@@ -31,7 +31,7 @@ for family in _FAMILIES:
     mod_qname = "BTrees.tests.test_" + family + 'BTree'
     try:
         importlib.import_module(mod_qname)
-    except ImportError:
+    except ModuleNotFoundError:
         btree = importlib.import_module("BTrees." + family + 'BTree')
         mod = types.ModuleType(mod_qname)
         update_module(vars(mod), btree)
