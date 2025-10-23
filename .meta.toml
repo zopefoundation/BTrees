@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/c-code
 [meta]
 template = "c-code"
-commit-id = "2d8bba0c"
+commit-id = "a17d8c29"
 
 [python]
 with-windows = true
@@ -13,7 +13,6 @@ with-sphinx-doctests = true
 with-macos = false
 
 [tox]
-use-flake8 = true
 additional-envlist = [
     "w_zodb",
     "w_zodb-pure",
@@ -27,11 +26,11 @@ testenv-setenv = [
 testenv-additional = [
     "",
     "[testenv:w_zodb]",
-    "basepython = python3.11",
+    "basepython = python3.13",
     "deps = ZODB",
     "",
     "[testenv:w_zodb-pure]",
-    "basepython = python3.11",
+    "basepython = python3.13",
     "deps = ZODB",
     ]
 

@@ -1,6 +1,8 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/c-code
 [build-system]
 requires = [
-    "setuptools <= 75.6.0",
+    "setuptools",
     "wheel",
     "persistent",
 ]
@@ -36,6 +38,3 @@ source = [
     ".tox/*/lib/python*/site-packages/",
     ".tox/pypy*/site-packages/",
 ]
-# 
-# Generated from:
-# https://github.com/zopefoundation/meta/tree/master/config/c-code

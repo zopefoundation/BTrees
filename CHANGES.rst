@@ -9,7 +9,7 @@
 
 - Drop support for Python 3.8.
 
-- Add preliminary support for Python 3.14.
+- Add support for Python 3.14.
 
 
 6.1 (2024-09-17)
