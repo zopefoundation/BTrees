@@ -714,7 +714,7 @@ class IUnsignedFloatBTreeModule(_IMergeBTreeModule):
 
 try:
     from ZODB.POSException import BTreesConflictError
-except ImportError:
+except ModuleNotFoundError:
     class BTreesConflictError(ValueError):
         @property
         def reason(self):

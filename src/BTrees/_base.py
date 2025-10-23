@@ -47,6 +47,7 @@ class _Base(Persistent):
         # If the C extensions are around, we do need these methods, but
         # these classes are unlikely to be used in production anyway.
         __import__('BTrees._OOBTree')
+    # ModuleNotFoundError not possible here, a real ImportError is raised:
     except ImportError:  # pragma: no cover
         pass
     else:
