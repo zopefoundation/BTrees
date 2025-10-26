@@ -80,7 +80,10 @@
 static PyObject *
 _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
 {
-    int i, cmp;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    int i;
+    int cmp;
     KEY_TYPE key;
     PyObject *r = NULL;
     int copied = 1;
@@ -96,7 +99,7 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
         return NULL;
     }
 
-    UNLESS (PER_USE(self)) return NULL;
+    UNLESS (per_use((cPersistentObject*)self, per_capi)) return NULL;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
     if (has_key)
@@ -112,7 +115,8 @@ _bucket_get(Bucket *self, PyObject *keyarg, int has_key)
     }
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 }
 
@@ -326,6 +330,8 @@ static int
 _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             int unique, int noval, int *changed)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int i, cmp;
     KEY_TYPE key;
 
@@ -360,7 +366,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             return -1;
     }
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -393,7 +399,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
             DECREF_VALUE(self->values[i]);
             COPY_VALUE(self->values[i], value);
             INCREF_VALUE(self->values[i]);
-            if (PER_CHANGED(self) >= 0)
+            if (per_capi->changed((cPersistentObject*)self) >= 0)
                 result = 0;
             goto Done;
         }
@@ -427,7 +433,7 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
 
         if (changed)
             *changed = 1;
-        if (PER_CHANGED(self) >= 0)
+        if (per_capi->changed((cPersistentObject*)self) >= 0)
             result = 1;
         goto Done;
     }
@@ -467,11 +473,12 @@ _bucket_set(Bucket *self, PyObject *keyarg, PyObject *v,
     self->len++;
     if (changed)
         *changed = 1;
-    if (PER_CHANGED(self) >= 0)
+    if (per_capi->changed((cPersistentObject*)self) >= 0)
         result = 1;
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -589,6 +596,8 @@ Mapping_update(PyObject *self, PyObject *seq)
 static int
 bucket_split(Bucket *self, int index, Bucket *next)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int next_size;
 
     ASSERT(self->len > 1, "split of empty bucket", -1);
@@ -621,7 +630,7 @@ bucket_split(Bucket *self, int index, Bucket *next)
     Py_INCREF(next);
     self->next = next;
 
-    if (PER_CHANGED(self) < 0)
+    if (per_capi->changed((cPersistentObject*)self) < 0)
         return -1;
 
     return 0;
@@ -637,10 +646,13 @@ bucket_split(Bucket *self, int index, Bucket *next)
 static int
 Bucket_deleteNextBucket(Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int result = -1;    /* until proven innocent */
     Bucket *successor;
 
-    PER_USE_OR_RETURN(self, -1);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return -1;
     successor = self->next;
     if (successor)
     {
@@ -648,21 +660,23 @@ Bucket_deleteNextBucket(Bucket *self)
         /* Before:  self -> successor -> next
         * After:   self --------------> next
         */
-        UNLESS (PER_USE(successor))
+        UNLESS (per_use((cPersistentObject*)successor, per_capi))
             goto Done;
         next = successor->next;
-        PER_UNUSE(successor);
+        per_allow_deactivation((cPersistentObject*)successor);
+        per_capi->accessed((cPersistentObject*)successor);
 
         Py_XINCREF(next);       /* it may be NULL, of course */
         self->next = next;
         Py_DECREF(successor);
-        if (PER_CHANGED(self) < 0)
+        if (per_capi->changed((cPersistentObject*)self) < 0)
             goto Done;
     }
     result = 0;
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
@@ -706,7 +720,10 @@ static int
 Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
                     int *offset)
 {
-    int i, cmp;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    int i;
+    int cmp;
     int result = -1;    /* until proven innocent */
     KEY_TYPE key;
     int copied = 1;
@@ -715,7 +732,7 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
     UNLESS (copied)
         return -1;
 
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
 
     BUCKET_SEARCH(i, cmp, self, key, goto Done);
@@ -742,21 +759,26 @@ Bucket_findRangeEnd(Bucket *self, PyObject *keyarg, int low, int exclude_equal,
         *offset = i;
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return result;
 }
 
 static PyObject *
 Bucket_maxminKey(Bucket *self, PyObject *args, int min)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     PyObject *key=0;
-    int rc, offset = 0;
+    int rc;
+    int offset = 0;
     int empty_bucket = 1;
 
     if (args && ! PyArg_ParseTuple(args, "|O", &key))
         return NULL;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     UNLESS (self->len)
         goto empty;
@@ -778,7 +800,8 @@ Bucket_maxminKey(Bucket *self, PyObject *args, int min)
         offset = self->len -1;
 
     COPY_KEY_TO_OBJECT(key, self->keys[offset]);
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     return key;
 
@@ -786,7 +809,8 @@ empty:
     PyErr_SetString(PyExc_ValueError,
                     empty_bucket ? "empty bucket" :
                     "no key satisfies the conditions");
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return NULL;
 }
 
@@ -888,10 +912,16 @@ empty:
 static PyObject *
 bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r = NULL, *key;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *r = NULL;
+    PyObject *key;
+    int i;
+    int low;
+    int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -907,11 +937,13 @@ bucket_keys(Bucket *self, PyObject *args, PyObject *kw)
             goto err;
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -929,10 +961,16 @@ err:
 static PyObject *
 bucket_values(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r=0, *v;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *r=0;
+    PyObject *v;
+    int i;
+    int low;
+    int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -949,11 +987,13 @@ bucket_values(Bucket *self, PyObject *args, PyObject *kw)
             goto err;
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     return NULL;
 }
@@ -971,10 +1011,17 @@ err:
 static PyObject *
 bucket_items(Bucket *self, PyObject *args, PyObject *kw)
 {
-    PyObject *r=0, *o=0, *item=0;
-    int i, low, high;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *r=0;
+    PyObject *o=0;
+    PyObject *item=0;
+    int i;
+    int low;
+    int high;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     if (Bucket_rangeSearch(self, args, kw, &low, &high) < 0)
         goto err;
@@ -1003,11 +1050,13 @@ bucket_items(Bucket *self, PyObject *args, PyObject *kw)
         item = 0;
     }
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
@@ -1016,12 +1065,19 @@ err:
 static PyObject *
 bucket_byValue(Bucket *self, PyObject *omin)
 {
-    PyObject *r=0, *o=0, *item=0;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *r=0;
+    PyObject *o=0;
+    PyObject *item=0;
     VALUE_TYPE min;
     VALUE_TYPE v;
-    int i, l, copied=1;
+    int i;
+    int l;
+    int copied=1;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     COPY_VALUE_FROM_ARG(min, omin, copied);
     UNLESS(copied)
@@ -1062,56 +1118,45 @@ bucket_byValue(Bucket *self, PyObject *omin)
         item = 0;
     }
 
-    item=PyObject_GetAttr(r,sort_str);
-    UNLESS (item)
+    item = PyObject_CallMethodObjArgs(r, str_sort, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
+    Py_DECREF(item); /* Py_None */
+    item = PyObject_CallMethodObjArgs(r, str_reverse, NULL);
+    if(item == NULL)
         goto err;
-    ASSIGN(item, PyObject_GetAttr(r, reverse_str));
-    UNLESS (item)
-        goto err;
-    ASSIGN(item, PyObject_CallObject(item, NULL));
-    UNLESS (item)
-        goto err;
-    Py_DECREF(item);
-
-    PER_UNUSE(self);
-    return r;
+    Py_DECREF(item); /* Py_None */
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(r);
     Py_XDECREF(item);
     return NULL;
 }
 
+
 static int
 _bucket_clear(Bucket *self)
 {
     const int len = self->len;
-    /* Don't declare i at this level.  If neither keys nor values are
-     * PyObject*, i won't be referenced, and you'll get a nuisance compiler
-     * wng for declaring it here.
-     */
+    /* silence compiler nag when neither keys nor values are objects*/
+    (void)len;
+
     self->len = self->size = 0;
 
-    if (self->next)
-    {
-        Py_DECREF(self->next);
-        self->next = NULL;
-    }
-
-    /* Silence compiler warning about unused variable len for the case
-        when neither key nor value is an object, i.e. II. */
-    (void)len;
+    Py_CLEAR(self->next);
 
     if (self->keys)
     {
 #ifdef KEY_TYPE_IS_PYOBJECT
-        int i;
-        for (i = 0; i < len; ++i)
-            DECREF_KEY(self->keys[i]);
+        for (int i_key = 0; i_key < len; ++i_key)
+            /* XXX Should we use 'Py_CLEAR' instead of 'DECREF_KEY'?
+             *
+             * We *are* just about to free the whole array, but could
+             * be be in the dreaded GC-inconsistent state here?
+             */
+            DECREF_KEY(self->keys[i_key]);
 #endif
         free(self->keys);
         self->keys = NULL;
@@ -1120,13 +1165,18 @@ _bucket_clear(Bucket *self)
     if (self->values)
     {
 #ifdef VALUE_TYPE_IS_PYOBJECT
-        int i;
-        for (i = 0; i < len; ++i)
-            DECREF_VALUE(self->values[i]);
+        for (int i_val = 0; i_val < len; ++i_val)
+            /* XXX Should we use 'Py_CLEAR' instead of 'DECREF_VALUE'?
+             *
+             * We *are* just about to free the whole array, but could
+             * be be in the dreaded GC-inconsistent state here?
+             */
+            DECREF_VALUE(self->values[i_val]);
 #endif
         free(self->values);
         self->values = NULL;
     }
+
     return 0;
 }
 
@@ -1134,6 +1184,9 @@ _bucket_clear(Bucket *self)
 static PyObject *
 bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+
     int ghostify = 1;
     PyObject *force = NULL;
 
@@ -1166,9 +1219,8 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
             return NULL;
         }
         if (ghostify) {
-            if (_bucket_clear(self) < 0)
-            return NULL;
-            PER_GHOSTIFY(self);
+            if (_bucket_clear(self) < 0) return NULL;
+            per_capi->ghostify((cPersistentObject*)self);
         }
     }
     Py_INCREF(Py_None);
@@ -1179,22 +1231,28 @@ bucket__p_deactivate(Bucket *self, PyObject *args, PyObject *keywords)
 static PyObject *
 bucket_clear(Bucket *self, PyObject *args)
 {
-    PER_USE_OR_RETURN(self, NULL);
+    PyObject* obj_self = (PyObject*)self;
+    PyObject* result = NULL;
+
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     if (self->len)
     {
         if (_bucket_clear(self) < 0)
-        return NULL;
-        if (PER_CHANGED(self) < 0)
-        goto err;
-    }
-    PER_UNUSE(self);
-    Py_INCREF(Py_None);
-    return Py_None;
+            return NULL;
 
-err:
-    PER_UNUSE(self);
-    return NULL;
+        if (per_capi->changed((cPersistentObject*)self) < 0)
+            goto done;
+    }
+    result = Py_None;
+    Py_INCREF(result);
+
+done:
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
+    return result;
 }
 
 /*
@@ -1223,10 +1281,17 @@ err:
 static PyObject *
 bucket_getstate(Bucket *self)
 {
-    PyObject *o = NULL, *items = NULL, *state;
-    int i, len, l;
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    PyObject *o = NULL;
+    PyObject *items = NULL;
+    PyObject *state;
+    int i;
+    int len;
+    int l;
 
-    PER_USE_OR_RETURN(self, NULL);
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
 
     len = self->len;
 
@@ -1268,11 +1333,13 @@ bucket_getstate(Bucket *self)
         state = Py_BuildValue("(O)", items);
     Py_DECREF(items);
 
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return state;
 
 err:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     Py_XDECREF(items);
     return NULL;
 }
@@ -1280,9 +1347,14 @@ err:
 static int
 _bucket_setstate(Bucket *self, PyObject *state)
 {
-    PyObject *k, *v, *items;
+    PyObject *k;
+    PyObject *v;
+    PyObject *items;
     Bucket *next = NULL;
-    int i, l, len, copied=1;
+    int i;
+    int l;
+    int len;
+    int copied=1;
     KEY_TYPE *keys;
     VALUE_TYPE *values;
 
@@ -1305,10 +1377,7 @@ _bucket_setstate(Bucket *self, PyObject *state)
     }
     self->len = 0;
 
-    if (self->next) {
-        Py_DECREF(self->next);
-        self->next = NULL;
-    }
+    Py_CLEAR(self->next);
 
     if (len > self->size) {
         keys = BTree_Realloc(self->keys, sizeof(KEY_TYPE)*len);
@@ -1341,8 +1410,8 @@ _bucket_setstate(Bucket *self, PyObject *state)
     self->len = len;
 
     if (next) {
-        self->next = next;
         Py_INCREF(next);
+        self->next = next;
     }
 
     return 0;
@@ -1351,11 +1420,14 @@ _bucket_setstate(Bucket *self, PyObject *state)
 static PyObject *
 bucket_setstate(Bucket *self, PyObject *state)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
 
-    PER_PREVENT_DEACTIVATION(self);
+    per_prevent_deactivation((cPersistentObject*)self);
     r = _bucket_setstate(self, state);
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
@@ -1367,21 +1439,27 @@ static PyObject *
 bucket_sub(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return difference_m(NULL, args);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'difference_m' checks if needed. */
+    return difference_m(module, args);
 }
 
 static PyObject *
 bucket_or(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return union_m(NULL, args);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'union_m' checks if needed. */
+    return union_m(module, args);
 }
 
 static PyObject *
 bucket_and(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return intersection_m(NULL, args);
+    PyObject *module = _get_module(Py_TYPE(self));
+    /* no check here, because 'intersection_m' checks if needed. */
+    return intersection_m(module, args);
 }
 
 static PyObject *
@@ -1572,24 +1650,41 @@ bucket_getm(Bucket *self, PyObject *args)
 static PyObject *
 buildBucketIter(Bucket *self, PyObject *args, PyObject *kw, char kind)
 {
+    PyObject* obj_self = (PyObject*)self;
     BTreeItems *items;
-    int lowoffset, highoffset;
+    int lowoffset;
+    int highoffset;
     BTreeIter *result = NULL;
 
-    PER_USE_OR_RETURN(self, NULL);
+    PyObject* module = _get_module(Py_TYPE(obj_self));
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "buildBucketIter: module is NULL");
+        return NULL;
+    }
+
+    /* If we have a valid module, this one is bound to succeed. */
+    PerCAPI* per_capi = _get_per_capi(module);
+
+    if (!per_use((cPersistentObject*)self, per_capi))
+        return NULL;
     if (Bucket_rangeSearch(self, args, kw, &lowoffset, &highoffset) < 0)
         goto Done;
 
-    items = (BTreeItems *)newBTreeItems(kind, self, lowoffset,
-                                        self, highoffset);
+    items = (BTreeItems *)newBTreeItems(module, kind,
+                                        self, lowoffset,
+                                        self, highoffset
+                                       );
     if (items == NULL)
         goto Done;
 
-    result = BTreeIter_new(items);      /* win or lose, we're done */
+    result = newBTreeIter(module, items);      /* win or lose, we're done */
     Py_DECREF(items);
 
 Done:
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return (PyObject *)result;
 }
 
@@ -1624,11 +1719,15 @@ Bucket_iteritems(Bucket *self, PyObject *args, PyObject *kw)
 /* End of iterator support. */
 
 #ifdef PERSISTENT
-static PyObject *merge_error(int p1, int p2, int p3, int reason);
-static PyObject *bucket_merge(Bucket *s1, Bucket *s2, Bucket *s3);
+/* Defined in 'MergeTemplate.c' */
+static PyObject *merge_error(
+    PyObject* module, int p1, int p2, int p3, int reason
+);
+static PyObject *bucket_merge(
+    PyObject* module, Bucket *s1, Bucket *s2, Bucket *s3);
 
 static PyObject *
-_bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
+_bucket__p_resolveConflict(PyTypeObject *tp, PyObject *s[3])
 {
     PyObject *result = NULL;    /* guilty until proved innocent */
     Bucket *b[3] = {NULL, NULL, NULL};
@@ -1636,15 +1735,23 @@ _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
     PyObject *a = NULL;
     int i;
 
+    PyObject *module = _get_module(tp);
+
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "_bucket__p_resolveConflict: module is NULL");
+        return NULL;
+    }
+
     for (i = 0; i < 3; i++) {
         PyObject *r;
 
-        b[i] = (Bucket*)PyObject_CallObject((PyObject *)ob_type, NULL);
+        b[i] = BUCKET(tp->tp_alloc(tp, 0));
         if (b[i] == NULL)
             goto Done;
         if (s[i] == Py_None) /* None is equivalent to empty, for BTrees */
             continue;
-        meth = PyObject_GetAttr((PyObject *)b[i], __setstate___str);
+        meth = PyObject_GetAttr((PyObject *)b[i], str___setstate__);
         if (meth == NULL)
             goto Done;
         a = PyTuple_New(1);
@@ -1662,9 +1769,9 @@ _bucket__p_resolveConflict(PyObject *ob_type, PyObject *s[3])
     }
 
     if (b[0]->next != b[1]->next || b[0]->next != b[2]->next)
-        merge_error(-1, -1, -1, 0);
+        merge_error(module, -1, -1, -1, 0);
     else
-        result = bucket_merge(b[0], b[1], b[2]);
+        result = bucket_merge(module, b[0], b[1], b[2]);
 
 Done:
     Py_XDECREF(meth);
@@ -1684,7 +1791,7 @@ bucket__p_resolveConflict(Bucket *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOO", &s[0], &s[1], &s[2]))
         return NULL;
 
-    return _bucket__p_resolveConflict((PyObject *)Py_TYPE(self), s);
+    return _bucket__p_resolveConflict(Py_TYPE(self), s);
 }
 #endif
 
@@ -1800,67 +1907,86 @@ Bucket_init(PyObject *self, PyObject *args, PyObject *kwds)
 static void
 bucket_dealloc(Bucket *self)
 {
-    PyObject_GC_UnTrack((PyObject *)self);
+    PyObject* obj_self = (PyObject*)self;
+
+#if USE_HEAP_ALLOCATED_TYPES
+    PyTypeObject* tp = Py_TYPE(obj_self);
+#endif
+
+    PyObject_GC_UnTrack(obj_self);
     if (self->state != cPersistent_GHOST_STATE) {
         _bucket_clear(self);
     }
 
-    cPersistenceCAPI->pertype->tp_dealloc((PyObject *)self);
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    if (! per_capi) {
+        PyErr_SetString(PyExc_RuntimeError, "Cannot find persistence CAPI");
+        return;
+    }
+    per_capi->pertype->tp_dealloc(obj_self);
+
+#if USE_HEAP_ALLOCATED_TYPES
+    int per_is_heaptype = per_capi->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+
+    /* Heap-allocated Persistent will have already decref'ed our type. */
+    if (!per_is_heaptype)
+        Py_DECREF(tp);
+#endif
 }
 
 static int
 bucket_traverse(Bucket *self, visitproc visit, void *arg)
 {
-    int err = 0;
-    int i, len;
+    PyObject* obj_self = (PyObject*)self;
 
-#define VISIT(SLOT)                             \
-  if (SLOT) {                                   \
-    err = visit((PyObject *)(SLOT), arg);       \
-    if (err)                                    \
-      goto Done;                                \
-  }
-
+    PerCAPI* per_capi = _get_per_capi(obj_self);
+    if(per_capi == NULL) {
+        /* Likely means that we are in application shutdown:  just bail.*/
+        return -1;
+    }
     /* Call our base type's traverse function.  Because buckets are
      * subclasses of Peristent, there must be one.
      */
-    err = cPersistenceCAPI->pertype->tp_traverse((PyObject *)self, visit, arg);
-    if (err)
-        goto Done;
+    if (per_capi->pertype->tp_traverse(obj_self, visit, arg) < 0)
+        return -1;
+
+#if USE_HEAP_ALLOCATED_TYPES
+    int per_is_heaptype = per_capi->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+
+    /* Heap-allocated Persistent will have already traversed our type. */
+    if (!per_is_heaptype)
+        Py_VISIT(Py_TYPE(obj_self));
+#endif
 
     /* If this is registered with the persistence system, cleaning up cycles
      * is the database's problem.  It would be horrid to unghostify buckets
      * here just to chase pointers every time gc runs.
      */
     if (self->state == cPersistent_GHOST_STATE)
-        goto Done;
+        return 0;
 
-    len = self->len;
-    /* if neither keys nor values are PyObject*, "i" is otherwise
-       unreferenced and we get a nuisance compiler wng */
-    (void)i;
-    (void)len;
+    /*
+     *  OK, now we visit "normal" attributes / items.
+     */
+
 #ifdef KEY_TYPE_IS_PYOBJECT
     /* Keys are Python objects so need to be traversed. */
-    for (i = 0; i < len; i++)
-        VISIT(self->keys[i]);
+    for (int i_key = 0; i_key < self->len; ++i_key)
+        Py_VISIT(self->keys[i_key]);
 #endif
 
 #ifdef VALUE_TYPE_IS_PYOBJECT
     if (self->values != NULL) {
         /* self->values exists (this is a mapping bucket, not a set bucket),
-        * and are Python objects, so need to be traversed. */
-        for (i = 0; i < len; i++)
-            VISIT(self->values[i]);
+         * and are Python objects, so need to be traversed. */
+        for (int i_val = 0; i_val < self->len; ++i_val)
+            Py_VISIT(self->values[i_val]);
     }
 #endif
 
-    VISIT(self->next);
+    Py_VISIT(self->next);
 
-Done:
-    return err;
-
-#undef VISIT
+    return 0;
 }
 
 static int
@@ -1875,51 +2001,16 @@ bucket_tp_clear(Bucket *self)
 static int
 Bucket_length( Bucket *self)
 {
+    PyObject* obj_self = (PyObject*)self;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     int r;
-    UNLESS (PER_USE(self))
+    UNLESS (per_use((cPersistentObject*)self, per_capi))
         return -1;
     r = self->len;
-    PER_UNUSE(self);
+    per_allow_deactivation((cPersistentObject*)self);
+    per_capi->accessed((cPersistentObject*)self);
     return r;
 }
-
-static PyMappingMethods Bucket_as_mapping = {
-    (lenfunc)Bucket_length,             /*mp_length*/
-    (binaryfunc)bucket_getitem,         /*mp_subscript*/
-    (objobjargproc)bucket_setitem,      /*mp_ass_subscript*/
-};
-
-static PySequenceMethods Bucket_as_sequence = {
-    (lenfunc)0,                         /* sq_length */
-    (binaryfunc)0,                      /* sq_concat */
-    (ssizeargfunc)0,                    /* sq_repeat */
-    (ssizeargfunc)0,                    /* sq_item */
-    (ssizessizeargfunc)0,               /* sq_slice */
-    (ssizeobjargproc)0,                 /* sq_ass_item */
-    (ssizessizeobjargproc)0,            /* sq_ass_slice */
-    (objobjproc)bucket_contains,        /* sq_contains */
-    0,                                  /* sq_inplace_concat */
-    0,                                  /* sq_inplace_repeat */
-};
-
-static PyNumberMethods Bucket_as_number = {
-     (binaryfunc)0,                     /* nb_add */
-     bucket_sub,                        /* nb_subtract */
-     (binaryfunc)0,                     /* nb_multiply */
-     (binaryfunc)0,                     /* nb_remainder */
-     (binaryfunc)0,                     /* nb_divmod */
-     (ternaryfunc)0,                    /* nb_power */
-     (unaryfunc)0,                      /* nb_negative */
-     (unaryfunc)0,                      /* nb_positive */
-     (unaryfunc)0,                      /* nb_absolute */
-     (inquiry)0,                        /* nb_bool */
-     (unaryfunc)0,                      /* nb_invert */
-     (binaryfunc)0,                     /* nb_lshift */
-     (binaryfunc)0,                     /* nb_rshift */
-     bucket_and,                        /* nb_and */
-     (binaryfunc)0,                     /* nb_xor */
-     bucket_or,                         /* nb_or */
-};
 
 
 static PyObject *
@@ -1937,55 +2028,95 @@ bucket_repr(Bucket *self)
     return r;
 }
 
-static PyTypeObject BucketType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    MODULE_NAME MOD_NAME_PREFIX "Bucket",   /* tp_name */
-    sizeof(Bucket),                         /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    (destructor)bucket_dealloc,             /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    (reprfunc)bucket_repr,                  /* tp_repr */
-    &Bucket_as_number,                      /* tp_as_number */
-    &Bucket_as_sequence,                    /* tp_as_sequence */
-    &Bucket_as_mapping,                     /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-    Py_TPFLAGS_HAVE_GC |
-    Py_TPFLAGS_BASETYPE,                    /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)bucket_traverse,          /* tp_traverse */
-    (inquiry)bucket_tp_clear,               /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    (getiterfunc)Bucket_getiter,            /* tp_iter */
-    0,                                      /* tp_iternext */
-    Bucket_methods,                         /* tp_methods */
-    Bucket_members,                         /* tp_members */
-    0,                                      /* tp_getset */
-    0,                                      /* tp_base */
-    0,                                      /* tp_dict */
-    0,                                      /* tp_descr_get */
-    0,                                      /* tp_descr_set */
-    0,                                      /* tp_dictoffset */
-    Bucket_init,                            /* tp_init */
-    0,                                      /* tp_alloc */
-    0, /*PyType_GenericNew,*/               /* tp_new */
+static char Bucket__name__[] = MODULE_NAME MOD_NAME_PREFIX "Bucket";
+static char Bucket__doc__[] =
+    "Buckets are fundamental building blocks of BTrees";
+
+#if USE_STATIC_TYPES
+
+static PyNumberMethods Bucket_as_number = {
+    .nb_subtract               = bucket_sub,
+    .nb_and                    = bucket_and,
+    .nb_or                     = bucket_or,
 };
+
+static PyMappingMethods Bucket_as_mapping = {
+    .mp_length                  = (lenfunc)Bucket_length,
+    .mp_subscript               = (binaryfunc)bucket_getitem,
+    .mp_ass_subscript           = (objobjargproc)bucket_setitem,
+};
+
+static PySequenceMethods Bucket_as_sequence = {
+    .sq_contains                = (objobjproc)bucket_contains,
+};
+
+static PyTypeObject Bucket_type_def = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name                    = Bucket__name__,
+    .tp_doc                     = Bucket__doc__,
+    .tp_basicsize               = sizeof(Bucket),
+    .tp_flags                   = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_BASETYPE,
+    .tp_init                    = Bucket_init,
+    .tp_alloc                   = _pytype_generic_alloc,
+    .tp_new                     = _pytype_generic_new,
+    .tp_repr                    = (reprfunc)bucket_repr,
+    .tp_iter                    = (getiterfunc)Bucket_getiter,
+    .tp_traverse                = (traverseproc)bucket_traverse,
+    .tp_clear                   = (inquiry)bucket_tp_clear,
+    .tp_dealloc                 = (destructor)bucket_dealloc,
+    .tp_methods                 = Bucket_methods,
+    .tp_members                 = Bucket_members,
+    .tp_as_number               = &Bucket_as_number,
+    .tp_as_sequence             = &Bucket_as_sequence,
+    .tp_as_mapping              = &Bucket_as_mapping,
+};
+
+#else
+
+static PyType_Slot Bucket_type_slots[] = {
+    {Py_tp_doc,                 Bucket__doc__},
+    {Py_tp_alloc,               _pytype_generic_alloc},
+    {Py_tp_new,                 _pytype_generic_new},
+    {Py_tp_init,                Bucket_init},
+    {Py_tp_repr,                (reprfunc)bucket_repr},
+    {Py_tp_iter,                (getiterfunc)Bucket_getiter},
+    {Py_tp_traverse,            (traverseproc)bucket_traverse},
+    {Py_tp_clear,               (inquiry)bucket_tp_clear},
+    {Py_tp_dealloc,             (destructor)bucket_dealloc},
+    {Py_tp_methods,             Bucket_methods},
+    {Py_tp_members,             Bucket_members},
+    {Py_nb_subtract,            bucket_sub},
+    {Py_nb_and,                 bucket_and},
+    {Py_nb_or,                  bucket_or},
+    {Py_mp_length,              (lenfunc)Bucket_length},
+    {Py_mp_subscript,           (binaryfunc)bucket_getitem},
+    {Py_mp_ass_subscript,       (objobjargproc)bucket_setitem},
+    {Py_sq_contains,            (objobjproc)bucket_contains},
+    {0,                         NULL}
+};
+
+static PyType_Spec Bucket_type_spec = {
+    .name                       = Bucket__name__,
+    .basicsize                  = sizeof(Bucket),
+    .flags                      = Py_TPFLAGS_DEFAULT |
+                                  Py_TPFLAGS_HAVE_GC |
+                                  Py_TPFLAGS_IMMUTABLETYPE |
+                                  Py_TPFLAGS_BASETYPE,
+    .slots                      = Bucket_type_slots
+};
+
+#endif
 
 static int
 nextBucket(SetIteration *i)
 {
+    PyObject* obj_self = i->set;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     if (i->position >= 0)
     {
-        UNLESS(PER_USE(BUCKET(i->set)))
+        UNLESS(per_use((cPersistentObject*)BUCKET(i->set), per_capi))
             return -1;
 
         if (i->position)
@@ -2005,10 +2136,10 @@ nextBucket(SetIteration *i)
         else
         {
           i->position = -1;
-          PER_ACCESSED(BUCKET(i->set));
+          per_capi->accessed((cPersistentObject*)BUCKET(i->set));
         }
 
-        PER_ALLOW_DEACTIVATION(BUCKET(i->set));
+        per_allow_deactivation((cPersistentObject*)BUCKET(i->set));
     }
 
     return 0;
