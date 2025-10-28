@@ -2,7 +2,7 @@
  BTrees Changelog
 ==================
 
-6.2 (unreleased)
+6.2 (2025-10-28)
 ================
 
 - Drop support for Python 3.8, 3.9.
