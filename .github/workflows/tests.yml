@@ -161,7 +161,7 @@ jobs:
           pip install -U pip
           pip install -U "setuptools >= 78.1.1,< 81" wheel twine
 
-      - name: Build BTrees (macOS x86_64)
+      - name: Build Btrees (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
@@ -174,7 +174,7 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-      - name: Build BTrees (macOS arm64)
+      - name: Build Btrees (macOS arm64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
@@ -187,7 +187,7 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-      - name: Build BTrees (all other versions)
+      - name: Build Btrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
           || startsWith(matrix.python-version, 'pypy')
@@ -197,25 +197,25 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
-      - name: Install BTrees and dependencies (3.15)
+      - name: Install Btrees and dependencies (3.15)
         if: matrix.python-version == '3.15'
         run: |
           # Install to collect dependencies into the (pip) cache.
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
           pip install --pre .[test]
-      - name: Install BTrees and dependencies
+      - name: Install Btrees and dependencies
         if: matrix.python-version != '3.15'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install -U pip "setuptools >= 78.1.1,< 81"
           pip install .[test]
 
-      - name: Check BTrees build
+      - name: Check Btrees build
         run: |
           ls -l dist
           twine check dist/*
-      - name: Upload BTrees wheel (macOS x86_64)
+      - name: Upload Btrees wheel (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
         uses: actions/upload-artifact@v4
@@ -223,37 +223,23 @@ jobs:
           # The x86_64 wheel is uploaded with a different name just so it can be
           # manually downloaded when desired. The wheel itself *cannot* be tested
           # on the GHA runner, which uses arm64 architecture.
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-x86_64.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}-x86_64.whl
           path: dist/*x86_64.whl
-      - name: Upload BTrees wheel (macOS arm64)
+      - name: Upload Btrees wheel (macOS arm64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
         uses: actions/upload-artifact@v4
         with:
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*arm64.whl
-      - name: Upload BTrees wheel (all other platforms)
+      - name: Upload Btrees wheel (all other platforms)
         if: >
           !startsWith(runner.os, 'Mac')
         uses: actions/upload-artifact@v4
         with:
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*whl
-      - name: Publish package to PyPI (Non-Linux)
-        # We cannot use pypa/gh-action-pypi-publish because that
-        # is a container action, and those don't run on macOS
-        # or Windows GHA runners.
-        if: >
-          github.event_name == 'push'
-          && startsWith(github.ref, 'refs/tags')
-          && !startsWith(runner.os, 'Linux')
-          && !startsWith(matrix.python-version, 'pypy')
-          && !startsWith(matrix.python-version, '3.15')
-        env:
-          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-        run: |
-          twine upload --skip-existing dist/*
 
   test:
     needs: build-package
@@ -320,12 +306,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download BTrees wheel
+      - name: Download Btrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install BTrees ${{ matrix.python-version }}
+      - name: Install Btrees ${{ matrix.python-version }}
         if: matrix.python-version == '3.15'
         run: |
           pip install -U wheel "setuptools >= 78.1.1,< 81"
@@ -340,7 +326,7 @@ jobs:
           # Use "--pre" here because dependencies with support for this future
           # Python release may only be available as pre-releases
           pip install --pre -e .[test]
-      - name: Install BTrees
+      - name: Install Btrees
         if: matrix.python-version != '3.15'
         run: |
           pip install -U wheel "setuptools >= 78.1.1,< 81"
@@ -387,7 +373,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
         os: [ubuntu-latest]
 
     steps:
@@ -436,12 +422,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download BTrees wheel
+      - name: Download Btrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install BTrees
+      - name: Install Btrees
         run: |
           pip install -U wheel
           pip install -U coverage[toml]
@@ -458,7 +444,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
         os: [ubuntu-latest]
 
     steps:
@@ -507,12 +493,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download BTrees wheel
+      - name: Download Btrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install BTrees
+      - name: Install Btrees
         run: |
           pip install -U wheel
           pip install -U tox
@@ -524,14 +510,21 @@ jobs:
           tox -e release-check
 
   manylinux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-    # We use a regular Python matrix entry to share as much code as possible.
+    # We use a matrix to share as much code as possible.
     strategy:
       matrix:
-        python-version: ["3.11"]
-        image: [manylinux2014_x86_64, manylinux2014_i686, manylinux2014_aarch64]
-
+        include:
+          - os: ubuntu-latest
+            image: manylinux2014_x86_64
+            python-version: "3.13"
+          - os: ubuntu-latest
+            image: manylinux2014_i686
+            python-version: "3.13"
+          - os: ubuntu-24.04-arm
+            image: manylinux2014_aarch64
+            python-version: "3.13"
     steps:
       - name: checkout
         uses: actions/checkout@v5
@@ -580,8 +573,9 @@ jobs:
 
       - name: Update pip
         run: pip install -U pip
-      - name: Build BTrees (x86_64)
-        if: matrix.image == 'manylinux2014_x86_64'
+
+      - name: Build Btrees
+        if: matrix.image != 'manylinux2014_i686'
         # An alternate way to do this is to run the container directly with a uses:
         # and then the script runs inside it. That may work better with caching.
         # See https://github.com/pyca/bcrypt/blob/f6b5ee2eda76d077c531362ac65e16f045cf1f29/.github/workflows/wheel-builder.yml
@@ -589,38 +583,66 @@ jobs:
           DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
         run: |
           bash .manylinux.sh
-      - name: Build BTrees (i686)
+      - name: Build Btrees (i686)
         if: matrix.image == 'manylinux2014_i686'
         env:
           DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
           PRE_CMD: linux32
         run: |
           bash .manylinux.sh
-      - name: Build BTrees (aarch64)
-        if: matrix.image == 'manylinux2014_aarch64'
-        env:
-          DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
-        run: |
-          # First we must enable emulation
-          docker run --rm --privileged hypriot/qemu-register
-          bash .manylinux.sh
 
-      - name: Upload BTrees wheels
+      - name: Upload Btrees wheels
         uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*whl
           name: manylinux_${{ matrix.image }}_wheels.zip
+
       - name: Restore pip cache permissions
         run: sudo chown -R $(whoami) ${{ steps.pip-cache-default.outputs.dir }}
+
       - name: Prevent publishing wheels for unreleased Python versions
         run: VER=$(echo '3.15' | tr -d .) && ls -al wheelhouse && sudo rm -f wheelhouse/*-cp${VER}*.whl && ls -al wheelhouse
-      - name: Publish package to PyPI
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Only publish on tag pushes
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    # Wait for both build jobs to complete
+    needs: [build-package, manylinux]
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: '*'
+          merge-multiple: true
+
+      - name: Display structure of downloaded files
+        run: |
+          ls -lR dist/
+          echo "Total wheel files:"
+          find dist/ -name "*.whl" | wc -l
+
+      - name: Remove undesired wheels (if any were downloaded)
+        run: |
+          # PyPy wheels shouldn't be uploaded, remove them if present
+          find dist/ -name "*pypy*" -type f -delete || true
+          find dist/ -name "*none-any*" -type f -delete || true
+          # Wheels for the no-yet-supported future Python version need to go
+          find dist/ -name "*3.15*" -type f -delete || true
+          find dist/ -name "*cp315*" -type f -delete || true
+          # For Linux, we only want the manylinux wheels
+          find dist/ -name "*linux_x86_64*" -type f -delete || true
+
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: >
-          github.event_name == 'push'
-          && startsWith(github.ref, 'refs/tags')
         with:
           user: __token__
           password: ${{ secrets.TWINE_PASSWORD }}
           skip-existing: true
-          packages-dir: wheelhouse/
+          packages-dir: dist/
+          verbose: true

@@ -19,21 +19,8 @@ from distutils.errors import DistutilsExecError
 from distutils.errors import DistutilsPlatformError
 
 from setuptools import Extension
-from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
-
-
-version = '6.3.dev0'
-
-
-def _read(fname):
-    here = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(here, fname)) as f:
-        return f.read()
-
-
-README = _read("README.rst") + '\n\n' + _read('CHANGES.rst')
 
 
 class optional_build_ext(build_ext):
@@ -142,76 +129,6 @@ def BTreeExtension(family):
 
 ext_modules = [BTreeExtension(family) for family in FAMILIES]
 
-REQUIRES = [
-    # 4.1.0 is the first version that PURE_PYTHON can run
-    # ZODB tests
-    'persistent >= 4.1.0',
-    # 5.0.0 added zope.interface.common.collections
-    'zope.interface >= 5.0.0',
-]
 
-TESTS_REQUIRE = [
-    # Our tests check for the new repr strings
-    # generated in persistent 4.4.
-    'persistent >= 4.4.3',
-    'transaction',
-    'zope.testrunner',
-]
-
-setup(
-    name='BTrees',
-    version=version,
-    description='Scalable persistent object containers',
-    long_description=README,
-    classifiers=[
-        "Development Status :: 6 - Mature",
-        "License :: OSI Approved :: Zope Public License",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: 3.14",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Framework :: ZODB",
-        "Topic :: Database",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: Unix",
-    ],
-    author="Zope Foundation",
-    author_email="zodb-dev@zope.org",
-    url="https://github.com/zopefoundation/BTrees",
-    project_urls={
-        'Documentation': 'https://btrees.readthedocs.io',
-        'Issue Tracker': 'https://github.com/zopefoundation/BTrees/issues',
-        'Sources': 'https://github.com/zopefoundation/BTrees',
-    },
-    license="ZPL-2.1",
-    platforms=["any"],
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
-    include_package_data=True,
-    zip_safe=False,
-    ext_modules=ext_modules,
-    extras_require={
-        'test': TESTS_REQUIRE,
-        'ZODB': [
-            'ZODB',
-        ],
-        'docs': [
-            'Sphinx',
-            'repoze.sphinx.autointerface',
-            'sphinx_rtd_theme',
-        ],
-    },
-    python_requires='>=3.10',
-    install_requires=REQUIRES,
-    cmdclass={
-        'build_ext': optional_build_ext,
-    },
-    entry_points="""\
-    """
-)
+setup(ext_modules=ext_modules,
+      cmdclass={'build_ext': optional_build_ext})

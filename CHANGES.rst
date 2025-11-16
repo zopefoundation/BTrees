@@ -1,15 +1,14 @@
-==================
- BTrees Changelog
-==================
+Change log
+==========
 
 6.3 (unreleased)
-================
+----------------
 
-- Nothing changed yet.
+- Move all supported package metadata into ``pyproject.toml``.
 
 
 6.2 (2025-10-28)
-================
+----------------
 
 - Drop support for Python 3.8, 3.9.
 
@@ -17,13 +16,13 @@
 
 
 6.1 (2024-09-17)
-================
+----------------
 
 - Add final support for Python 3.13.
 
 
 6.0 (2024-05-30)
-================
+----------------
 
 - Drop support for Python 3.7.
 
@@ -31,13 +30,13 @@
 
 
 5.2 (2024-02-07)
-================
+----------------
 
 - Add preliminary support for Python 3.13 as of 3.13a3.
 
 
 5.1 (2023-10-05)
-================
+----------------
 
 - Drop using ``setup_requires`` due to constant problems on GHA.
 
@@ -45,7 +44,7 @@
 
 
 5.0 (2023-02-10)
-================
+----------------
 
 - Build Linux binary wheels for Python 3.11.
 
@@ -53,19 +52,19 @@
 
 
 4.11.3 (2022-11-17)
-===================
+-------------------
 
 - point release to rebuild full set of wheels
 
 
 4.11.2 (2022-11-16)
-===================
+-------------------
 
 - Add support for building arm64 wheels on macOS.
 
 
 4.11.1 (2022-11-09)
-===================
+-------------------
 
 - Fix macOS wheel build issues on GitHub Actions
 
@@ -73,26 +72,26 @@
 
 
 4.11.0 (2022-11-03)
-===================
+-------------------
 
 - Add support for Python 3.11.
 
 
 4.10.1 (2022-09-12)
-===================
+-------------------
 
 - Disable unsafe math optimizations in C code.
   (`#184 <https://github.com/zopefoundation/BTrees/pull/184>`_)
 
 
 4.10.0 (2022-03-09)
-===================
+-------------------
 
 - Add support for Python 3.10.
 
 
 4.9.2 (2021-06-09)
-==================
+------------------
 
 - Fix ``fsBTree.TreeSet`` and ``fsBTree.BTree`` raising
   ``SystemError``. See `issue 170 <https://github.com/zopefoundation/BTrees/issues/170>`_.
@@ -109,8 +108,9 @@
   function would produce garbage output. Now, if the function detects
   an arbitrary iterable, it automatically sorts a copy.
 
+
 4.9.1 (2021-05-27)
-==================
+------------------
 
 - Fix setting unknown class attributes on subclasses of BTrees when
   using the C extension. This prevented subclasses from being
@@ -119,7 +119,7 @@
 
 
 4.9.0 (2021-05-26)
-==================
+------------------
 
 - Fix the C implementation to match the Python implementation and
   allow setting custom node sizes for an entire application directly
@@ -133,8 +133,9 @@
   zope.interface attributes on ``BTree`` and ``TreeSet`` as well as
   deactivating persistent objects from this package.
 
+
 4.8.0 (2021-04-14)
-==================
+------------------
 
 - Make Python 2 forbid the use of type objects as keys (unless a
   custom metaclass is used that implements comparison as required by
@@ -218,8 +219,9 @@
   ZODB, but not propagated. See `issue 161
   <https://github.com/zopefoundation/BTrees/issues/161>`_.
 
+
 4.7.2 (2020-04-07)
-==================
+------------------
 
 - Fix more cases of C and Python inconsistency. The C implementation
   now behaves like the Python implementation when it comes to integer
@@ -237,7 +239,7 @@
 
 
 4.7.1 (2020-03-22)
-==================
+------------------
 
 - Fix the definitions of ``__all__`` in modules. In 4.7.0, they
   incorrectly left out names. See `PR 132
@@ -246,8 +248,9 @@
 - Ensure the interface resolution order of all objects is consistent.
   See `issue 137 <https://github.com/zopefoundation/BTrees/issues/137>`_.
 
+
 4.7.0 (2020-03-17)
-==================
+------------------
 
 - Add unsigned variants of the trees. These use the initial "U" for
   32-bit data and "Q" for 64-bit data (for "quad", which is similar to
@@ -265,14 +268,15 @@
   versions 4.3.2: Querying for keys with default comparisons or that
   are not integers no longer raises ``TypeError``.
 
+
 4.6.1 (2019-11-07)
-==================
+------------------
 
 - Add support for Python 3.8.
 
 
 4.6.0 (2019-07-30)
-==================
+------------------
 
 - Drop support for Python 3.4.
 
@@ -287,7 +291,7 @@
 
 
 4.5.1 (2018-08-09)
-==================
+------------------
 
 - Produce binary wheels for Python 3.7.
 
@@ -296,7 +300,7 @@
 
 
 4.5.0 (2018-04-23)
-==================
+------------------
 
 - Add support for Python 3.6 and 3.7.
 - Drop support for Python 3.3.
@@ -314,14 +318,16 @@
 - Fix a ``DeprecationWarning`` that could come from I and L objects in
   Python 2 in pure-Python mode. See https://github.com/zopefoundation/BTrees/issues/79
 
+
 4.4.1 (2017-01-24)
-==================
+------------------
 
 Fixed a packaging bug that caused extra files to be included (some of
 which caused problems in some platforms).
 
+
 4.4.0 (2017-01-11)
-==================
+------------------
 
 - Allow None as a special key (sorted smaller than all others).
 
@@ -329,8 +335,9 @@ which caused problems in some platforms).
   allowed as keys again.  Other objects with default ordering are
   still not allowed as keys.
 
+
 4.3.2 (2017-01-05)
-==================
+------------------
 
 - Make the CPython implementation consistent with the pure-Python
   implementation and only check object keys for default comparison
@@ -361,13 +368,15 @@ which caused problems in some platforms).
   raised a ``KeyError``, returned the default, and raised a
   ``TypeError``, while CPython raised ``TypeError`` in all three cases.
 
+
 4.3.1 (2016-05-16)
-==================
+------------------
 
 - Packaging:  fix password used to automate wheel creation on Travis.
 
+
 4.3.0 (2016-05-10)
-==================
+------------------
 
 - Fix unexpected ``OverflowError`` when passing 64bit values to long
   keys / values on Win64.  See:
@@ -392,19 +401,22 @@ which caused problems in some platforms).
 
 - Drop support for Python 2.6 and 3.2.
 
+
 4.2.0 (2015-11-13)
-==================
+------------------
 
 - Add support for Python 3.5.
 
+
 4.1.4 (2015-06-02)
-==================
+------------------
 
 - Ensure that pure-Python Bucket and Set objects have a human readable
   ``__repr__`` like the C versions.
 
+
 4.1.3 (2015-05-19)
-==================
+------------------
 
 - Fix ``_p_changed`` when removing items from small pure-Python
   BTrees/TreeSets and when adding items to small pure-Python Sets. See:
@@ -412,7 +424,7 @@ which caused problems in some platforms).
 
 
 4.1.2 (2015-04-07)
-==================
+------------------
 
 - Suppress testing 64-bit values in OLBTrees on 32 bit machines.
   See:  https://github.com/zopefoundation/BTrees/issues/9
@@ -423,13 +435,13 @@ which caused problems in some platforms).
 
 
 4.1.1 (2014-12-27)
-==================
+------------------
 
 - Accomodate long values in pure-Python OLBTrees.
 
 
 4.1.0 (2014-12-26)
-==================
+------------------
 
 - Add support for PyPy and PyPy3.
 
@@ -448,7 +460,7 @@ which caused problems in some platforms).
 
 
 4.0.8 (2013-05-25)
-==================
+------------------
 
 - Fix value-based comparison for objects under Py3k:  addresses invalid
   merges of ``[OLI]OBTrees/OBuckets``.
@@ -458,7 +470,7 @@ which caused problems in some platforms).
 
 
 4.0.7 (2013-05-22)
-==================
+------------------
 
 - Issue #2:  compilation error on 32-bit mode of OS/X.
 
@@ -467,7 +479,7 @@ which caused problems in some platforms).
 
 
 4.0.6 (2013-05-14)
-==================
+------------------
 
 - Changed the ``ZODB`` extra to require only the real ``ZODB`` package,
   rather than the ``ZODB3`` metapackage:  depending on the version used,
@@ -478,14 +490,14 @@ which caused problems in some platforms).
 
 
 4.0.5 (2013-01-15)
-==================
+------------------
 
 - Fit the ``repr`` of bucket objects, which could contain garbage
   characters.
 
 
 4.0.4 (2013-01-12)
-==================
+------------------
 
 - Emulate the (private) iterators used by the C extension modules from
   pure Python.  This change is "cosmetic" only:  it prevents the ZCML
@@ -501,13 +513,13 @@ which caused problems in some platforms).
 
 
 4.0.3 (2013-01-04)
-==================
+------------------
 
-- Added ``setup_requires==['persistent']``.
+- Added ``setup_requires--['persistent']``.
 
 
 4.0.2 (2013-01-03)
-==================
+------------------
 
 - Updated Trove classifiers.
 
@@ -521,14 +533,14 @@ which caused problems in some platforms).
 
 
 4.0.1 (2012-10-21)
-==================
+------------------
 
 - Provide local fallback for persistent C header inclusion if the
   persistent distribution isn't installed. This makes the winbot happy.
 
 
 4.0.0 (2012-10-20)
-==================
+------------------
 
 Platform Changes
 ----------------
