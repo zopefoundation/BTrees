@@ -98,7 +98,6 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-          - "3.15"
         os: [ubuntu-latest, macos-latest, windows-latest]
         exclude:
           - os: macos-latest
@@ -106,7 +105,7 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
@@ -150,18 +149,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install Build Dependencies (3.15)
-        if: matrix.python-version == '3.15'
-        run: |
-          pip install -U pip
-          pip install -U "setuptools >= 78.1.1,< 81" wheel twine
       - name: Install Build Dependencies
-        if: matrix.python-version != '3.15'
         run: |
           pip install -U pip
           pip install -U "setuptools >= 78.1.1,< 81" wheel twine
 
-      - name: Build Btrees (macOS x86_64)
+      - name: Build BTrees (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
@@ -174,7 +167,7 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-      - name: Build Btrees (macOS arm64)
+      - name: Build BTrees (macOS arm64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
@@ -187,7 +180,7 @@ jobs:
           # output (pip install uses a random temporary directory, making this difficult).
           python setup.py build_ext -i
           python setup.py bdist_wheel
-      - name: Build Btrees (all other versions)
+      - name: Build BTrees (all other versions)
         if: >
           !startsWith(runner.os, 'Mac')
           || startsWith(matrix.python-version, 'pypy')
@@ -197,25 +190,17 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
-      - name: Install Btrees and dependencies (3.15)
-        if: matrix.python-version == '3.15'
-        run: |
-          # Install to collect dependencies into the (pip) cache.
-          # Use "--pre" here because dependencies with support for this future
-          # Python release may only be available as pre-releases
-          pip install --pre .[test]
-      - name: Install Btrees and dependencies
-        if: matrix.python-version != '3.15'
+      - name: Install BTrees and dependencies
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install -U pip "setuptools >= 78.1.1,< 81"
           pip install .[test]
 
-      - name: Check Btrees build
+      - name: Check BTrees build
         run: |
           ls -l dist
           twine check dist/*
-      - name: Upload Btrees wheel (macOS x86_64)
+      - name: Upload BTrees wheel (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
         uses: actions/upload-artifact@v4
@@ -223,22 +208,22 @@ jobs:
           # The x86_64 wheel is uploaded with a different name just so it can be
           # manually downloaded when desired. The wheel itself *cannot* be tested
           # on the GHA runner, which uses arm64 architecture.
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}-x86_64.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-x86_64.whl
           path: dist/*x86_64.whl
-      - name: Upload Btrees wheel (macOS arm64)
+      - name: Upload BTrees wheel (macOS arm64)
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
         uses: actions/upload-artifact@v4
         with:
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*arm64.whl
-      - name: Upload Btrees wheel (all other platforms)
+      - name: Upload BTrees wheel (all other platforms)
         if: >
           !startsWith(runner.os, 'Mac')
         uses: actions/upload-artifact@v4
         with:
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*whl
 
   test:
@@ -254,7 +239,6 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-          - "3.15"
         os: [ubuntu-latest, macos-latest, windows-latest]
         exclude:
           - os: macos-latest
@@ -262,7 +246,7 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
@@ -306,28 +290,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download Btrees wheel
+      - name: Download BTrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install Btrees ${{ matrix.python-version }}
-        if: matrix.python-version == '3.15'
-        run: |
-          pip install -U wheel "setuptools >= 78.1.1,< 81"
-          # coverage might have a wheel on PyPI for a future python version which is
-          # not ABI compatible with the current one, so build it from sdist:
-          pip install -U --no-binary :all: coverage[toml]
-          # Unzip into src/ so that testrunner can find the .so files
-          # when we ask it to load tests from that directory. This
-          # might also save some build time?
-          ls -l dist/
-          unzip -n dist/*.whl -d src
-          # Use "--pre" here because dependencies with support for this future
-          # Python release may only be available as pre-releases
-          pip install --pre -e .[test]
-      - name: Install Btrees
-        if: matrix.python-version != '3.15'
+      - name: Install BTrees
         run: |
           pip install -U wheel "setuptools >= 78.1.1,< 81"
           pip install -U coverage[toml]
@@ -378,7 +346,7 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
@@ -422,12 +390,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download Btrees wheel
+      - name: Download BTrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install Btrees
+      - name: Install BTrees
         run: |
           pip install -U wheel
           pip install -U coverage[toml]
@@ -449,7 +417,7 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
@@ -493,12 +461,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download Btrees wheel
+      - name: Download BTrees wheel
         uses: actions/download-artifact@v4
         with:
-          name: Btrees-${{ runner.os }}-${{ matrix.python-version }}.whl
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
-      - name: Install Btrees
+      - name: Install BTrees
         run: |
           pip install -U wheel
           pip install -U tox
@@ -527,7 +495,7 @@ jobs:
             python-version: "3.13"
     steps:
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
@@ -574,7 +542,7 @@ jobs:
       - name: Update pip
         run: pip install -U pip
 
-      - name: Build Btrees
+      - name: Build BTrees
         if: matrix.image != 'manylinux2014_i686'
         # An alternate way to do this is to run the container directly with a uses:
         # and then the script runs inside it. That may work better with caching.
@@ -583,7 +551,7 @@ jobs:
           DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
         run: |
           bash .manylinux.sh
-      - name: Build Btrees (i686)
+      - name: Build BTrees (i686)
         if: matrix.image == 'manylinux2014_i686'
         env:
           DOCKER_IMAGE: quay.io/pypa/${{ matrix.image }}
@@ -591,7 +559,7 @@ jobs:
         run: |
           bash .manylinux.sh
 
-      - name: Upload Btrees wheels
+      - name: Upload BTrees wheels
         uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*whl
@@ -599,9 +567,6 @@ jobs:
 
       - name: Restore pip cache permissions
         run: sudo chown -R $(whoami) ${{ steps.pip-cache-default.outputs.dir }}
-
-      - name: Prevent publishing wheels for unreleased Python versions
-        run: VER=$(echo '3.15' | tr -d .) && ls -al wheelhouse && sudo rm -f wheelhouse/*-cp${VER}*.whl && ls -al wheelhouse
 
   publish:
     name: Publish to PyPI
