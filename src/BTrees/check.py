@@ -34,59 +34,15 @@ that doesn't exist in the actual BTree).
 """
 
 # 32-bit signed int
-from BTrees.IFBTree import IFBTree, IFBucket, IFSet, IFTreeSet
-from BTrees.IFBTree import IFBTreePy, IFBucketPy, IFSetPy, IFTreeSetPy
-from BTrees.IIBTree import IIBTree, IIBucket, IISet, IITreeSet
-from BTrees.IIBTree import IIBTreePy, IIBucketPy, IISetPy, IITreeSetPy
-from BTrees.IOBTree import IOBTree, IOBucket, IOSet, IOTreeSet
-from BTrees.IOBTree import IOBTreePy, IOBucketPy, IOSetPy, IOTreeSetPy
-from BTrees.IUBTree import IUBTree, IUBucket, IUSet, IUTreeSet
-from BTrees.IUBTree import IUBTreePy, IUBucketPy, IUSetPy, IUTreeSetPy
 
 # 32-bit unsigned int
-from BTrees.UFBTree import UFBTree, UFBucket, UFSet, UFTreeSet
-from BTrees.UFBTree import UFBTreePy, UFBucketPy, UFSetPy, UFTreeSetPy
-from BTrees.UIBTree import UIBTree, UIBucket, UISet, UITreeSet
-from BTrees.UIBTree import UIBTreePy, UIBucketPy, UISetPy, UITreeSetPy
-from BTrees.UOBTree import UOBTree, UOBucket, UOSet, UOTreeSet
-from BTrees.UOBTree import UOBTreePy, UOBucketPy, UOSetPy, UOTreeSetPy
-from BTrees.UUBTree import UUBTree, UUBucket, UUSet, UUTreeSet
-from BTrees.UUBTree import UUBTreePy, UUBucketPy, UUSetPy, UUTreeSetPy
 
 # 64-bit signed int
-from BTrees.LFBTree import LFBTree, LFBucket, LFSet, LFTreeSet
-from BTrees.LFBTree import LFBTreePy, LFBucketPy, LFSetPy, LFTreeSetPy
-from BTrees.LLBTree import LLBTree, LLBucket, LLSet, LLTreeSet
-from BTrees.LLBTree import LLBTreePy, LLBucketPy, LLSetPy, LLTreeSetPy
-from BTrees.LOBTree import LOBTree, LOBucket, LOSet, LOTreeSet
-from BTrees.LOBTree import LOBTreePy, LOBucketPy, LOSetPy, LOTreeSetPy
-from BTrees.LQBTree import LQBTree, LQBucket, LQSet, LQTreeSet
-from BTrees.LQBTree import LQBTreePy, LQBucketPy, LQSetPy, LQTreeSetPy
 
 # 64-bit unsigned int
-from BTrees.QFBTree import QFBTree, QFBucket, QFSet, QFTreeSet
-from BTrees.QFBTree import QFBTreePy, QFBucketPy, QFSetPy, QFTreeSetPy
-from BTrees.QLBTree import QLBTree, QLBucket, QLSet, QLTreeSet
-from BTrees.QLBTree import QLBTreePy, QLBucketPy, QLSetPy, QLTreeSetPy
-from BTrees.QOBTree import QOBTree, QOBucket, QOSet, QOTreeSet
-from BTrees.QOBTree import QOBTreePy, QOBucketPy, QOSetPy, QOTreeSetPy
-from BTrees.QQBTree import QQBTree, QQBucket, QQSet, QQTreeSet
-from BTrees.QQBTree import QQBTreePy, QQBucketPy, QQSetPy, QQTreeSetPy
 
 
-from BTrees.OIBTree import OIBTree, OIBucket, OISet, OITreeSet
-from BTrees.OIBTree import OIBTreePy, OIBucketPy, OISetPy, OITreeSetPy
-from BTrees.OLBTree import OLBTree, OLBucket, OLSet, OLTreeSet
-from BTrees.OLBTree import OLBTreePy, OLBucketPy, OLSetPy, OLTreeSetPy
-from BTrees.OOBTree import OOBTree, OOBucket, OOSet, OOTreeSet
-from BTrees.OOBTree import OOBTreePy, OOBucketPy, OOSetPy, OOTreeSetPy
-from BTrees.OUBTree import OUBTree, OUBucket, OUSet, OUTreeSet
-from BTrees.OUBTree import OUBTreePy, OUBucketPy, OUSetPy, OUTreeSetPy
-from BTrees.OQBTree import OQBTree, OQBucket, OQSet, OQTreeSet
-from BTrees.OQBTree import OQBTreePy, OQBucketPy, OQSetPy, OQTreeSetPy
 
-from BTrees.fsBTree import fsBTree, fsBucket, fsSet, fsTreeSet
-from BTrees.fsBTree import fsBTreePy, fsBucketPy, fsSetPy, fsTreeSetPy
 
 from BTrees.utils import positive_id
 from BTrees.utils import oid_repr
