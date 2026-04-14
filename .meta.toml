@@ -2,15 +2,16 @@
 # https://github.com/zopefoundation/meta/tree/master/src/zope/meta/c-code
 [meta]
 template = "c-code"
-commit-id = "f62d8bab"
+commit-id = "2dc0cedb"
 
 [python]
 with-windows = true
 with-pypy = true
-with-future-python = false
+with-future-python = true
 with-docs = true
 with-sphinx-doctests = true
 with-macos = false
+with-free-threaded-python = false
 
 [tox]
 additional-envlist = [

@@ -94,10 +94,15 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-        os: [ubuntu-latest, macos-latest, windows-latest]
+          - "3.15"
+        os: [ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
         exclude:
           - os: macos-latest
             python-version: "pypy-3.11"
+          - os: windows-11-arm
+            python-version: "pypy-3.11"
+          - os: windows-11-arm
+            python-version: "3.10"
 
     steps:
       - name: checkout
@@ -128,7 +133,7 @@ jobs:
           echo "dir=$(pip cache dir)" >> $Env:GITHUB_OUTPUT
 
       - name: pip cache (default)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ !startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-default.outputs.dir }}
@@ -137,7 +142,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: pip cache (Windows)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-windows.outputs.dir }}
@@ -145,7 +150,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Install Build Dependencies (3.15)
+        if: matrix.python-version == '3.15'
+        run: |
+          pip install -U pip
+          pip install -U "setuptools >= 78.1.1,< 81" wheel twine
       - name: Install Build Dependencies
+        if: matrix.python-version != '3.15'
         run: |
           pip install -U pip
           pip install -U "setuptools >= 78.1.1,< 81" wheel twine
@@ -186,7 +197,15 @@ jobs:
           python setup.py build_ext -i
           python setup.py bdist_wheel
 
+      - name: Install BTrees and dependencies (3.15)
+        if: matrix.python-version == '3.15'
+        run: |
+          # Install to collect dependencies into the (pip) cache.
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          pip install --pre .[test]
       - name: Install BTrees and dependencies
+        if: matrix.python-version != '3.15'
         run: |
           # Install to collect dependencies into the (pip) cache.
           pip install -U pip "setuptools >= 78.1.1,< 81"
@@ -199,7 +218,7 @@ jobs:
       - name: Upload BTrees wheel (macOS x86_64)
         if: >
           startsWith(runner.os, 'Mac')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           # The x86_64 wheel is uploaded with a different name just so it can be
           # manually downloaded when desired. The wheel itself *cannot* be tested
@@ -210,14 +229,20 @@ jobs:
         if: >
           startsWith(runner.os, 'Mac')
           && !startsWith(matrix.python-version, 'pypy')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*arm64.whl
-      - name: Upload BTrees wheel (all other platforms)
-        if: >
-          !startsWith(runner.os, 'Mac')
-        uses: actions/upload-artifact@v4
+      - name: Upload BTrees wheel (Windows)
+        if: startsWith(runner.os, 'Windows')
+        uses: actions/upload-artifact@v7
+        with:
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-${{ runner.arch }}.whl
+          path: dist/*whl
+
+      - name: Upload BTrees wheel (Linux)
+        if: startsWith(runner.os, 'Linux')
+        uses: actions/upload-artifact@v7
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/*whl
@@ -235,10 +260,15 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-        os: [ubuntu-latest, macos-latest, windows-latest]
+          - "3.15"
+        os: [ubuntu-latest, macos-latest, windows-latest, windows-11-arm]
         exclude:
           - os: macos-latest
             python-version: "pypy-3.11"
+          - os: windows-11-arm
+            python-version: "pypy-3.11"
+          - os: windows-11-arm
+            python-version: "3.10"
 
     steps:
       - name: checkout
@@ -269,7 +299,7 @@ jobs:
           echo "dir=$(pip cache dir)" >> $Env:GITHUB_OUTPUT
 
       - name: pip cache (default)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ !startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-default.outputs.dir }}
@@ -278,20 +308,43 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: pip cache (Windows)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-windows.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
-      - name: Download BTrees wheel
-        uses: actions/download-artifact@v4
+      - name: Download BTrees wheel (Linux/macOS)
+        if: "!startsWith(runner.os, 'Windows')"
+        uses: actions/download-artifact@v8
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
+
+      - name: Download BTrees wheel (Windows)
+        if: startsWith(runner.os, 'Windows')
+        uses: actions/download-artifact@v8
+        with:
+          name: BTrees-${{ runner.os }}-${{ matrix.python-version }}-${{ runner.arch }}.whl
+          path: dist/
+      - name: Install BTrees ${{ matrix.python-version }}
+        if: matrix.python-version == '3.15'
+        run: |
+          pip install -U wheel "setuptools >= 78.1.1,< 81"
+          # coverage might have a wheel on PyPI for a future python version which is
+          # not ABI compatible with the current one, so build it from sdist:
+          pip install -U --no-binary :all: coverage[toml]
+          # Unzip into src/ so that testrunner can find the .so files
+          # when we ask it to load tests from that directory. This
+          # might also save some build time?
+          ls -l dist/
+          unzip -n dist/*.whl -d src
+          # Use "--pre" here because dependencies with support for this future
+          # Python release may only be available as pre-releases
+          pip install --pre -e .[test]
       - name: Install BTrees
+        if: matrix.python-version != '3.15'
         run: |
           pip install -U wheel "setuptools >= 78.1.1,< 81"
           pip install -U coverage[toml]
@@ -369,7 +422,7 @@ jobs:
           echo "dir=$(pip cache dir)" >> $Env:GITHUB_OUTPUT
 
       - name: pip cache (default)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ !startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-default.outputs.dir }}
@@ -378,16 +431,15 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: pip cache (Windows)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-windows.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -440,7 +492,7 @@ jobs:
           echo "dir=$(pip cache dir)" >> $Env:GITHUB_OUTPUT
 
       - name: pip cache (default)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ !startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-default.outputs.dir }}
@@ -449,16 +501,15 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: pip cache (Windows)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-windows.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: Download BTrees wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: BTrees-${{ runner.os }}-${{ matrix.python-version }}.whl
           path: dist/
@@ -518,7 +569,7 @@ jobs:
           echo "dir=$(pip cache dir)" >> $Env:GITHUB_OUTPUT
 
       - name: pip cache (default)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ !startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-default.outputs.dir }}
@@ -527,7 +578,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: pip cache (Windows)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: ${{ startsWith(runner.os, 'Windows') }}
         with:
           path: ${{ steps.pip-cache-windows.outputs.dir }}
@@ -556,13 +607,16 @@ jobs:
           bash .manylinux.sh
 
       - name: Upload BTrees wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: wheelhouse/*whl
           name: manylinux_${{ matrix.image }}_wheels.zip
 
       - name: Restore pip cache permissions
         run: sudo chown -R $(whoami) ${{ steps.pip-cache-default.outputs.dir }}
+
+      - name: Prevent publishing wheels for unreleased Python versions
+        run: VER=$(echo '3.15' | tr -d .) && ls -al wheelhouse && sudo rm -f wheelhouse/*-cp${VER}*.whl && ls -al wheelhouse
 
   publish:
     name: Publish to PyPI
@@ -580,7 +634,7 @@ jobs:
 
     steps:
       - name: Download all wheel artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist/
           pattern: '*'
@@ -597,7 +651,7 @@ jobs:
           # PyPy wheels shouldn't be uploaded, remove them if present
           find dist/ -name "*pypy*" -type f -delete || true
           find dist/ -name "*none-any*" -type f -delete || true
-          # Wheels for the no-yet-supported future Python version need to go
+          # Wheels for the not-yet-supported future Python version need to go
           find dist/ -name "*3.15*" -type f -delete || true
           find dist/ -name "*cp315*" -type f -delete || true
           # For Linux, we only want the manylinux wheels
