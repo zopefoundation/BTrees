@@ -45,6 +45,7 @@ tox_env_map() {
         *"cp312"*) echo 'py312';;
         *"cp313"*) echo 'py313';;
         *"cp314"*) echo 'py314';;
+        *"cp315"*) echo 'py315';;
         *) echo 'py';;
     esac
 }
@@ -56,9 +57,15 @@ for PYBIN in /opt/python/*/bin; do
        [[ "${PYBIN}" == *"cp311/"* ]] || \
        [[ "${PYBIN}" == *"cp312/"* ]] || \
        [[ "${PYBIN}" == *"cp313/"* ]] || \
-       [[ "${PYBIN}" == *"cp314/"* ]] ; then
-        "${PYBIN}/pip" install -e /io/
-        "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+       [[ "${PYBIN}" == *"cp314/"* ]] || \
+       [[ "${PYBIN}" == *"cp315/"* ]] ; then
+        if [[ "${PYBIN}" == *"cp315/"* ]] ; then
+            "${PYBIN}/pip" install --pre -e /io/
+            "${PYBIN}/pip" wheel /io/ --pre -w wheelhouse/
+        else
+            "${PYBIN}/pip" install -e /io/
+            "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+        fi
         if [ `uname -m` == 'aarch64' ]; then
           # Running the test suite takes forever in
           # emulation; an early run (using tox, which is also slow)
