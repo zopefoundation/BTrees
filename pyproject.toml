@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "BTrees"
-version = "6.4.dev0"
+version = "6.4"
 description = "Scalable persistent object containers"
 dynamic = ["readme"]
 requires-python = ">=3.10"
