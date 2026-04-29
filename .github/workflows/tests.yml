@@ -154,12 +154,12 @@ jobs:
         if: matrix.python-version == '3.15'
         run: |
           pip install -U pip
-          pip install -U "setuptools >= 78.1.1,< 81" wheel twine
+          pip install -U "setuptools >= 78.1.1,< 82" wheel twine
       - name: Install Build Dependencies
         if: matrix.python-version != '3.15'
         run: |
           pip install -U pip
-          pip install -U "setuptools >= 78.1.1,< 81" wheel twine
+          pip install -U "setuptools >= 78.1.1,< 82" wheel twine
 
       - name: Build BTrees (macOS x86_64)
         if: >
@@ -215,7 +215,7 @@ jobs:
         if: matrix.python-version != '3.15'
         run: |
           # Install to collect dependencies into the (pip) cache.
-          pip install -U pip "setuptools >= 78.1.1,< 81"
+          pip install -U pip "setuptools >= 78.1.1,< 82"
           pip install .[test]
 
       - name: Check BTrees build
@@ -347,7 +347,7 @@ jobs:
       - name: Install BTrees ${{ matrix.python-version }}
         if: matrix.python-version == '3.15'
         run: |
-          pip install -U wheel "setuptools >= 78.1.1,< 81"
+          pip install -U wheel "setuptools >= 78.1.1,< 82"
           # coverage might have a wheel on PyPI for a future python version which is
           # not ABI compatible with the current one, so build it from sdist:
           pip install -U --no-binary :all: coverage[toml]
@@ -362,7 +362,7 @@ jobs:
       - name: Install BTrees
         if: matrix.python-version != '3.15'
         run: |
-          pip install -U wheel "setuptools >= 78.1.1,< 81"
+          pip install -U wheel "setuptools >= 78.1.1,< 82"
           pip install -U coverage[toml]
           pip install -U 'cffi; platform_python_implementation == "CPython"'
           # Unzip into src/ so that testrunner can find the .so files
