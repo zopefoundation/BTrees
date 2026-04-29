@@ -260,7 +260,7 @@ jobs:
           && matrix.python-version == '3.14'
         uses: actions/upload-artifact@v7
         with:
-          name: BTrees-${{ github.ref_name }}.tar.gz
+          name: BTrees.tar.gz
           path: dist/*gz
 
   test:
