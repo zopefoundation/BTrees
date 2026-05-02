@@ -73,8 +73,11 @@ BTreeItems_dealloc(BTreeItems *self)
 static Py_ssize_t
 BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     Py_ssize_t r;
-    Bucket *b, *next;
+    Bucket *b;
+    Bucket *next;
 
     b = self->firstbucket;
     if (b == NULL)
@@ -90,7 +93,8 @@ BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
         return r;
 
     Py_INCREF(b);
-    PER_USE_OR_RETURN(b, -1);
+    if (!per_use((cPersistentObject*)b, capi_struct))
+        return -1;
     while ((next = b->next))
     {
         r += b->len;
@@ -102,12 +106,15 @@ BTreeItems_length_or_nonzero(BTreeItems *self, int nonzero)
             break; /* we already counted the last bucket */
 
         Py_INCREF(next);
-        PER_UNUSE(b);
+        per_allow_deactivation((cPersistentObject*)b);
+        capi_struct->accessed((cPersistentObject*)b);
         Py_DECREF(b);
         b = next;
-        PER_USE_OR_RETURN(b, -1);
+        if (!per_use((cPersistentObject*)b, capi_struct))
+            return -1;
     }
-    PER_UNUSE(b);
+    per_allow_deactivation((cPersistentObject*)b);
+    capi_struct->accessed((cPersistentObject*)b);
     Py_DECREF(b);
 
     return r >= 0 ? r : 0;
@@ -136,8 +143,13 @@ BTreeItems_length(BTreeItems *self)
 static int
 BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
 {
-    int delta, pseudoindex, currentoffset;
-    Bucket *b, *currentbucket;
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
+    Bucket *b;
+    Bucket *currentbucket;
+    int delta;
+    int pseudoindex;
+    int currentoffset;
     int error;
 
     pseudoindex = self->pseudoindex;
@@ -153,10 +165,12 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
         /* Want to move right delta positions; the most we can move right in
          * this bucket is currentbucket->len - currentoffset - 1 positions.
          */
-        PER_USE_OR_RETURN(currentbucket, -1);
+        if (!per_use((cPersistentObject*)currentbucket, capi_struct))
+            return -1;
         max = currentbucket->len - currentoffset - 1;
         b = currentbucket->next;
-        PER_UNUSE(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
+        capi_struct->accessed((cPersistentObject*)currentbucket);
         if (delta <= max)
         {
             currentoffset += delta;
@@ -199,9 +213,11 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
             return -1;
         pseudoindex -= currentoffset + 1;
         delta += currentoffset + 1;
-        PER_USE_OR_RETURN(currentbucket, -1);
+        if (!per_use((cPersistentObject*)currentbucket, capi_struct))
+            return -1;
         currentoffset = currentbucket->len - 1;
-        PER_UNUSE(currentbucket);
+        per_allow_deactivation((cPersistentObject*)currentbucket);
+        capi_struct->accessed((cPersistentObject*)currentbucket);
     }
 
     assert(pseudoindex == i);
@@ -210,9 +226,11 @@ BTreeItems_seek(BTreeItems *self, Py_ssize_t i)
      * were called, and if they deleted stuff, we may be pointing into
      * trash memory now.
      */
-    PER_USE_OR_RETURN(currentbucket, -1);
+    if (!per_use((cPersistentObject*)currentbucket, capi_struct))
+        return -1;
     error = currentoffset < 0 || currentoffset >= currentbucket->len;
-    PER_UNUSE(currentbucket);
+    per_allow_deactivation((cPersistentObject*)currentbucket);
+    capi_struct->accessed((cPersistentObject*)currentbucket);
     if (error)
     {
         PyErr_SetString(PyExc_RuntimeError,
@@ -304,15 +322,19 @@ getBucketEntry(Bucket *b, int i, char kind)
 static PyObject *
 BTreeItems_item(BTreeItems *self, Py_ssize_t i)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *result;
 
     if (BTreeItems_seek(self, i) < 0)
         return NULL;
 
-    PER_USE_OR_RETURN(self->currentbucket, NULL);
+    if (!per_use((cPersistentObject*)self->currentbucket, capi_struct))
+        return NULL;
     result = getBucketEntry(self->currentbucket, self->currentoffset,
                             self->kind);
-    PER_UNUSE(self->currentbucket);
+    per_allow_deactivation((cPersistentObject*)self->currentbucket);
+    capi_struct->accessed((cPersistentObject*)self->currentbucket);
     return result;
 }
 
@@ -553,6 +575,8 @@ newBTreeItems(char kind,
 static int
 nextBTreeItems(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -566,7 +590,7 @@ nextBTreeItems(SetIteration *i)
             Bucket *currentbucket;
 
             currentbucket = BUCKET(ITEMS(i->set)->currentbucket);
-            UNLESS(PER_USE(currentbucket))
+            UNLESS(per_use((cPersistentObject*)currentbucket, capi_struct))
             {
                 /* Mark iteration terminated, so that finiSetIteration doesn't
                 * try to redundantly decref the key and value
@@ -584,7 +608,8 @@ nextBTreeItems(SetIteration *i)
 
             i->position ++;
 
-            PER_UNUSE(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
+            capi_struct->accessed((cPersistentObject*)currentbucket);
         }
         else
         {
@@ -598,6 +623,8 @@ nextBTreeItems(SetIteration *i)
 static int
 nextTreeSetItems(SetIteration *i)
 {
+    PyObject* obj_self = (PyObject*)i;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     if (i->position >= 0)
     {
         if (i->position)
@@ -610,7 +637,7 @@ nextTreeSetItems(SetIteration *i)
             Bucket *currentbucket;
 
             currentbucket = BUCKET(ITEMS(i->set)->currentbucket);
-            UNLESS(PER_USE(currentbucket))
+            UNLESS(per_use((cPersistentObject*)currentbucket, capi_struct))
             {
                 /* Mark iteration terminated, so that finiSetIteration doesn't
                 * try to redundantly decref the key and value
@@ -624,7 +651,8 @@ nextTreeSetItems(SetIteration *i)
 
             i->position ++;
 
-            PER_UNUSE(currentbucket);
+            per_allow_deactivation((cPersistentObject*)currentbucket);
+            capi_struct->accessed((cPersistentObject*)currentbucket);
         }
         else
         {
@@ -684,6 +712,8 @@ BTreeIter_dealloc(BTreeIter *bi)
 static PyObject *
 BTreeIter_next(BTreeIter *bi, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)bi;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     PyObject *result = NULL;        /* until proven innocent */
     BTreeItems *items = bi->pitems;
     int i = items->currentoffset;
@@ -692,7 +722,8 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     if (bucket == NULL)    /* iteration termination is sticky */
         return NULL;
 
-    PER_USE_OR_RETURN(bucket, NULL);
+    if (!per_use((cPersistentObject*)bucket, capi_struct))
+        return NULL;
     if (i >= bucket->len)
     {
         /* We never leave this routine normally with i >= len:  somebody
@@ -729,7 +760,8 @@ BTreeIter_next(BTreeIter *bi, PyObject *args)
     }
 
 Done:
-    PER_UNUSE(bucket);
+    per_allow_deactivation((cPersistentObject*)bucket);
+    capi_struct->accessed((cPersistentObject*)bucket);
     return result;
 }
 
