@@ -221,14 +221,17 @@ err:
 static PyObject *
 TreeSet_setstate(BTree *self, PyObject *args)
 {
+    PyObject* obj_self = (PyObject*)self;
+    cPersistenceCAPIstruct* capi_struct = _get_capi_struct(obj_self);
     int r;
 
     if (!PyArg_ParseTuple(args,"O",&args))
         return NULL;
 
-    PER_PREVENT_DEACTIVATION(self);
-    r=_BTree_setstate(self, args, 1);
-    PER_UNUSE(self);
+    per_prevent_deactivation((cPersistentObject*)self);
+    r = _BTree_setstate(self, args, 1);
+    per_allow_deactivation((cPersistentObject*)self);
+    capi_struct->accessed((cPersistentObject*)self);
 
     if (r < 0)
         return NULL;
