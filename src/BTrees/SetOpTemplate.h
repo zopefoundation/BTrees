@@ -4,12 +4,12 @@
 #include "Python.h"
 
 static PyObject *
-union_m(PyObject *ignored, PyObject *args);
+union_m(PyObject *module, PyObject *args);
 
 static PyObject *
-intersection_m(PyObject *ignored, PyObject *args);
+intersection_m(PyObject *module, PyObject *args);
 
 static PyObject *
-difference_m(PyObject *ignored, PyObject *args);
+difference_m(PyObject *module, PyObject *args);
 
 # endif
