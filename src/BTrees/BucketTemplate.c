@@ -1018,8 +1018,8 @@ bucket_byValue(Bucket *self, PyObject *omin)
 {
     PyObject *r=0, *o=0, *item=0;
     VALUE_TYPE min;
-    VALUE_TYPE v;
-    int i, l, copied=1;
+    VALUE_TYPE cur;
+    int i, copied=1, cmp;
 
     PER_USE_OR_RETURN(self, NULL);
 
@@ -1027,37 +1027,63 @@ bucket_byValue(Bucket *self, PyObject *omin)
     UNLESS(copied)
         return NULL;
 
-    for (i=0, l=0; i < self->len; i++)
-        if (TEST_VALUE(self->values[i], min) >= 0)
-        l++;
-
-    UNLESS (r=PyList_New(l))
+    UNLESS (r=PyList_New(0))
         goto err;
 
-    for (i=0, l=0; i < self->len; i++)
+    for (i=0; i < self->len; i++)
     {
-        if (TEST_VALUE(self->values[i], min) < 0)
+        /* Compare against an owned copy of the value.  For object values
+           TEST_VALUE runs arbitrary Python code (__lt__/__eq__), which may
+           re-enter and mutate this very bucket -- freeing self->values and
+           self->keys.  Holding our own reference keeps the value alive across
+           the comparison, and after it we re-validate the bucket before
+           touching self->keys[i]/self->values[i] again. */
+        COPY_VALUE(cur, self->values[i]);
+        INCREF_VALUE(cur);
+        cmp = TEST_VALUE(cur, min);
+        if (PyErr_Occurred())
+        {
+            DECREF_VALUE(cur);
+            goto err;
+        }
+        if (self->values == NULL || i >= self->len)
+        {
+            DECREF_VALUE(cur);
+            PyErr_SetString(PyExc_RuntimeError,
+                            "bucket changed size during iteration");
+            goto err;
+        }
+        if (cmp < 0)
+        {
+            DECREF_VALUE(cur);
             continue;
+        }
 
         UNLESS (item = PyTuple_New(2))
+        {
+            DECREF_VALUE(cur);
             goto err;
+        }
 
         COPY_KEY_TO_OBJECT(o, self->keys[i]);
         UNLESS (o)
+        {
+            DECREF_VALUE(cur);
             goto err;
+        }
         PyTuple_SET_ITEM(item, 1, o);
 
-        COPY_VALUE(v, self->values[i]);
-        NORMALIZE_VALUE(v, min);
-        COPY_VALUE_TO_OBJECT(o, v);
-        DECREF_VALUE(v);
+        NORMALIZE_VALUE(cur, min);
+        COPY_VALUE_TO_OBJECT(o, cur);
+        DECREF_VALUE(cur);  /* balance NORMALIZE_VALUE */
+        DECREF_VALUE(cur);  /* balance the INCREF taken before the comparison */
         UNLESS (o)
             goto err;
         PyTuple_SET_ITEM(item, 0, o);
 
-        if (PyList_SetItem(r, l, item) < 0)
+        if (PyList_Append(r, item) < 0)
             goto err;
-        l++;
+        Py_DECREF(item);
 
         item = 0;
     }

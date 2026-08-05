@@ -14,6 +14,7 @@
 import unittest
 
 from BTrees.tests.common import permutations
+from BTrees.tests.common import skipOnPurePython
 
 
 class DegenerateBTree(unittest.TestCase):
@@ -397,6 +398,77 @@ class TestBugFixes(unittest.TestCase):
 
         self.assertEqual(len(t), 0)
         self.assertEqual(len(LP294788_ids), 0)
+
+    # https://github.com/zopefoundation/BTrees/issues/226
+    # Bucket.byValue() dereferenced a freed array pointer if a value's
+    # comparison method mutated the bucket, segfaulting the interpreter.
+    # Pure-Python buckets have no byValue(), so this is a C-only test.
+    @skipOnPurePython
+    def test_byValue_mutation_during_comparison(self):
+        from BTrees.OOBTree import OOBucket
+
+        for mutate in ('clear', 'del', 'pop'):
+            bucket = OOBucket()
+
+            class Mutating:
+                def __lt__(self, other):
+                    if mutate == 'clear':
+                        bucket.clear()
+                    elif mutate == 'del':
+                        del bucket[1]
+                    else:
+                        bucket.pop(1)
+                    return False
+
+                def __eq__(self, other):
+                    return False
+
+                __hash__ = object.__hash__
+
+            bucket[1] = Mutating()
+            # Used to segfault; must now raise instead of crashing.
+            with self.assertRaises(RuntimeError):
+                bucket.byValue(object())
+
+    @skipOnPurePython
+    def test_byValue_inconsistent_comparison(self):
+        from BTrees.OOBTree import OOBucket
+
+        class Inconsistent:
+            calls = 0
+
+            def __lt__(self, other):
+                Inconsistent.calls += 1
+                return Inconsistent.calls <= 1
+
+            def __eq__(self, other):
+                return False
+
+            __hash__ = object.__hash__
+
+        bucket = OOBucket()
+        bucket[1] = Inconsistent()
+        # A comparison that answers differently on repeated calls used to
+        # raise IndexError (and double-decref on a --with-pydebug build).
+        self.assertEqual(list(bucket.byValue(object())), [])
+
+    @skipOnPurePython
+    def test_byValue_comparison_error_propagates(self):
+        from BTrees.OOBTree import OOBucket
+
+        class Boom:
+            def __lt__(self, other):
+                raise ValueError('boom')
+
+            def __eq__(self, other):
+                return False
+
+            __hash__ = object.__hash__
+
+        bucket = OOBucket()
+        bucket[1] = Boom()
+        with self.assertRaises(ValueError):
+            bucket.byValue(object())
 
 
 # comparison error propagation tests

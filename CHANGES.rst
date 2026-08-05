@@ -4,7 +4,10 @@ Change log
 6.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix a segfault in the C implementation of ``Bucket.byValue()`` when a
+  value's comparison method mutates the bucket, plus a related ``IndexError``
+  (and a masked double-decref) when a comparison returns inconsistent results.
+  See `issue 226 <https://github.com/zopefoundation/BTrees/issues/226>`_.
 
 
 6.4 (2026-04-29)
