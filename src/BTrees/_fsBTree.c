@@ -67,8 +67,6 @@ typedef unsigned char char6[6];
       PyErr_SetString(PyExc_TypeError, "expected six-character string key"); \
       (STATUS)=0; }
 
-#define NORMALIZE_VALUE(V, MIN)
-
 #include "Python.h"
 
 static PyObject *bucket_toBytes(PyObject *self);

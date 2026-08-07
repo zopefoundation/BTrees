@@ -308,14 +308,6 @@ class IDictionaryIsh(IMinimalDictionary):
         (key, value) pairs.
         """
 
-    def byValue(minValue):
-        """Return a sequence of (value, key) pairs, sorted by value.
-
-        Values < minValue are omitted and other values are "normalized" by
-        the minimum value.  This normalization may be a noop, but, for
-        integer values, the normalization is division.
-        """
-
     def setdefault(key, d):
         """D.setdefault(k, d) -> D.get(k, d), also set D[k]=d if k not in D.
 
@@ -343,6 +335,30 @@ class IDictionaryIsh(IMinimalDictionary):
         as a 2-tuple; but raise KeyError if D is empty.
 
         .. versionadded:: 4.8.0
+        """
+
+
+class IByValue(Interface):
+    """Support for the deprecated ``byValue`` method.
+
+    Only the ``Bucket`` and ``BTree`` classes of the ``II`` and ``LL``
+    families provide this, that is the modules reachable as
+    ``BTrees.family32.II`` and ``BTrees.family64.II``.
+
+    .. versionchanged:: 6.5
+       Previously ``byValue`` was declared on
+       :class:`~BTrees.Interfaces.IDictionaryIsh` and implemented by every
+       family.  It could crash the interpreter for families with object
+       values, so it was removed everywhere except where it is actually
+       used.  See `issue 226
+       <https://github.com/zopefoundation/BTrees/issues/226>`_.
+    """
+
+    def byValue(minValue):
+        """Return a sequence of (value, key) pairs, sorted by value.
+
+        Values < minValue are omitted and other values are "normalized" by
+        the minimum value, which for these integer values means division.
         """
 
 

@@ -11,6 +11,7 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import importlib
 import unittest
 
 from BTrees.tests.common import permutations
@@ -547,3 +548,116 @@ class FamilyTest(unittest.TestCase):
         f2, = u.load()
         self.assertIs(f1, family)
         self.assertIs(f2, family)
+
+
+class TestByValue(unittest.TestCase):
+    # ``byValue`` used to exist for every family, where it could crash the
+    # interpreter for object values.  It now only exists for the ``II`` and
+    # ``LL`` families, the modules reachable as ``BTrees.family32.II`` and
+    # ``BTrees.family64.II``.
+    # https://github.com/zopefoundation/BTrees/issues/226
+
+    # The classes that have ``byValue`` in those two families.  ``Set`` and
+    # ``TreeSet`` never had it.
+    CLASS_NAMES = ('Bucket', 'BTree', 'BucketPy', 'BTreePy')
+
+    WITH_BY_VALUE = ('IIBTree', 'LLBTree')
+    WITHOUT_BY_VALUE = (
+        'OOBTree', 'IOBTree', 'IFBTree', 'IUBTree',
+        'OIBTree', 'UUBTree', 'QQBTree', 'fsBTree',
+    )
+
+    def _classes(self, module_names, class_names=CLASS_NAMES):
+        for module_name in module_names:
+            module = importlib.import_module('BTrees.' + module_name)
+            for class_name in class_names:
+                yield module_name, class_name, getattr(module, class_name)
+
+    def test_present_for_II_and_LL(self):
+        for mod, name, cls in self._classes(self.WITH_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                self.assertTrue(hasattr(cls, 'byValue'))
+
+    def test_absent_everywhere_else(self):
+        for mod, name, cls in self._classes(self.WITHOUT_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                self.assertFalse(hasattr(cls, 'byValue'))
+
+    def test_absent_from_sets(self):
+        for mod, name, cls in self._classes(
+                self.WITH_BY_VALUE + self.WITHOUT_BY_VALUE,
+                ('Set', 'TreeSet', 'SetPy', 'TreeSetPy')):
+            with self.subTest(module=mod, cls=name):
+                self.assertFalse(hasattr(cls, 'byValue'))
+
+    def test_values_are_normalized_by_min(self):
+        # Values are divided by ``min`` when ``min`` is positive, and the
+        # result is sorted descending.  The division makes 30 // 20 and
+        # 20 // 20 tie at 1, so the key breaks the tie.
+        for mod, name, cls in self._classes(self.WITH_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                mapping = cls({1: 10, 2: 20, 3: 30, 4: 40, 5: 50})
+                self.assertEqual(
+                    list(mapping.byValue(20)),
+                    [(2, 5), (2, 4), (1, 3), (1, 2)])
+
+    def test_values_are_not_normalized_by_a_non_positive_min(self):
+        for mod, name, cls in self._classes(self.WITH_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                mapping = cls({1: -10, 2: 0, 3: 10})
+                self.assertEqual(
+                    list(mapping.byValue(0)), [(10, 3), (0, 2)])
+                self.assertEqual(
+                    list(mapping.byValue(-10)), [(10, 3), (0, 2), (-10, 1)])
+
+    def test_C_and_Python_implementations_agree(self):
+        items = {1: 10, 2: 20, 3: 30, 4: 40, 5: 50}
+        for module_name in self.WITH_BY_VALUE:
+            module = importlib.import_module('BTrees.' + module_name)
+            for class_name in ('Bucket', 'BTree'):
+                c_class = getattr(module, class_name)
+                py_class = getattr(module, class_name + 'Py')
+                for min_value in (-1, 0, 1, 20, 100):
+                    with self.subTest(module=module_name, cls=class_name,
+                                      min=min_value):
+                        self.assertEqual(
+                            list(c_class(items).byValue(min_value)),
+                            list(py_class(items).byValue(min_value)))
+
+    def test_IByValue_is_provided_only_where_byValue_exists(self):
+        from zope.interface.verify import verifyObject
+
+        from BTrees.Interfaces import IByValue
+
+        for mod, name, cls in self._classes(self.WITH_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                self.assertTrue(verifyObject(IByValue, cls()))
+        for mod, name, cls in self._classes(self.WITHOUT_BY_VALUE):
+            with self.subTest(module=mod, cls=name):
+                self.assertFalse(IByValue.providedBy(cls()))
+
+    def test_IDictionaryIsh_no_longer_declares_byValue(self):
+        from BTrees.Interfaces import IDictionaryIsh
+
+        self.assertNotIn('byValue', IDictionaryIsh)
+
+    def test_issue_226_reproducer_no_longer_reaches_C_code(self):
+        # The reproducer from the issue used to segfault the interpreter.
+        # ``OOBucket`` no longer has ``byValue`` at all.
+        from BTrees.OOBTree import OOBucket
+
+        bucket = OOBucket()
+
+        class Mutating:
+            def __lt__(self, other):
+                bucket.clear()
+                return False
+
+            def __eq__(self, other):
+                return False
+
+            __hash__ = object.__hash__
+
+        bucket[1] = Mutating()
+        with self.assertRaises(AttributeError):
+            bucket.byValue(object())

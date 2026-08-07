@@ -26,8 +26,11 @@
 
 #define MOD_NAME_PREFIX "LL"
 
-
-
+/* ``byValue`` only exists for the ``II`` and ``LL`` families, the two
+   modules reachable as ``family32.II`` and ``family64.II``.  See
+   https://github.com/zopefoundation/BTrees/issues/226
+*/
+#define SUPPORT_BY_VALUE
 
 #define ZODB_64BIT_INTS
 

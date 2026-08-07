@@ -1413,10 +1413,6 @@ class Tree(_MutableMappingMixin, _Tree):
                   excludemin=False, excludemax=False):
         return iter(self.items(min, max, excludemin, excludemax))
 
-    def byValue(self, min):
-        return reversed(
-            sorted((v, k) for (k, v) in self.iteritems() if v >= min))
-
     def insert(self, key, value):
         return bool(self._set(key, value, True)[0])
 
@@ -1439,6 +1435,24 @@ class TreeSet(_MutableSetMixin, _Tree):
             add(i)
 
     _p_resolveConflict = _Tree._p_resolveConflict
+
+
+def byValue(self, min):
+    """Implementation of ``BTrees.Interfaces.IByValue.byValue``.
+
+    Only attached to the ``Bucket`` and ``BTree`` classes of the ``II`` and
+    ``LL`` families; see ``_module_builder._create_classes``.
+
+    Mirrors the C ``NORMALIZE_VALUE`` semantics: values are divided by *min*
+    when *min* is positive, and the division happens *before* sorting, since
+    it can make distinct values compare equal.
+    """
+    items = [(v, k) for (k, v) in self.iteritems() if v >= min]
+    if min > 0:
+        items = [(v // min, k) for (v, k) in items]
+    items.sort()
+    items.reverse()
+    return items
 
 
 class set_operation:

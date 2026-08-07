@@ -2469,12 +2469,6 @@ class TreeTests(unittest.TestCase):
                                              max='f', excludemax=True)),
                          ITEMS[2:5])
 
-    def test_byValue(self):
-        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
-        tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.byValue(min=22)),
-                         [(y, x) for x, y in reversed(ITEMS[22:])])
-
     def test_insert_new_key(self):
         tree = self._makeOne()
         self.assertTrue(tree.insert('a', 0))

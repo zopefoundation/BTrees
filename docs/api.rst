@@ -37,6 +37,7 @@ Protocol APIs
 .. autointerface:: IKeySequence
 .. autointerface:: IMinimalDictionary
 .. autointerface:: IDictionaryIsh
+.. autointerface:: IByValue
 .. autointerface:: IMerge
 .. autointerface:: IIMerge
 .. autointerface:: IMergeIntegerKey

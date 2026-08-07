@@ -51,7 +51,10 @@
  */
 #define MODULE_NAME "BTrees." MOD_NAME_PREFIX "BTree."
 
-static PyObject *sort_str, *reverse_str, *__setstate___str;
+#ifdef SUPPORT_BY_VALUE
+static PyObject *sort_str, *reverse_str;
+#endif
+static PyObject *__setstate___str;
 static PyObject *_bucket_type_str, *max_internal_size_str, *max_leaf_size_str;
 static PyObject *__slotnames__str;
 static PyObject *ConflictError = NULL;
@@ -631,12 +634,14 @@ module_init(void)
       return NULL;
 #endif
 
+#ifdef SUPPORT_BY_VALUE
     sort_str = PyUnicode_InternFromString("sort");
     if (!sort_str)
         return NULL;
     reverse_str = PyUnicode_InternFromString("reverse");
     if (!reverse_str)
         return NULL;
+#endif
     __setstate___str = PyUnicode_InternFromString("__setstate__");
     if (!__setstate___str)
         return NULL;

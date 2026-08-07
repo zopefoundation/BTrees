@@ -122,13 +122,18 @@ A BTree object supports all the methods you would expect of a mapping, with
 a few extensions that exploit the fact that the keys are sorted. The
 example below demonstrates how some of the methods work.  The extra methods
 are :func:`minKey` and :func:`maxKey`, which find the minimum and maximum
-key value subject to an optional bound argument, and :func:`byValue`, which
-should probably be ignored (it's hard to explain exactly what it does, and
-as a result it's almost never used -- best to consider it deprecated).  The
-various methods for enumerating keys, values and items also accept minimum
-and maximum key arguments ("range search"), and (new in ZODB 3.3) optional
-Boolean arguments to control whether a range search is inclusive or
-exclusive of the range's endpoints.
+key value subject to an optional bound argument.  The various methods for
+enumerating keys, values and items also accept minimum and maximum key
+arguments ("range search"), and (new in ZODB 3.3) optional Boolean
+arguments to control whether a range search is inclusive or exclusive of
+the range's endpoints.
+
+There is also :func:`byValue`, which should be considered deprecated: it is
+hard to explain exactly what it does, and as a result it is almost never
+used.  Since version 6.5 it only exists on the ``Bucket`` and ``BTree``
+classes of the ``II`` and ``LL`` families -- that is, on
+``BTrees.family32.II`` and ``BTrees.family64.II``.  See
+:class:`BTrees.Interfaces.IByValue`.
 
 .. doctest::
 

@@ -1885,6 +1885,7 @@ BTree_items(BTree *self, PyObject *args, PyObject *kw)
     return BTree_rangeSearch(self, args, kw, 'i');
 }
 
+#ifdef SUPPORT_BY_VALUE
 static PyObject *
 BTree_byValue(BTree *self, PyObject *omin)
 {
@@ -1965,6 +1966,7 @@ err:
     Py_XDECREF(item);
     return NULL;
 }
+#endif /* SUPPORT_BY_VALUE */
 
 /*
 ** BTree_getm
@@ -2251,11 +2253,13 @@ static struct PyMethodDef BTree_methods[] = {
      "Returns the items of the BTree.  If min and max are supplied, only\n"
      "items with keys greater than min and less than max are returned."},
 
+#ifdef SUPPORT_BY_VALUE
     {"byValue", (PyCFunction) BTree_byValue, METH_O,
      "byValue(min) ->  list of value, key pairs\n\n"
      "Returns list of value, key pairs where the value is >= min.  The\n"
      "list is sorted by value.  Note that items() returns keys in the\n"
      "opposite order."},
+#endif
 
     {"get", (PyCFunction) BTree_getm, METH_VARARGS,
      "get(key[, default=None]) -> Value for key or default\n\n"

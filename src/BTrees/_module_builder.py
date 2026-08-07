@@ -21,6 +21,16 @@ from zope.interface import classImplements
 from zope.interface import directlyProvides
 
 
+#: The families that still provide the deprecated ``byValue``: the modules
+#: reachable as ``family32.II`` and ``family64.II``.  It was removed
+#: everywhere else, see
+#: https://github.com/zopefoundation/BTrees/issues/226
+_BY_VALUE_PREFIXES = frozenset({'II', 'LL'})
+
+#: The classes within those families that provide ``byValue``.
+_BY_VALUE_CLASSES = frozenset({'Bucket', 'BTree'})
+
+
 def _create_classes(
         module_name, key_datatype, value_datatype,
 ):
@@ -31,6 +41,7 @@ def _create_classes(
     from ._base import TreeSet
     from ._base import _TreeItems as TreeItems
     from ._base import _TreeIterator
+    from ._base import byValue
 
     classes = {}
 
@@ -65,6 +76,8 @@ def _create_classes(
         ))
         cls.__module__ = module_name
         key_datatype.add_extra_methods(base_name, cls)
+        if prefix in _BY_VALUE_PREFIXES and base_name in _BY_VALUE_CLASSES:
+            cls.byValue = byValue
 
         classes[cls.__name__] = cls
         # Importing the C extension does this for the non-py
@@ -181,6 +194,11 @@ def populate_module(mod_globals,
     }.items():
         classImplements(mod_globals[cls_name], iface)
         classImplements(mod_globals[cls_name + 'Py'], iface)
+
+    if prefix in _BY_VALUE_PREFIXES:
+        for cls_name in _BY_VALUE_CLASSES:
+            classImplements(mod_globals[cls_name], interfaces.IByValue)
+            classImplements(mod_globals[cls_name + 'Py'], interfaces.IByValue)
 
     for cls_name, abc in {
             'BTree': collections.abc.MutableMapping,
