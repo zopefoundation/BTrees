@@ -1013,6 +1013,7 @@ err:
     return NULL;
 }
 
+#ifdef SUPPORT_BY_VALUE
 static PyObject *
 bucket_byValue(Bucket *self, PyObject *omin)
 {
@@ -1085,6 +1086,7 @@ err:
     Py_XDECREF(item);
     return NULL;
 }
+#endif /* SUPPORT_BY_VALUE */
 
 static int
 _bucket_clear(Bucket *self)
@@ -1734,9 +1736,11 @@ static struct PyMethodDef Bucket_methods[] = {
     {"items", (PyCFunction) bucket_items, METH_VARARGS | METH_KEYWORDS,
      "items([min, max])) -- Return the items"},
 
+#ifdef SUPPORT_BY_VALUE
     {"byValue", (PyCFunction) bucket_byValue, METH_O,
      "byValue(min) -- "
      "Return value-keys with values >= min and reverse sorted by values"},
+#endif
 
     {"get", (PyCFunction) bucket_getm, METH_VARARGS,
      "get(key[,default]) -- Look up a value\n\n"

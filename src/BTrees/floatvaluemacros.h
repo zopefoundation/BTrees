@@ -19,8 +19,6 @@
       PyErr_SetString(PyExc_TypeError, "expected float or int value");  \
       (STATUS)=0; (TARGET)=0; }
 
-#define NORMALIZE_VALUE(V, MIN) ((MIN) > 0) ? ((V)/=(MIN)) : 0
-
 #define MERGE_DEFAULT 1.0f
 #define MERGE(O1, w1, O2, w2) ((O1)*(w1)+(O2)*(w2))
 #define MERGE_WEIGHT(O, w) ((O)*(w))

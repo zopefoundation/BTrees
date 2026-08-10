@@ -4,7 +4,22 @@ Change log
 6.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Remove the long deprecated ``byValue()`` method from all ``Bucket`` and
+  ``BTree`` classes except those of the ``II`` and ``LL`` families, which are
+  the modules reachable as ``BTrees.family32.II`` and ``BTrees.family64.II``.
+
+  For families with object values ``byValue()`` could crash the interpreter:
+  a value whose comparison method mutated the bucket freed the array the C
+  code was iterating over.  Removing the method resolves that, see `issue 226
+  <https://github.com/zopefoundation/BTrees/issues/226>`_.
+
+  The declaration moved from ``BTrees.Interfaces.IDictionaryIsh`` to the new
+  ``BTrees.Interfaces.IByValue``, which only the remaining implementations
+  provide.
+
+- Fix the pure-Python ``byValue()`` so it matches the C implementation: it now
+  normalizes the values by dividing them by ``min`` (when ``min`` is positive)
+  before sorting, and returns a list.
 
 
 6.4 (2026-04-29)

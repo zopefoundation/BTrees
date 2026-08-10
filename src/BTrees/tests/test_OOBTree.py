@@ -19,12 +19,6 @@ from .common import BTreeTests
 
 class OOBTreeTest(BTreeTests):
 
-    def test_byValue(self):
-        ITEMS = [(y, x) for x, y in enumerate('abcdefghijklmnopqrstuvwxyz')]
-        tree = self._makeOne(ITEMS)
-        self.assertEqual(list(tree.byValue(22)),
-                         [(y, x) for x, y in reversed(ITEMS[22:])])
-
     def testRejectDefaultComparisonOnSet(self):
         # Check that passing in keys w default comparison fails. Only
         # applies to new-style class instances if we're using the C
