@@ -4,6 +4,8 @@ Change log
 6.5 (unreleased)
 ----------------
 
+- Add support for Python 3.15.
+
 - Remove the long deprecated ``byValue()`` method from all ``Bucket`` and
   ``BTree`` classes except those of the ``II`` and ``LL`` families, which are
   the modules reachable as ``BTrees.family32.II`` and ``BTrees.family64.II``.
