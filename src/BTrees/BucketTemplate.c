@@ -1369,21 +1369,39 @@ static PyObject *
 bucket_sub(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return difference_m(NULL, args);
+    PyObject *result;
+
+    if (args == NULL)
+        return NULL;
+    result = difference_m(NULL, args);
+    Py_DECREF(args);
+    return result;
 }
 
 static PyObject *
 bucket_or(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return union_m(NULL, args);
+    PyObject *result;
+
+    if (args == NULL)
+        return NULL;
+    result = union_m(NULL, args);
+    Py_DECREF(args);
+    return result;
 }
 
 static PyObject *
 bucket_and(PyObject *self, PyObject *other)
 {
     PyObject *args = Py_BuildValue("OO", self, other);
-    return intersection_m(NULL, args);
+    PyObject *result;
+
+    if (args == NULL)
+        return NULL;
+    result = intersection_m(NULL, args);
+    Py_DECREF(args);
+    return result;
 }
 
 static PyObject *

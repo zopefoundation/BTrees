@@ -4,6 +4,14 @@ Change log
 6.6 (unreleased)
 ----------------
 
+- Fix a reference leak in the C implementation of the Bucket ``-``, ``|``
+  and ``&`` operators (``bucket_sub``, ``bucket_or`` and ``bucket_and``).
+  Each of these built a temporary argument tuple for an internal helper
+  function but never released it afterwards, so every subtraction, union
+  or intersection performed directly on a ``Bucket`` leaked one tuple
+  (and a reference to both operands). See `issue 225
+  <https://github.com/zopefoundation/BTrees/issues/225>`_.
+
 
 6.5 (2026-08-20)
 ----------------
