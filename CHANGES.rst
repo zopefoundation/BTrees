@@ -4,6 +4,14 @@ Change log
 6.6 (unreleased)
 ----------------
 
+- Fix a reference leak in the C implementation of the Set and TreeSet
+  in-place ``&=`` operator (``set_iand`` and ``TreeSet_iand``). Both
+  functions allocate a temporary list before checking whether the other
+  operand is iterable, and returned ``NotImplemented`` without releasing
+  it when it wasn't, so every ``Set &= non_iterable`` or
+  ``TreeSet &= non_iterable`` leaked one empty list. See `issue 227
+  <https://github.com/zopefoundation/BTrees/issues/227>`_.
+
 
 6.5 (2026-08-20)
 ----------------

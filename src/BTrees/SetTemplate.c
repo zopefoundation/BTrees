@@ -603,6 +603,7 @@ set_iand(Bucket* self, PyObject* other)
 
     iter = PyObject_GetIter(other);
     if (iter == NULL) {
+        Py_DECREF(tmp_list);
         PyErr_Clear();
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
