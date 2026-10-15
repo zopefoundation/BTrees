@@ -5,6 +5,10 @@ Change log
 ----------------
 
 
+- Add support for Python 3.15.
+
+- Drop support for Python 3.10.
+
 6.5 (2026-08-20)
 ----------------
 
