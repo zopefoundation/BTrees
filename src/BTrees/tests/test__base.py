@@ -366,12 +366,12 @@ class Test_BucketBase(unittest.TestCase):
 
     def test___iter___empty(self):
         bucket = self._makeOne()
-        self.assertEqual([x for x in bucket], [])
+        self.assertEqual([*bucket], [])
 
     def test___iter___filled(self):
         bucket = self._makeOne()
         KEYS = bucket._keys = ['alpha', 'bravo', 'charlie', 'delta', 'echo']
-        self.assertEqual([x for x in bucket], KEYS[0: 5])
+        self.assertEqual([*bucket], KEYS[0: 5])
 
     def test___contains___empty(self):
         bucket = self._makeOne()
