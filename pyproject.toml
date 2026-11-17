@@ -13,7 +13,7 @@ name = "BTrees"
 version = "6.6.dev0"
 description = "Scalable persistent object containers"
 dynamic = ["readme"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "ZPL-2.1"
 authors = [
   { name = "Zope Foundation and contributors", email = "zope-dev@zope.dev" },
@@ -22,23 +22,21 @@ maintainers = [
   { name = "Plone Foundation and contributors", email = "zope-dev@zope.dev" },
 ]
 classifiers = [
-  "Development Status :: 6 - Mature",
-  "Framework :: ZODB",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
-  "Programming Language :: Python :: 3.15",
-  "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
-  "Topic :: Database",
-  "Topic :: Software Development :: Libraries :: Python Modules",
+    "Development Status :: 6 - Mature",
+    "Framework :: ZODB",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
   "persistent",
