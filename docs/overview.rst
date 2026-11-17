@@ -248,10 +248,10 @@ strings both supply total orderings, but mixing the two loses trichotomy; e.g.,
 it can be dangerous to use keys with multiple types in a single BTree-based
 structure.  Don't try to do that, and you don't have to worry about it.
 
-Another potential problem is mutability:  when a key is inserted in a BTree-
-based structure, it must retain the same order relative to the other keys over
-time.  This is easy to run afoul of if you use mutable objects as keys.  For
-example, lists supply a total ordering, and then
+Another potential problem is mutability:  when a key is inserted in a
+BTree-based structure, it must retain the same order relative to the other keys
+over time.  This is easy to run afoul of if you use mutable objects as keys.
+For example, lists supply a total ordering, and then
 
 .. doctest::
 
@@ -478,10 +478,10 @@ or TreeSets.
 BTree Diagnostic Tools
 ======================
 
-A BTree (or TreeSet) is a complex data structure, really a graph of variable-
-size nodes, connected in multiple ways via three distinct kinds of C pointers.
-There are some tools available to help check internal consistency of a BTree as
-a whole.
+A BTree (or TreeSet) is a complex data structure, really a graph of
+variable-size nodes, connected in multiple ways via three distinct kinds of C
+pointers. There are some tools available to help check internal consistency of
+a BTree as a whole.
 
 Most generally useful is the :mod:`~BTrees.check` module.  The
 :func:`~BTrees.check.check` function examines a BTree (or Bucket, Set, or TreeSet) for

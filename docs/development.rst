@@ -34,7 +34,7 @@ Macros for Keys
 
 ``KEY_TYPE_IS_PYOBJECT``
 
-    Define if ``KEY_TYPE`` is a ``PyObject*`, else ``undef``.
+    Define if ``KEY_TYPE`` is a ``PyObject*``, else ``undef``.
 
 ``KEY_CHECK(K)``
 
