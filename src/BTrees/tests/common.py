@@ -44,6 +44,13 @@ if _c_optimizations_ignored():
 else:
     skipOnPurePython = _no_op
 
+if sys.version_info < (3, 12):
+    # The BTreeType metaclass (and its attribute-settailist discipline)
+    # attaches only via PyType_FromMetaclass, which is 3.12+.
+    _skip_pre_312 = skip("Metaclass discipline requires 3.12+")
+else:
+    _skip_pre_312 = _no_op
+
 
 def _skip_if_pure_py_and_py_test(self):
     if _c_optimizations_ignored() and 'Py' in type(self).__name__:
@@ -145,6 +152,7 @@ class Base(ZODBAccess, SignedMixin):
     KEYS = tuple(range(2001))
     VALUES = tuple(range(2001))
 
+    @_skip_pre_312
     def testSubclassesCanHaveAttributes(self):
         # https://github.com/zopefoundation/BTrees/issues/168
         class Subclass(self._getTargetClass()):
@@ -154,6 +162,7 @@ class Base(ZODBAccess, SignedMixin):
         self.assertNotIn('foo', self._getTargetClass().__dict__)
 
     @skipOnPurePython
+    @_skip_pre_312
     def testCannotSetArbitraryAttributeOnBase(self):
         if 'Py' in self._getTargetClass().__name__:
             # pure-python classes can have arbitrary attributes

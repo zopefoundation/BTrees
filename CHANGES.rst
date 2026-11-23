@@ -4,6 +4,9 @@ Change log
 6.6 (unreleased)
 ----------------
 
+- PEP 489 support:  multi-phase module initialization, heap-allocated types
+  (NOTE: depends on parallel work in `persistent #244
+  <https://github.com/zopefoundation/persistent/issues/244>`_.
 
 - Add support for Python 3.15.
 

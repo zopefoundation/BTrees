@@ -900,7 +900,7 @@ class _Tree(_ArithmeticMixin, _Base):
     __slots__ = ('_data', '_firstbucket')
 
     def __new__(cls, *args):
-        value = _Base.__new__(cls, *args)
+        value = _Base.__new__(cls)
         # Empty trees don't get their __setstate__ called upon
         # unpickling (or __init__, obviously), so clear() is never called
         # and _data and _firstbucket are never defined, unless we do it here.

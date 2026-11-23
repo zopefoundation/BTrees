@@ -13,31 +13,86 @@
  ****************************************************************************/
 
 #include "Python.h"
-/* include structmember.h for offsetof */
 #include "structmember.h"
-#include "bytesobject.h"
 
-#ifdef PERSISTENT
+
+#if defined(PERSISTENT)
+
 #include "persistent/cPersistence.h"
-#else
-#define PER_USE_OR_RETURN(self, NULL)
-#define PER_ALLOW_DEACTIVATION(self)
-#define PER_PREVENT_DEACTIVATION(self)
-#define PER_DEL(self)
-#define PER_USE(O) 1
-#define PER_ACCESSED(O) 1
+
+typedef cPersistenceCAPIstruct PerCAPI;
+
+/*
+ *  Unset these macros from 'persistent/cPersistence.h':  the live paths
+ *  look the capi up from module state as 'per_capi' in each method;
+ *  the per-TU static 'cPersistenceCAPI' is used only by the dealloc /
+ *  traverse GC paths, which cannot rely on the instance's type still
+ *  holding its module link.
+ */
+
+#ifdef PER_GHOSTIFY
+#undef PER_GHOSTIFY
 #endif
 
-/* So sue me.  This pair gets used all over the place, so much so that it
- * interferes with understanding non-persistence parts of algorithms.
- * PER_UNUSE can be used after a successul PER_USE or PER_USE_OR_RETURN.
- * It allows the object to become ghostified, and tells the persistence
- * machinery that the object's fields were used recently.
- */
-#define PER_UNUSE(OBJ) do {             \
-    PER_ALLOW_DEACTIVATION(OBJ);        \
-    PER_ACCESSED(OBJ);                  \
-} while (0)
+#ifdef PER_CHANGED
+#undef PER_CHANGED
+#endif
+
+#ifdef PER_READCURRENT
+#undef PER_READCURRENT
+#endif
+
+#ifdef PER_UNUSE
+#undef PER_UNUSE
+#endif
+
+#ifdef PER_ACCESSED
+#undef PER_ACCESSED
+#endif
+
+#ifdef PER_ALLOW_DEACTIVATION
+#undef PER_ALLOW_DEACTIVATION
+#endif
+
+static inline void
+per_allow_deactivation(cPersistentObject* p_obj)
+{
+    if (p_obj->state == cPersistent_STICKY_STATE)
+        p_obj->state = cPersistent_UPTODATE_STATE;
+}
+
+#ifdef PER_PREVENT_DEACTIVATION
+#undef PER_PREVENT_DEACTIVATION
+#endif
+
+static inline void
+per_prevent_deactivation(cPersistentObject* p_obj)
+{
+    if (p_obj->state == cPersistent_UPTODATE_STATE)
+        p_obj->state = cPersistent_STICKY_STATE;
+}
+
+#ifdef PER_USE
+#undef PER_USE
+#endif
+
+static inline int
+per_use(cPersistentObject* p_obj, PerCAPI* per_capi)
+{
+    if (p_obj->state == cPersistent_GHOST_STATE &&
+        per_capi->setstate((PyObject*)p_obj) < 0) {
+        return 0;
+    } else if (p_obj->state == cPersistent_UPTODATE_STATE) {
+        p_obj->state = cPersistent_STICKY_STATE;
+    }
+    return 1;
+}
+
+#ifdef PER_USE_OR_RETURN
+#undef PER_USE_OR_RETURN
+#endif
+
+#endif /* defined(PERSISTENT) */
 
 /* The tp_name slots of the various BTree types contain the fully
  * qualified names of the types, e.g. zodb.btrees.OOBTree.OOBTree.
@@ -52,15 +107,86 @@
 #define MODULE_NAME "BTrees." MOD_NAME_PREFIX "BTree."
 
 #ifdef SUPPORT_BY_VALUE
-static PyObject *sort_str, *reverse_str;
+static PyObject *str_sort;
+static PyObject *str_reverse;
 #endif
-static PyObject *__setstate___str;
-static PyObject *_bucket_type_str, *max_internal_size_str, *max_leaf_size_str;
-static PyObject *__slotnames__str;
-static PyObject *ConflictError = NULL;
+static PyObject *str___setstate__;
+static PyObject *str__bucket_type;
+static PyObject *str_max_internal_size;
+static PyObject *str_max_leaf_size;
+static PyObject *str___slotnames__;
+static PyObject *str___implemented__;
+static PyObject *str___providedBy__;
+static PyObject *str___provides__;
 
+static int
+intern_strings()
+{
+#define INIT_STRING(S)                                  \
+  if (!(str_ ## S = PyUnicode_InternFromString(#S)))    \
+    return -1;
+
+#ifdef SUPPORT_BY_VALUE
+    INIT_STRING(sort);
+    INIT_STRING(reverse);
+#endif
+    INIT_STRING(__setstate__);
+    INIT_STRING(_bucket_type);
+    INIT_STRING(max_internal_size);
+    INIT_STRING(max_leaf_size);
+    INIT_STRING(__slotnames__);
+    INIT_STRING(__implemented__);
+    INIT_STRING(__providedBy__);
+    INIT_STRING(__provides__);
+
+#undef INIT_STRING
+
+    return 0;
+}
+
+static inline PyObject* _get_module(PyTypeObject* typeobj);
+static inline PyObject* _get_conflict_error( PyObject* bt_obj_or_module);
+static inline PyObject* _get_btreetype_allowed_attrs(PyTypeObject* type);
+static inline PerCAPI* _get_per_capi(PyObject* bt_obj_or_module);
+static inline PyTypeObject* _get_btree_type(PyObject* module);
+static inline PyTypeObject* _get_bucket_type(PyObject* module);
+static inline PyTypeObject* _get_set_type(PyObject* module);
+static inline PyTypeObject* _get_tree_set_type(PyObject* module);
+static inline PyTypeObject* _get_btree_items_type(PyObject* module);
+static inline PyTypeObject* _get_btree_iter_type(PyObject* module);
+
+/*
+ *  Non-macro aliases for Python APIs, for use in static initializers.
+ */
+static inline PyObject*
+_pyobject_generic_getattr(PyObject* self, PyObject* attr)
+{
+    return PyObject_GenericGetAttr(self, attr);
+}
+
+static inline PyObject*
+_pytype_generic_alloc(PyTypeObject* tp, Py_ssize_t nitems)
+{
+    return PyType_GenericAlloc(tp, nitems);
+}
+
+static inline PyObject*
+_pytype_generic_new(PyTypeObject* tp, PyObject* _args,  PyObject* _kw)
+{
+#if 0
+    return PyType_GenericNew(tp, _args, _kw);
+#else
+    /* just inline it */
+    return tp->tp_alloc(tp, 0);;
+#endif
+}
+
+/* Why is this one prefixed 'Py'?  There is no such API in any version
+ * of Python on my machine, going back to 1.5.2!
+ */
 static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
 #define ASSIGN(V,E) PyVar_Assign(&(V),(E))
+
 #define UNLESS(E) if (!(E))
 #define OBJECT(O) ((PyObject*)(O))
 
@@ -72,7 +198,7 @@ static void PyVar_Assign(PyObject **v, PyObject *e) { Py_XDECREF(*v); *v=e;}
   PyErr_SetString(PyExc_AssertionError, (S)); return (R); }
 
 
-#ifdef NEED_LONG_LONG_SUPPORT
+#if defined(NEED_LONG_LONG_SUPPORT)
 /* Helper code used to support long long instead of int. */
 
 #ifndef PY_LONG_LONG
@@ -100,7 +226,7 @@ longlong_handle_overflow(PY_LONG_LONG result, int overflow)
     return 1;
 }
 
-#endif /*defined(NEED_LONG_LONG_CONVERT) || defined(NEED_LONG_LONG_AS_OBJECT)*/
+#endif /*defined(NEED_LONG_LONG_CONVERT)||defined(NEED_LONG_LONG_AS_OBJECT)*/
 
 
 #if defined(NEED_LONG_LONG_CHECK)
@@ -155,7 +281,6 @@ longlong_convert(PyObject *ob, PY_LONG_LONG *value)
 
 #endif /* defined(NEED_LONG_LONG_CONVERT) */
 
-
 #if defined(NEED_ULONG_LONG_CHECK)
 
 static int
@@ -166,7 +291,10 @@ ulonglong_check(PyObject *ob)
         return 0;
     }
 
-    if (PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 && PyErr_Occurred())
+    if (
+        PyLong_AsUnsignedLongLong(ob) == (unsigned long long)-1 &&
+        PyErr_Occurred()
+    )
     {
         return 0;
     }
@@ -206,7 +334,9 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
         if (PyErr_ExceptionMatches(PyExc_OverflowError))
         {
             PyErr_Clear();
-            PyErr_SetString(PyExc_TypeError, "overflow error converting int to C long long");
+            PyErr_SetString(
+                PyExc_TypeError,
+                "overflow error converting int to C long long");
         }
         return 0;
     }
@@ -216,7 +346,7 @@ ulonglong_convert(PyObject *ob, unsigned PY_LONG_LONG *value)
 
 #endif /* defined(NEED_ULONG_LONG_CONVERT) */
 
-#endif  /* NEED_LONG_LONG_SUPPORT */
+#endif  /* defined(NEED_LONG_LONG_SUPPORT) */
 
 
 /* Various kinds of BTree and Bucket structs are instances of
@@ -298,9 +428,6 @@ typedef struct BTree_s {
   long max_leaf_size;
 } BTree;
 
-static PyTypeObject BTreeTypeType;
-static PyTypeObject BTreeType;
-static PyTypeObject BucketType;
 
 #define BTREE(O) ((BTree*)(O))
 
@@ -425,6 +552,8 @@ IndexError(int i)
 static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
+    PyObject* obj_self = (PyObject*)current;
+    PerCAPI* per_capi = _get_per_capi(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
@@ -434,14 +563,15 @@ PreviousBucket(Bucket **current, Bucket *first)
 
     do {
         trailing = first;
-        PER_USE_OR_RETURN(first, -1);
+        if (!per_use((cPersistentObject*)first, per_capi))
+            return -1;
         first = first->next;
 
         ((trailing)->state==cPersistent_STICKY_STATE
         &&
         ((trailing)->state=cPersistent_UPTODATE_STATE));
 
-        PER_ACCESSED(trailing);
+        per_capi->accessed((cPersistentObject*)trailing);
 
         if (first == *current) {
             *current = trailing;
@@ -518,6 +648,28 @@ BTree_ShouldSuppressKeyError()
 #include "SetOpTemplate.c"
 #include "MergeTemplate.c"
 
+/*
+ *  Module functions / initialization
+ */
+
+static struct PyModuleDef module_def;
+
+static char BTree_module_documentation[] =
+"\n"
+MASTER_ID
+BTREEITEMSTEMPLATE_C
+"$Id$\n"
+BTREETEMPLATE_C
+BUCKETTEMPLATE_C
+KEYMACROS_H
+MERGETEMPLATE_C
+SETOPTEMPLATE_C
+SETTEMPLATE_C
+TREESETTEMPLATE_C
+VALUEMACROS_H
+BTREEITEMSTEMPLATE_C
+;
+
 static struct PyMethodDef module_methods[] = {
   {"difference", (PyCFunction) difference_m,    METH_VARARGS,
    "difference(o1, o2)\n"
@@ -552,148 +704,281 @@ static struct PyMethodDef module_methods[] = {
   {NULL,                NULL}           /* sentinel */
 };
 
-static char BTree_module_documentation[] =
-"\n"
-MASTER_ID
-BTREEITEMSTEMPLATE_C
-"$Id$\n"
-BTREETEMPLATE_C
-BUCKETTEMPLATE_C
-KEYMACROS_H
-MERGETEMPLATE_C
-SETOPTEMPLATE_C
-SETTEMPLATE_C
-TREESETTEMPLATE_C
-VALUEMACROS_H
-BTREEITEMSTEMPLATE_C
-;
+typedef struct {
+    PyObject* conflict_error;
+    PerCAPI* per_capi;
+    PyObject* btreetype_allowed_attrs;
+    PyTypeObject* btree_type_type;
+    PyTypeObject* btree_type;
+    PyTypeObject* bucket_type;
+    PyTypeObject* set_type;
+    PyTypeObject* tree_set_type;
+    PyTypeObject* btree_items_type;
+    PyTypeObject* btree_iter_type;
+} module_state;
 
 static int
-init_type_with_meta_base(PyTypeObject *type, PyTypeObject* meta, PyTypeObject* base)
+module_traverse(PyObject* module, visitproc visit, void *arg)
 {
-    int result;
-    PyObject* slotnames;
-    ((PyObject*)type)->ob_type = meta;
-    type->tp_base = base;
+    module_state* state = PyModule_GetState(module);
+    Py_VISIT(state->conflict_error);
+    Py_VISIT(state->btreetype_allowed_attrs);
+    Py_VISIT(state->btree_type_type);
+    Py_VISIT(state->btree_type);
+    Py_VISIT(state->bucket_type);
+    Py_VISIT(state->set_type);
+    Py_VISIT(state->tree_set_type);
+    Py_VISIT(state->btree_items_type);
+    Py_VISIT(state->btree_iter_type);
+    return 0;
+}
 
-    if (PyType_Ready(type) < 0)
-        return 0;
+static int
+module_clear(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    Py_CLEAR(state->conflict_error);
+    Py_CLEAR(state->btreetype_allowed_attrs);
+    Py_CLEAR(state->btree_type_type);
+    Py_CLEAR(state->btree_type);
+    Py_CLEAR(state->bucket_type);
+    Py_CLEAR(state->set_type);
+    Py_CLEAR(state->tree_set_type);
+    Py_CLEAR(state->btree_items_type);
+    Py_CLEAR(state->btree_iter_type);
+    return 0;
+}
+
+static inline PyObject*
+_get_module(PyTypeObject* typeobj)
+{
+    if (PyType_Check(typeobj)) {
+        /* Only added in Python 3.11 */
+        return PyType_GetModuleByDef(typeobj, &module_def);
+    }
+
+    PyErr_SetString(PyExc_TypeError, "_get_module: called w/ non-type");
+    return NULL;
+}
+
+static inline PyObject*
+_get_conflict_error(PyObject* bt_obj_or_module)
+{
+    PyObject* module;
+
+    if (PyModule_Check(bt_obj_or_module))
+        module = bt_obj_or_module;
+    else
+        module = _get_module(Py_TYPE(bt_obj_or_module));
+
+    if (module == NULL)
+        /* Probably occurs during shutdown.  Just bail.*/
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->conflict_error;
+}
+
+static inline PyObject*
+_get_btreetype_allowed_attrs(PyTypeObject* type)
+{
+    PyObject* module = _get_module(type);
+    if (module == NULL)
+        return NULL;
+
+    module_state* state = PyModule_GetState(module);
+    return state->btreetype_allowed_attrs;
+}
+
+static inline PerCAPI*
+_get_per_capi(PyObject* bt_obj_or_module)
+{
+    PyObject* module;
+
+    if (PyModule_Check(bt_obj_or_module))
+        module = bt_obj_or_module;
+    else
+        module = _get_module(Py_TYPE(bt_obj_or_module));
+
+    if (module == NULL) {
+        /* Probably occurs during shutdown.  Just bail.*/
+        return NULL;
+    }
+
+    module_state* state = PyModule_GetState(module);
+    return state->per_capi;
+}
+
+static inline PyTypeObject*
+_get_btree_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_type;
+}
+
+static inline PyTypeObject*
+_get_bucket_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->bucket_type;
+}
+
+static inline PyTypeObject*
+_get_set_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->set_type;
+}
+
+static inline PyTypeObject*
+_get_tree_set_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->tree_set_type;
+}
+
+static inline PyTypeObject*
+_get_btree_items_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_items_type;
+}
+
+static inline PyTypeObject*
+_get_btree_iter_type(PyObject* module)
+{
+    module_state* state = PyModule_GetState(module);
+    return state->btree_iter_type;
+}
+
+
+
+static PyTypeObject*
+init_type_with_meta_base(
+    PyTypeObject* meta,
+    PyObject* module,
+    PyType_Spec* typespec,
+    PyTypeObject* base
+)
+{
+    PyObject* slotnames;
+    int result;
+
+#if PY_VERSION_HEX < 0x030c0000
+    /* 3.11 has no 'PyType_FromMetaclass':  create the type with the
+     * default metaclass (module link still set).  The attribute-settailist
+     * discipline of BTreeType_setattro is therefore 3.12+ only.
+     */
+    PyTypeObject* new_type = (PyTypeObject*)PyType_FromModuleAndSpec(
+        module, typespec, (PyObject*)base
+    );
+#else
+    PyTypeObject* new_type = (PyTypeObject*)PyType_FromMetaclass(
+        meta, module, typespec, (PyObject*)base
+    );
+#endif
+    if (new_type == NULL)
+        return NULL;
+
     /*
       persistent looks for __slotnames__ in the dict at deactivation time,
       and if it's not present, calls ``copyreg._slotnames``, which itself
       looks in the dict again. Then it does some computation, and tries to
       store the object in the dict --- which for built-in types, it can't.
-      So we can save some runtime if we store an empty slotnames for these classes.
+      So we can save some runtime if we store an empty slotnames for these
+      classes.
     */
     slotnames = PyTuple_New(0);
-    if (!slotnames) {
-        return 0;
-    }
-    result = PyDict_SetItem(type->tp_dict, __slotnames__str, slotnames);
+    if (!slotnames)
+        return NULL;
+
+    result = PyDict_SetItem(new_type->tp_dict, str___slotnames__, slotnames);
     Py_DECREF(slotnames);
-    return result < 0 ? 0 : 1;
+
+    if (result < 0)
+        return NULL;
+
+    return new_type;
 }
 
-int /* why isn't this static? */
-init_persist_type(PyTypeObject* type)
+static PyTypeObject*
+init_persist_type(
+    PyTypeObject* tree_meta,
+    PyObject* module,
+    PyType_Spec* typespec,
+    PerCAPI* per_capi
+)
 {
-    return init_type_with_meta_base(type, &PyType_Type, cPersistenceCAPI->pertype);
+    return init_type_with_meta_base(
+        tree_meta, module, typespec, per_capi->pertype
+    );
 }
 
-static int init_tree_type(PyTypeObject* type, PyTypeObject* bucket_type)
+static PyTypeObject*
+init_tree_type(
+    PyObject* module,
+    PyType_Spec* typespec,
+    PyTypeObject* bucket_type,
+    PyTypeObject* tree_meta,
+    PerCAPI* per_capi
+)
 {
-    if (!init_type_with_meta_base(type, &BTreeTypeType, cPersistenceCAPI->pertype)) {
-        return 0;
-    }
-    if (PyDict_SetItem(type->tp_dict, _bucket_type_str, (PyObject*)bucket_type) < 0) {
-        return 0;
-    }
-    return 1;
+    PyTypeObject* new_type = init_type_with_meta_base(
+        tree_meta, module, typespec, per_capi->pertype);
+
+    if (new_type == NULL)
+        return NULL;
+
+    if (PyDict_SetItem(
+            new_type->tp_dict, str__bucket_type, (PyObject*)bucket_type) < 0)
+        return NULL;
+
+    return new_type;
 }
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_" MOD_NAME_PREFIX "BTree",    /* m_name */
-        BTree_module_documentation,     /* m_doc */
-        -1,                             /* m_size */
-        module_methods,                 /* m_methods */
-        NULL,                           /* m_reload */
-        NULL,                           /* m_traverse */
-        NULL,                           /* m_clear */
-        NULL,                           /* m_free */
-    };
 
-static PyObject*
-module_init(void)
+
+static int
+module_exec(PyObject* module)
 {
-    PyObject *module, *mod_dict, *interfaces, *conflicterr;
+    module_state* state = PyModule_GetState(module);
+    PyObject *mod_dict;
+    PyObject *interfaces;
 
-#ifdef KEY_TYPE_IS_PYOBJECT
-    object_ = PyTuple_GetItem(Py_TYPE(Py_None)->tp_bases, 0);
-    if (object_ == NULL)
-      return NULL;
-#endif
 
-#ifdef SUPPORT_BY_VALUE
-    sort_str = PyUnicode_InternFromString("sort");
-    if (!sort_str)
-        return NULL;
-    reverse_str = PyUnicode_InternFromString("reverse");
-    if (!reverse_str)
-        return NULL;
-#endif
-    __setstate___str = PyUnicode_InternFromString("__setstate__");
-    if (!__setstate___str)
-        return NULL;
-    _bucket_type_str = PyUnicode_InternFromString("_bucket_type");
-    if (!_bucket_type_str)
-        return NULL;
-
-    max_internal_size_str = PyUnicode_InternFromString("max_internal_size");
-    if (! max_internal_size_str)
-        return NULL;
-    max_leaf_size_str = PyUnicode_InternFromString("max_leaf_size");
-    if (! max_leaf_size_str)
-        return NULL;
-    __slotnames__str = PyUnicode_InternFromString("__slotnames__");
-    if (!__slotnames__str)
-        return NULL;
-
-    BTreeType_setattro_allowed_names = PyTuple_Pack(
+    state->btreetype_allowed_attrs = PyTuple_Pack(
         5,
         /* BTree attributes  */
-        max_internal_size_str,
-        max_leaf_size_str,
-        /* zope.interface attributes */
-        /*
-          Technically, INTERNING directly here leaks references,
-          but since we can't be unloaded, it's not a problem.
-        */
-        PyUnicode_InternFromString("__implemented__"),
-        PyUnicode_InternFromString("__providedBy__"),
-        PyUnicode_InternFromString("__provides__")
+        str_max_internal_size,
+        str_max_leaf_size,
+        /* Zope interface attributes  */
+        str___implemented__,
+        str___providedBy__,
+        str___provides__
     );
+
+    if (state->btreetype_allowed_attrs == NULL)
+        return -1;
 
     /* Grab the ConflictError class */
     interfaces = PyImport_ImportModule("BTrees.Interfaces");
-    if (interfaces != NULL)
-    {
-        conflicterr = PyObject_GetAttrString(interfaces, "BTreesConflictError");
-        if (conflicterr != NULL)
-            ConflictError = conflicterr;
-        Py_DECREF(interfaces);
-    }
+    if (interfaces == NULL)
+        return -1;
 
-    if (ConflictError == NULL)
+    state->conflict_error = PyObject_GetAttrString(
+        interfaces, "BTreesConflictError");
+    Py_DECREF(interfaces);
+
+    if (state->conflict_error == NULL)
     {
         Py_INCREF(PyExc_ValueError);
-        ConflictError=PyExc_ValueError;
+        state->conflict_error=PyExc_ValueError;
     }
 
     /* Initialize the PyPersist_C_API and the type objects. */
-    cPersistenceCAPI = (cPersistenceCAPIstruct *)PyCapsule_Import(
-                "persistent.cPersistence.CAPI", 0);
-    if (cPersistenceCAPI == NULL) {
+    state->per_capi = (PerCAPI*)PyCapsule_Import(
+                            "persistent.cPersistence.CAPI", 0);
+    if (state->per_capi == NULL) {
        /* The Capsule API attempts to import 'persistent' and then
         * walk down to the specified attribute using getattr. If the C
         * extensions aren't available, this can result in an
@@ -701,90 +986,175 @@ module_init(void)
         * ImportError so it can be caught in the expected way.
         */
        if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_ImportError)) {
-           PyErr_SetString(PyExc_ImportError, "persistent C extension unavailable");
+            PyErr_SetString(
+                PyExc_ImportError, "persistent C extension unavailable");
        }
-        return NULL;
-   }
-
-#define _SET_TYPE(typ) ((PyObject*)(&typ))->ob_type = &PyType_Type
-    _SET_TYPE(BTreeItemsType);
-    _SET_TYPE(BTreeIter_Type);
-    BTreeIter_Type.tp_getattro = PyObject_GenericGetAttr;
-    BucketType.tp_new = PyType_GenericNew;
-    SetType.tp_new = PyType_GenericNew;
-    BTreeType.tp_new = PyType_GenericNew;
-    TreeSetType.tp_new = PyType_GenericNew;
-
-    if (!init_persist_type(&BucketType))
-            return NULL;
-
-    if (!init_type_with_meta_base(&BTreeTypeType, &PyType_Type, &PyType_Type)) {
-        return NULL;
+        return -1;
     }
 
-    if (!init_tree_type(&BTreeType, &BucketType)) {
-        return NULL;
-    }
+    /* The dealloc / traverse GC paths can't do module lookups;  they
+     * use this per-TU static instead (mirrors the persistent GC fix).
+     * Stale values across subinterpreters are benign:  the struct
+     * holds function pointers only.
+     */
+    cPersistenceCAPI = state->per_capi;
 
-    if (!init_persist_type(&SetType))
-        return NULL;
 
-    if (!init_tree_type(&TreeSetType, &SetType)) {
-        return NULL;
-    }
 
-    /* Create the module and add the functions */
-    module = PyModule_Create(&moduledef);
+    state->btree_type_type = init_type_with_meta_base(
+                                &PyType_Type,
+                                module,
+                                &BTreeType_type_spec,
+                                &PyType_Type);
 
-    /* Add some symbolic constants to the module */
+    if (state->btree_type_type == NULL)
+        return -1;
+
+    state->bucket_type = init_persist_type(
+                                state->btree_type_type,
+                                module,
+                                &Bucket_type_spec,
+                                state->per_capi);
+    if (state->bucket_type == NULL)
+        return -1;
+
+    state->btree_type = init_tree_type(
+                                module,
+                                &BTree_type_spec,
+                                state->bucket_type,
+                                state->btree_type_type,
+                                state->per_capi);
+    if (state->btree_type == NULL)
+        return -1;
+
+    state->set_type = init_persist_type(
+                                state->btree_type_type,
+                                module,
+                                &Set_type_spec,
+                                state->per_capi);
+    if (state->set_type == NULL)
+        return -1;
+
+    state->tree_set_type = init_tree_type(
+                                module,
+                                &TreeSet_type_spec,
+                                state->set_type,
+                                state->btree_type_type,
+                                state->per_capi);
+    if (state->tree_set_type == NULL)
+        return -1;
+
+    state->btree_items_type = init_type_with_meta_base(
+                                    state->btree_type_type,
+                                    module,
+                                    &BTreeItems_type_spec,
+                                    NULL);
+    if (state->btree_items_type == NULL)
+        return -1;
+
+    state->btree_iter_type = init_type_with_meta_base(
+                                    state->btree_type_type,
+                                    module,
+                                    &BTreeIter_type_spec,
+                                    NULL);
+    if (state->btree_iter_type == NULL)
+        return -1;
+
+
     mod_dict = PyModule_GetDict(module);
 
+    /* Add our types to the module dict
+     *
+     * XXX Should this use 'PyModule_AddObjectRef' instead?
+     */
+
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Bucket",
-                             (PyObject *)&BucketType) < 0)
-        return NULL;
+                             (PyObject *)state->bucket_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "BTree",
-                             (PyObject *)&BTreeType) < 0)
-        return NULL;
+                             (PyObject *)state->btree_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "Set",
-                             (PyObject *)&SetType) < 0)
-        return NULL;
+                             (PyObject *)state->set_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeSet",
-                             (PyObject *)&TreeSetType) < 0)
-        return NULL;
+                             (PyObject *)state->tree_set_type) < 0)
+        return -1;
+    if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeItems",
+                             (PyObject *)state->btree_items_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, MOD_NAME_PREFIX "TreeIterator",
-                             (PyObject *)&BTreeIter_Type) < 0)
-        return NULL;
-        /* We also want to be able to access these constants without the prefix
-         * so that code can more easily exchange modules (particularly the integer
-         * and long modules, but also others).  The TreeIterator is only internal,
-         * so we don't bother to expose that.
+                             (PyObject *)state->btree_iter_type) < 0)
+        return -1;
+
+    /* We also want to be able to access these constants without the
+     * prefix so that code can more easily exchange modules
+     * (particularly the integer and long modules, but also others).
+     *
+     * The TreeIterator is only internal, so we don't bother to
+     * expose that.
      */
     if (PyDict_SetItemString(mod_dict, "Bucket",
-                             (PyObject *)&BucketType) < 0)
-        return NULL;
+                             (PyObject *)state->bucket_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, "BTree",
-                             (PyObject *)&BTreeType) < 0)
-        return NULL;
+                             (PyObject *)state->btree_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, "Set",
-                             (PyObject *)&SetType) < 0)
-        return NULL;
+                             (PyObject *)state->set_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, "TreeSet",
-                             (PyObject *)&TreeSetType) < 0)
-        return NULL;
+                             (PyObject *)state->tree_set_type) < 0)
+        return -1;
     if (PyDict_SetItemString(mod_dict, "TreeItems",
-                             (PyObject *)&BTreeItemsType) < 0)
-        return NULL;
+                             (PyObject *)state->btree_items_type) < 0)
+        return -1;
+
 #if defined(ZODB_64BIT_INTS) && defined(NEED_LONG_LONG_SUPPORT)
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_True) < 0)
-        return NULL;
+        return -1;
 #else
     if (PyDict_SetItemString(mod_dict, "using64bits", Py_False) < 0)
-        return NULL;
+        return -1;
 #endif
-    return module;
+
+    return 0;
 }
 
-PyMODINIT_FUNC INITMODULE(void)
+/* Slot definitions for multi-phase initialization
+ *
+ * See: https://docs.python.org/3/c-api/module.html#multi-phase-initialization
+ * and: https://peps.python.org/pep-0489
+ */
+static PyModuleDef_Slot module_slots[] = {
+    {Py_mod_exec,       module_exec},
+    {0,                 NULL}
+};
+
+static struct PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    .m_name                 = "_" MOD_NAME_PREFIX "BTree",
+    .m_doc                  = BTree_module_documentation,
+    .m_size                 = sizeof(module_state),
+    .m_methods              = module_methods,
+    .m_traverse             = module_traverse,
+    .m_clear                = module_clear,
+    .m_slots                = module_slots,
+};
+
+static PyObject*
+module_init(void)
+{
+    if (intern_strings() < 0 )
+        return NULL;
+
+
+    return PyModuleDef_Init(&module_def);
+
+}
+
+PyMODINIT_FUNC
+INITMODULE(void)
 {
     return module_init();
 }
