@@ -1444,27 +1444,51 @@ bucket_setstate(Bucket *self, PyObject *state)
 static PyObject *
 bucket_sub(PyObject *self, PyObject *other)
 {
-    PyObject *args = Py_BuildValue("OO", self, other);
     PyObject *module = _get_module(Py_TYPE(self));
-    /* no check here, because 'difference_m' checks if needed. */
+    if (module == NULL) {
+        /* real bucket might be 'other', not 'self' */
+        PyErr_Clear();
+        module = _get_module(Py_TYPE(other));
+    }
+    if (module == NULL) {
+        PyErr_Clear();
+        return Py_NotImplemented;
+    }
+    PyObject *args = Py_BuildValue("OO", self, other);
     return difference_m(module, args);
 }
 
 static PyObject *
 bucket_or(PyObject *self, PyObject *other)
 {
-    PyObject *args = Py_BuildValue("OO", self, other);
     PyObject *module = _get_module(Py_TYPE(self));
-    /* no check here, because 'union_m' checks if needed. */
+    if (module == NULL) {
+        /* real bucket might be 'other', not 'self' */
+        PyErr_Clear();
+        module = _get_module(Py_TYPE(other));
+    }
+    if (module == NULL) {
+        PyErr_Clear();
+        return Py_NotImplemented;
+    }
+    PyObject *args = Py_BuildValue("OO", self, other);
     return union_m(module, args);
 }
 
 static PyObject *
 bucket_and(PyObject *self, PyObject *other)
 {
-    PyObject *args = Py_BuildValue("OO", self, other);
     PyObject *module = _get_module(Py_TYPE(self));
-    /* no check here, because 'intersection_m' checks if needed. */
+    if (module == NULL) {
+        /* real bucket might be 'other', not 'self' */
+        PyErr_Clear();
+        module = _get_module(Py_TYPE(other));
+    }
+    if (module == NULL) {
+        PyErr_Clear();
+        return Py_NotImplemented;
+    }
+    PyObject *args = Py_BuildValue("OO", self, other);
     return intersection_m(module, args);
 }
 

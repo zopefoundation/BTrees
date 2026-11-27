@@ -109,6 +109,12 @@ nextGenericKeyIter(SetIteration *i) {
  */
 static int
 initSetIteration(PyObject* module, SetIteration *i, PyObject *s, int useValues) {
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "initSetIteration: module is NULL");
+        return -1;
+    }
+
     PyTypeObject *btree_type = _get_btree_type(module);
     PyTypeObject *bucket_type = _get_bucket_type(module);
     PyTypeObject *set_type = _get_set_type(module);
@@ -274,6 +280,12 @@ set_operation(PyObject* module,
               int c2
              )
 {
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "set_operation: module is NULL");
+        return NULL;
+    }
+
     Bucket *r = 0;
     PyTypeObject *bucket_type = _get_bucket_type(module);
     PyTypeObject *set_type = _get_set_type(module);
@@ -502,7 +514,11 @@ wunion_m(PyObject *module, PyObject *args) {
 
 static PyObject *
 wintersection_m(PyObject *module, PyObject *args) {
-    /* set_operation checks module */
+    if (module == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "wintersection_m: module is NULL");
+        return NULL;
+    }
     PyTypeObject *set_type = _get_set_type(module);
     PyObject *o1, *o2;
     VALUE_TYPE w1 = 1, w2 = 1;
