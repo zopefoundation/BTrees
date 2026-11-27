@@ -366,6 +366,8 @@ jobs:
           retry pip install "persistent @ git+https://github.com/zopefoundation/persistent@feat-204-pep489-refresh"
       - name: Build BTrees and install editable with test extras
         run: |
+          # Each step runs in a new shell, so 'retry' must be defined again.
+          retry() { for i in 1 2; do "$@" && return 0; echo "Attempt $i failed, retrying in 15s ..."; sleep 15; done; pip cache purge || true; "$@"; }
           python setup.py build_ext -i
           retry pip install -e ".[test]"
       - name: Run tests with C extensions
