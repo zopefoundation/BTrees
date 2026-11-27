@@ -1952,8 +1952,19 @@ bucket_dealloc(Bucket *self)
      * fields rather than crash.
      */
     if (cPersistenceCAPI != NULL) {
-        /* persistent's own dealloc decrefs the heap type. */
+        /* If persistent is a heap type, its dealloc decrefs the type;
+         * if it is a static type, we must do it here.  Capture the
+         * type now: 'obj_self' is freed by the tp_dealloc call.
+         *
+         * Revisit once we pin a minimum version of 'persistent' which
+         * includes its PR #244 heap-based types.
+         */
+        PyTypeObject *type = Py_TYPE(obj_self);
+        int per_is_heaptype =
+            cPersistenceCAPI->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
         cPersistenceCAPI->pertype->tp_dealloc(obj_self);
+        if (!per_is_heaptype)
+            Py_DECREF(type);
     }
 }
 
@@ -1977,7 +1988,11 @@ bucket_traverse(Bucket *self, visitproc visit, void *arg)
 
     int per_is_heaptype = cPersistenceCAPI->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
 
-    /* Heap-allocated Persistent will have already traversed our type. */
+    /* Heap-allocated Persistent will have already traversed our type.
+     *
+     * Revisit once we pin a minimum version of 'persistent' which
+     * includes its PR #244 heap-based types.
+     */
     if (!per_is_heaptype)
         Py_VISIT(Py_TYPE(obj_self));
 

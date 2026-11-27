@@ -2617,8 +2617,19 @@ BTree_dealloc(BTree *self)
      * fields rather than crash.
      */
     if (cPersistenceCAPI != NULL) {
-        /* persistent's own dealloc decrefs the heap type. */
+        /* If persistent is a heap type, its dealloc decrefs the type;
+         * if it is a static type, we must do it here.  Capture the
+         * type now: 'obj_self' is freed by the tp_dealloc call.
+         *
+         * Revisit once we pin a minimum version of 'persistent' which
+         * includes its PR #244 heap-based types.
+         */
+        PyTypeObject *type = Py_TYPE(obj_self);
+        int per_is_heaptype =
+            cPersistenceCAPI->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
         cPersistenceCAPI->pertype->tp_dealloc(obj_self);
+        if (!per_is_heaptype)
+            Py_DECREF(type);
     }
 }
 
@@ -2639,12 +2650,25 @@ BTree_traverse(BTree *self, visitproc visit, void *arg)
 
     /* Call our base type's traverse function.
      *
-     * Because BTrees are subclasses of Peristent, there must be one;
-     * it (being a heap type) also visits the instance's type for us,
-     * so don't visit 'tp' here.
-    */
+     * Because BTrees are subclasses of Peristent, there must be one.
+     * If persistent is heap-allocated, its traverse visits the instance's
+     * type for us; with a static Pertype, visit it ourselves (as
+     * bucket_traverse does).
+     */
     if (cPersistenceCAPI->pertype->tp_traverse((PyObject *)self, visit, arg) < 0)
         return -1;
+
+    {
+        int per_is_heaptype =
+            cPersistenceCAPI->pertype->tp_flags & Py_TPFLAGS_HEAPTYPE;
+        /* Heap-allocated Persistent will have already traversed our type.
+         *
+         * Revisit once we pin a minimum version of 'persistent' which
+         * includes its PR #244 heap-based types.
+         */
+        if (!per_is_heaptype)
+            Py_VISIT(Py_TYPE(obj_self));
+    }
 
     /* If this is registered with the persistence system, cleaning up cycles
     * is the database's problem.  It would be horrid to unghostify BTree
