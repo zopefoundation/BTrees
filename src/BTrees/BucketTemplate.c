@@ -2035,7 +2035,6 @@ static char Bucket__doc__[] =
 static PyType_Slot Bucket_type_slots[] = {
     {Py_tp_doc,                 Bucket__doc__},
     {Py_tp_alloc,               _pytype_generic_alloc},
-    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_init,                Bucket_init},
     {Py_tp_repr,                (reprfunc)bucket_repr},
     {Py_tp_iter,                (getiterfunc)Bucket_getiter},

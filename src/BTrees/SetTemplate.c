@@ -676,7 +676,6 @@ static char Set__doc__[] = "Result set mapped as a single bucket";
 static PyType_Slot Set_type_slots[] = {
     {Py_tp_doc,                 Set__doc__},
     {Py_tp_alloc,               _pytype_generic_alloc},
-    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_init,                Set_init},
     {Py_tp_repr,                (reprfunc)set_repr},
     {Py_tp_iter,                (getiterfunc)Bucket_getiter},

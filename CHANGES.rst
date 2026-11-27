@@ -4,9 +4,13 @@ Change log
 6.6 (unreleased)
 ----------------
 
-- PEP 489 support:  multi-phase module initialization, heap-allocated types
+- PEP 489 support:  multi-phase module initialization, heap-allocated types.
+  The heap types' ``tp_new`` is assigned at run time to ``PyType_GenericNew``
+  (rather than via a static slot initializer or a module-local function) so
+  that persistent's slot clearing on deactivation treats them as not
+  overriding ``__new__``, matching the behavior of the static types.
   (NOTE: depends on parallel work in `persistent #244
-  <https://github.com/zopefoundation/persistent/issues/244>`_.
+  <https://github.com/zopefoundation/persistent/issues/244>`_).
 
 - Add support for Python 3.15.
 

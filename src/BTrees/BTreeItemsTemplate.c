@@ -522,7 +522,6 @@ BTreeItems_clear(BTreeItems *self)
 static PyType_Slot BTreeItems_type_slots[] = {
     {Py_tp_doc,                 BTreeItems__doc__},
     {Py_tp_alloc,               _pytype_generic_alloc},
-    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_traverse,            (traverseproc)BTreeItems_traverse},
     {Py_tp_clear,               (inquiry)BTreeItems_clear},
     {Py_tp_dealloc,             (destructor)BTreeItems_dealloc},
@@ -825,7 +824,6 @@ BTreeIter_clear(BTreeIter *self)
 static PyType_Slot BTreeIter_type_slots[] = {
     {Py_tp_doc,                 BTreeIter__doc__},
     {Py_tp_alloc,               _pytype_generic_alloc},
-    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_getattro,            _pyobject_generic_getattr},
     {Py_tp_iter,                (getiterfunc)BTreeIter_getiter},
     {Py_tp_iternext,            (iternextfunc)BTreeIter_next},

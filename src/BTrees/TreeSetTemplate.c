@@ -543,7 +543,6 @@ static char TreeSet__doc__[] = "Result set mapped as a tree";
 static PyType_Slot TreeSet_type_slots[] = {
     {Py_tp_doc,                 TreeSet__doc__},
     {Py_tp_alloc,               _pytype_generic_alloc},
-    {Py_tp_new,                 _pytype_generic_new},
     {Py_tp_init,                TreeSet_init},
     {Py_tp_iter,                BTree_getiter},
     {Py_tp_traverse,            BTree_traverse},

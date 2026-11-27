@@ -170,17 +170,6 @@ _pytype_generic_alloc(PyTypeObject* tp, Py_ssize_t nitems)
     return PyType_GenericAlloc(tp, nitems);
 }
 
-static inline PyObject*
-_pytype_generic_new(PyTypeObject* tp, PyObject* _args,  PyObject* _kw)
-{
-#if 0
-    return PyType_GenericNew(tp, _args, _kw);
-#else
-    /* just inline it */
-    return tp->tp_alloc(tp, 0);;
-#endif
-}
-
 /* Why is this one prefixed 'Py'?  There is no such API in any version
  * of Python on my machine, going back to 1.5.2!
  */
@@ -879,6 +868,15 @@ init_type_with_meta_base(
 #endif
     if (new_type == NULL)
         return NULL;
+
+    /* Assign 'tp_new' at run time (except on the metaclass, which must
+     * keep 'type_new' so it can create classes).  The persistent
+     * package's 'ghostify' compares 'tp_new' against the run-time-loaded
+     * 'PyType_GenericNew', and only it is guaranteed to compare equal on
+     * every platform (MSVC binds imported functions referenced from
+     * static data initializers differently than from code). */
+    if (base != &PyType_Type)
+        new_type->tp_new = PyType_GenericNew;
 
     /*
       persistent looks for __slotnames__ in the dict at deactivation time,
