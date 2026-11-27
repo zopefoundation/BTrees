@@ -355,9 +355,10 @@ Set_init(PyObject *self, PyObject *args, PyObject *kwds)
     Bucket* b_self = BUCKET(self);
     PyObject *v = NULL;
 
-    b_self->next = 0;
-    b_self->keys = 0;
-    b_self->values = 0;
+   /*
+    * 'tp_alloc' zero-fills new instances, and '__init__' can legitimately
+    * be called more than once:  it must merge, not strip prior state.
+    */
 
     if (!PyArg_ParseTuple(args, "|O:" MOD_NAME_PREFIX "Set", &v))
         return -1;
