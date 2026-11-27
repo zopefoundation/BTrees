@@ -1776,7 +1776,7 @@ _bucket__p_resolveConflict(PyTypeObject *tp, PyObject *s[3])
     for (i = 0; i < 3; i++) {
         PyObject *r;
 
-        b[i] = BUCKET(tp->tp_alloc(tp, 0));
+        b[i] = (Bucket*)PyObject_CallObject((PyObject *)tp, NULL);
         if (b[i] == NULL)
             goto Done;
         if (s[i] == Py_None) /* None is equivalent to empty, for BTrees */

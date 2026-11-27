@@ -518,12 +518,11 @@ static int BTree_grow(BTree *self, int index, int noval);
 static int
 BTree_split_root(BTree *self, int noval)
 {
-    PyTypeObject* tp = Py_TYPE(self);
     BTree *child;
     BTreeItem *d;
 
     /* Create a child BTree, and a new data vector for self. */
-    child = BTREE(tp->tp_alloc(tp, 0));
+    child = BTREE(PyObject_CallObject(OBJECT(Py_TYPE(self)), NULL));
     if (!child)
         return -1;
 
@@ -604,8 +603,7 @@ BTree_grow(BTree *self, int index, int noval)
         d = self->data + index;
         v = d->child;
         /* Create a new object of the same type as the target value */
-        PyTypeObject* tp = Py_TYPE(v);
-        e = (Sized *)tp->tp_alloc(tp, 0);
+        e = (Sized *)PyObject_CallObject((PyObject *)Py_TYPE(v), NULL);
         if (e == NULL)
             return -1;
 
