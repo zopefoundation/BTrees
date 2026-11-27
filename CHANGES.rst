@@ -12,6 +12,12 @@ Change log
   (NOTE: depends on parallel work in `persistent #244
   <https://github.com/zopefoundation/persistent/issues/244>`_).
 
+- On Python 3.11, the module-owned BTrees types cannot reject setting
+  arbitrary attributes on themselves (the metaclass that enforces this
+  requires ``PyType_FromMetaclass``, new in Python 3.12, so it is not
+  attached there).  The protection against arbitrary attribute assignment
+  on those types applies to Python 3.12 and later only.
+
 - Add support for Python 3.15.
 
 - Drop support for Python 3.10.

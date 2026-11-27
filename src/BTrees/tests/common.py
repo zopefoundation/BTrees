@@ -47,6 +47,8 @@ else:
 if sys.version_info < (3, 12):
     # The BTreeType metaclass (and its attribute-settailist discipline)
     # attaches only via PyType_FromMetaclass, which is 3.12+.
+    # See CHANGES.rst (6.6): on 3.11 the module-owned types accept
+    # arbitrary attributes.
     _skip_pre_312 = skip("Metaclass discipline requires 3.12+")
 else:
     _skip_pre_312 = _no_op
