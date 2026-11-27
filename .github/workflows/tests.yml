@@ -339,6 +339,41 @@ jobs:
         with:
           parallel: true
 
+  # Temporary: test against the unreleased persistent carrying the
+  # PEP 489 changes (zopefoundation/persistent#244), instead of the
+  # released persistent from PyPI.  Safe to drop once BTrees can require
+  # that persistent (then fold this back into the 'test' matrix).
+  test-persistent-pep489:
+    name: test (3.12, ubuntu-latest, persistent#244)
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies and persistent from the PR branch
+        run: |
+          retry() { for i in 1 2; do "$@" && return 0; echo "Attempt $i failed, retrying in 15s ..."; sleep 15; done; pip cache purge || true; "$@"; }
+          retry pip install -U wheel "setuptools >= 78.1.1,< 82"
+          retry pip install -U coverage[toml]
+          retry pip install -U 'cffi; platform_python_implementation == "CPython"'
+          # Install *before* BTrees so that the BTrees[test] extra
+          # does not pull the released persistent from PyPI.
+          retry pip install "persistent @ git+https://github.com/zopefoundation/persistent@feat-204-pep489-refresh"
+      - name: Build BTrees and install editable with test extras
+        run: |
+          # Each step runs in a new shell, so 'retry' must be defined again.
+          retry() { for i in 1 2; do "$@" && return 0; echo "Attempt $i failed, retrying in 15s ..."; sleep 15; done; pip cache purge || true; "$@"; }
+          python setup.py build_ext -i
+          retry pip install -e ".[test]"
+      - name: Run tests with C extensions
+        run: |
+          python -m zope.testrunner --test-path=src --auto-color --auto-progress
+
   coveralls_finish:
     needs: test
     runs-on: ubuntu-latest
