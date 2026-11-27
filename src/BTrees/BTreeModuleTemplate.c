@@ -961,15 +961,14 @@ module_exec(PyObject* module)
 
     /* Grab the ConflictError class */
     interfaces = PyImport_ImportModule("BTrees.Interfaces");
-    if (interfaces == NULL)
-        return -1;
-
-    state->conflict_error = PyObject_GetAttrString(
-        interfaces, "BTreesConflictError");
-    Py_DECREF(interfaces);
-
+    if (interfaces != NULL) {
+        state->conflict_error = PyObject_GetAttrString(
+            interfaces, "BTreesConflictError");
+        Py_DECREF(interfaces);
+    }
     if (state->conflict_error == NULL)
     {
+        PyErr_Clear();
         Py_INCREF(PyExc_ValueError);
         state->conflict_error=PyExc_ValueError;
     }
