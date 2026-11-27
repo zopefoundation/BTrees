@@ -541,12 +541,13 @@ IndexError(int i)
 static int
 PreviousBucket(Bucket **current, Bucket *first)
 {
-    PyObject* obj_self = (PyObject*)current;
+    assert(current && *current && first);
+
+    PyObject* obj_self = (PyObject*)first;
     PerCAPI* per_capi = _get_per_capi(obj_self);
     Bucket *trailing = NULL;    /* first travels; trailing follows it */
     int result = 0;
 
-    assert(current && *current && first);
     if (first == *current)
         return 0;
 
