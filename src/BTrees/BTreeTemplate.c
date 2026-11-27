@@ -22,6 +22,7 @@
 static int
 BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
 {
+    int allowed;
     PyObject* allowed_attrs = _get_btreetype_allowed_attrs(type);
     /*
       type.tp_setattro prohibits setting any attributes on a built-in type,
@@ -33,43 +34,46 @@ BTreeType_setattro(PyTypeObject* type, PyObject* name, PyObject* value)
       an all the versions we care about, because those do allow setting
       attributes.
     */
-    int allowed;
-    allowed = PySequence_Contains(allowed_attrs, name);
-    if (allowed < 0) {
-        return -1;
-    }
-
-    if (allowed) {
-        PyDict_SetItem(type->tp_dict, name, value);
-        PyType_Modified(type);
-        if (PyErr_Occurred()) {
+    if (allowed_attrs == NULL) { /* type without module; punt */
+        PyErr_Clear();
+    } else {
+        allowed = PySequence_Contains(allowed_attrs, name);
+        if (allowed < 0) {
             return -1;
         }
-        return 0;
-    }
 
-    /*
-     *  The module-owned type objects reject arbitrary attributes
-     *  (BTrees issue #168);  user-created subclasses still accept
-     *  them.  `_get_module` can fail for types holding no module
-     *  link:  treat those as not module-owned.
-     */
-    {
-        PyObject* module = _get_module(type);
-        if (module == NULL) {
-            PyErr_Clear();
-        } else {
-            if (type == _get_btree_type(module) ||
-                type == _get_tree_set_type(module) ||
-                type == _get_bucket_type(module) ||
-                type == _get_set_type(module) ||
-                type == _get_btree_items_type(module) ||
-                type == _get_btree_iter_type(module)) {
-                PyErr_Format(PyExc_TypeError,
-                             "can't set arbitrary attributes on internal "
-                             "BTrees type '%s'",
-                             type->tp_name);
+        if (allowed) {
+            PyDict_SetItem(type->tp_dict, name, value);
+            PyType_Modified(type);
+            if (PyErr_Occurred()) {
                 return -1;
+            }
+            return 0;
+        }
+
+        /*
+        *  The module-owned type objects reject arbitrary attributes
+        *  (BTrees issue #168);  user-created subclasses still accept
+        *  them.  `_get_module` can fail for types holding no module
+        *  link:  treat those as not module-owned.
+        */
+        {
+            PyObject* module = _get_module(type);
+            if (module == NULL) {
+                PyErr_Clear();
+            } else {
+                if (type == _get_btree_type(module) ||
+                    type == _get_tree_set_type(module) ||
+                    type == _get_bucket_type(module) ||
+                    type == _get_set_type(module) ||
+                    type == _get_btree_items_type(module) ||
+                    type == _get_btree_iter_type(module)) {
+                    PyErr_Format(PyExc_TypeError,
+                                "can't set arbitrary attributes on internal "
+                                "BTrees type '%s'",
+                                type->tp_name);
+                    return -1;
+                }
             }
         }
     }
