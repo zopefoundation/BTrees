@@ -1125,8 +1125,11 @@ module_exec(PyObject* module)
  * and: https://peps.python.org/pep-0489
  */
 static PyModuleDef_Slot module_slots[] = {
-    {Py_mod_exec,       module_exec},
-    {0,                 NULL}
+    {Py_mod_exec,                   module_exec},
+#if PY_VERSION_HEX >= 0x030c0000
+    {Py_mod_multiple_interpreters,  Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+    {0,                             NULL}
 };
 
 static struct PyModuleDef module_def = {
